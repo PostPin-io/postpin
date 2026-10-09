@@ -1,9 +1,18 @@
 {
-    "name": "@postpin-io/workspace",
-    "private": true,
-    "scripts": {
-        "sync-env": "node ./scripts/sync-env.mjs",
-        "dev": "pnpm run sync-env && pnpm -r run dev",
-        "build": "pnpm -r run build"
-    }
+	"name": "@postpin-io/workspace",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"sync-env": "node ./scripts/sync-env.mjs",
+		"dev": "pnpm run sync-env && pnpm -r run dev",
+		"build": "pnpm -r run build",
+		"prepare": "husky",
+		"format": "prettier --write . && pnpm -r run format",
+		"lint": "prettier --check . && pnpm -r run lint"
+	},
+	"devDependencies": {
+		"husky": "^9.1.7",
+		"lint-staged": "^17.6.0",
+		"prettier": "^3.9.9"
+	}
 }
