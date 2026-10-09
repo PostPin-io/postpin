@@ -1,22 +1,22 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { resolve } from '$app/paths';
-	import { confetti } from '@neoconfetti/svelte';
-	import { prefersReducedMotion } from 'svelte/motion';
-	import type { PageProps } from './$types';
+	import { enhance } from "$app/forms";
+	import { resolve } from "$app/paths";
+	import { confetti } from "@neoconfetti/svelte";
+	import { prefersReducedMotion } from "svelte/motion";
+	import type { PageProps } from "./$types";
 
 	let { data }: PageProps = $props();
 
 	let shake = $state(false);
 
 	/** Whether or not the user has won */
-	let won = $derived(data.answers.at(-1) === 'xxxxx');
+	let won = $derived(data.answers.at(-1) === "xxxxx");
 
 	/** The index of the current guess */
 	let i = $derived(won ? -1 : data.answers.length);
 
 	/** The current guess */
-	let currentGuess = $derived(data.guesses[i] || '');
+	let currentGuess = $derived(data.guesses[i] || "");
 
 	/** Whether the current guess can be submitted */
 	let submittable = $derived(currentGuess.length === 5);
@@ -26,7 +26,7 @@
 		 * A map of classnames for all letters that have been guessed,
 		 * used for styling the keyboard
 		 */
-		let classnames: Record<string, 'exact' | 'close' | 'missing'> = {};
+		let classnames: Record<string, "exact" | "close" | "missing"> = {};
 		/**
 		 * A map of descriptions for all letters that have been guessed,
 		 * used for adding text for assistive technology (e.g. screen readers)
@@ -36,12 +36,12 @@
 			const guess = data.guesses[i];
 			for (let i = 0; i < 5; i += 1) {
 				const letter = guess[i];
-				if (answer[i] === 'x') {
-					classnames[letter] = 'exact';
-					description[letter] = 'correct';
+				if (answer[i] === "x") {
+					classnames[letter] = "exact";
+					description[letter] = "correct";
 				} else if (!classnames[letter]) {
-					classnames[letter] = answer[i] === 'c' ? 'close' : 'missing';
-					description[letter] = answer[i] === 'c' ? 'present' : 'absent';
+					classnames[letter] = answer[i] === "c" ? "close" : "missing";
+					description[letter] = answer[i] === "c" ? "present" : "absent";
 				}
 			}
 		});
@@ -54,9 +54,9 @@
 	 */
 	function update(event: MouseEvent) {
 		event.preventDefault();
-		const key = (event.target as HTMLButtonElement).getAttribute('data-key');
+		const key = (event.target as HTMLButtonElement).getAttribute("data-key");
 
-		if (key === 'backspace') {
+		if (key === "backspace") {
 			currentGuess = currentGuess.slice(0, -1);
 			shake = false;
 		} else if (currentGuess.length < 5) {
@@ -71,11 +71,11 @@
 	function keydown(event: KeyboardEvent) {
 		if (event.metaKey) return;
 
-		if (event.key === 'Enter' && !submittable) return;
+		if (event.key === "Enter" && !submittable) return;
 
 		document
 			.querySelector(`[data-key="${event.key}" i]`)
-			?.dispatchEvent(new MouseEvent('click', { cancelable: true, bubbles: true }));
+			?.dispatchEvent(new MouseEvent("click", { cancelable: true, bubbles: true }));
 	}
 </script>
 
@@ -94,12 +94,12 @@
 	use:enhance={() => {
 		// prevent default callback from resetting the form
 		return ({ result, update }) => {
-			shake = result.type === 'failure';
+			shake = result.type === "failure";
 			update({ reset: false });
 		};
 	}}
 >
-	<a class="how-to-play" href={resolve('/sverdle/how-to-play')}>How to play</a>
+	<a class="how-to-play" href={resolve("/sverdle/how-to-play")}>How to play</a>
 
 	<div class="grid" class:playing={!won} class:shake onanimationend={() => (shake = false)}>
 		{#each Array.from(Array(6).keys()) as row (row)}
@@ -110,11 +110,11 @@
 				{#each Array.from(Array(5).keys()) as column (column)}
 					{const guess = $derived(current ? currentGuess : data.guesses[row])}
 					{const answer = $derived(data.answers[row]?.[column])}
-					{const value = $derived(guess?.[column] ?? '')}
+					{const value = $derived(guess?.[column] ?? "")}
 					{const selected = $derived(current && column === guess.length)}
-					{const exact = $derived(answer === 'x')}
-					{const close = $derived(answer === 'c')}
-					{const missing = $derived(answer === '_')}
+					{const exact = $derived(answer === "x")}
+					{const close = $derived(answer === "c")}
+					{const missing = $derived(answer === "_")}
 
 					<div class="letter" class:exact class:close class:missing class:selected>
 						{value}
@@ -142,7 +142,7 @@
 				<p>the answer was "{data.answer}"</p>
 			{/if}
 			<button data-key="enter" class="restart selected" formaction="?/restart">
-				{won ? 'you won :)' : `game over :(`} play again?
+				{won ? "you won :)" : `game over :(`} play again?
 			</button>
 		{:else}
 			<div class="keyboard">
@@ -158,7 +158,7 @@
 					back
 				</button>
 
-				{#each ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'] as row (row)}
+				{#each ["qwertyuiop", "asdfghjkl", "zxcvbnm"] as row (row)}
 					<div class="row">
 						{#each row as letter, index (index)}
 							<button
@@ -189,7 +189,7 @@
 			force: 0.7,
 			stageWidth: window.innerWidth,
 			stageHeight: window.innerHeight,
-			colors: ['#ff3e00', '#40b3ff', '#676778']
+			colors: ["#ff3e00", "#40b3ff", "#676778"],
 		}}
 	></div>
 {/if}
@@ -211,7 +211,7 @@
 	}
 
 	.how-to-play::before {
-		content: 'i';
+		content: "i";
 		display: inline-block;
 		font-size: 0.8em;
 		font-weight: 900;
@@ -344,8 +344,8 @@
 		outline: none;
 	}
 
-	.keyboard button[data-key='enter'],
-	.keyboard button[data-key='backspace'] {
+	.keyboard button[data-key="enter"],
+	.keyboard button[data-key="backspace"] {
 		position: absolute;
 		bottom: 0;
 		width: calc(1.5 * var(--size));
@@ -355,15 +355,15 @@
 		padding-top: calc(0.15 * var(--size));
 	}
 
-	.keyboard button[data-key='enter'] {
+	.keyboard button[data-key="enter"] {
 		right: calc(50% + 3.5 * var(--size) + 0.8rem);
 	}
 
-	.keyboard button[data-key='backspace'] {
+	.keyboard button[data-key="backspace"] {
 		left: calc(50% + 3.5 * var(--size) + 0.8rem);
 	}
 
-	.keyboard button[data-key='enter']:disabled {
+	.keyboard button[data-key="enter"]:disabled {
 		opacity: 0.5;
 	}
 

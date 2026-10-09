@@ -4,8 +4,8 @@ const sourceEnvFile = ".env";
 const targetEnvFile = "packages/postpin/.env";
 
 if (!fs.existsSync(sourceEnvFile)) {
-    console.error(`Source env file "${sourceEnvFile}" does not exist.`);
-    process.exit(1);
+	console.error(`Source env file "${sourceEnvFile}" does not exist.`);
+	process.exit(1);
 }
 
 let envContent = fs.readFileSync(sourceEnvFile, "utf-8");

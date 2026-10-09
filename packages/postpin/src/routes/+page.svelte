@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Counter from './Counter.svelte';
+	import Counter from "./Counter.svelte";
 </script>
 
 <svelte:head>
