@@ -1,0 +1,9 @@
+{
+    "name": "@postpin-io/workspace",
+    "private": true,
+    "scripts": {
+        "sync-env": "node ./scripts/sync-env.mjs",
+        "dev": "pnpm run sync-env && pnpm -r run dev",
+        "build": "pnpm -r run build"
+    }
+}
