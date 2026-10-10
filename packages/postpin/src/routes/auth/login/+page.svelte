@@ -45,3 +45,5 @@
 	{isLoading ? "Logging in..." : "Login"}
 </button>
 New user? <a href="/auth/signup">Sign up</a>
+
+Password reset: <a href="/auth/reset-password">Reset Password</a>
