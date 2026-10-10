@@ -12,6 +12,16 @@ services:
     ports:
       - "1080:1080"
       - "1025:1025"
+  rustfs:
+    image: rustfs/rustfs:latest
+    ports:
+      - "9003:9000"
+      - "9004:9001"
+    volumes:
+      - ./dev-data/rustfs:/data
+    environment:
+      - RUSTFS_ACCESS_KEY=${S3_ACCESS_KEY}
+      - RUSTFS_SECRET_KEY=${S3_SECRET_KEY}
 
 volumes:
   db_data:

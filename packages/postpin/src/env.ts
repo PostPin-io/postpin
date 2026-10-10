@@ -16,4 +16,11 @@ export const variables = defineEnvVars({
 	SMTP_USER: { schema: v.optional(v.string()) },
 	SMTP_PASSWORD: { schema: v.optional(v.string()) },
 	SMTP_MAIL_FROM: { schema: v.optional(v.string()) },
+	S3_HOST: { schema: v.string() },
+	S3_PORT: { schema: v.pipe(v.string(), v.toNumber()) },
+	S3_USE_SSL: { schema: envBoolean },
+	S3_ACCESS_KEY: { schema: v.string() },
+	S3_SECRET_KEY: { schema: v.string() },
+	S3_BUCKET: { schema: v.string() },
+	S3_REGION: { schema: v.optional(v.string()) },
 });
