@@ -64,6 +64,9 @@
 				<li>
 					<a href={resolve("/dbtests")}>dbtests</a>
 				</li>
+				<li>
+					<a href={resolve("/auth/login")}>Login</a>
+				</li>
 			</ul>
 		</div>
 		<div class="navbar-end">
