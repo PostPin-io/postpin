@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { authClient } from "#lib/auth-client.ts";
+	let formMessage = $state<{ type: "success" | "error"; text: string } | null>(null);
 
 	let isLoading = $state(false);
 	let email = $state("");
@@ -15,11 +16,17 @@
 			},
 			{
 				onSuccess: () => {
-					alert("If an account exists for that email, a reset link has been sent.");
+					formMessage = {
+						type: "success",
+						text: "If an account exists for that email, a reset link has been sent.",
+					};
 					isLoading = false;
 				},
 				onError: (ctx) => {
-					alert(ctx.error.message);
+					formMessage = {
+						type: "error",
+						text: ctx.error.message ?? "Something went wrong while requesting a password reset.",
+					};
 					isLoading = false;
 				},
 			},

@@ -4,8 +4,8 @@
 
 	let email = $state("");
 	let password = $state("");
-
 	let isLoading = $state(false);
+	let formMessage = $state<{ type: "success" | "error"; text: string } | null>(null);
 
 	async function handleLogin() {
 		if (isLoading) return; // Prevent multiple submissions
@@ -28,7 +28,10 @@
 				},
 				onError: (ctx) => {
 					// display the error message
-					alert(ctx.error.message);
+					formMessage = {
+						type: "error",
+						text: ctx.error.message ?? "Something went wrong while logging in.",
+					};
 					isLoading = false;
 				},
 			},
@@ -75,6 +78,13 @@
 				<div class="text-right">
 					<a class="link text-sm link-hover" href="/auth/reset-password">Forgot password?</a>
 				</div>
+
+				{#if formMessage}
+					// Display the form message if it exists
+					<div class="alert alert-error" role="alert">
+						{formMessage.text}
+					</div>
+				{/if}
 
 				<button class="btn w-full btn-primary" onclick={handleLogin} disabled={isLoading}>
 					{isLoading ? "Logging in..." : "Log in"}
