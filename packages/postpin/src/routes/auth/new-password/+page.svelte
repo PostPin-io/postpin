@@ -2,7 +2,7 @@
 	import { page } from "$app/state";
 	import { authClient } from "#lib/auth-client.ts";
 	import { goto } from "$app/navigation";
-
+	import { getEmail } from "./new-password.remote.ts";
 	let newPassword = $state("");
 	let isLoading = $state(false);
 	let formMessage = $state<{ type: "success" | "error"; text: string } | null>(null);
@@ -46,15 +46,14 @@
 <svelte:head>
 	<title>Choose a new password | PostPin</title>
 
-	<meta
-		name="description"
-		content="Choose a new password for your PostPin account.(TODO:ADD EMAIL META TAG)"
-	/>
+	<meta name="description" content="Choose a new password for your PostPin account." />
 </svelte:head>
 
 <header class="space-y-2 text-center">
 	<h1 class="text-3xl font-bold">Choose a new password</h1>
-	<p class="text-base-content/70">Enter a new password for your PostPin account.</p>
+	<p class="text-base-content/70">Enter a new password for this account:</p>
+
+	{await getEmail(token)}
 </header>
 
 {#if formMessage}
