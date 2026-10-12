@@ -1,0 +1,14 @@
+{
+	"entryFile": "src/api/dummy.ts",
+	"noImplicitAdditionalProperties": "throw-on-extras",
+	"controllerPathGlobs": ["src/api/**/*Controller.ts"],
+	"spec": {
+		"outputDirectory": "src/api/build",
+		"specVersion": 3,
+		"basePath": "/api"
+	},
+	"routes": {
+		"routesDir": "src/api/build",
+		"middleware": "hapi"
+	}
+}
