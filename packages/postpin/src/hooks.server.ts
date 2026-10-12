@@ -1,7 +1,19 @@
-import { auth } from "#lib/server/auth.ts"; // path to your auth file
+import { auth } from "#lib/server/auth.ts";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import { building } from "$app/env";
+import { sequence, type Handle } from "@sveltejs/kit/hooks";
+import { handleApiRequest } from "./api";
 
-export async function handle({ event, resolve }) {
+const authHandler: Handle = async ({ event, resolve }) => {
 	return svelteKitHandler({ event, resolve, auth, building });
-}
+};
+
+const apiHandler: Handle = async ({ event, resolve }) => {
+	if (event.url.pathname.startsWith("/api/")) {
+		return handleApiRequest(event);
+	}
+
+	return resolve(event);
+};
+
+export const handle = sequence(authHandler, apiHandler);
