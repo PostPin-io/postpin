@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { authClient } from "#lib/auth-client.ts"; //import the auth client
 	import { goto } from "$app/navigation";
+
 	let firstName = $state("");
 	let lastName = $state("");
 	let email = $state("");
@@ -8,8 +9,11 @@
 
 	let isLoading = $state(false);
 
+	let formMessage = $state<{ type: "success" | "error"; text: string } | null>(null);
+
 	async function handleSignup() {
 		if (isLoading) return; // Prevent multiple submissions
+
 		isLoading = true;
 
 		console.log("Signing up with:", { firstName, lastName, email, password });
@@ -30,7 +34,10 @@
 				},
 				onError: (ctx) => {
 					// display the error message
-					alert(ctx.error.message);
+					formMessage = {
+						type: "error",
+						text: ctx.error.message ?? "Something went wrong while signing up.",
+					};
 					isLoading = false;
 				},
 			},
@@ -38,13 +45,80 @@
 	}
 </script>
 
-<input type="text" placeholder="First Name" bind:value={firstName} />
-<input type="text" placeholder="Last Name" bind:value={lastName} />
-<input type="email" placeholder="Email" bind:value={email} />
-<input type="password" placeholder="Password" bind:value={password} />
+<svelte:head>
+	<title>Sign Up | PostPin</title>
+	<meta name="description" content="Create a new PostPin account." />
+</svelte:head>
 
-<button onclick={handleSignup} disabled={isLoading}>
-	{isLoading ? "Signing up..." : "Sign up"}
-</button>
+<header class="space-y-2 text-center">
+	<h1 class="text-3xl font-bold">Create an account</h1>
+	<p class="text-base-content/70">Sign up to start using PostPin.</p>
+</header>
 
-Back to login: <a href="/auth/login">Login</a>
+<div class="space-y-4">
+	<label class="form-control w-full">
+		<div class="h-4"></div>
+		<span class="label-text mb-2">First Name</span>
+		<input
+			type="text"
+			placeholder="First Name"
+			class="input-bordered input w-full"
+			bind:value={firstName}
+		/>
+	</label>
+
+	<label class="form-control w-full">
+		<span class="label-text mb-2">Last Name</span>
+		<input
+			type="text"
+			placeholder="Last Name"
+			class="input-bordered input w-full"
+			bind:value={lastName}
+		/>
+	</label>
+
+	<label class="form-control w-full">
+		<span class="label-text mb-2">Email</span>
+		<input
+			type="email"
+			placeholder="you@example.com"
+			class="input-bordered input w-full"
+			autocomplete="email"
+			bind:value={email}
+		/>
+	</label>
+
+	<label class="form-control w-full">
+		<span class="label-text mb-2">Password</span>
+		<input
+			type="password"
+			placeholder="Your password"
+			class="input-bordered input w-full"
+			autocomplete="current-password"
+			bind:value={password}
+		/>
+	</label>
+
+	<div class="text-right">
+		<a class="link text-sm link-hover" href="/auth/reset-password">Forgot password?</a>
+	</div>
+
+	{#if formMessage}
+		<!-- Display the form message if it exists -->
+		<div class="alert alert-error" role="alert">
+			{formMessage.text}
+		</div>
+	{/if}
+
+	<button class="btn w-full btn-primary" onclick={handleSignup} disabled={isLoading}>
+		{#if formMessage}
+			<span class="loading loading-md loading-spinner"></span>
+		{:else}
+			Sign Up
+		{/if}
+	</button>
+</div>
+
+<p class="text-center text-sm text-base-content/70">
+	Already have an account? <a class="link link-primary" href="/auth/login">Log in</a>
+</p>

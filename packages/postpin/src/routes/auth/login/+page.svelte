@@ -4,8 +4,8 @@
 
 	let email = $state("");
 	let password = $state("");
-
 	let isLoading = $state(false);
+	let formMessage = $state<{ type: "success" | "error"; text: string } | null>(null);
 
 	async function handleLogin() {
 		if (isLoading) return; // Prevent multiple submissions
@@ -28,7 +28,10 @@
 				},
 				onError: (ctx) => {
 					// display the error message
-					alert(ctx.error.message);
+					formMessage = {
+						type: "error",
+						text: ctx.error.message ?? "Something went wrong while logging in.",
+					};
 					isLoading = false;
 				},
 			},
@@ -36,14 +39,60 @@
 	}
 </script>
 
-<h1>Login</h1>
+<svelte:head>
+	<title>Login | PostPin</title>
+	<meta name="description" content="Log in to your PostPin account." />
+</svelte:head>
 
-<input type="email" placeholder="Email" bind:value={email} />
-<input type="password" placeholder="Password" bind:value={password} />
+<header class="space-y-2 text-center">
+	<h1 class="text-3xl font-bold">Welcome back</h1>
+	<p class="text-base-content/70">Log in to continue to PostPin.</p>
+</header>
 
-<button onclick={handleLogin} disabled={isLoading}>
-	{isLoading ? "Logging in..." : "Login"}
-</button>
-New user? <a href="/auth/signup">Sign up</a>
+<div class="space-y-4">
+	<label class="form-control w-full">
+		<div class="h-4"></div>
+		<span class="label-text mb-2">Email</span>
+		<input
+			type="email"
+			placeholder="you@example.com"
+			class="input-bordered input w-full"
+			autocomplete="email"
+			bind:value={email}
+		/>
+	</label>
 
-Password reset: <a href="/auth/reset-password">Reset Password</a>
+	<label class="form-control w-full">
+		<span class="label-text mb-2">Password</span>
+		<input
+			type="password"
+			placeholder="Your password"
+			class="input-bordered input w-full"
+			autocomplete="current-password"
+			bind:value={password}
+		/>
+	</label>
+
+	<div class="text-right">
+		<a class="link text-sm link-hover" href="/auth/reset-password">Forgot password?</a>
+	</div>
+
+	{#if formMessage}
+		// Display the form message if it exists
+		<div class="alert alert-error" role="alert">
+			{formMessage.text}
+		</div>
+	{/if}
+
+	<button class="btn w-full btn-primary" onclick={handleLogin} disabled={isLoading}>
+		{#if isLoading}
+			<span class="loading loading-md loading-spinner"></span>
+		{:else}
+			Log in
+		{/if}
+	</button>
+</div>
+
+<p class="text-center text-sm text-base-content/70">
+	New to PostPin? <a class="link link-primary" href="/auth/signup">Create an account</a>
+</p>

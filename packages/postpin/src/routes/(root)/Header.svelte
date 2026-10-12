@@ -56,13 +56,16 @@
 		<div class="navbar-center hidden lg:flex">
 			<ul class="menu menu-horizontal px-1">
 				<li>
-					<a href={resolve("/")}>Home</a>
+					<a href={resolve("/(root)")}>Home</a>
 				</li>
 				<li>
-					<a href={resolve("/about")}>About</a>
+					<a href={resolve("/(root)/about")}>About</a>
 				</li>
 				<li>
-					<a href={resolve("/dbtests")}>dbtests</a>
+					<a href={resolve("/(root)/dbtests")}>dbtests</a>
+				</li>
+				<li>
+					<a href={resolve("/auth/login")}>Login</a>
 				</li>
 			</ul>
 		</div>
