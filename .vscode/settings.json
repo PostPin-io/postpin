@@ -5,7 +5,7 @@
 	"editor.formatOnSave": true,
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
 	"[svelte]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
+		"editor.defaultFormatter": "svelte.svelte-vscode"
 	},
 	"[prisma]": {
 		"editor.defaultFormatter": "Prisma.prisma"

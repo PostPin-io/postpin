@@ -44,56 +44,55 @@
 	<meta name="description" content="Log in to your PostPin account." />
 </svelte:head>
 
-<main class="flex min-h-[60vh] items-center justify-center py-12">
-	<section class="card w-full max-w-md bg-base-100 shadow-xl">
-		<div class="card-body gap-6 p-8 sm:p-10">
-			<header class="space-y-2 text-center">
-				<h1 class="text-3xl font-bold">Welcome back</h1>
-				<p class="text-base-content/70">Log in to continue to PostPin.</p>
-			</header>
+<header class="space-y-2 text-center">
+	<h1 class="text-3xl font-bold">Welcome back</h1>
+	<p class="text-base-content/70">Log in to continue to PostPin.</p>
+</header>
 
-			<div class="space-y-4">
-				<label class="form-control w-full">
-					<span class="label-text mb-2">Email</span>
-					<input
-						type="email"
-						placeholder="you@example.com"
-						class="input-bordered input w-full"
-						autocomplete="email"
-						bind:value={email}
-					/>
-				</label>
+<div class="space-y-4">
+	<label class="form-control w-full">
+		<div class="h-4"></div>
+		<span class="label-text mb-2">Email</span>
+		<input
+			type="email"
+			placeholder="you@example.com"
+			class="input-bordered input w-full"
+			autocomplete="email"
+			bind:value={email}
+		/>
+	</label>
 
-				<label class="form-control w-full">
-					<span class="label-text mb-2">Password</span>
-					<input
-						type="password"
-						placeholder="Your password"
-						class="input-bordered input w-full"
-						autocomplete="current-password"
-						bind:value={password}
-					/>
-				</label>
+	<label class="form-control w-full">
+		<span class="label-text mb-2">Password</span>
+		<input
+			type="password"
+			placeholder="Your password"
+			class="input-bordered input w-full"
+			autocomplete="current-password"
+			bind:value={password}
+		/>
+	</label>
 
-				<div class="text-right">
-					<a class="link text-sm link-hover" href="/auth/reset-password">Forgot password?</a>
-				</div>
+	<div class="text-right">
+		<a class="link text-sm link-hover" href="/auth/reset-password">Forgot password?</a>
+	</div>
 
-				{#if formMessage}
-					// Display the form message if it exists
-					<div class="alert alert-error" role="alert">
-						{formMessage.text}
-					</div>
-				{/if}
-
-				<button class="btn w-full btn-primary" onclick={handleLogin} disabled={isLoading}>
-					{isLoading ? "Logging in..." : "Log in"}
-				</button>
-			</div>
-
-			<p class="text-center text-sm text-base-content/70">
-				New to PostPin? <a class="link link-primary" href="/auth/signup">Create an account</a>
-			</p>
+	{#if formMessage}
+		// Display the form message if it exists
+		<div class="alert alert-error" role="alert">
+			{formMessage.text}
 		</div>
-	</section>
-</main>
+	{/if}
+
+	<button class="btn w-full btn-primary" onclick={handleLogin} disabled={isLoading}>
+		{#if isLoading}
+			<span class="loading loading-md loading-spinner"></span>
+		{:else}
+			Log in
+		{/if}
+	</button>
+</div>
+
+<p class="text-center text-sm text-base-content/70">
+	New to PostPin? <a class="link link-primary" href="/auth/signup">Create an account</a>
+</p>
