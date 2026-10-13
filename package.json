@@ -4,11 +4,11 @@
 	"type": "module",
 	"scripts": {
 		"sync-env": "node ./scripts/sync-env.mjs",
-		"dev": "pnpm run sync-env && pnpm -r run dev",
+		"dev": "pnpm run sync-env && pnpm -r  --reporter append-only run dev",
 		"build": "pnpm -r run build",
 		"prepare": "husky",
-		"format": "prettier --write . && pnpm -r run format",
-		"lint": "prettier --check . && pnpm -r run lint"
+		"format": "prettier --write . '!packages/**' && pnpm -r run format",
+		"lint": "prettier --check . '!packages/**' && pnpm -r run lint"
 	},
 	"devDependencies": {
 		"husky": "^9.1.7",

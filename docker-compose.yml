@@ -7,6 +7,13 @@ services:
       - "5439:5432"
     volumes:
       - db_data:/var/lib/postgresql
+  redis:
+    image: redis:8
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    ports:
+      - "6389:6379"
+    volumes:
+      - ./dev-data/redis:/data
   maildev:
     image: maildev/maildev
     ports:
