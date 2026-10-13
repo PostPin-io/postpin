@@ -8,12 +8,18 @@
 		"build": "pnpm -r run build",
 		"prepare": "husky",
 		"format": "prettier --write . '!packages/**' && pnpm -r run format",
-		"lint": "prettier --check . '!packages/**' && pnpm -r run lint"
+		"lint": "prettier --check . '!packages/**' && pnpm -r run lint",
+		"charts": "d2 docs/architecture/architecture.d2 docs/architecture/architecture.svg",
+		"charts:watch": "nodemon --watch docs/architecture -e d2 --exec \"pnpm charts\""
 	},
 	"devDependencies": {
+		"@mdi/svg": "^7.4.47",
+		"devicon": "^2.17.0",
 		"husky": "^9.1.7",
 		"lint-staged": "^17.6.0",
-		"prettier": "^3.9.9"
+		"nodemon": "^3.1.14",
+		"prettier": "^3.9.9",
+		"simple-icons": "^16.35.0"
 	},
 	"scarfSettings": {
 		"enabled": false

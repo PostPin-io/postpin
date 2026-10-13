@@ -1,0 +1,88 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: up
+
+classes: {
+  svc: {
+    shape: image
+    width: 48
+    height: 48
+    label.near: outside-bottom-center
+  }
+  container: {
+    style: {
+      border-radius: 8
+      stroke-dash: 3
+    }
+  }
+}
+
+user: PostPin User {
+  class: container
+  icon: ../../node_modules/@mdi/svg/svg/account.svg
+  browser: Browser {class: svc; icon: ../../node_modules/@mdi/svg/svg/web.svg}
+  resolve: "Resolve\nPlugin" {class: svc; icon: ../../node_modules/simple-icons/icons/davinciresolve.svg}
+  premiere: "Premiere\nPlugin" {class: svc; icon: ../../node_modules/devicon/icons/premierepro/premierepro-plain.svg}
+}
+
+vm: PostPin Server VM {
+  class: container
+  icon: ../../node_modules/@mdi/svg/svg/server.svg
+
+  worker: Worker {
+    class: container
+    icon: ../../node_modules/simple-icons/icons/docker.svg
+    ffmpeg: ffmpeg {class: svc; icon: ../../node_modules/simple-icons/icons/ffmpeg.svg}
+    prisma: Prisma ORM {class: svc; icon: ../../node_modules/devicon/icons/prisma/prisma-original.svg}
+    worker: Worker {class: svc; icon: ../../node_modules/devicon/icons/nodejs/nodejs-original.svg}
+  }
+
+  s3: S3 Storage {
+    class: container
+    icon: ../../node_modules/simple-icons/icons/docker.svg
+    s3: S3 (rustfs) {class: svc; icon: ../../node_modules/@mdi/svg/svg/harddisk.svg}
+  }
+  database: Database {
+    class: container
+    icon: ../../node_modules/simple-icons/icons/docker.svg
+    database: PostgreSQL {class: svc; icon: ../../node_modules/devicon/icons/postgresql/postgresql-original.svg}
+  }
+  redis: Redis Queue {
+    class: container
+    icon: ../../node_modules/simple-icons/icons/docker.svg
+    redis: Queue (redis) {class: svc; icon: ../../node_modules/devicon/icons/redis/redis-original.svg}
+  }
+
+  app: PostPin App {
+    class: container
+    icon: ../../node_modules/simple-icons/icons/docker.svg
+    prisma: Prisma ORM {class: svc; icon: ../../node_modules/devicon/icons/prisma/prisma-original.svg}
+    svelte: "Web App\n(SvelteKit)" {class: svc; icon: ../../node_modules/devicon/icons/svelte/svelte-original.svg}
+    api: "REST API\n(tsoa)" {class: svc; icon: ../../node_modules/@mdi/svg/svg/api.svg}
+  }
+
+  database <-> worker.prisma
+  redis <-> worker.worker
+  s3 <-> worker.ffmpeg
+  s3 <-> worker.worker
+  app.prisma <-> database
+  app <-> redis
+  app <-> s3
+}
+
+external: External Services {
+  class: container
+  near: center-right
+  icon: ../../node_modules/@mdi/svg/svg/server.svg
+  smtp: SMTP {class: svc; icon: ../../node_modules/@mdi/svg/svg/email.svg}
+}
+
+user.browser <-> vm.app.svelte
+user.resolve <-> vm.app.api
+user.premiere <-> vm.app.api
+user -> vm.s3
+vm -> external
