@@ -1,47 +1,59 @@
-import { Body, Controller, Get, Path, Post, Route, SuccessResponse } from "tsoa";
+import { prisma } from "#lib/server/database.ts";
+import { Controller, Get, Path, Response, Route } from "tsoa";
 
 interface Project {
 	id: string;
 	name: string;
+	createdAt: Date;
+	updatedAt: Date;
 }
 
-interface ProjectCreationParams {
+interface Timeline {
+	id: string;
 	name: string;
+	createdAt: Date;
+	updatedAt: Date;
 }
 
-const dummyProjects: Project[] = [
-	{
-		id: "_dummyId",
-		name: "Irgendein Dummy Projekt",
-	},
-	{
-		id: "_dummyId2",
-		name: "Dummy Projekt 2",
-	},
-];
+interface ProjectWithTimelines extends Project {
+	timelines: Timeline[];
+}
 
 @Route("v1/projects")
 export class ProjectController extends Controller {
+	@Get("")
+	public async getProjects(): Promise<Project[]> {
+		return prisma.project.findMany({
+			select: {
+				id: true,
+				name: true,
+				createdAt: true,
+				updatedAt: true,
+			},
+			orderBy: { updatedAt: "desc" },
+		});
+	}
+
 	@Get("{projectId}")
-	public async getProject(@Path() projectId: number): Promise<Project> {
-		const project = dummyProjects.find((p) => p.id === projectId.toString());
+	@Response(404, "Project not found")
+	public async getProject(@Path() projectId: string): Promise<ProjectWithTimelines> {
+		const project = await prisma.project.findUnique({
+			where: { id: projectId },
+			select: {
+				id: true,
+				name: true,
+				createdAt: true,
+				updatedAt: true,
+				timelines: {
+					select: { id: true, name: true, createdAt: true, updatedAt: true },
+					orderBy: { updatedAt: "desc" },
+				},
+			},
+		});
 		if (!project) {
 			this.setStatus(404);
 			throw new Error("Project not found");
 		}
 		return project;
-	}
-
-	@Get("")
-	public async getProjects(): Promise<Project[]> {
-		return dummyProjects;
-	}
-
-	@SuccessResponse("201", "Created")
-	@Post()
-	public async createProject(@Body() requestBody: ProjectCreationParams): Promise<void> {
-		this.setStatus(201);
-
-		dummyProjects.push({ id: "_dummyId" + (dummyProjects.length + 1), name: requestBody.name });
 	}
 }

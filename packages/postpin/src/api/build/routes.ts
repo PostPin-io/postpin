@@ -7,6 +7,8 @@ import { fetchMiddlewares, HapiTemplateService } from "@tsoa/runtime";
 import { SpecController } from "./../controllers/SpecController";
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ProjectController } from "./../controllers/ProjectController";
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { ExportController } from "./../controllers/ExportController";
 import { boomify, isBoom, type Payload } from "@hapi/boom";
 import type { Request, ResponseToolkit, RouteOptionsPreAllOptions } from "@hapi/hapi";
 
@@ -18,14 +20,44 @@ const models: TsoaRoute.Models = {
 		properties: {
 			id: { dataType: "string", required: true },
 			name: { dataType: "string", required: true },
+			createdAt: { dataType: "datetime", required: true },
+			updatedAt: { dataType: "datetime", required: true },
 		},
 		additionalProperties: false,
 	},
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-	ProjectCreationParams: {
+	Timeline: {
 		dataType: "refObject",
 		properties: {
+			id: { dataType: "string", required: true },
 			name: { dataType: "string", required: true },
+			createdAt: { dataType: "datetime", required: true },
+			updatedAt: { dataType: "datetime", required: true },
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	ProjectWithTimelines: {
+		dataType: "refObject",
+		properties: {
+			id: { dataType: "string", required: true },
+			name: { dataType: "string", required: true },
+			createdAt: { dataType: "datetime", required: true },
+			updatedAt: { dataType: "datetime", required: true },
+			timelines: {
+				dataType: "array",
+				array: { dataType: "refObject", ref: "Timeline" },
+				required: true,
+			},
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	UploadUrlResponse: {
+		dataType: "refObject",
+		properties: {
+			mediaId: { dataType: "string", required: true },
+			uploadUrl: { dataType: "string", required: true },
 		},
 		additionalProperties: false,
 	},
@@ -140,56 +172,6 @@ export function RegisterRoutes(server: any) {
 		},
 	});
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-	const argsProjectController_getProject: Record<string, TsoaRoute.ParameterSchema> = {
-		projectId: { in: "path", name: "projectId", required: true, dataType: "double" },
-	};
-	server.route({
-		method: "get",
-		path: "/v1/projects/{projectId}",
-		options: {
-			pre: [
-				...fetchMiddlewares<RouteOptionsPreAllOptions>(ProjectController),
-				...fetchMiddlewares<RouteOptionsPreAllOptions>(ProjectController.prototype.getProject),
-			],
-			handler: function ProjectController_getProject(request: Request, h: ResponseToolkit) {
-				let validatedArgs: any[] = [];
-				try {
-					validatedArgs = templateService.getValidatedArgs({
-						args: argsProjectController_getProject,
-						request,
-						h,
-					});
-				} catch (err) {
-					const error = err as any;
-					if (isBoom(error)) {
-						throw error;
-					}
-
-					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
-						statusCode: error.status || 500,
-					});
-					boomErr.output.statusCode = error.status || 500;
-					boomErr.output.payload = {
-						name: error.name,
-						fields: error.fields,
-						message: error.message,
-					} as unknown as Payload;
-					throw boomErr;
-				}
-
-				const controller = new ProjectController();
-
-				return templateService.apiHandler({
-					methodName: "getProject",
-					controller,
-					h,
-					validatedArgs,
-					successStatus: undefined,
-				});
-			},
-		},
-	});
-	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 	const argsProjectController_getProjects: Record<string, TsoaRoute.ParameterSchema> = {};
 	server.route({
 		method: "get",
@@ -238,22 +220,22 @@ export function RegisterRoutes(server: any) {
 		},
 	});
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-	const argsProjectController_createProject: Record<string, TsoaRoute.ParameterSchema> = {
-		requestBody: { in: "body", name: "requestBody", required: true, ref: "ProjectCreationParams" },
+	const argsProjectController_getProject: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
 	};
 	server.route({
-		method: "post",
-		path: "/v1/projects",
+		method: "get",
+		path: "/v1/projects/{projectId}",
 		options: {
 			pre: [
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(ProjectController),
-				...fetchMiddlewares<RouteOptionsPreAllOptions>(ProjectController.prototype.createProject),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ProjectController.prototype.getProject),
 			],
-			handler: function ProjectController_createProject(request: Request, h: ResponseToolkit) {
+			handler: function ProjectController_getProject(request: Request, h: ResponseToolkit) {
 				let validatedArgs: any[] = [];
 				try {
 					validatedArgs = templateService.getValidatedArgs({
-						args: argsProjectController_createProject,
+						args: argsProjectController_getProject,
 						request,
 						h,
 					});
@@ -278,11 +260,166 @@ export function RegisterRoutes(server: any) {
 				const controller = new ProjectController();
 
 				return templateService.apiHandler({
-					methodName: "createProject",
+					methodName: "getProject",
 					controller,
 					h,
 					validatedArgs,
-					successStatus: 201,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsExportController_createExport: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+	};
+	server.route({
+		method: "post",
+		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports",
+		options: {
+			pre: [
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController.prototype.createExport),
+			],
+			handler: function ExportController_createExport(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsExportController_createExport,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new ExportController();
+
+				return templateService.apiHandler({
+					methodName: "createExport",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsExportController_initUpload: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+		exportId: { in: "path", name: "exportId", required: true, dataType: "string" },
+	};
+	server.route({
+		method: "post",
+		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/init-upload",
+		options: {
+			pre: [
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController.prototype.initUpload),
+			],
+			handler: function ExportController_initUpload(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsExportController_initUpload,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new ExportController();
+
+				return templateService.apiHandler({
+					methodName: "initUpload",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsExportController_completeUpload: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+		exportId: { in: "path", name: "exportId", required: true, dataType: "string" },
+	};
+	server.route({
+		method: "post",
+		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/complete-upload",
+		options: {
+			pre: [
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController.prototype.completeUpload),
+			],
+			handler: function ExportController_completeUpload(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsExportController_completeUpload,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new ExportController();
+
+				return templateService.apiHandler({
+					methodName: "completeUpload",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
 				});
 			},
 		},

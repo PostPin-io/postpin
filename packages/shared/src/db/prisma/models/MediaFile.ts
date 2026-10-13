@@ -13,8 +13,7 @@ import type * as Prisma from "../internal/prismaNamespace.ts";
 
 /**
  * Model MediaFile
- * A single stored file: either the original upload of a Media or one of its proxies.
- * Video/audio columns are null when the file has no such stream.
+ *
  */
 export type MediaFileModel = runtime.Types.Result.DefaultSelection<Prisma.$MediaFilePayload>;
 

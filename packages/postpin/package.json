@@ -11,11 +11,13 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"build:api-client": "rm -rf ../api-client-ts/src && npx @hey-api/openapi-ts --input src/api/build/swagger.json --output ../api-client-ts/src"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"@fontsource/fira-mono": "^5.2.7",
+		"@hey-api/openapi-ts": "^0.99.0",
 		"@neoconfetti/svelte": "^2.2.2",
 		"@postpin/shared": "workspace:*",
 		"@sveltejs/adapter-node": "^6.0.0",

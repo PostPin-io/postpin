@@ -14,19 +14,79 @@
 					},
 					"name": {
 						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
 					}
 				},
-				"required": ["id", "name"],
+				"required": ["id", "name", "createdAt", "updatedAt"],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"ProjectCreationParams": {
+			"Timeline": {
 				"properties": {
+					"id": {
+						"type": "string"
+					},
 					"name": {
 						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
 					}
 				},
-				"required": ["name"],
+				"required": ["id", "name", "createdAt", "updatedAt"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ProjectWithTimelines": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"timelines": {
+						"items": {
+							"$ref": "#/components/schemas/Timeline"
+						},
+						"type": "array"
+					}
+				},
+				"required": ["id", "name", "createdAt", "updatedAt", "timelines"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UploadUrlResponse": {
+				"properties": {
+					"mediaId": {
+						"type": "string"
+					},
+					"uploadUrl": {
+						"type": "string",
+						"description": "Presigned S3 PUT URL for the export's original file, valid for one hour."
+					}
+				},
+				"required": ["mediaId", "uploadUrl"],
 				"type": "object",
 				"additionalProperties": false
 			}
@@ -73,35 +133,6 @@
 				"parameters": []
 			}
 		},
-		"/v1/projects/{projectId}": {
-			"get": {
-				"operationId": "GetProject",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/Project"
-								}
-							}
-						}
-					}
-				},
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "projectId",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			}
-		},
 		"/v1/projects": {
 			"get": {
 				"operationId": "GetProjects",
@@ -122,26 +153,176 @@
 				},
 				"security": [],
 				"parameters": []
-			},
-			"post": {
-				"operationId": "CreateProject",
+			}
+		},
+		"/v1/projects/{projectId}": {
+			"get": {
+				"operationId": "GetProject",
 				"responses": {
-					"201": {
-						"description": "Created"
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ProjectWithTimelines"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Project not found"
 					}
 				},
 				"security": [],
-				"parameters": [],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/ProjectCreationParams"
-							}
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
 						}
 					}
-				}
+				]
+			}
+		},
+		"/v1/projects/{projectId}/timelines/{timelineId}/exports": {
+			"post": {
+				"operationId": "CreateExport",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"id": {
+											"type": "string"
+										}
+									},
+									"required": ["id"],
+									"type": "object"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Export not found"
+					}
+				},
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "timelineId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/init-upload": {
+			"post": {
+				"operationId": "InitUpload",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UploadUrlResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Export not found"
+					},
+					"409": {
+						"description": "Export media was already uploaded"
+					}
+				},
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "timelineId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "exportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/complete-upload": {
+			"post": {
+				"operationId": "CompleteUpload",
+				"responses": {
+					"204": {
+						"description": "No content"
+					},
+					"404": {
+						"description": "Export not found"
+					},
+					"409": {
+						"description": "Upload missing or media already processing"
+					}
+				},
+				"description": "Call after the file was PUT to the upload URL: checks the original exists in storage and\nqueues transcoding, probing and thumbnailing.",
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "timelineId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "exportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		}
 	},

@@ -1,0 +1,35 @@
+{
+	"name": "@postpin-io/resolve-plugin",
+	"version": "1.0.0",
+	"description": "PostPin workflow integration plugin for DaVinci Resolve",
+	"main": "main.js",
+	"scripts": {
+		"build": "node build.mjs && vite build",
+		"install:dev:mac": "P=\"/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins\" && node build.mjs --dev && sudo mkdir -p \"$P\" && sudo rm -rf \"$P/com.postpin.resolve\" && sudo cp -R dist \"$P/com.postpin.resolve\"",
+		"install:mac": "P=\"/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins\" && pnpm run build && sudo mkdir -p \"$P\" && sudo rm -rf \"$P/com.postpin.resolve\" && sudo cp -R dist \"$P/com.postpin.resolve\"",
+		"dev": "vite",
+		"preview": "vite preview",
+		"check": "svelte-check --tsgo --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
+		"generate:ipc": "generate-ipc src/schema src/ipc"
+	},
+	"devDependencies": {
+		"@postpin-io/api-client-ts": "workspace:*",
+		"@sveltejs/vite-plugin-svelte": "^7.3.1",
+		"@tsconfig/svelte": "^5.0.8",
+		"@types/node": "^26.6.5",
+		"@typescript/native": "npm:typescript@7",
+		"daisyui": "^5.7.47",
+		"electron": "^44.7.0",
+		"esbuild": "^0.28.2",
+		"svelte": "^5.57.2",
+		"svelte-check": "^4.7.6",
+		"tailwindcss": "^4.3.3",
+		"typescript": "^6.0.3",
+		"vite": "^8.3.4"
+	},
+	"type": "module",
+	"dependencies": {
+		"@marshallofsound/ipc": "^2.7.1",
+		"@tailwindcss/vite": "^4.3.3"
+	}
+}

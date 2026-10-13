@@ -1,0 +1,15 @@
+module PostPinResolveAPI
+
+validator MyApp = AND(
+    is_main_frame is true
+)
+
+[RendererAPI]
+[ContextBridge]
+[Validator=MyApp]
+interface Settings {
+  getRenderPresets() -> string[]
+  renderTimeline(timelineName: string, renderPresetName: string, targetDirPath: string, targetClipName: string) -> string
+  uploadRenderedFile(sourcePath: string, uploadUrl: string) -> boolean
+  openInBrowser(path: string) -> boolean
+}

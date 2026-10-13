@@ -1,0 +1,11 @@
+{
+	"name": "@postpin-io/api-client-ts",
+	"exports": {
+		".": {
+			"import": "./src/index.ts"
+		},
+		"./client": {
+			"import": "./src/client/index.ts"
+		}
+	}
+}

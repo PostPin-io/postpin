@@ -81,13 +81,12 @@ export type Timeline = Prisma.TimelineModel;
 export type Export = Prisma.ExportModel;
 /**
  * Model Media
- * An uploaded file plus everything derived from it. `status` tracks the whole processing pipeline.
+ *
  */
 export type Media = Prisma.MediaModel;
 /**
  * Model MediaFile
- * A single stored file: either the original upload of a Media or one of its proxies.
- * Video/audio columns are null when the file has no such stream.
+ *
  */
 export type MediaFile = Prisma.MediaFileModel;
 /**

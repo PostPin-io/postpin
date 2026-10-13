@@ -13,7 +13,7 @@ import type * as Prisma from "../internal/prismaNamespace.ts";
 
 /**
  * Model Media
- * An uploaded file plus everything derived from it. `status` tracks the whole processing pipeline.
+ *
  */
 export type MediaModel = runtime.Types.Result.DefaultSelection<Prisma.$MediaPayload>;
 
@@ -309,9 +309,9 @@ export type MediaUncheckedUpdateManyInput = {
 	originalId?: Prisma.StringFieldUpdateOperationsInput | string;
 };
 
-export type MediaScalarRelationFilter = {
-	is?: Prisma.MediaWhereInput;
-	isNot?: Prisma.MediaWhereInput;
+export type MediaNullableScalarRelationFilter = {
+	is?: Prisma.MediaWhereInput | null;
+	isNot?: Prisma.MediaWhereInput | null;
 };
 
 export type MediaCountOrderByAggregateInput = {
@@ -338,9 +338,9 @@ export type MediaMinOrderByAggregateInput = {
 	originalId?: Prisma.SortOrder;
 };
 
-export type MediaNullableScalarRelationFilter = {
-	is?: Prisma.MediaWhereInput | null;
-	isNot?: Prisma.MediaWhereInput | null;
+export type MediaScalarRelationFilter = {
+	is?: Prisma.MediaWhereInput;
+	isNot?: Prisma.MediaWhereInput;
 };
 
 export type MediaCreateNestedOneWithoutExportInput = {
@@ -352,13 +352,15 @@ export type MediaCreateNestedOneWithoutExportInput = {
 	connect?: Prisma.MediaWhereUniqueInput;
 };
 
-export type MediaUpdateOneRequiredWithoutExportNestedInput = {
+export type MediaUpdateOneWithoutExportNestedInput = {
 	create?: Prisma.XOR<
 		Prisma.MediaCreateWithoutExportInput,
 		Prisma.MediaUncheckedCreateWithoutExportInput
 	>;
 	connectOrCreate?: Prisma.MediaCreateOrConnectWithoutExportInput;
 	upsert?: Prisma.MediaUpsertWithoutExportInput;
+	disconnect?: Prisma.MediaWhereInput | boolean;
+	delete?: Prisma.MediaWhereInput | boolean;
 	connect?: Prisma.MediaWhereUniqueInput;
 	update?: Prisma.XOR<
 		Prisma.XOR<
@@ -875,9 +877,6 @@ export type $MediaPayload<
 > = {
 	name: "Media";
 	objects: {
-		/**
-		 * Deleting the original file cascades to the media and everything attached to it.
-		 */
 		original: Prisma.$MediaFilePayload<ExtArgs>;
 		proxies: Prisma.$MediaFilePayload<ExtArgs>[];
 		thumbnail: Prisma.$ThumbnailPayload<ExtArgs> | null;
