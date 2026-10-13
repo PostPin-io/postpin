@@ -1,13 +1,6 @@
-import "dotenv/config";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "#lib/prisma/client.ts";
-import { DATABASE_URL } from "$app/env/private";
+import * as env from "$app/env/private";
+import { createPrismaClient } from "@postpin/shared/db";
 
-const connectionString = DATABASE_URL;
-
-const adapter = new PrismaPg({ connectionString });
-const prisma = new PrismaClient({ adapter });
-
-console.log(connectionString);
+const prisma = createPrismaClient(env);
 
 export { prisma };

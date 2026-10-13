@@ -1,0 +1,30 @@
+{
+	"name": "@postpin/worker",
+	"version": "1.0.0",
+	"private": true,
+	"license": "MIT",
+	"type": "module",
+	"engines": {
+		"node": ">=24"
+	},
+	"scripts": {
+		"dev": "tsx watch --env-file-if-exists=.env src/index.ts",
+		"build": "tsc",
+		"start": "node --enable-source-maps dist/index.js",
+		"typecheck": "tsc --noEmit",
+		"lint": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@aws-sdk/lib-storage": "^3.1149.0",
+		"@postpin/shared": "workspace:*",
+		"bullmq": "^6.3.12",
+		"ioredis": "^6.0.0",
+		"valibot": "^1.5.0"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.5",
+		"tsx": "^4.23.15",
+		"typescript": "^7.0.2"
+	},
+	"main": "dist/index.js"
+}
