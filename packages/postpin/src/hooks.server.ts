@@ -15,5 +15,11 @@ const apiHandler: Handle = async ({ event, resolve }) => {
 
 	return resolve(event);
 };
+const sessionHandler: Handle = async ({ event, resolve }) => {
+	const session = await auth.api.getSession({ headers: event.request.headers });
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	event.locals.user = (session?.user as any) ?? null;
 
-export const handle = sequence(authHandler, apiHandler);
+	return resolve(event);
+};
+export const handle = sequence(authHandler, apiHandler, sessionHandler);

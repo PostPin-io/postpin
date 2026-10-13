@@ -3,7 +3,9 @@
 declare global {
 	namespace App {
 		// interface Error {}
-		// interface Locals {}
+		interface Locals {
+			user: import("#lib/prisma/client.ts").User | null;
+		}
 		// interface PageData {}
 		// interface PageState {}
 		// interface Platform {}

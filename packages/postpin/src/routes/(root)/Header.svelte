@@ -51,16 +51,10 @@
 					/></svg
 				>
 			</label>
-			<button class="btn btn-ghost text-xl">PostPin</button>
+			<a href={resolve("/(root)/dashboard")} class="btn btn-ghost text-xl">PostPin</a>
 		</div>
 		<div class="navbar-center hidden lg:flex">
 			<ul class="menu menu-horizontal px-1">
-				<li>
-					<a href={resolve("/(root)")}>Home</a>
-				</li>
-				<li>
-					<a href={resolve("/(root)/about")}>About</a>
-				</li>
 				<li>
 					<a href={resolve("/(root)/dbtests")}>dbtests</a>
 				</li>

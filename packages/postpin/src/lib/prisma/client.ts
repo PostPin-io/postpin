@@ -61,3 +61,18 @@ export type Account = Prisma.AccountModel
  * 
  */
 export type Verification = Prisma.VerificationModel
+/**
+ * Model Project
+ * 
+ */
+export type Project = Prisma.ProjectModel
+/**
+ * Model Timeline
+ * 
+ */
+export type Timeline = Prisma.TimelineModel
+/**
+ * Model Export
+ * 
+ */
+export type Export = Prisma.ExportModel
