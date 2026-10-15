@@ -8,6 +8,14 @@ export const getTimelines = query(valibot.string(), async (projectId) => {
 		where: {
 			projectId,
 		},
+		include: {
+			exports: {
+				orderBy: {
+					createdAt: "desc",
+				},
+				take: 1,
+			},
+		},
 	});
 
 	return timelines;
