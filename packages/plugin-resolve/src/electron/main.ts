@@ -3,7 +3,8 @@
 import { app, BrowserWindow, shell } from "electron";
 import path from "path";
 // @ts-ignore
-import WorkflowIntegration from "./WorkflowIntegration.node";
+import WorkflowIntegrationModule from "./WorkflowIntegration.node";
+import type { Project, ProjectManager, Resolve, WorkflowIntegrationModule as WI } from "./resolve";
 import { Settings } from "../ipc/browser/PostPinResolveAPI";
 import { createReadStream } from "fs";
 import { stat } from "fs/promises";
@@ -16,9 +17,11 @@ declare const DEV_SERVER_URL: string;
 
 const PLUGIN_ID = "io.postpin.plugin.resolve";
 
-// Cached objects (Resolve's scripting objects are untyped)
-let resolveObj: any = null;
-let projectManagerObj: any = null;
+const WorkflowIntegration: WI = WorkflowIntegrationModule;
+
+// Cached objects
+let resolveObj: Resolve | null = null;
+let projectManagerObj: ProjectManager | null = null;
 
 // Initialize Resolve interface and returns Resolve object.
 async function initResolveInterface() {
@@ -62,7 +65,7 @@ async function getProjectManager() {
 	if (!projectManagerObj) {
 		const resolve = await getResolve();
 		if (resolve) {
-			projectManagerObj = await resolve.GetProjectManager();
+			projectManagerObj = (await resolve.GetProjectManager()) ?? null;
 			if (!projectManagerObj) {
 				console.log("Error: Failed to get ProjectManager object!");
 			}
@@ -87,7 +90,7 @@ async function getCurrentProject() {
 
 const RENDER_POLL_INTERVAL_MS = 500;
 
-async function waitForRenderJob(project: any, jobId: string) {
+async function waitForRenderJob(project: Project, jobId: string) {
 	while (true) {
 		const status = await project.GetRenderJobStatus(jobId);
 		if (!status?.JobStatus) throw new Error(`Render job ${jobId} not found`);
@@ -124,10 +127,10 @@ async function renderTimeline(
 	});
 	if (!isSuccess) throw new Error("Failed to apply render settings");
 
-	const jobId: string = await project.AddRenderJob();
+	const jobId = await project.AddRenderJob();
 	if (!jobId) throw new Error("Failed to add render job");
 
-	const job = (await project.GetRenderJobList())?.find((j: any) => j.JobId === jobId);
+	const job = (await project.GetRenderJobList())?.find((j) => j.JobId === jobId);
 	if (!job) throw new Error(`Render job ${jobId} not found`);
 	const outputPath = path.join(job.TargetDir, job.OutputFilename);
 

@@ -3,7 +3,7 @@
 import { contextBridge, ipcRenderer } from "electron";
 export * from "../common/PostPinResolveAPI.js";
 import { ISettingsImpl, ISettingsRenderer } from "../common/PostPinResolveAPI.js";
-const $$ipcPrefix$$ = "$eipc_message$_fe40886d-0e68-467a-ba85-5c29b03263fc_$_PostPinResolveAPI_$_";
+const $$ipcPrefix$$ = "$eipc_message$_ecf3288e-0015-43a2-b01d-6a32530f7735_$_PostPinResolveAPI_$_";
 import { webFrame } from "electron/renderer";
 function $eipc_event_validator$_MyApp() {
 	if (

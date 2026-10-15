@@ -10,7 +10,7 @@
 		"dev": "vite",
 		"preview": "vite preview",
 		"check": "svelte-check --tsgo --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
-		"generate:ipc": "generate-ipc src/schema src/ipc"
+		"generate:ipc": "generate-ipc src/schema src/ipc && prettier --write src/ipc"
 	},
 	"devDependencies": {
 		"@postpin-io/api-client-ts": "workspace:*",
