@@ -8,6 +8,7 @@
 	type Message = { type: "success" | "error"; text: string } | null;
 
 	const profile = $derived(await getProfile());
+	const memberships = $derived(await getMemberships());
 
 	let name = $state(untrack(() => profile.name));
 	let savingName = $state(false);
@@ -276,36 +277,33 @@
 	<fieldset class="fieldset rounded-box border border-base-300 bg-base-100 p-4">
 		<legend class="fieldset-legend">Organizations</legend>
 		{@render alert(orgMessage, () => (orgMessage = null))}
-		{#await getMemberships() then memberships}
-			<ul class="divide-y divide-base-200">
-				{#each memberships as org (org.id)}
-					<li class="flex items-center justify-between gap-2 py-1.5">
-						<div class="flex items-center gap-2 text-sm">
-							<a class="link font-medium link-hover" href={`/organizations/${org.slug}`}
-								>{org.name}</a
-							>
-							<span class="badge badge-ghost badge-sm">{org.role}</span>
-						</div>
-						<button
-							type="button"
-							class="btn btn-ghost text-error btn-xs"
-							disabled={leaving !== null}
-							onclick={() => leaveOrg(org)}
+		<ul class="divide-y divide-base-200">
+			{#each memberships as org (org.id)}
+				<li class="flex items-center justify-between gap-2 py-1.5">
+					<div class="flex items-center gap-2 text-sm">
+						<a class="link font-medium link-hover" href={`/organizations/${org.slug}`}>{org.name}</a
 						>
-							Leave
-							{#if leaving === org.id}<span class="loading loading-xs loading-spinner"></span>{/if}
-						</button>
-					</li>
-				{:else}
-					<li class="py-1.5 text-sm text-base-content/70">
-						You're not a member of any organizations yet.
-					</li>
-				{/each}
-			</ul>
-			<div>
-				<button class="btn btn-sm" onclick={() => dialog?.open()}> Create new organization </button>
-			</div>
-		{/await}
+						<span class="badge badge-ghost badge-sm">{org.role}</span>
+					</div>
+					<button
+						type="button"
+						class="btn btn-ghost text-error btn-xs"
+						disabled={leaving !== null}
+						onclick={() => leaveOrg(org)}
+					>
+						Leave
+						{#if leaving === org.id}<span class="loading loading-xs loading-spinner"></span>{/if}
+					</button>
+				</li>
+			{:else}
+				<li class="py-1.5 text-sm text-base-content/70">
+					You're not a member of any organizations yet.
+				</li>
+			{/each}
+		</ul>
+		<div>
+			<button class="btn btn-sm" onclick={() => dialog?.open()}> Create new organization </button>
+		</div>
 	</fieldset>
 </div>
 

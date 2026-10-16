@@ -400,6 +400,7 @@ export const ModelName = {
 	Organization: "Organization",
 	Member: "Member",
 	Invitation: "Invitation",
+	InviteLink: "InviteLink",
 	Project: "Project",
 	Timeline: "Timeline",
 	Export: "Export",
@@ -433,6 +434,7 @@ export type TypeMap<
 			| "organization"
 			| "member"
 			| "invitation"
+			| "inviteLink"
 			| "project"
 			| "timeline"
 			| "export";
@@ -1181,6 +1183,80 @@ export type TypeMap<
 				};
 			};
 		};
+		InviteLink: {
+			payload: Prisma.$InviteLinkPayload<ExtArgs>;
+			fields: Prisma.InviteLinkFieldRefs;
+			operations: {
+				findUnique: {
+					args: Prisma.InviteLinkFindUniqueArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteLinkPayload> | null;
+				};
+				findUniqueOrThrow: {
+					args: Prisma.InviteLinkFindUniqueOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteLinkPayload>;
+				};
+				findFirst: {
+					args: Prisma.InviteLinkFindFirstArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteLinkPayload> | null;
+				};
+				findFirstOrThrow: {
+					args: Prisma.InviteLinkFindFirstOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteLinkPayload>;
+				};
+				findMany: {
+					args: Prisma.InviteLinkFindManyArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteLinkPayload>[];
+				};
+				create: {
+					args: Prisma.InviteLinkCreateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteLinkPayload>;
+				};
+				createMany: {
+					args: Prisma.InviteLinkCreateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				createManyAndReturn: {
+					args: Prisma.InviteLinkCreateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteLinkPayload>[];
+				};
+				delete: {
+					args: Prisma.InviteLinkDeleteArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteLinkPayload>;
+				};
+				update: {
+					args: Prisma.InviteLinkUpdateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteLinkPayload>;
+				};
+				deleteMany: {
+					args: Prisma.InviteLinkDeleteManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateMany: {
+					args: Prisma.InviteLinkUpdateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateManyAndReturn: {
+					args: Prisma.InviteLinkUpdateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteLinkPayload>[];
+				};
+				upsert: {
+					args: Prisma.InviteLinkUpsertArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteLinkPayload>;
+				};
+				aggregate: {
+					args: Prisma.InviteLinkAggregateArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.AggregateInviteLink>;
+				};
+				groupBy: {
+					args: Prisma.InviteLinkGroupByArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.InviteLinkGroupByOutputType>[];
+				};
+				count: {
+					args: Prisma.InviteLinkCountArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.InviteLinkCountAggregateOutputType> | number;
+				};
+			};
+		};
 		Project: {
 			payload: Prisma.$ProjectPayload<ExtArgs>;
 			fields: Prisma.ProjectFieldRefs;
@@ -1583,6 +1659,20 @@ export const InvitationScalarFieldEnum = {
 export type InvitationScalarFieldEnum =
 	(typeof InvitationScalarFieldEnum)[keyof typeof InvitationScalarFieldEnum];
 
+export const InviteLinkScalarFieldEnum = {
+	id: "id",
+	organizationId: "organizationId",
+	role: "role",
+	token: "token",
+	enabled: "enabled",
+	createdById: "createdById",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
+} as const;
+
+export type InviteLinkScalarFieldEnum =
+	(typeof InviteLinkScalarFieldEnum)[keyof typeof InviteLinkScalarFieldEnum];
+
 export const ProjectScalarFieldEnum = {
 	id: "id",
 	name: "name",
@@ -1881,6 +1971,7 @@ export type GlobalOmitConfig = {
 	organization?: Prisma.OrganizationOmit;
 	member?: Prisma.MemberOmit;
 	invitation?: Prisma.InvitationOmit;
+	inviteLink?: Prisma.InviteLinkOmit;
 	project?: Prisma.ProjectOmit;
 	timeline?: Prisma.TimelineOmit;
 	export?: Prisma.ExportOmit;

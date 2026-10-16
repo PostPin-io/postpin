@@ -1,8 +1,14 @@
 <script lang="ts">
 	import { authClient } from "#lib/auth-client.ts"; //import the auth client
 	import { goto } from "$app/navigation";
+	import { page } from "$app/state";
+	import { safeRedirect } from "#lib/redirect.ts";
 
-	let email = $state("");
+	const redirectTo = safeRedirect(page.url.searchParams.get("redirect"));
+	// keeps ?redirect= (and the invited email) when switching between login and signup
+	const authQuery = page.url.search;
+
+	let email = $state(page.url.searchParams.get("email") ?? "");
 	let password = $state("");
 	let isLoading = $state(false);
 	let formMessage = $state<{ type: "success" | "error"; text: string } | null>(null);
@@ -17,14 +23,14 @@
 			{
 				email, // user email address
 				password, // user password -> min 8 characters by default
-				callbackURL: "/dashboard", // A URL to redirect to after the user verifies their email (optional)
+				callbackURL: redirectTo, // A URL to redirect to after the user verifies their email (optional)
 			},
 			{
 				onRequest: (ctx) => {
 					//show loading
 				},
 				onSuccess: (ctx) => {
-					goto("/dashboard");
+					goto(redirectTo);
 				},
 				onError: (ctx) => {
 					// display the error message
@@ -78,7 +84,7 @@
 	</div>
 
 	{#if formMessage}
-		// Display the form message if it exists
+		<!-- Display the form message if it exists -->
 		<div class="alert alert-error" role="alert">
 			{formMessage.text}
 		</div>
@@ -94,5 +100,7 @@
 </div>
 
 <p class="text-center text-sm text-base-content/70">
-	New to PostPin? <a class="link link-primary" href="/auth/signup">Create an account</a>
+	New to PostPin? <a class="link link-primary" href={`/auth/signup${authQuery}`}
+		>Create an account</a
+	>
 </p>

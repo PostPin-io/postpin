@@ -67,6 +67,11 @@ export type Member = Prisma.MemberModel;
  */
 export type Invitation = Prisma.InvitationModel;
 /**
+ * Model InviteLink
+ *
+ */
+export type InviteLink = Prisma.InviteLinkModel;
+/**
  * Model Project
  *
  */

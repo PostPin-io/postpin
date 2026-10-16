@@ -17,6 +17,7 @@ export type * from "./models/Thumbnail.ts";
 export type * from "./models/Organization.ts";
 export type * from "./models/Member.ts";
 export type * from "./models/Invitation.ts";
+export type * from "./models/InviteLink.ts";
 export type * from "./models/Project.ts";
 export type * from "./models/Timeline.ts";
 export type * from "./models/Export.ts";

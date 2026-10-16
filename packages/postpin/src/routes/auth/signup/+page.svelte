@@ -1,10 +1,16 @@
 <script lang="ts">
 	import { authClient } from "#lib/auth-client.ts"; //import the auth client
 	import { goto } from "$app/navigation";
+	import { page } from "$app/state";
+	import { safeRedirect } from "#lib/redirect.ts";
+
+	const redirectTo = safeRedirect(page.url.searchParams.get("redirect"));
+	// keeps ?redirect= (and the invited email) when switching between login and signup
+	const authQuery = page.url.search;
 
 	let firstName = $state("");
 	let lastName = $state("");
-	let email = $state("");
+	let email = $state(page.url.searchParams.get("email") ?? "");
 	let password = $state("");
 
 	let isLoading = $state(false);
@@ -23,14 +29,14 @@
 				email, // user email address
 				password, // user password -> min 8 characters by default
 				name: `${firstName} ${lastName}`, // user display name
-				callbackURL: "/dashboard", // A URL to redirect to after the user verifies their email (optional)
+				callbackURL: redirectTo, // A URL to redirect to after the user verifies their email (optional)
 			},
 			{
 				onRequest: (ctx) => {
 					//show loading
 				},
 				onSuccess: (ctx) => {
-					goto("/dashboard");
+					goto(redirectTo);
 				},
 				onError: (ctx) => {
 					// display the error message
@@ -111,7 +117,7 @@
 	{/if}
 
 	<button class="btn w-full btn-primary" onclick={handleSignup} disabled={isLoading}>
-		{#if formMessage}
+		{#if isLoading}
 			<span class="loading loading-md loading-spinner"></span>
 		{:else}
 			Sign Up
@@ -120,5 +126,5 @@
 </div>
 
 <p class="text-center text-sm text-base-content/70">
-	Already have an account? <a class="link link-primary" href="/auth/login">Log in</a>
+	Already have an account? <a class="link link-primary" href={`/auth/login${authQuery}`}>Log in</a>
 </p>

@@ -58,6 +58,7 @@ export const ModelName = {
 	Organization: "Organization",
 	Member: "Member",
 	Invitation: "Invitation",
+	InviteLink: "InviteLink",
 	Project: "Project",
 	Timeline: "Timeline",
 	Export: "Export",
@@ -219,6 +220,20 @@ export const InvitationScalarFieldEnum = {
 
 export type InvitationScalarFieldEnum =
 	(typeof InvitationScalarFieldEnum)[keyof typeof InvitationScalarFieldEnum];
+
+export const InviteLinkScalarFieldEnum = {
+	id: "id",
+	organizationId: "organizationId",
+	role: "role",
+	token: "token",
+	enabled: "enabled",
+	createdById: "createdById",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
+} as const;
+
+export type InviteLinkScalarFieldEnum =
+	(typeof InviteLinkScalarFieldEnum)[keyof typeof InviteLinkScalarFieldEnum];
 
 export const ProjectScalarFieldEnum = {
 	id: "id",
