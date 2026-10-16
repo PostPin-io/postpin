@@ -4,10 +4,14 @@
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
 	import { onMount } from "svelte";
+	import { getUrl } from "../../videotests/videotests.remote.ts";
+	import { goto } from "$app/navigation";
 
 	let viewMode: "table" | "card" = $state("card");
 	let sortField: "name" | "created" | "updated" = $state("updated");
 	let sortDirection: "asc" | "desc" = $state("desc");
+	import ImageIcon from "@lucide/svelte/icons/image";
+	import Apeture from "@lucide/svelte/icons/aperture";
 
 	let loadingStatus = $state(true);
 
@@ -133,51 +137,136 @@
 				{/snippet}
 
 				<div class="overflow-x-auto rounded-box bg-base-100 shadow">
-					<table class="table">
-						<thead>
-							<tr>
-								<th onclick={() => sortBy("name")}>
-									<div class="flex items-center">Name {@render chevronToggle("name")}</div>
-								</th>
-								<th onclick={() => sortBy("created")}>
-									<div class="flex">Created {@render chevronToggle("created")}</div>
-								</th><th onclick={() => sortBy("updated")}>
-									<div class="flex">Updated {@render chevronToggle("updated")}</div>
-								</th>
-								<th><span class="sr-only">Latest export</span></th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each sortedTimelines as timeline (timeline.id)}
+					<div class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100">
+						<table class="table table-zebra">
+							<thead>
 								<tr>
-									<td class="font-medium">{timeline.name}</td>
-									<td>{new Date(timeline.createdAt).toLocaleDateString()}</td>
-									<td>{new Date(timeline.updatedAt).toLocaleDateString()}</td>
-									<td class="text-right">
-										{#if timeline.exports[0]}
-											<a
-												href={`/projects/${page.params.project}/timelines/${timeline.id}/exports/${timeline.exports[0].id}`}
-												class="btn btn-primary btn-sm">View latest export</a
-											>
-										{:else}
-											<span class="text-base-content/70">No exports yet</span>
-										{/if}
-									</td>
+									<th class="w-44"><span class="sr-only">Thumbnail</span></th>
+									<th>
+										<button
+											type="button"
+											class="flex cursor-pointer items-center gap-1 select-none hover:text-base-content"
+											onclick={() => sortBy("name")}
+										>
+											Name {@render chevronToggle("name")}
+										</button>
+									</th>
+									<th>
+										<button
+											type="button"
+											class="flex cursor-pointer items-center gap-1 select-none hover:text-base-content"
+											onclick={() => sortBy("created")}
+										>
+											Created {@render chevronToggle("created")}
+										</button>
+									</th>
+									<th>
+										<button
+											type="button"
+											class="flex cursor-pointer items-center gap-1 select-none hover:text-base-content"
+											onclick={() => sortBy("updated")}
+										>
+											Updated {@render chevronToggle("updated")}
+										</button>
+									</th>
+									<th><span class="sr-only">Latest export</span></th>
 								</tr>
-							{:else}
-								<tr>
-									<td colspan="4" class="py-8 text-center text-base-content/70"
-										>No timelines yet.</td
-									>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
+							</thead>
+
+							<tbody>
+								{#each sortedTimelines as timeline (timeline.id)}
+									{@const latest = timeline.exports[0]}
+									{@const exportHref = latest
+										? `/projects/${page.params.project}/timelines/${timeline.id}/exports/${latest.id}`
+										: null}
+									{@const exportListHref = latest
+										? `/projects/${page.params.project}/timelines/${timeline.id}/exports/exportlist`
+										: null}
+									<tr class="hover:bg-base-200/60 [&>td]:align-middle">
+										<td class="w-44">
+											<div class="aspect-video w-36 overflow-hidden rounded-md bg-base-300">
+												{#if latest?.media}
+													<a
+														href={exportHref}
+														class="group relative block size-full"
+														aria-label="Open latest export"
+													>
+														<img
+															src={await getUrl({ mediaId: latest.media.id, type: "thumbnail" })}
+															alt="Thumbnail of {timeline.name}"
+															loading="lazy"
+															class="size-full object-cover transition duration-300 group-hover:scale-105"
+														/>
+													</a>
+												{:else}
+													<div
+														class="flex size-full items-center justify-center text-base-content/30"
+													>
+														<Apeture></Apeture>
+													</div>
+												{/if}
+											</div>
+										</td>
+
+										<td class="font-medium">{timeline.name}</td>
+										<td class="whitespace-nowrap text-base-content/70">
+											{new Date(timeline.createdAt).toLocaleDateString()}
+										</td>
+										<td class="whitespace-nowrap text-base-content/70">
+											{new Date(timeline.updatedAt).toLocaleDateString()}
+										</td>
+
+										<td class="text-right whitespace-nowrap">
+											{#if exportHref}
+												<div class="flex items-center justify-end gap-2">
+													<a href={exportListHref} class="btn btn-ghost btn-sm">All exports</a>
+													<a href={exportHref} class="btn btn-primary btn-sm">View latest export</a>
+												</div>
+											{:else}
+												<span class="text-sm text-base-content/70">No exports yet</span>
+											{/if}
+										</td>
+									</tr>
+								{:else}
+									<tr>
+										<td colspan="5" class="py-8 text-center text-base-content/70"
+											>No timelines yet.</td
+										>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
 				</div>
 			{:else}
 				<div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
 					{#each sortedTimelines as timeline (timeline.id)}
-						<article class="card h-full bg-base-100 shadow-xl">
+						{@const latest = timeline.exports[0]}
+						{@const exportHref = latest
+							? `/projects/${page.params.project}/timelines/${timeline.id}/exports/${latest.id}`
+							: null}
+						{@const exportListHref = latest
+							? `/projects/${page.params.project}/timelines/${timeline.id}/exports/exportlist`
+							: null}
+						<article class="card h-full overflow-hidden bg-base-100 shadow-xl">
+							<!-- Thumbnail -->
+							<figure class="group relative aspect-video bg-base-300">
+								{#if latest?.media}
+									<a href={exportHref} class="block size-full" aria-label="Open latest export">
+										<img
+											src={await getUrl({ mediaId: latest.media.id, type: "thumbnail" })}
+											alt="Thumbnail of {timeline.name}"
+											loading="lazy"
+											class="size-full object-cover transition duration-300 group-hover:scale-105"
+										/>
+									</a>
+								{:else}
+									<div class="flex size-full items-center justify-center text-base-content/30">
+										<Apeture></Apeture>
+									</div>
+								{/if}
+							</figure>
+
 							<div class="card-body">
 								<h2 class="card-title">{timeline.name}</h2>
 
@@ -192,12 +281,10 @@
 									</div>
 								</dl>
 
-								<div class="mt-4 card-actions justify-end">
-									{#if timeline.exports[0]}
-										<a
-											href={`/projects/${page.params.project}/timelines/${timeline.id}/exports/${timeline.exports[0].id}`}
-											class="btn btn-primary">View latest export</a
-										>
+								<div class="mt-4 card-actions flex items-center justify-between gap-2">
+									{#if exportHref}
+										<a href={exportListHref} class="btn btn-ghost btn-sm">All exports</a>
+										<a href={exportHref} class="btn btn-primary btn-sm">Open latest</a>
 									{:else}
 										<span class="text-sm text-base-content/70">No exports yet</span>
 									{/if}

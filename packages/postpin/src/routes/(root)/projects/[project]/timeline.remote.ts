@@ -10,6 +10,9 @@ export const getTimelines = query(valibot.string(), async (projectId) => {
 		},
 		include: {
 			exports: {
+				include: {
+					media: true,
+				},
 				orderBy: {
 					createdAt: "desc",
 				},
