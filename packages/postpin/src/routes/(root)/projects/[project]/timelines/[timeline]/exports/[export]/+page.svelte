@@ -52,7 +52,6 @@
 			src={await getUrl({ mediaId: media.id, type: "original" })}
 			poster={media.thumbnail ? await getUrl({ mediaId: media.id, type: "thumbnail" }) : undefined}
 			controls
-			aria-label="Export video"
 			class="max-h-[70vh]"
 		></video>
 	{/if}
@@ -67,7 +66,6 @@
 						<video
 							src={await getUrl({ mediaId: media.id, type: "proxy", proxyId: proxy.id })}
 							controls
-							aria-label="Proxy {proxy.width}x{proxy.height}"
 							class="h-40"
 						></video>
 					{/if}
