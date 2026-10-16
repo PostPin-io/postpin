@@ -1,3 +1,4 @@
+import { hasRole, INVITE_LINK_ROLES, MANAGER_ROLES, ORG_ROLES } from "#lib/roles.ts";
 import { prisma } from "#lib/server/database.ts";
 import { requireOrgRole } from "#lib/server/org-access.ts";
 import { command, getRequestEvent, query } from "$app/server";
@@ -18,22 +19,23 @@ export const getOrg = query(v.string(), async (slug) => {
 		},
 	});
 	if (!org) error(404, "Organization not found");
-	const me = await requireOrgRole(org.id, ["owner", "admin", "member"]);
+	const me = await requireOrgRole(org.id, ORG_ROLES);
 	return { ...org, myRole: me.role };
 });
 
 export const changeInvitationRole = command(
 	v.object({
 		invitationId: v.string(),
-		role: v.picklist(["member", "admin", "owner"]),
+		role: v.picklist(ORG_ROLES),
 	}),
 	async ({ invitationId, role }) => {
 		const invitation = await prisma.invitation.findUnique({
 			where: { id: invitationId },
 		});
 		if (!invitation) error(404, "Invitation not found");
-		const me = await requireOrgRole(invitation.organizationId, ["owner", "admin"]);
-		if (role === "owner" && me.role !== "owner") error(403, "Only owners can invite owners");
+		const me = await requireOrgRole(invitation.organizationId, MANAGER_ROLES);
+		if (role === "owner" && !hasRole(me.role, ["owner"]))
+			error(403, "Only owners can invite owners");
 		if (invitation.status != "pending") error(400, "Invitation is not pending");
 		return await prisma.invitation.update({
 			where: { id: invitationId },
@@ -42,11 +44,11 @@ export const changeInvitationRole = command(
 	},
 );
 
-const linkRole = v.picklist(["member", "admin"]);
+const linkRole = v.picklist(INVITE_LINK_ROLES);
 const newToken = () => randomBytes(24).toString("base64url");
 
 export const getInviteLinks = query(v.string(), async (organizationId) => {
-	await requireOrgRole(organizationId, ["owner", "admin"]);
+	await requireOrgRole(organizationId, MANAGER_ROLES);
 	const links = await prisma.inviteLink.findMany({ where: { organizationId } });
 	return linkRole.options.map((role) => {
 		const link = links.find((l) => l.role === role);
@@ -57,7 +59,7 @@ export const getInviteLinks = query(v.string(), async (organizationId) => {
 export const setInviteLinkEnabled = command(
 	v.object({ organizationId: v.string(), role: linkRole, enabled: v.boolean() }),
 	async ({ organizationId, role, enabled }) => {
-		await requireOrgRole(organizationId, ["owner", "admin"]);
+		await requireOrgRole(organizationId, MANAGER_ROLES);
 		await prisma.inviteLink.upsert({
 			where: { organizationId_role: { organizationId, role } },
 			create: {
@@ -76,7 +78,7 @@ export const setInviteLinkEnabled = command(
 export const resetInviteLink = command(
 	v.object({ organizationId: v.string(), role: linkRole }),
 	async ({ organizationId, role }) => {
-		await requireOrgRole(organizationId, ["owner", "admin"]);
+		await requireOrgRole(organizationId, MANAGER_ROLES);
 		await prisma.inviteLink.update({
 			where: { organizationId_role: { organizationId, role } },
 			data: { token: newToken() },

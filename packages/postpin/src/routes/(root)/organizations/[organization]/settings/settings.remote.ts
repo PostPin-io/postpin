@@ -2,8 +2,7 @@ import { prisma } from "#lib/server/database.ts";
 import { error } from "@sveltejs/kit";
 import { getRequestEvent, query } from "$app/server";
 import * as v from "valibot";
-
-const MANAGER_ROLES = ["owner", "admin"];
+import { hasRole, MANAGER_ROLES } from "#lib/roles.ts";
 
 export const getOrganizationSettings = query(v.string(), async (slug) => {
 	const { user } = getRequestEvent().locals;
@@ -22,8 +21,7 @@ export const getOrganizationSettings = query(v.string(), async (slug) => {
 
 	const role = organization?.members[0]?.role;
 	if (!organization || !role) error(404, "Organization not found");
-	// a member can hold several roles, stored comma-separated
-	if (!role.split(",").some((r) => MANAGER_ROLES.includes(r.trim()))) {
+	if (!hasRole(role, MANAGER_ROLES)) {
 		error(403, "Only owners and admins can change organization settings");
 	}
 

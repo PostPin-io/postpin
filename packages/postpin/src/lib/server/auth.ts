@@ -4,6 +4,7 @@ import { prisma } from "./database"; // your prisma client instance
 import { sendEmail } from "./email";
 import { organization } from "better-auth/plugins";
 import { BETTER_AUTH_URL } from "$app/env/private";
+import { ac, roles } from "#lib/roles.ts";
 
 export const auth = betterAuth({
 	database: prismaAdapter(prisma, {
@@ -11,6 +12,8 @@ export const auth = betterAuth({
 	}),
 	plugins: [
 		organization({
+			ac,
+			roles,
 			async sendInvitationEmail(data) {
 				const inviteLink = `${BETTER_AUTH_URL}/auth/invite/${data.id}`;
 				await sendEmail(

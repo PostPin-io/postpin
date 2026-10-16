@@ -3,6 +3,7 @@ import { prisma } from "#lib/server/database.ts";
 import { command, getRequestEvent, query } from "$app/server";
 import { error } from "@sveltejs/kit";
 import * as v from "valibot";
+import type { OrgRole } from "#lib/roles.ts";
 
 async function findEnabledLink(token: string) {
 	return prisma.inviteLink.findFirst({
@@ -42,7 +43,7 @@ export const joinViaLink = command(v.string(), async (token) => {
 			body: {
 				userId: signedInUser.id,
 				organizationId: link.organizationId,
-				role: link.role as "member" | "admin",
+				role: link.role as OrgRole,
 			},
 		});
 	}

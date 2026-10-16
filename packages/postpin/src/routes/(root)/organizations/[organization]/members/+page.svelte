@@ -8,6 +8,13 @@
 	} from "./members.remote";
 	import { page } from "$app/state";
 	import { authClient } from "#lib/auth-client.ts";
+	import {
+		hasRole,
+		MANAGER_ROLES,
+		ORG_ROLES,
+		type InviteLinkRole,
+		type OrgRole,
+	} from "#lib/roles.ts";
 
 	const org = $derived(await getOrg(page.params.organization!));
 
@@ -28,7 +35,7 @@
 
 	let inviting = $state(false);
 	let inviteEmail = $state("");
-	let inviteRole: "owner" | "admin" | "member" = $state("member");
+	let inviteRole: OrgRole = $state("member");
 	async function inviteMember() {
 		inviting = true;
 		const { error } = await authClient.organization.inviteMember({
@@ -45,14 +52,14 @@
 	let resendingInviteId: string | null = $state(null);
 	let cancelingInviteId: string | null = $state(null);
 
-	const canManage = $derived(org.myRole === "owner" || org.myRole === "admin");
+	const canManage = $derived(hasRole(org.myRole, MANAGER_ROLES));
 	const inviteLinks = $derived(canManage ? await getInviteLinks(org.id) : []);
 	let updatingLinkRole = $state<string | null>(null);
 	let copiedLinkRole = $state<string | null>(null);
 
 	const linkUrl = (token: string) => `${page.url.origin}/auth/join/${token}`;
 
-	async function toggleLink(role: "member" | "admin", enabled: boolean) {
+	async function toggleLink(role: InviteLinkRole, enabled: boolean) {
 		updatingLinkRole = role;
 		try {
 			await setInviteLinkEnabled({ organizationId: org.id, role, enabled });
@@ -62,7 +69,7 @@
 		updatingLinkRole = null;
 	}
 
-	async function resetLink(role: "member" | "admin") {
+	async function resetLink(role: InviteLinkRole) {
 		if (!confirm("Reset this link? The current link will stop working immediately.")) return;
 		updatingLinkRole = role;
 		try {
@@ -80,20 +87,16 @@
 	}
 </script>
 
-{#snippet roleSelect(
-	value: "owner" | "admin" | "member",
-	onchange: (value: "owner" | "admin" | "member") => void,
-	disabled: boolean,
-)}
+{#snippet roleSelect(value: OrgRole, onchange: (value: OrgRole) => void, disabled: boolean)}
 	<select
 		{value}
-		class="select"
-		onchange={(e) => onchange(e.currentTarget.value as "owner" | "admin" | "member")}
+		class="select capitalize"
+		onchange={(e) => onchange(e.currentTarget.value as OrgRole)}
 		{disabled}
 	>
-		<option value="owner">Owner</option>
-		<option value="admin">Admin</option>
-		<option value="member">Member</option>
+		{#each ORG_ROLES as role (role)}
+			<option value={role}>{role.charAt(0).toUpperCase() + role.slice(1)}</option>
+		{/each}
 	</select>
 {/snippet}
 
@@ -118,16 +121,11 @@
 						<td>{member.user.name}</td>
 						<td>{member.user.email}</td>
 						<td>
-							<select
-								value={member.role}
-								class="select"
-								onchange={(e) => changeRole(member.id, e.currentTarget.value)}
-								disabled={changingRoleOf === member.id}
-							>
-								<option value="owner">Owner</option>
-								<option value="admin">Admin</option>
-								<option value="member">Member</option>
-							</select>
+							{@render roleSelect(
+								member.role as OrgRole,
+								(role) => changeRole(member.id, role),
+								changingRoleOf === member.id,
+							)}
 						</td>
 					</tr>
 				{/each}
@@ -145,9 +143,9 @@
 				bind:value={inviteEmail}
 			/>
 			{@render roleSelect(
-				"member",
-				(e) => {
-					inviteRole = e;
+				inviteRole,
+				(role) => {
+					inviteRole = role;
 				},
 				inviting,
 			)}
@@ -173,11 +171,11 @@
 						<td>{invite.email}</td>
 						<td
 							>{@render roleSelect(
-								invite.role as "owner" | "admin" | "member",
-								async (e) => {
+								invite.role as OrgRole,
+								async (role) => {
 									await changeInvitationRole({
 										invitationId: invite.id,
-										role: e,
+										role,
 									});
 									await getOrg(page.params.organization!).refresh();
 								},
@@ -194,7 +192,7 @@
 										const result = await authClient.organization.inviteMember({
 											organizationId: org.id,
 											email: invite.email,
-											role: invite.role as "owner" | "admin" | "member",
+											role: invite.role as OrgRole,
 											resend: true,
 										});
 										if (result.error) {

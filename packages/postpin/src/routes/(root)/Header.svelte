@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { resolve } from "$app/paths";
 	import { authClient } from "#lib/auth-client.ts";
-	import { goto, refreshAll } from "$app/navigation";
-	import { page } from "$app/state";
+	import { goto } from "$app/navigation";
+	import { hasRole, MANAGER_ROLES } from "#lib/roles.ts";
 
 	const session = authClient.useSession();
 	const organizations = authClient.useListOrganizations();
@@ -12,10 +12,8 @@
 	let activeOrganization = $derived(
 		$organizations.data?.find((org) => org.id === activeOrganizationId),
 	);
-	// a member can hold several roles, stored comma-separated
 	let canManageThisOrg = $derived(
-		$activeMember.data?.role.split(",").some((role) => ["owner", "admin"].includes(role.trim())) ??
-			false,
+		$activeMember.data ? hasRole($activeMember.data.role, MANAGER_ROLES) : false,
 	);
 
 	async function switchOrganization(organizationId: string) {
