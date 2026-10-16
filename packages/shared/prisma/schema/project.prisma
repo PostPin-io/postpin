@@ -1,0 +1,41 @@
+model Project {
+  id             String       @id @default(cuid())
+  name           String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  creator        User         @relation(fields: [creatorId], references: [id], onDelete: Restrict)
+  creatorId      String
+  timelines      Timeline[]
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  organizationId String
+
+  @@index([creatorId])
+  @@map("project")
+}
+
+model Timeline {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  exports   Export[]
+
+  @@index([projectId])
+  @@map("timeline")
+}
+
+model Export {
+  id         String   @id @default(cuid())
+  name       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  timeline   Timeline @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+  timelineId String
+  media      Media?   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId    String?  @unique
+
+  @@index([timelineId])
+  @@map("export")
+}

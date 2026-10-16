@@ -1,4 +1,7 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/typography";
-@plugin "daisyui";
+@plugin "daisyui" {
+	/* the modal scroll lock shifts the layout and leaves an unstyled gutter strip */
+	exclude: rootscrollgutter, rootscrolllock;
+}

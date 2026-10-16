@@ -4,7 +4,12 @@ declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
-			user: import("#lib/prisma/client.ts").User | null;
+			user:
+				| import("@postpin/shared/db").Prisma.UserGetPayload<{
+						include: { memberships: true };
+				  }>
+				| null;
+			session: (typeof import("#lib/server/auth.ts").auth.$Infer.Session)["session"] | null;
 		}
 		// interface PageData {}
 		// interface PageState {}

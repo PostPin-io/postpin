@@ -52,12 +52,15 @@ export const ModelName = {
 	Session: "Session",
 	Account: "Account",
 	Verification: "Verification",
-	Project: "Project",
-	Timeline: "Timeline",
-	Export: "Export",
 	Media: "Media",
 	MediaFile: "MediaFile",
 	Thumbnail: "Thumbnail",
+	Organization: "Organization",
+	Member: "Member",
+	Invitation: "Invitation",
+	Project: "Project",
+	Timeline: "Timeline",
+	Export: "Export",
 } as const;
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -84,6 +87,7 @@ export const UserScalarFieldEnum = {
 	email: "email",
 	emailVerified: "emailVerified",
 	image: "image",
+	lastActiveOrganizationId: "lastActiveOrganizationId",
 } as const;
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum];
@@ -97,6 +101,7 @@ export const SessionScalarFieldEnum = {
 	ipAddress: "ipAddress",
 	userAgent: "userAgent",
 	userId: "userId",
+	activeOrganizationId: "activeOrganizationId",
 } as const;
 
 export type SessionScalarFieldEnum =
@@ -132,40 +137,6 @@ export const VerificationScalarFieldEnum = {
 
 export type VerificationScalarFieldEnum =
 	(typeof VerificationScalarFieldEnum)[keyof typeof VerificationScalarFieldEnum];
-
-export const ProjectScalarFieldEnum = {
-	id: "id",
-	name: "name",
-	createdAt: "createdAt",
-	updatedAt: "updatedAt",
-	creatorId: "creatorId",
-} as const;
-
-export type ProjectScalarFieldEnum =
-	(typeof ProjectScalarFieldEnum)[keyof typeof ProjectScalarFieldEnum];
-
-export const TimelineScalarFieldEnum = {
-	id: "id",
-	name: "name",
-	createdAt: "createdAt",
-	updatedAt: "updatedAt",
-	projectId: "projectId",
-} as const;
-
-export type TimelineScalarFieldEnum =
-	(typeof TimelineScalarFieldEnum)[keyof typeof TimelineScalarFieldEnum];
-
-export const ExportScalarFieldEnum = {
-	id: "id",
-	name: "name",
-	createdAt: "createdAt",
-	updatedAt: "updatedAt",
-	timelineId: "timelineId",
-	mediaId: "mediaId",
-} as const;
-
-export type ExportScalarFieldEnum =
-	(typeof ExportScalarFieldEnum)[keyof typeof ExportScalarFieldEnum];
 
 export const MediaScalarFieldEnum = {
 	id: "id",
@@ -211,6 +182,78 @@ export const ThumbnailScalarFieldEnum = {
 
 export type ThumbnailScalarFieldEnum =
 	(typeof ThumbnailScalarFieldEnum)[keyof typeof ThumbnailScalarFieldEnum];
+
+export const OrganizationScalarFieldEnum = {
+	id: "id",
+	name: "name",
+	slug: "slug",
+	logo: "logo",
+	createdAt: "createdAt",
+	metadata: "metadata",
+} as const;
+
+export type OrganizationScalarFieldEnum =
+	(typeof OrganizationScalarFieldEnum)[keyof typeof OrganizationScalarFieldEnum];
+
+export const MemberScalarFieldEnum = {
+	id: "id",
+	organizationId: "organizationId",
+	userId: "userId",
+	role: "role",
+	createdAt: "createdAt",
+} as const;
+
+export type MemberScalarFieldEnum =
+	(typeof MemberScalarFieldEnum)[keyof typeof MemberScalarFieldEnum];
+
+export const InvitationScalarFieldEnum = {
+	id: "id",
+	organizationId: "organizationId",
+	email: "email",
+	role: "role",
+	status: "status",
+	expiresAt: "expiresAt",
+	createdAt: "createdAt",
+	inviterId: "inviterId",
+} as const;
+
+export type InvitationScalarFieldEnum =
+	(typeof InvitationScalarFieldEnum)[keyof typeof InvitationScalarFieldEnum];
+
+export const ProjectScalarFieldEnum = {
+	id: "id",
+	name: "name",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
+	creatorId: "creatorId",
+	organizationId: "organizationId",
+} as const;
+
+export type ProjectScalarFieldEnum =
+	(typeof ProjectScalarFieldEnum)[keyof typeof ProjectScalarFieldEnum];
+
+export const TimelineScalarFieldEnum = {
+	id: "id",
+	name: "name",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
+	projectId: "projectId",
+} as const;
+
+export type TimelineScalarFieldEnum =
+	(typeof TimelineScalarFieldEnum)[keyof typeof TimelineScalarFieldEnum];
+
+export const ExportScalarFieldEnum = {
+	id: "id",
+	name: "name",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
+	timelineId: "timelineId",
+	mediaId: "mediaId",
+} as const;
+
+export type ExportScalarFieldEnum =
+	(typeof ExportScalarFieldEnum)[keyof typeof ExportScalarFieldEnum];
 
 export const SortOrder = {
 	asc: "asc",

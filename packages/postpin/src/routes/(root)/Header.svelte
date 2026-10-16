@@ -1,7 +1,37 @@
 <script lang="ts">
 	import { resolve } from "$app/paths";
+	import { authClient } from "#lib/auth-client.ts";
+	import { goto, refreshAll } from "$app/navigation";
 	import { page } from "$app/state";
-	import logo from "#lib/images/svelte-logo.svg";
+
+	const session = authClient.useSession();
+	const organizations = authClient.useListOrganizations();
+	const activeMember = authClient.useActiveMember();
+
+	let activeOrganizationId = $derived($session.data?.session.activeOrganizationId);
+	let activeOrganization = $derived(
+		$organizations.data?.find((org) => org.id === activeOrganizationId),
+	);
+	// a member can hold several roles, stored comma-separated
+	let canManageThisOrg = $derived(
+		$activeMember.data?.role.split(",").some((role) => ["owner", "admin"].includes(role.trim())) ??
+			false,
+	);
+
+	async function switchOrganization(organizationId: string) {
+		(document.activeElement as HTMLElement | null)?.blur();
+		const { error } = await authClient.organization.setActive({ organizationId });
+		if (error) {
+			alert(`Could not switch organization: ${error.message}`);
+			return;
+		}
+		goto(resolve("/(root)/dashboard"), { replaceState: true });
+	}
+
+	async function logout() {
+		await authClient.signOut();
+		await goto(resolve("/auth/login"));
+	}
 </script>
 
 <!-- 
@@ -51,7 +81,21 @@
 					/></svg
 				>
 			</label>
-			<a href={resolve("/(root)/dashboard")} class="btn btn-ghost text-xl">PostPin</a>
+			<a href={resolve("/(root)/dashboard")} class="btn btn-ghost text-xl">
+				{#if activeOrganization}
+					{activeOrganization.name}
+					<span class="font-normal text-base-content/40">|</span>
+				{/if}
+				PostPin
+			</a>
+			{#if activeOrganization && canManageThisOrg}
+				<a href={`/organizations/${activeOrganization.slug}/members`} class="btn btn-ghost btn-sm"
+					>Members</a
+				>
+				<a href={`/organizations/${activeOrganization.slug}/settings`} class="btn btn-ghost btn-sm"
+					>Settings</a
+				>
+			{/if}
 		</div>
 		<div class="navbar-center hidden lg:flex">
 			<ul class="menu menu-horizontal px-1">
@@ -65,6 +109,32 @@
 		</div>
 		<div class="navbar-end">
 			<input type="text" placeholder="Search" class="input w-64 lg:w-auto" />
+			<div class="dropdown dropdown-end ml-2">
+				<div tabindex="0" role="button" class="btn btn-ghost">
+					{$session.data?.user.name ?? "Account"}
+				</div>
+				<ul
+					tabindex="-1"
+					class="menu dropdown-content z-10 mt-2 w-56 rounded-box bg-base-100 p-2 shadow"
+				>
+					{#if $organizations.data?.length}
+						<li class="menu-title">Organizations</li>
+						{#each $organizations.data as org (org.id)}
+							<li>
+								<button
+									class:menu-active={org.id === activeOrganizationId}
+									onclick={() => switchOrganization(org.id)}
+								>
+									{org.name}
+								</button>
+							</li>
+						{/each}
+						<div class="divider my-1"></div>
+					{/if}
+					<li><a href={resolve("/(root)/profile")}>Profile</a></li>
+					<li><button onclick={logout}>Logout</button></li>
+				</ul>
+			</div>
 		</div>
 	</nav>
 

@@ -65,21 +65,6 @@ export type Account = Prisma.AccountModel;
  */
 export type Verification = Prisma.VerificationModel;
 /**
- * Model Project
- *
- */
-export type Project = Prisma.ProjectModel;
-/**
- * Model Timeline
- *
- */
-export type Timeline = Prisma.TimelineModel;
-/**
- * Model Export
- *
- */
-export type Export = Prisma.ExportModel;
-/**
  * Model Media
  *
  */
@@ -94,3 +79,33 @@ export type MediaFile = Prisma.MediaFileModel;
  *
  */
 export type Thumbnail = Prisma.ThumbnailModel;
+/**
+ * Model Organization
+ *
+ */
+export type Organization = Prisma.OrganizationModel;
+/**
+ * Model Member
+ *
+ */
+export type Member = Prisma.MemberModel;
+/**
+ * Model Invitation
+ *
+ */
+export type Invitation = Prisma.InvitationModel;
+/**
+ * Model Project
+ *
+ */
+export type Project = Prisma.ProjectModel;
+/**
+ * Model Timeline
+ *
+ */
+export type Timeline = Prisma.TimelineModel;
+/**
+ * Model Export
+ *
+ */
+export type Export = Prisma.ExportModel;
