@@ -20,15 +20,13 @@
 
 	async function createtimeline() {
 		creatingTimeline = true;
-
-		await createTimeline({ name: timelineName, projectId: projectId });
-
-		await refreshAll();
-
-		dialog?.close();
-		setTimeout(() => {
+		try {
+			await createTimeline({ name: timelineName, projectId: projectId });
+			await refreshAll();
+			dialog?.close();
+		} finally {
 			creatingTimeline = false;
-		}, 500);
+		}
 	}
 </script>
 

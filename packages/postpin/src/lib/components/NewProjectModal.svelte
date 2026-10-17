@@ -14,14 +14,13 @@
 	async function createproject() {
 		creatingproject = true;
 
-		await createProject({ name: projectName });
-
-		await refreshAll();
-
-		dialog?.close();
-		setTimeout(() => {
+		try {
+			await createProject({ name: projectName });
+			await refreshAll();
+			dialog?.close();
+		} finally {
 			creatingproject = false;
-		}, 500);
+		}
 	}
 </script>
 

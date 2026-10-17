@@ -1,16 +1,11 @@
 import { prisma } from "#lib/server/database.ts";
 import { getRequestEvent, command } from "$app/server";
-import * as Valibot from "valibot";
+import * as v from "valibot";
 
 export const renameExport = command(
-	Valibot.object({
-		id: Valibot.string(),
-		name: Valibot.pipe(
-			Valibot.string(),
-			Valibot.trim(),
-			Valibot.minLength(1),
-			Valibot.maxLength(100),
-		),
+	v.object({
+		id: v.string(),
+		name: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(100)),
 	}),
 	async (data) => {
 		const event = getRequestEvent();

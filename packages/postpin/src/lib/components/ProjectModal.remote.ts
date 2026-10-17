@@ -1,10 +1,10 @@
 import { prisma } from "#lib/server/database.ts";
 import { getRequestEvent, command } from "$app/server";
-import * as Valibot from "valibot";
+import * as v from "valibot";
 
 export const createProject = command(
-	Valibot.object({
-		name: Valibot.string(),
+	v.object({
+		name: v.string(),
 	}),
 	async (data) => {
 		const event = getRequestEvent();
@@ -19,8 +19,8 @@ export const createProject = command(
 	},
 );
 export const deleteProject = command(
-	Valibot.object({
-		id: Valibot.string(),
+	v.object({
+		id: v.string(),
 	}),
 	async (data) => {
 		const event = getRequestEvent();
@@ -36,14 +36,9 @@ export const deleteProject = command(
 );
 
 export const renameProject = command(
-	Valibot.object({
-		id: Valibot.string(),
-		name: Valibot.pipe(
-			Valibot.string(),
-			Valibot.trim(),
-			Valibot.minLength(1),
-			Valibot.maxLength(100),
-		),
+	v.object({
+		id: v.string(),
+		name: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(100)),
 	}),
 	async (data) => {
 		const event = getRequestEvent();
