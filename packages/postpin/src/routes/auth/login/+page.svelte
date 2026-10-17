@@ -78,7 +78,7 @@
 	</div>
 
 	{#if formMessage}
-		// Display the form message if it exists
+		<!-- // Display the form message if it exists -->
 		<div class="alert alert-error" role="alert">
 			{formMessage.text}
 		</div>

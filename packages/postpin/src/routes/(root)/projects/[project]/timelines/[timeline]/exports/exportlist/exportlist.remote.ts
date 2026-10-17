@@ -4,7 +4,7 @@ import { query } from "$app/server";
 import * as valibot from "valibot";
 
 export const getExportList = query(valibot.string(), async (timelineId) => {
-	const timelines = await prisma.export.findMany({
+	const exports = await prisma.export.findMany({
 		where: {
 			timelineId,
 		},
@@ -14,8 +14,7 @@ export const getExportList = query(valibot.string(), async (timelineId) => {
 		orderBy: {
 			createdAt: "desc",
 		},
-		take: 1,
 	});
 
-	return timelines;
+	return exports;
 });

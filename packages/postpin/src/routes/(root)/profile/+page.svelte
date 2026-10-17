@@ -3,7 +3,7 @@
 	import { refreshAll } from "$app/navigation";
 	import { authClient } from "#lib/auth-client.ts";
 	import { getMemberships, getProfile } from "./profile.remote.ts";
-	import NewOrgModal from "../dashboard/NewOrgModal.svelte";
+	import NewOrgModal from "../../../lib/components/NewOrgModal.svelte";
 
 	type Message = { type: "success" | "error"; text: string } | null;
 
