@@ -4,16 +4,19 @@
 	"description": "PostPin workflow integration plugin for DaVinci Resolve",
 	"main": "main.js",
 	"scripts": {
+		"setup:mac": "P=\"/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/com.postpin.resolve\" && sudo rm -rf \"$P\" && sudo mkdir -p \"$P\" && sudo chown \"$USER\" \"$P\"",
 		"build": "node build.mjs && vite build",
-		"install:dev:mac": "P=\"/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins\" && node build.mjs --dev && sudo mkdir -p \"$P\" && sudo rm -rf \"$P/com.postpin.resolve\" && sudo cp -R dist \"$P/com.postpin.resolve\"",
-		"install:mac": "P=\"/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins\" && pnpm run build && sudo mkdir -p \"$P\" && sudo rm -rf \"$P/com.postpin.resolve\" && sudo cp -R dist \"$P/com.postpin.resolve\"",
+		"install:mac": "P=\"/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/com.postpin.resolve\" && pnpm run build && rm -rf \"$P\"/* && cp -R dist/. \"$P\"",
 		"dev": "vite",
+		"dev:electron": "node build.mjs --dev --watch --install",
 		"preview": "vite preview",
 		"check": "svelte-check --tsgo --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
-		"generate:ipc": "generate-ipc src/schema src/ipc && prettier --write src/ipc"
+		"generate:ipc": "generate-ipc src/schema src/ipc && prettier --write src/ipc",
+		"generate:resolve": "python3 scripts/generate-resolve-types.py && prettier --write src/electron/resolve.ts"
 	},
 	"devDependencies": {
 		"@postpin-io/api-client-ts": "workspace:*",
+		"@postpin-io/shared": "workspace:*",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
 		"@tsconfig/svelte": "^5.0.8",
 		"@types/node": "^26.6.5",
@@ -30,6 +33,7 @@
 	"type": "module",
 	"dependencies": {
 		"@marshallofsound/ipc": "^2.7.1",
-		"@tailwindcss/vite": "^4.3.3"
+		"@tailwindcss/vite": "^4.3.3",
+		"electron-store": "^12.0.0"
 	}
 }

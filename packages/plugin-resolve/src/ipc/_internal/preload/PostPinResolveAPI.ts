@@ -2,8 +2,23 @@
 
 import { contextBridge, ipcRenderer } from "electron";
 export * from "../common/PostPinResolveAPI.js";
-import { ISettingsImpl, ISettingsRenderer } from "../common/PostPinResolveAPI.js";
-const $$ipcPrefix$$ = "$eipc_message$_ecf3288e-0015-43a2-b01d-6a32530f7735_$_PostPinResolveAPI_$_";
+import {
+	Settings,
+	RenderProgress,
+	UploadPartUrl,
+	UploadedPart,
+	UploadProgress,
+	IMainAPIImpl,
+	IMainAPIRenderer,
+} from "../common/PostPinResolveAPI.js";
+import {
+	$eipc_validator$_Settings,
+	$eipc_validator$_RenderProgress,
+	$eipc_validator$_UploadPartUrl,
+	$eipc_validator$_UploadedPart,
+	$eipc_validator$_UploadProgress,
+} from "../common-runtime/PostPinResolveAPI.js";
+const $$ipcPrefix$$ = "$eipc_message$_614bedfc-fcf5-4af9-991d-b7027b00fd1c_$_PostPinResolveAPI_$_";
 import { webFrame } from "electron/renderer";
 function $eipc_event_validator$_MyApp() {
 	if (
@@ -14,44 +29,69 @@ function $eipc_event_validator$_MyApp() {
 		return true;
 	return false;
 }
-export const Settings: Partial<ISettingsRenderer> = {
+export const MainAPI: Partial<IMainAPIRenderer> = {
 	getRenderPresets() {
-		return ipcRenderer.invoke($$ipcPrefix$$ + "Settings_$_getRenderPresets");
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_getRenderPresets");
 	},
-	renderTimeline(
-		timelineName: string,
-		renderPresetName: string,
-		targetDirPath: string,
-		targetClipName: string,
-	) {
+	renderPreview(targetDirPath: string, targetClipName: string) {
 		return ipcRenderer.invoke(
-			$$ipcPrefix$$ + "Settings_$_renderTimeline",
-			timelineName,
-			renderPresetName,
+			$$ipcPrefix$$ + "MainAPI_$_renderPreview",
 			targetDirPath,
 			targetClipName,
 		);
 	},
-	uploadRenderedFile(sourcePath: string, uploadUrl: string) {
+	onRenderProgress(fn: (progress: RenderProgress) => void) {
+		const handler = (e: unknown, progress: RenderProgress) => fn(progress);
+		const $$channel$$ = $$ipcPrefix$$ + "MainAPI_$_renderProgress";
+		ipcRenderer.on($$channel$$, handler);
+		return () => {
+			ipcRenderer.removeListener($$channel$$, handler);
+		};
+	},
+	getFileSize(path: string) {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_getFileSize", path);
+	},
+	uploadRenderedFile(sourcePath: string, partSize: number, parts: UploadPartUrl[]) {
 		return ipcRenderer.invoke(
-			$$ipcPrefix$$ + "Settings_$_uploadRenderedFile",
+			$$ipcPrefix$$ + "MainAPI_$_uploadRenderedFile",
 			sourcePath,
-			uploadUrl,
+			partSize,
+			parts,
 		);
 	},
+	onUploadProgress(fn: (progress: UploadProgress) => void) {
+		const handler = (e: unknown, progress: UploadProgress) => fn(progress);
+		const $$channel$$ = $$ipcPrefix$$ + "MainAPI_$_uploadProgress";
+		ipcRenderer.on($$channel$$, handler);
+		return () => {
+			ipcRenderer.removeListener($$channel$$, handler);
+		};
+	},
 	openInBrowser(path: string) {
-		return ipcRenderer.invoke($$ipcPrefix$$ + "Settings_$_openInBrowser", path);
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_openInBrowser", path);
+	},
+	buildTimelineSnapshot() {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_buildTimelineSnapshot");
+	},
+	getLastSettings() {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_getLastSettings");
+	},
+	saveSettings(settings: Settings) {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_saveSettings", settings);
+	},
+	pickOutputDirectory() {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_pickOutputDirectory");
 	},
 };
-const $eipc_impl$__init_Settings = (localBridged: Record<string, any>) => {
+const $eipc_impl$__init_MainAPI = (localBridged: Record<string, any>) => {
 	if (!$eipc_event_validator$_MyApp()) return;
 	localBridged["PostPinResolveAPI"] = localBridged["PostPinResolveAPI"] || {};
-	localBridged["PostPinResolveAPI"]["Settings"] = Settings;
+	localBridged["PostPinResolveAPI"]["MainAPI"] = MainAPI;
 };
 
 // Initialize context bridge
 const $$bridged$$ = {} as Record<string, any>;
-$eipc_impl$__init_Settings($$bridged$$);
+$eipc_impl$__init_MainAPI($$bridged$$);
 for (const [key, value] of Object.entries($$bridged$$)) {
 	contextBridge.exposeInMainWorld(key, value);
 }

@@ -4,12 +4,47 @@ validator MyApp = AND(
     is_main_frame is true
 )
 
+structure Settings {
+  renderToDisk: boolean
+  outputPath: string
+  filename: string
+}
+
+structure RenderProgress {
+  percent: number
+  estimatedTimeRemainingMs: number
+}
+
+structure UploadPartUrl {
+  partNumber: number
+  url: string
+}
+
+structure UploadedPart {
+  partNumber: number
+  etag: string
+}
+
+structure UploadProgress {
+  uploadedBytes: number
+  totalBytes: number
+}
+
 [RendererAPI]
 [ContextBridge]
 [Validator=MyApp]
-interface Settings {
+interface MainAPI {
   getRenderPresets() -> string[]
-  renderTimeline(timelineName: string, renderPresetName: string, targetDirPath: string, targetClipName: string) -> string
-  uploadRenderedFile(sourcePath: string, uploadUrl: string) -> boolean
+  renderPreview(targetDirPath: string, targetClipName: string) -> string
+  [Event]
+  renderProgress(progress: RenderProgress)
+  getFileSize(path: string) -> number
+  uploadRenderedFile(sourcePath: string, partSize: number, parts: UploadPartUrl[]) -> UploadedPart[]
+  [Event]
+  uploadProgress(progress: UploadProgress)
   openInBrowser(path: string) -> boolean
+  buildTimelineSnapshot() -> unknown
+  getLastSettings() -> Settings
+  saveSettings(settings: Settings) -> boolean
+  pickOutputDirectory() -> string
 }
