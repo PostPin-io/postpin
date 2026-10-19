@@ -26,12 +26,95 @@ export type ProjectWithTimelines = {
 	timelines: Array<Timeline>;
 };
 
-export type UploadUrlResponse = {
-	mediaId: string;
+export type MultipartUploadPartUrl = {
+	partNumber: number;
 	/**
-	 * Presigned S3 PUT URL for the export's original file, valid for one hour.
+	 * Presigned S3 PUT URL for this part, valid for one day.
 	 */
-	uploadUrl: string;
+	url: string;
+};
+
+export type InitUploadResponse = {
+	uploadId: string;
+	/**
+	 * Size of every part except the last one, in bytes.
+	 */
+	partSize: number;
+	parts: Array<MultipartUploadPartUrl>;
+	mediaId: string;
+};
+
+export type UploadedPart = {
+	partNumber: number;
+	/**
+	 * ETag response header of the part's PUT request
+	 */
+	etag: string;
+};
+
+export type TrackType = "video" | "audio";
+
+/**
+ * Construct a type with a set of properties K of type T
+ */
+export type RecordStringUnknown = {
+	[key: string]: unknown;
+};
+
+export type Clip = {
+	metadata: RecordStringUnknown;
+	/**
+	 * Constant playback speed, 1 is normal speed. Speed ramps aren't supported.
+	 */
+	speed: number;
+	/**
+	 * null without media
+	 */
+	sourceStartFrameIndex: number | null;
+	durationFrameCount: number;
+	startFrameIndex: number;
+	/**
+	 * null for generators and titles
+	 */
+	mediaId: string | null;
+	name: string;
+	id: string;
+};
+
+export type Track = {
+	/**
+	 * Disabled clips are left out
+	 */
+	clips: Array<Clip>;
+	name: string;
+	type: TrackType;
+	id: string;
+};
+
+export type FrameRate = {
+	dropFrame: boolean;
+	fpsDenominator: number;
+	fpsNumerator: number;
+};
+
+export type MediaItem = {
+	metadata: RecordStringUnknown;
+	startTimecode: string;
+	frameRate: FrameRate;
+	filePath: string;
+	type: "video" | "audio";
+	name: string;
+	id: string;
+};
+
+export type TimelineSnapshot = {
+	metadata: RecordStringUnknown;
+	startTimecode: string;
+	frameRate: FrameRate;
+	mediaItems: Array<MediaItem>;
+	tracks: Array<Track>;
+	name: string;
+	id: string;
 };
 
 export type GetOpenApiSpecData = {
@@ -59,8 +142,10 @@ export type GetDocsHtmlResponses = {
 	/**
 	 * Ok
 	 */
-	200: unknown;
+	200: string;
 };
+
+export type GetDocsHtmlResponse = GetDocsHtmlResponses[keyof GetDocsHtmlResponses];
 
 export type GetProjectsData = {
 	body?: never;
@@ -132,7 +217,9 @@ export type CreateExportResponses = {
 export type CreateExportResponse = CreateExportResponses[keyof CreateExportResponses];
 
 export type InitUploadData = {
-	body?: never;
+	body: {
+		fileSize: number;
+	};
 	path: {
 		projectId: string;
 		timelineId: string;
@@ -143,6 +230,10 @@ export type InitUploadData = {
 };
 
 export type InitUploadErrors = {
+	/**
+	 * Invalid file size
+	 */
+	400: unknown;
 	/**
 	 * Export not found
 	 */
@@ -157,13 +248,17 @@ export type InitUploadResponses = {
 	/**
 	 * Ok
 	 */
-	200: UploadUrlResponse;
+	200: InitUploadResponse;
 };
 
-export type InitUploadResponse = InitUploadResponses[keyof InitUploadResponses];
+export type InitUploadResponse2 = InitUploadResponses[keyof InitUploadResponses];
 
 export type CompleteUploadData = {
-	body?: never;
+	body: {
+		timelineSnapshot: TimelineSnapshot;
+		parts: Array<UploadedPart>;
+		uploadId: string;
+	};
 	path: {
 		projectId: string;
 		timelineId: string;
@@ -192,3 +287,36 @@ export type CompleteUploadResponses = {
 };
 
 export type CompleteUploadResponse = CompleteUploadResponses[keyof CompleteUploadResponses];
+
+export type AbortUploadData = {
+	body: {
+		uploadId: string;
+	};
+	path: {
+		projectId: string;
+		timelineId: string;
+		exportId: string;
+	};
+	query?: never;
+	url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/abort-upload";
+};
+
+export type AbortUploadErrors = {
+	/**
+	 * Export not found
+	 */
+	404: unknown;
+	/**
+	 * Media already processing
+	 */
+	409: unknown;
+};
+
+export type AbortUploadResponses = {
+	/**
+	 * No content
+	 */
+	204: void;
+};
+
+export type AbortUploadResponse = AbortUploadResponses[keyof AbortUploadResponses];
