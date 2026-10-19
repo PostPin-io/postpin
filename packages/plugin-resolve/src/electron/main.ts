@@ -458,13 +458,16 @@ function setupIPC(win: BrowserWindow) {
 				)
 			).flat();
 
+			// GetEndFrame() is exclusive, it equals the last clip's GetEnd()
+			const startFrameIndex = await timeline.GetStartFrame();
 			const result: TimelineSnapshot = {
 				id: await timeline.GetUniqueId(),
 				name: await timeline.GetName(),
 				tracks,
 				mediaItems: [...mediaItems.values()],
 				frameRate,
-				startTimecode: await timeline.GetStartTimecode(),
+				startFrameIndex,
+				durationFrameCount: (await timeline.GetEndFrame()) - startFrameIndex,
 				metadata: {},
 			};
 			return result;

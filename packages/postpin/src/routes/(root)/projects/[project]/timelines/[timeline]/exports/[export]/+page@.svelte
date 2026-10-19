@@ -4,8 +4,9 @@
 	import { getExport, getUrl } from "./export.remote";
 	import Header from "#lib/components/Header.svelte";
 	import MarkerPanel from "#lib/components/review/MarkerPanel.svelte";
-
 	import { Pane, Splitpanes } from "svelte-splitpanes";
+	import Timeline from "./Timeline.svelte";
+	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 
 	const STORAGE_KEY = "postpin:export-panes";
 	const defaults = { main: [75, 25], left: [65, 35] };
@@ -66,17 +67,23 @@
 	}
 	let isMarkerVisible = $state(true);
 	let isTimelineVisible = $state(true);
+
+	let videoPosition = $state(0);
+	let videoPaused = $state(true);
+	let videoPlaybackRate = $state(1);
 </script>
 
-<button onclick={toggleMarkerPanel}>
-	{isMarkerVisible == true ? "Hide" : "Show"}
-</button>
-
-<button onclick={toggleTimelinePanel}>
-	{isTimelineVisible == true ? "Hide" : "Show"}
-</button>
 <div class="flex h-full flex-col overflow-hidden">
 	<Header />
+	<div class="flex shrink-0 gap-2">
+		<button onclick={toggleMarkerPanel}>
+			{isMarkerVisible == true ? "Hide" : "Show"}
+		</button>
+
+		<button onclick={toggleTimelinePanel}>
+			{isTimelineVisible == true ? "Hide" : "Show"}
+		</button>
+	</div>
 	<Splitpanes theme="daisy-theme" class="min-h-0 flex-1" on:resized={(e) => saveLayout("main", e)}>
 		<Pane size={layout.main[0]} minSize={25} class="overflow-auto">
 			<Splitpanes theme="daisy-theme" horizontal on:resized={(e) => saveLayout("left", e)}>
@@ -101,6 +108,9 @@
 								<div class="flex min-h-0 flex-1 items-center justify-center">
 									<!-- svelte-ignore a11y_media_has_caption -->
 									<video
+										bind:currentTime={videoPosition}
+										bind:paused={videoPaused}
+										bind:playbackRate={videoPlaybackRate}
 										src={await getUrl({ mediaId: media.id, type: "original" })}
 										poster={media.thumbnail
 											? await getUrl({ mediaId: media.id, type: "thumbnail" })
@@ -114,7 +124,16 @@
 					</div>
 				</Pane>
 				{#if isTimelineVisible}
-					<Pane size={layout.left[1]} minSize={10} class="overflow-auto"></Pane>
+					<Pane size={layout.left[1]} minSize={10} class="overflow-hidden">
+						{#if exportQuery.current?.timelineSnapshot}
+							<Timeline
+								snapshot={exportQuery.current!.timelineSnapshot as TimelineSnapshot}
+								bind:videoPositionSeconds={videoPosition}
+								bind:paused={videoPaused}
+								bind:playbackRate={videoPlaybackRate}
+							/>
+						{/if}
+					</Pane>
 				{/if}
 			</Splitpanes>
 		</Pane>

@@ -109,7 +109,11 @@ export type MediaItem = {
 
 export type TimelineSnapshot = {
 	metadata: RecordStringUnknown;
-	startTimecode: string;
+	/**
+	 * Up to the end of the last clip
+	 */
+	durationFrameCount: number;
+	startFrameIndex: number;
 	frameRate: FrameRate;
 	mediaItems: Array<MediaItem>;
 	tracks: Array<Track>;

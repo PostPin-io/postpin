@@ -14,7 +14,9 @@ export type TimelineSnapshot = {
 	tracks: Track[];
 	mediaItems: MediaItem[];
 	frameRate: FrameRate;
-	startTimecode: string;
+	startFrameIndex: number;
+	/** Up to the end of the last clip */
+	durationFrameCount: number;
 	metadata: Record<string, unknown>;
 };
 

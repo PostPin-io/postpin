@@ -191,7 +191,8 @@ const models: TsoaRoute.Models = {
 			dataType: "nestedObjectLiteral",
 			nestedProperties: {
 				metadata: { ref: "Record_string.unknown_", required: true },
-				startTimecode: { dataType: "string", required: true },
+				durationFrameCount: { dataType: "double", required: true },
+				startFrameIndex: { dataType: "double", required: true },
 				frameRate: { ref: "FrameRate", required: true },
 				mediaItems: {
 					dataType: "array",
