@@ -1,5 +1,6 @@
 import { prisma } from "#lib/server/database.ts";
 import { Controller, Get, Path, Response, Route } from "tsoa";
+import { HttpError } from "../HttpError.ts";
 
 interface Project {
 	id: string;
@@ -51,8 +52,7 @@ export class ProjectController extends Controller {
 			},
 		});
 		if (!project) {
-			this.setStatus(404);
-			throw new Error("Project not found");
+			throw new HttpError(404, "Project not found");
 		}
 		return project;
 	}

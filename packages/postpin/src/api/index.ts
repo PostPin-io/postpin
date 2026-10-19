@@ -8,7 +8,11 @@ declare module "@hapi/hapi" {
 	}
 }
 
-const server = Hapi.server();
+// Any origin may call the API, e.g. the Resolve plugin, whose UI runs on file:// (Origin: null).
+// hapi answers CORS preflight requests itself once cors is enabled for the routes.
+const server = Hapi.server({
+	routes: { cors: { origin: ["*"] } },
+});
 const ready = server
 	.register({
 		plugin: { name: "tsoa-routes", register: RegisterRoutes },
