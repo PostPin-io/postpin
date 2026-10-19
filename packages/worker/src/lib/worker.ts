@@ -1,6 +1,6 @@
 import { Worker, type Job, type Processor, type WorkerOptions } from "bullmq";
-import { queueOptions, type JobData, type JobName, type QueueName } from "@postpin/shared/queue";
-import type { RedisEnv } from "@postpin/shared/env";
+import { queueOptions, type JobData, type JobName, type QueueName } from "@postpin-io/shared/queue";
+import type { RedisEnv } from "@postpin-io/shared/env";
 
 type ProcessorArgs = Parameters<Processor> extends [unknown, ...infer R] ? R : never;
 

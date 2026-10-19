@@ -1,4 +1,4 @@
-import { Queues } from "@postpin/shared/queue";
+import { Queues } from "@postpin-io/shared/queue";
 import { queues } from "./lib/config.ts";
 import { env } from "./lib/env.ts";
 import { heavyHandlers, lightHandlers } from "./lib/queue.ts";

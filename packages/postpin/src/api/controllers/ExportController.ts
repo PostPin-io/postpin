@@ -2,7 +2,7 @@ import * as env from "$app/env/private";
 import { prisma } from "#lib/server/database.ts";
 import { startMediaProcessing } from "#lib/server/media.ts";
 import { s3Client } from "#lib/server/storage.ts";
-import { getPresignedUrl, getS3ObjectPath } from "@postpin/shared/storage";
+import { getPresignedUrl, getS3ObjectPath } from "@postpin-io/shared/storage";
 import { Controller, Path, Post, Response, Route } from "tsoa";
 
 interface UploadUrlResponse {

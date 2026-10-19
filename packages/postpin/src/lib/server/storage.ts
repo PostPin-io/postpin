@@ -1,6 +1,6 @@
 import { building } from "$app/env";
 import * as env from "$app/env/private";
-import { createS3Client, ensureBucket, ensureCORS } from "@postpin/shared/storage";
+import { createS3Client, ensureBucket, ensureCORS } from "@postpin-io/shared/storage";
 import { S3 } from "@aws-sdk/client-s3";
 
 const s3Client = building ? (null as unknown as S3) : createS3Client(env);

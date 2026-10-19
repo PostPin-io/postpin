@@ -1,4 +1,4 @@
-import { getQueue, Queues } from "@postpin/shared/queue";
+import { getQueue, Queues } from "@postpin-io/shared/queue";
 import * as env from "$app/env/private";
 import { command, query } from "$app/server";
 

@@ -1,11 +1,11 @@
-import type { Queues, ThumbnailMessage } from "@postpin/shared/queue";
+import type { Queues, ThumbnailMessage } from "@postpin-io/shared/queue";
 import type { TypedJob } from "../lib/worker.ts";
 import { ffmpeg } from "../lib/ffmpeg.ts";
 import { getOriginalUrl, s3Client } from "../lib/storage.ts";
 import { env } from "../lib/env.ts";
 import { Upload } from "@aws-sdk/lib-storage";
 import { prisma } from "../lib/database.ts";
-import { getS3ObjectPath } from "@postpin/shared/storage";
+import { getS3ObjectPath } from "@postpin-io/shared/storage";
 
 function scaleFilter(size: ThumbnailMessage["size"]) {
 	// -2 keeps the aspect ratio while rounding to an even number of pixels

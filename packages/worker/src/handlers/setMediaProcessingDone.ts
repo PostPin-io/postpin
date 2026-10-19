@@ -1,4 +1,4 @@
-import type { Queues } from "@postpin/shared/queue";
+import type { Queues } from "@postpin-io/shared/queue";
 import type { TypedJob } from "../lib/worker.ts";
 import { prisma } from "../lib/database.ts";
 

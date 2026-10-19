@@ -1,10 +1,10 @@
-import type { Queues } from "@postpin/shared/queue";
+import type { Queues } from "@postpin-io/shared/queue";
 import type { TypedJob } from "../lib/worker.ts";
 import { ffmpeg } from "../lib/ffmpeg.ts";
 import { getOriginalUrl, s3Client } from "../lib/storage.ts";
 import { env } from "../lib/env.ts";
 import { Upload } from "@aws-sdk/lib-storage";
-import { getS3ObjectPath } from "@postpin/shared/storage";
+import { getS3ObjectPath } from "@postpin-io/shared/storage";
 import { prisma } from "../lib/database.ts";
 
 export async function transcode(job: TypedJob<typeof Queues.heavy, "transcode">) {

@@ -19,7 +19,7 @@
 		"@fontsource/fira-mono": "^5.2.7",
 		"@hey-api/openapi-ts": "^0.99.0",
 		"@neoconfetti/svelte": "^2.2.2",
-		"@postpin/shared": "workspace:*",
+		"@postpin-io/shared": "workspace:*",
 		"@sveltejs/adapter-node": "^6.0.0",
 		"@sveltejs/enhanced-img": "^1.0.0",
 		"@sveltejs/kit": "^3.0.0",
