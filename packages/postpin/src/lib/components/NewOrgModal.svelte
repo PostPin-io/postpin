@@ -43,9 +43,9 @@
 	<div class="modal-box">
 		<h3 class="text-lg font-bold">New Organization</h3>
 
-		<div class="flex flex-col gap-4 pt-4">
+		<div class="flex flex-wrap gap-4 pt-4">
 			<div class="form-control w-full">
-				<label class="label" for="org-name">
+				<label class="label mb-2" for="org-name">
 					<span class="label-text">Organization Name</span>
 				</label>
 				<input
