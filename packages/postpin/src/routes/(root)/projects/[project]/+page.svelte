@@ -42,7 +42,7 @@
 		return {
 			latest,
 			exportHref: latest ? `${base}/${latest.id}` : null,
-			exportListHref: latest ? `${base}/exportlist` : null,
+			exportListHref: latest ? base : null,
 		};
 	}
 

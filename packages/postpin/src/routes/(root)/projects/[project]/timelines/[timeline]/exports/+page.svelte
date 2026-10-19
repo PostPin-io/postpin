@@ -2,7 +2,7 @@
 	import { page } from "$app/state";
 	import { onMount } from "svelte";
 	import { getExportList } from "./exportlist.remote.ts";
-	import { getUrl } from "../../../../../../videotests/videotests.remote.ts";
+	import { getUrl } from "../../../../../videotests/videotests.remote.ts";
 	import RenameExportModal from "#lib/components/RenameExportModal.svelte";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
