@@ -3,6 +3,9 @@
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from "./client";
 import { client } from "./client.gen";
 import type {
+	AbortUploadData,
+	AbortUploadErrors,
+	AbortUploadResponses,
 	CompleteUploadData,
 	CompleteUploadErrors,
 	CompleteUploadResponses,
@@ -81,17 +84,25 @@ export const createExport = <ThrowOnError extends boolean = false>(
 		...options,
 	});
 
+/**
+ * Starts a multipart upload of the export's original file. PUT each part's bytes to its URL,
+ * keep the ETag response headers and pass them to complete-upload.
+ */
 export const initUpload = <ThrowOnError extends boolean = false>(
 	options: Options<InitUploadData, ThrowOnError>,
 ): RequestResult<InitUploadResponses, InitUploadErrors, ThrowOnError> =>
 	(options.client ?? client).post<InitUploadResponses, InitUploadErrors, ThrowOnError>({
 		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/init-upload",
 		...options,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
 	});
 
 /**
- * Call after the file was PUT to the upload URL: checks the original exists in storage and
- * queues transcoding, probing and thumbnailing.
+ * Call after all parts were PUT: assembles the original in storage, stores the timeline
+ * snapshot and queues transcoding, probing and thumbnailing.
  */
 export const completeUpload = <ThrowOnError extends boolean = false>(
 	options: Options<CompleteUploadData, ThrowOnError>,
@@ -99,4 +110,23 @@ export const completeUpload = <ThrowOnError extends boolean = false>(
 	(options.client ?? client).post<CompleteUploadResponses, CompleteUploadErrors, ThrowOnError>({
 		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/complete-upload",
 		...options,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
+	});
+
+/**
+ * Discards an unfinished multipart upload, so its parts don't linger in storage.
+ */
+export const abortUpload = <ThrowOnError extends boolean = false>(
+	options: Options<AbortUploadData, ThrowOnError>,
+): RequestResult<AbortUploadResponses, AbortUploadErrors, ThrowOnError> =>
+	(options.client ?? client).post<AbortUploadResponses, AbortUploadErrors, ThrowOnError>({
+		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/abort-upload",
+		...options,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
 	});

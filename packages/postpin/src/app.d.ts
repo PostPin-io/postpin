@@ -5,7 +5,7 @@ declare global {
 		// interface Error {}
 		interface Locals {
 			user:
-				| import("@postpin/shared/db").Prisma.UserGetPayload<{
+				| import("@postpin-io/shared/db").Prisma.UserGetPayload<{
 						include: { memberships: true };
 				  }>
 				| null;

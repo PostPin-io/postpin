@@ -1,5 +1,5 @@
 import * as env from "$app/env/private";
-import { createPrismaClient } from "@postpin/shared/db";
+import { createPrismaClient } from "@postpin-io/shared/db";
 
 const prisma = createPrismaClient(env);
 

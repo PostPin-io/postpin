@@ -5,7 +5,7 @@ import {
 	envNumber,
 	redisEnvVars,
 	s3EnvVars,
-} from "@postpin/shared/env";
+} from "@postpin-io/shared/env";
 import * as v from "valibot";
 
 export const variables = defineEnvVars({

@@ -2,6 +2,13 @@
 	"entryFile": "src/api/dummy.ts",
 	"noImplicitAdditionalProperties": "throw-on-extras",
 	"controllerPathGlobs": ["src/api/**/*Controller.ts"],
+	"compilerOptions": {
+		"module": 99,
+		"moduleResolution": 100,
+		"target": 9,
+		"strict": true,
+		"experimentalDecorators": true
+	},
 	"spec": {
 		"outputDirectory": "src/api/build",
 		"specVersion": 3,

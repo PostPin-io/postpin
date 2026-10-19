@@ -1,4 +1,4 @@
-import { Queues } from "@postpin/shared/queue";
+import { Queues } from "@postpin-io/shared/queue";
 import { transcode } from "../handlers/transcode.ts";
 import type { JobHandlers } from "./worker.ts";
 import { probe } from "../handlers/probe.ts";

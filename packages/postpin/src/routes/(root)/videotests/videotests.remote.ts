@@ -4,7 +4,7 @@ import { s3Client } from "#lib/server/storage.ts";
 import { prisma } from "#lib/server/database.ts";
 import { getMediaJobs, startMediaProcessing } from "#lib/server/media.ts";
 import * as v from "valibot";
-import { getPresignedUrl } from "@postpin/shared/storage";
+import { getPresignedUrl } from "@postpin-io/shared/storage";
 
 export const getVideos = query(async () => {
 	const videos = await prisma.media.findMany({

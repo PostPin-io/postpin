@@ -1,5 +1,5 @@
 {
-	"name": "@postpin/worker",
+	"name": "@postpin-io/worker",
 	"version": "1.0.0",
 	"private": true,
 	"license": "MIT",
@@ -16,7 +16,7 @@
 	},
 	"dependencies": {
 		"@aws-sdk/lib-storage": "^3.1149.0",
-		"@postpin/shared": "workspace:*",
+		"@postpin-io/shared": "workspace:*",
 		"bullmq": "^6.3.12",
 		"ioredis": "^6.0.0",
 		"valibot": "^1.5.0"
