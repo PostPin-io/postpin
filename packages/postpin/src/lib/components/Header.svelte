@@ -61,6 +61,7 @@
 <header class="w-full rounded-md bg-base-200 shadow-sm max-lg:collapse">
 	<input id="navbar-1-toggle" class="peer hidden" type="checkbox" />
 	<label for="navbar-1-toggle" class="fixed inset-0 hidden max-lg:peer-checked:block"></label>
+
 	<nav class="collapse-title navbar">
 		<div class="navbar-start">
 			<label for="navbar-1-toggle" class="btn btn-ghost lg:hidden">

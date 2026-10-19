@@ -113,6 +113,9 @@ importers:
       pg:
         specifier: ^8.23.1
         version: 8.23.1
+      svelte-splitpanes:
+        specifier: ^8.0.12
+        version: 8.0.12(svelte@5.57.2(@typescript-eslint/types@8.71.1))
       tsoa:
         specifier: 7.0.0-alpha.0
         version: 7.0.0-alpha.0
@@ -3608,6 +3611,11 @@ packages:
     peerDependenciesMeta:
       svelte:
         optional: true
+
+  svelte-splitpanes@8.0.12:
+    resolution: {integrity: sha512-HJ07HgbtY0Q/35TEuJquGy47dtgCVavV7ay9r1FhWRx3boyUs3RpeiHlwMKliznCKy2ZotNeT+8GG+mIoNjgRA==}
+    peerDependencies:
+      svelte: ^5.43.0
 
   svelte@5.57.2:
     resolution: {integrity: sha512-1YiPCAXT0Ct6g1vOMmSLa0Nsc3QRMvtDF32ihgglGVrugIuIK38RyDiFNXVDhtQ81TJjSO57NdMw6DyYLqSGDQ==}
@@ -7208,6 +7216,10 @@ snapshots:
       postcss-selector-parser: 7.1.6
       semver: 7.8.5
     optionalDependencies:
+      svelte: 5.57.2(@typescript-eslint/types@8.71.1)
+
+  svelte-splitpanes@8.0.12(svelte@5.57.2(@typescript-eslint/types@8.71.1)):
+    dependencies:
       svelte: 5.57.2(@typescript-eslint/types@8.71.1)
 
   svelte@5.57.2(@typescript-eslint/types@8.71.1):
