@@ -189,6 +189,7 @@ export type ProjectWhereInput = {
 	creator?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
 	timelines?: Prisma.TimelineListRelationFilter;
 	organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>;
+	categories?: Prisma.CategoryListRelationFilter;
 };
 
 export type ProjectOrderByWithRelationInput = {
@@ -201,6 +202,7 @@ export type ProjectOrderByWithRelationInput = {
 	creator?: Prisma.UserOrderByWithRelationInput;
 	timelines?: Prisma.TimelineOrderByRelationAggregateInput;
 	organization?: Prisma.OrganizationOrderByWithRelationInput;
+	categories?: Prisma.CategoryOrderByRelationAggregateInput;
 };
 
 export type ProjectWhereUniqueInput = Prisma.AtLeast<
@@ -220,6 +222,7 @@ export type ProjectWhereUniqueInput = Prisma.AtLeast<
 			Prisma.OrganizationScalarRelationFilter,
 			Prisma.OrganizationWhereInput
 		>;
+		categories?: Prisma.CategoryListRelationFilter;
 	},
 	"id"
 >;
@@ -258,6 +261,7 @@ export type ProjectCreateInput = {
 	creator: Prisma.UserCreateNestedOneWithoutCreatedProjectsInput;
 	timelines?: Prisma.TimelineCreateNestedManyWithoutProjectInput;
 	organization: Prisma.OrganizationCreateNestedOneWithoutProjectsInput;
+	categories?: Prisma.CategoryCreateNestedManyWithoutProjectInput;
 };
 
 export type ProjectUncheckedCreateInput = {
@@ -268,6 +272,7 @@ export type ProjectUncheckedCreateInput = {
 	creatorId: string;
 	organizationId: string;
 	timelines?: Prisma.TimelineUncheckedCreateNestedManyWithoutProjectInput;
+	categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutProjectInput;
 };
 
 export type ProjectUpdateInput = {
@@ -278,6 +283,7 @@ export type ProjectUpdateInput = {
 	creator?: Prisma.UserUpdateOneRequiredWithoutCreatedProjectsNestedInput;
 	timelines?: Prisma.TimelineUpdateManyWithoutProjectNestedInput;
 	organization?: Prisma.OrganizationUpdateOneRequiredWithoutProjectsNestedInput;
+	categories?: Prisma.CategoryUpdateManyWithoutProjectNestedInput;
 };
 
 export type ProjectUncheckedUpdateInput = {
@@ -288,6 +294,7 @@ export type ProjectUncheckedUpdateInput = {
 	creatorId?: Prisma.StringFieldUpdateOperationsInput | string;
 	organizationId?: Prisma.StringFieldUpdateOperationsInput | string;
 	timelines?: Prisma.TimelineUncheckedUpdateManyWithoutProjectNestedInput;
+	categories?: Prisma.CategoryUncheckedUpdateManyWithoutProjectNestedInput;
 };
 
 export type ProjectCreateManyInput = {
@@ -325,6 +332,11 @@ export type ProjectOrderByRelationAggregateInput = {
 	_count?: Prisma.SortOrder;
 };
 
+export type ProjectScalarRelationFilter = {
+	is?: Prisma.ProjectWhereInput;
+	isNot?: Prisma.ProjectWhereInput;
+};
+
 export type ProjectCountOrderByAggregateInput = {
 	id?: Prisma.SortOrder;
 	name?: Prisma.SortOrder;
@@ -350,11 +362,6 @@ export type ProjectMinOrderByAggregateInput = {
 	updatedAt?: Prisma.SortOrder;
 	creatorId?: Prisma.SortOrder;
 	organizationId?: Prisma.SortOrder;
-};
-
-export type ProjectScalarRelationFilter = {
-	is?: Prisma.ProjectWhereInput;
-	isNot?: Prisma.ProjectWhereInput;
 };
 
 export type ProjectCreateNestedManyWithoutCreatorInput = {
@@ -441,6 +448,32 @@ export type ProjectUncheckedUpdateManyWithoutCreatorNestedInput = {
 		| Prisma.ProjectUpdateManyWithWhereWithoutCreatorInput
 		| Prisma.ProjectUpdateManyWithWhereWithoutCreatorInput[];
 	deleteMany?: Prisma.ProjectScalarWhereInput | Prisma.ProjectScalarWhereInput[];
+};
+
+export type ProjectCreateNestedOneWithoutCategoriesInput = {
+	create?: Prisma.XOR<
+		Prisma.ProjectCreateWithoutCategoriesInput,
+		Prisma.ProjectUncheckedCreateWithoutCategoriesInput
+	>;
+	connectOrCreate?: Prisma.ProjectCreateOrConnectWithoutCategoriesInput;
+	connect?: Prisma.ProjectWhereUniqueInput;
+};
+
+export type ProjectUpdateOneRequiredWithoutCategoriesNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.ProjectCreateWithoutCategoriesInput,
+		Prisma.ProjectUncheckedCreateWithoutCategoriesInput
+	>;
+	connectOrCreate?: Prisma.ProjectCreateOrConnectWithoutCategoriesInput;
+	upsert?: Prisma.ProjectUpsertWithoutCategoriesInput;
+	connect?: Prisma.ProjectWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.ProjectUpdateToOneWithWhereWithoutCategoriesInput,
+			Prisma.ProjectUpdateWithoutCategoriesInput
+		>,
+		Prisma.ProjectUncheckedUpdateWithoutCategoriesInput
+	>;
 };
 
 export type ProjectCreateNestedManyWithoutOrganizationInput = {
@@ -562,6 +595,7 @@ export type ProjectCreateWithoutCreatorInput = {
 	updatedAt?: Date | string;
 	timelines?: Prisma.TimelineCreateNestedManyWithoutProjectInput;
 	organization: Prisma.OrganizationCreateNestedOneWithoutProjectsInput;
+	categories?: Prisma.CategoryCreateNestedManyWithoutProjectInput;
 };
 
 export type ProjectUncheckedCreateWithoutCreatorInput = {
@@ -571,6 +605,7 @@ export type ProjectUncheckedCreateWithoutCreatorInput = {
 	updatedAt?: Date | string;
 	organizationId: string;
 	timelines?: Prisma.TimelineUncheckedCreateNestedManyWithoutProjectInput;
+	categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutProjectInput;
 };
 
 export type ProjectCreateOrConnectWithoutCreatorInput = {
@@ -626,6 +661,74 @@ export type ProjectScalarWhereInput = {
 	organizationId?: Prisma.StringFilter<"Project"> | string;
 };
 
+export type ProjectCreateWithoutCategoriesInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	creator: Prisma.UserCreateNestedOneWithoutCreatedProjectsInput;
+	timelines?: Prisma.TimelineCreateNestedManyWithoutProjectInput;
+	organization: Prisma.OrganizationCreateNestedOneWithoutProjectsInput;
+};
+
+export type ProjectUncheckedCreateWithoutCategoriesInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	creatorId: string;
+	organizationId: string;
+	timelines?: Prisma.TimelineUncheckedCreateNestedManyWithoutProjectInput;
+};
+
+export type ProjectCreateOrConnectWithoutCategoriesInput = {
+	where: Prisma.ProjectWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.ProjectCreateWithoutCategoriesInput,
+		Prisma.ProjectUncheckedCreateWithoutCategoriesInput
+	>;
+};
+
+export type ProjectUpsertWithoutCategoriesInput = {
+	update: Prisma.XOR<
+		Prisma.ProjectUpdateWithoutCategoriesInput,
+		Prisma.ProjectUncheckedUpdateWithoutCategoriesInput
+	>;
+	create: Prisma.XOR<
+		Prisma.ProjectCreateWithoutCategoriesInput,
+		Prisma.ProjectUncheckedCreateWithoutCategoriesInput
+	>;
+	where?: Prisma.ProjectWhereInput;
+};
+
+export type ProjectUpdateToOneWithWhereWithoutCategoriesInput = {
+	where?: Prisma.ProjectWhereInput;
+	data: Prisma.XOR<
+		Prisma.ProjectUpdateWithoutCategoriesInput,
+		Prisma.ProjectUncheckedUpdateWithoutCategoriesInput
+	>;
+};
+
+export type ProjectUpdateWithoutCategoriesInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	creator?: Prisma.UserUpdateOneRequiredWithoutCreatedProjectsNestedInput;
+	timelines?: Prisma.TimelineUpdateManyWithoutProjectNestedInput;
+	organization?: Prisma.OrganizationUpdateOneRequiredWithoutProjectsNestedInput;
+};
+
+export type ProjectUncheckedUpdateWithoutCategoriesInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	creatorId?: Prisma.StringFieldUpdateOperationsInput | string;
+	organizationId?: Prisma.StringFieldUpdateOperationsInput | string;
+	timelines?: Prisma.TimelineUncheckedUpdateManyWithoutProjectNestedInput;
+};
+
 export type ProjectCreateWithoutOrganizationInput = {
 	id?: string;
 	name: string;
@@ -633,6 +736,7 @@ export type ProjectCreateWithoutOrganizationInput = {
 	updatedAt?: Date | string;
 	creator: Prisma.UserCreateNestedOneWithoutCreatedProjectsInput;
 	timelines?: Prisma.TimelineCreateNestedManyWithoutProjectInput;
+	categories?: Prisma.CategoryCreateNestedManyWithoutProjectInput;
 };
 
 export type ProjectUncheckedCreateWithoutOrganizationInput = {
@@ -642,6 +746,7 @@ export type ProjectUncheckedCreateWithoutOrganizationInput = {
 	updatedAt?: Date | string;
 	creatorId: string;
 	timelines?: Prisma.TimelineUncheckedCreateNestedManyWithoutProjectInput;
+	categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutProjectInput;
 };
 
 export type ProjectCreateOrConnectWithoutOrganizationInput = {
@@ -692,6 +797,7 @@ export type ProjectCreateWithoutTimelinesInput = {
 	updatedAt?: Date | string;
 	creator: Prisma.UserCreateNestedOneWithoutCreatedProjectsInput;
 	organization: Prisma.OrganizationCreateNestedOneWithoutProjectsInput;
+	categories?: Prisma.CategoryCreateNestedManyWithoutProjectInput;
 };
 
 export type ProjectUncheckedCreateWithoutTimelinesInput = {
@@ -701,6 +807,7 @@ export type ProjectUncheckedCreateWithoutTimelinesInput = {
 	updatedAt?: Date | string;
 	creatorId: string;
 	organizationId: string;
+	categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutProjectInput;
 };
 
 export type ProjectCreateOrConnectWithoutTimelinesInput = {
@@ -738,6 +845,7 @@ export type ProjectUpdateWithoutTimelinesInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	creator?: Prisma.UserUpdateOneRequiredWithoutCreatedProjectsNestedInput;
 	organization?: Prisma.OrganizationUpdateOneRequiredWithoutProjectsNestedInput;
+	categories?: Prisma.CategoryUpdateManyWithoutProjectNestedInput;
 };
 
 export type ProjectUncheckedUpdateWithoutTimelinesInput = {
@@ -747,6 +855,7 @@ export type ProjectUncheckedUpdateWithoutTimelinesInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	creatorId?: Prisma.StringFieldUpdateOperationsInput | string;
 	organizationId?: Prisma.StringFieldUpdateOperationsInput | string;
+	categories?: Prisma.CategoryUncheckedUpdateManyWithoutProjectNestedInput;
 };
 
 export type ProjectCreateManyCreatorInput = {
@@ -764,6 +873,7 @@ export type ProjectUpdateWithoutCreatorInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	timelines?: Prisma.TimelineUpdateManyWithoutProjectNestedInput;
 	organization?: Prisma.OrganizationUpdateOneRequiredWithoutProjectsNestedInput;
+	categories?: Prisma.CategoryUpdateManyWithoutProjectNestedInput;
 };
 
 export type ProjectUncheckedUpdateWithoutCreatorInput = {
@@ -773,6 +883,7 @@ export type ProjectUncheckedUpdateWithoutCreatorInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	organizationId?: Prisma.StringFieldUpdateOperationsInput | string;
 	timelines?: Prisma.TimelineUncheckedUpdateManyWithoutProjectNestedInput;
+	categories?: Prisma.CategoryUncheckedUpdateManyWithoutProjectNestedInput;
 };
 
 export type ProjectUncheckedUpdateManyWithoutCreatorInput = {
@@ -798,6 +909,7 @@ export type ProjectUpdateWithoutOrganizationInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	creator?: Prisma.UserUpdateOneRequiredWithoutCreatedProjectsNestedInput;
 	timelines?: Prisma.TimelineUpdateManyWithoutProjectNestedInput;
+	categories?: Prisma.CategoryUpdateManyWithoutProjectNestedInput;
 };
 
 export type ProjectUncheckedUpdateWithoutOrganizationInput = {
@@ -807,6 +919,7 @@ export type ProjectUncheckedUpdateWithoutOrganizationInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	creatorId?: Prisma.StringFieldUpdateOperationsInput | string;
 	timelines?: Prisma.TimelineUncheckedUpdateManyWithoutProjectNestedInput;
+	categories?: Prisma.CategoryUncheckedUpdateManyWithoutProjectNestedInput;
 };
 
 export type ProjectUncheckedUpdateManyWithoutOrganizationInput = {
@@ -823,12 +936,14 @@ export type ProjectUncheckedUpdateManyWithoutOrganizationInput = {
 
 export type ProjectCountOutputType = {
 	timelines: number;
+	categories: number;
 };
 
 export type ProjectCountOutputTypeSelect<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
 	timelines?: boolean | ProjectCountOutputTypeCountTimelinesArgs;
+	categories?: boolean | ProjectCountOutputTypeCountCategoriesArgs;
 };
 
 /**
@@ -852,6 +967,15 @@ export type ProjectCountOutputTypeCountTimelinesArgs<
 	where?: Prisma.TimelineWhereInput;
 };
 
+/**
+ * ProjectCountOutputType without action
+ */
+export type ProjectCountOutputTypeCountCategoriesArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	where?: Prisma.CategoryWhereInput;
+};
+
 export type ProjectSelect<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = runtime.Types.Extensions.GetSelect<
@@ -865,6 +989,7 @@ export type ProjectSelect<
 		creator?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
 		timelines?: boolean | Prisma.Project$timelinesArgs<ExtArgs>;
 		organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>;
+		categories?: boolean | Prisma.Project$categoriesArgs<ExtArgs>;
 		_count?: boolean | Prisma.ProjectCountOutputTypeDefaultArgs<ExtArgs>;
 	},
 	ExtArgs["result"]["project"]
@@ -923,6 +1048,7 @@ export type ProjectInclude<
 	creator?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
 	timelines?: boolean | Prisma.Project$timelinesArgs<ExtArgs>;
 	organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>;
+	categories?: boolean | Prisma.Project$categoriesArgs<ExtArgs>;
 	_count?: boolean | Prisma.ProjectCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type ProjectIncludeCreateManyAndReturn<
@@ -946,6 +1072,7 @@ export type $ProjectPayload<
 		creator: Prisma.$UserPayload<ExtArgs>;
 		timelines: Prisma.$TimelinePayload<ExtArgs>[];
 		organization: Prisma.$OrganizationPayload<ExtArgs>;
+		categories: Prisma.$CategoryPayload<ExtArgs>[];
 	};
 	scalars: runtime.Types.Extensions.GetPayloadResult<
 		{
@@ -1509,6 +1636,17 @@ export interface Prisma__ProjectClient<
 		ExtArgs,
 		GlobalOmitOptions
 	>;
+	categories<T extends Prisma.Project$categoriesArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.Project$categoriesArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		| runtime.Types.Result.GetResult<
+				Prisma.$CategoryPayload<ExtArgs>,
+				T,
+				"findMany",
+				GlobalOmitOptions
+		  >
+		| Null
+	>;
 	/**
 	 * Attaches callbacks for the resolution and/or rejection of the Promise.
 	 * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1997,6 +2135,32 @@ export type Project$timelinesArgs<
 	take?: number;
 	skip?: number;
 	distinct?: Prisma.TimelineScalarFieldEnum | Prisma.TimelineScalarFieldEnum[];
+};
+
+/**
+ * Project.categories
+ */
+export type Project$categoriesArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the Category
+	 */
+	select?: Prisma.CategorySelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the Category
+	 */
+	omit?: Prisma.CategoryOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.CategoryInclude<ExtArgs> | null;
+	where?: Prisma.CategoryWhereInput;
+	orderBy?: Prisma.CategoryOrderByWithRelationInput | Prisma.CategoryOrderByWithRelationInput[];
+	cursor?: Prisma.CategoryWhereUniqueInput;
+	take?: number;
+	skip?: number;
+	distinct?: Prisma.CategoryScalarFieldEnum | Prisma.CategoryScalarFieldEnum[];
 };
 
 /**

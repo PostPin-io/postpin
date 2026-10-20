@@ -192,6 +192,7 @@ export type ExportWhereInput = {
 	timelineSnapshot?: Prisma.JsonNullableFilter<"Export">;
 	timeline?: Prisma.XOR<Prisma.TimelineScalarRelationFilter, Prisma.TimelineWhereInput>;
 	media?: Prisma.XOR<Prisma.MediaNullableScalarRelationFilter, Prisma.MediaWhereInput> | null;
+	markers?: Prisma.MarkerListRelationFilter;
 };
 
 export type ExportOrderByWithRelationInput = {
@@ -204,6 +205,7 @@ export type ExportOrderByWithRelationInput = {
 	timelineSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder;
 	timeline?: Prisma.TimelineOrderByWithRelationInput;
 	media?: Prisma.MediaOrderByWithRelationInput;
+	markers?: Prisma.MarkerOrderByRelationAggregateInput;
 };
 
 export type ExportWhereUniqueInput = Prisma.AtLeast<
@@ -220,6 +222,7 @@ export type ExportWhereUniqueInput = Prisma.AtLeast<
 		timelineSnapshot?: Prisma.JsonNullableFilter<"Export">;
 		timeline?: Prisma.XOR<Prisma.TimelineScalarRelationFilter, Prisma.TimelineWhereInput>;
 		media?: Prisma.XOR<Prisma.MediaNullableScalarRelationFilter, Prisma.MediaWhereInput> | null;
+		markers?: Prisma.MarkerListRelationFilter;
 	},
 	"id" | "mediaId"
 >;
@@ -258,6 +261,7 @@ export type ExportCreateInput = {
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timeline: Prisma.TimelineCreateNestedOneWithoutExportsInput;
 	media?: Prisma.MediaCreateNestedOneWithoutExportInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutExportInput;
 };
 
 export type ExportUncheckedCreateInput = {
@@ -268,6 +272,7 @@ export type ExportUncheckedCreateInput = {
 	timelineId: string;
 	mediaId?: string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutExportInput;
 };
 
 export type ExportUpdateInput = {
@@ -278,6 +283,7 @@ export type ExportUpdateInput = {
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timeline?: Prisma.TimelineUpdateOneRequiredWithoutExportsNestedInput;
 	media?: Prisma.MediaUpdateOneWithoutExportNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutExportNestedInput;
 };
 
 export type ExportUncheckedUpdateInput = {
@@ -288,6 +294,7 @@ export type ExportUncheckedUpdateInput = {
 	timelineId?: Prisma.StringFieldUpdateOperationsInput | string;
 	mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutExportNestedInput;
 };
 
 export type ExportCreateManyInput = {
@@ -316,6 +323,11 @@ export type ExportUncheckedUpdateManyInput = {
 	timelineId?: Prisma.StringFieldUpdateOperationsInput | string;
 	mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+};
+
+export type ExportScalarRelationFilter = {
+	is?: Prisma.ExportWhereInput;
+	isNot?: Prisma.ExportWhereInput;
 };
 
 export type ExportNullableScalarRelationFilter = {
@@ -359,6 +371,32 @@ export type ExportMinOrderByAggregateInput = {
 	updatedAt?: Prisma.SortOrder;
 	timelineId?: Prisma.SortOrder;
 	mediaId?: Prisma.SortOrder;
+};
+
+export type ExportCreateNestedOneWithoutMarkersInput = {
+	create?: Prisma.XOR<
+		Prisma.ExportCreateWithoutMarkersInput,
+		Prisma.ExportUncheckedCreateWithoutMarkersInput
+	>;
+	connectOrCreate?: Prisma.ExportCreateOrConnectWithoutMarkersInput;
+	connect?: Prisma.ExportWhereUniqueInput;
+};
+
+export type ExportUpdateOneRequiredWithoutMarkersNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.ExportCreateWithoutMarkersInput,
+		Prisma.ExportUncheckedCreateWithoutMarkersInput
+	>;
+	connectOrCreate?: Prisma.ExportCreateOrConnectWithoutMarkersInput;
+	upsert?: Prisma.ExportUpsertWithoutMarkersInput;
+	connect?: Prisma.ExportWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.ExportUpdateToOneWithWhereWithoutMarkersInput,
+			Prisma.ExportUpdateWithoutMarkersInput
+		>,
+		Prisma.ExportUncheckedUpdateWithoutMarkersInput
+	>;
 };
 
 export type ExportCreateNestedOneWithoutMediaInput = {
@@ -503,6 +541,74 @@ export type ExportUncheckedUpdateManyWithoutTimelineNestedInput = {
 	deleteMany?: Prisma.ExportScalarWhereInput | Prisma.ExportScalarWhereInput[];
 };
 
+export type ExportCreateWithoutMarkersInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	timeline: Prisma.TimelineCreateNestedOneWithoutExportsInput;
+	media?: Prisma.MediaCreateNestedOneWithoutExportInput;
+};
+
+export type ExportUncheckedCreateWithoutMarkersInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	timelineId: string;
+	mediaId?: string | null;
+	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+};
+
+export type ExportCreateOrConnectWithoutMarkersInput = {
+	where: Prisma.ExportWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.ExportCreateWithoutMarkersInput,
+		Prisma.ExportUncheckedCreateWithoutMarkersInput
+	>;
+};
+
+export type ExportUpsertWithoutMarkersInput = {
+	update: Prisma.XOR<
+		Prisma.ExportUpdateWithoutMarkersInput,
+		Prisma.ExportUncheckedUpdateWithoutMarkersInput
+	>;
+	create: Prisma.XOR<
+		Prisma.ExportCreateWithoutMarkersInput,
+		Prisma.ExportUncheckedCreateWithoutMarkersInput
+	>;
+	where?: Prisma.ExportWhereInput;
+};
+
+export type ExportUpdateToOneWithWhereWithoutMarkersInput = {
+	where?: Prisma.ExportWhereInput;
+	data: Prisma.XOR<
+		Prisma.ExportUpdateWithoutMarkersInput,
+		Prisma.ExportUncheckedUpdateWithoutMarkersInput
+	>;
+};
+
+export type ExportUpdateWithoutMarkersInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	timeline?: Prisma.TimelineUpdateOneRequiredWithoutExportsNestedInput;
+	media?: Prisma.MediaUpdateOneWithoutExportNestedInput;
+};
+
+export type ExportUncheckedUpdateWithoutMarkersInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	timelineId?: Prisma.StringFieldUpdateOperationsInput | string;
+	mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+};
+
 export type ExportCreateWithoutMediaInput = {
 	id?: string;
 	name: string;
@@ -510,6 +616,7 @@ export type ExportCreateWithoutMediaInput = {
 	updatedAt?: Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timeline: Prisma.TimelineCreateNestedOneWithoutExportsInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutExportInput;
 };
 
 export type ExportUncheckedCreateWithoutMediaInput = {
@@ -519,6 +626,7 @@ export type ExportUncheckedCreateWithoutMediaInput = {
 	updatedAt?: Date | string;
 	timelineId: string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutExportInput;
 };
 
 export type ExportCreateOrConnectWithoutMediaInput = {
@@ -556,6 +664,7 @@ export type ExportUpdateWithoutMediaInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timeline?: Prisma.TimelineUpdateOneRequiredWithoutExportsNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutExportNestedInput;
 };
 
 export type ExportUncheckedUpdateWithoutMediaInput = {
@@ -565,6 +674,7 @@ export type ExportUncheckedUpdateWithoutMediaInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	timelineId?: Prisma.StringFieldUpdateOperationsInput | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutExportNestedInput;
 };
 
 export type ExportCreateWithoutTimelineInput = {
@@ -574,6 +684,7 @@ export type ExportCreateWithoutTimelineInput = {
 	updatedAt?: Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	media?: Prisma.MediaCreateNestedOneWithoutExportInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutExportInput;
 };
 
 export type ExportUncheckedCreateWithoutTimelineInput = {
@@ -583,6 +694,7 @@ export type ExportUncheckedCreateWithoutTimelineInput = {
 	updatedAt?: Date | string;
 	mediaId?: string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutExportInput;
 };
 
 export type ExportCreateOrConnectWithoutTimelineInput = {
@@ -655,6 +767,7 @@ export type ExportUpdateWithoutTimelineInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	media?: Prisma.MediaUpdateOneWithoutExportNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutExportNestedInput;
 };
 
 export type ExportUncheckedUpdateWithoutTimelineInput = {
@@ -664,6 +777,7 @@ export type ExportUncheckedUpdateWithoutTimelineInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutExportNestedInput;
 };
 
 export type ExportUncheckedUpdateManyWithoutTimelineInput = {
@@ -673,6 +787,41 @@ export type ExportUncheckedUpdateManyWithoutTimelineInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+};
+
+/**
+ * Count Type ExportCountOutputType
+ */
+
+export type ExportCountOutputType = {
+	markers: number;
+};
+
+export type ExportCountOutputTypeSelect<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	markers?: boolean | ExportCountOutputTypeCountMarkersArgs;
+};
+
+/**
+ * ExportCountOutputType without action
+ */
+export type ExportCountOutputTypeDefaultArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the ExportCountOutputType
+	 */
+	select?: Prisma.ExportCountOutputTypeSelect<ExtArgs> | null;
+};
+
+/**
+ * ExportCountOutputType without action
+ */
+export type ExportCountOutputTypeCountMarkersArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	where?: Prisma.MarkerWhereInput;
 };
 
 export type ExportSelect<
@@ -688,6 +837,8 @@ export type ExportSelect<
 		timelineSnapshot?: boolean;
 		timeline?: boolean | Prisma.TimelineDefaultArgs<ExtArgs>;
 		media?: boolean | Prisma.Export$mediaArgs<ExtArgs>;
+		markers?: boolean | Prisma.Export$markersArgs<ExtArgs>;
+		_count?: boolean | Prisma.ExportCountOutputTypeDefaultArgs<ExtArgs>;
 	},
 	ExtArgs["result"]["export"]
 >;
@@ -747,6 +898,8 @@ export type ExportInclude<
 > = {
 	timeline?: boolean | Prisma.TimelineDefaultArgs<ExtArgs>;
 	media?: boolean | Prisma.Export$mediaArgs<ExtArgs>;
+	markers?: boolean | Prisma.Export$markersArgs<ExtArgs>;
+	_count?: boolean | Prisma.ExportCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type ExportIncludeCreateManyAndReturn<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
@@ -768,6 +921,7 @@ export type $ExportPayload<
 	objects: {
 		timeline: Prisma.$TimelinePayload<ExtArgs>;
 		media: Prisma.$MediaPayload<ExtArgs> | null;
+		markers: Prisma.$MarkerPayload<ExtArgs>[];
 	};
 	scalars: runtime.Types.Extensions.GetPayloadResult<
 		{
@@ -1315,6 +1469,17 @@ export interface Prisma__ExportClient<
 		ExtArgs,
 		GlobalOmitOptions
 	>;
+	markers<T extends Prisma.Export$markersArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.Export$markersArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		| runtime.Types.Result.GetResult<
+				Prisma.$MarkerPayload<ExtArgs>,
+				T,
+				"findMany",
+				GlobalOmitOptions
+		  >
+		| Null
+	>;
 	/**
 	 * Attaches callbacks for the resolution and/or rejection of the Promise.
 	 * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1799,6 +1964,32 @@ export type Export$mediaArgs<
 	 */
 	include?: Prisma.MediaInclude<ExtArgs> | null;
 	where?: Prisma.MediaWhereInput;
+};
+
+/**
+ * Export.markers
+ */
+export type Export$markersArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the Marker
+	 */
+	select?: Prisma.MarkerSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the Marker
+	 */
+	omit?: Prisma.MarkerOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.MarkerInclude<ExtArgs> | null;
+	where?: Prisma.MarkerWhereInput;
+	orderBy?: Prisma.MarkerOrderByWithRelationInput | Prisma.MarkerOrderByWithRelationInput[];
+	cursor?: Prisma.MarkerWhereUniqueInput;
+	take?: number;
+	skip?: number;
+	distinct?: Prisma.MarkerScalarFieldEnum | Prisma.MarkerScalarFieldEnum[];
 };
 
 /**

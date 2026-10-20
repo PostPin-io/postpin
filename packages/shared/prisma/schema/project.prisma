@@ -8,6 +8,7 @@ model Project {
   timelines      Timeline[]
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   organizationId String
+  categories     Category[]
 
   @@index([creatorId])
   @@map("project")

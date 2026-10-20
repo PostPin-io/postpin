@@ -65,6 +65,21 @@ export type Account = Prisma.AccountModel;
  */
 export type Verification = Prisma.VerificationModel;
 /**
+ * Model Marker
+ *
+ */
+export type Marker = Prisma.MarkerModel;
+/**
+ * Model Category
+ *
+ */
+export type Category = Prisma.CategoryModel;
+/**
+ * Model Response
+ *
+ */
+export type Response = Prisma.ResponseModel;
+/**
  * Model Media
  *
  */

@@ -52,6 +52,9 @@ export const ModelName = {
 	Session: "Session",
 	Account: "Account",
 	Verification: "Verification",
+	Marker: "Marker",
+	Category: "Category",
+	Response: "Response",
 	Media: "Media",
 	MediaFile: "MediaFile",
 	Thumbnail: "Thumbnail",
@@ -138,6 +141,45 @@ export const VerificationScalarFieldEnum = {
 
 export type VerificationScalarFieldEnum =
 	(typeof VerificationScalarFieldEnum)[keyof typeof VerificationScalarFieldEnum];
+
+export const MarkerScalarFieldEnum = {
+	id: "id",
+	name: "name",
+	description: "description",
+	frame: "frame",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
+	exportId: "exportId",
+	categoryId: "categoryId",
+	authorId: "authorId",
+} as const;
+
+export type MarkerScalarFieldEnum =
+	(typeof MarkerScalarFieldEnum)[keyof typeof MarkerScalarFieldEnum];
+
+export const CategoryScalarFieldEnum = {
+	id: "id",
+	name: "name",
+	color: "color",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
+	projectId: "projectId",
+} as const;
+
+export type CategoryScalarFieldEnum =
+	(typeof CategoryScalarFieldEnum)[keyof typeof CategoryScalarFieldEnum];
+
+export const ResponseScalarFieldEnum = {
+	markerId: "markerId",
+	id: "id",
+	content: "content",
+	authorId: "authorId",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
+} as const;
+
+export type ResponseScalarFieldEnum =
+	(typeof ResponseScalarFieldEnum)[keyof typeof ResponseScalarFieldEnum];
 
 export const MediaScalarFieldEnum = {
 	id: "id",

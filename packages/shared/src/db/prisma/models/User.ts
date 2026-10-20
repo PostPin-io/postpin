@@ -211,6 +211,8 @@ export type UserWhereInput = {
 		Prisma.OrganizationNullableScalarRelationFilter,
 		Prisma.OrganizationWhereInput
 	> | null;
+	markers?: Prisma.MarkerListRelationFilter;
+	responses?: Prisma.ResponseListRelationFilter;
 };
 
 export type UserOrderByWithRelationInput = {
@@ -228,6 +230,8 @@ export type UserOrderByWithRelationInput = {
 	memberships?: Prisma.MemberOrderByRelationAggregateInput;
 	invitations?: Prisma.InvitationOrderByRelationAggregateInput;
 	lastActiveOrganization?: Prisma.OrganizationOrderByWithRelationInput;
+	markers?: Prisma.MarkerOrderByRelationAggregateInput;
+	responses?: Prisma.ResponseOrderByRelationAggregateInput;
 };
 
 export type UserWhereUniqueInput = Prisma.AtLeast<
@@ -252,6 +256,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
 			Prisma.OrganizationNullableScalarRelationFilter,
 			Prisma.OrganizationWhereInput
 		> | null;
+		markers?: Prisma.MarkerListRelationFilter;
+		responses?: Prisma.ResponseListRelationFilter;
 	},
 	"id" | "email"
 >;
@@ -298,6 +304,8 @@ export type UserCreateInput = {
 	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationCreateNestedManyWithoutUserInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 };
 
 export type UserUncheckedCreateInput = {
@@ -314,6 +322,8 @@ export type UserUncheckedCreateInput = {
 	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutUserInput;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 };
 
 export type UserUpdateInput = {
@@ -330,6 +340,8 @@ export type UserUpdateInput = {
 	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUpdateManyWithoutUserNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 };
 
 export type UserUncheckedUpdateInput = {
@@ -346,6 +358,8 @@ export type UserUncheckedUpdateInput = {
 	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutUserNestedInput;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 };
 
 export type UserCreateManyInput = {
@@ -493,6 +507,58 @@ export type UserUpdateOneRequiredWithoutAccountsNestedInput = {
 			Prisma.UserUpdateWithoutAccountsInput
 		>,
 		Prisma.UserUncheckedUpdateWithoutAccountsInput
+	>;
+};
+
+export type UserCreateNestedOneWithoutMarkersInput = {
+	create?: Prisma.XOR<
+		Prisma.UserCreateWithoutMarkersInput,
+		Prisma.UserUncheckedCreateWithoutMarkersInput
+	>;
+	connectOrCreate?: Prisma.UserCreateOrConnectWithoutMarkersInput;
+	connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneRequiredWithoutMarkersNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.UserCreateWithoutMarkersInput,
+		Prisma.UserUncheckedCreateWithoutMarkersInput
+	>;
+	connectOrCreate?: Prisma.UserCreateOrConnectWithoutMarkersInput;
+	upsert?: Prisma.UserUpsertWithoutMarkersInput;
+	connect?: Prisma.UserWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.UserUpdateToOneWithWhereWithoutMarkersInput,
+			Prisma.UserUpdateWithoutMarkersInput
+		>,
+		Prisma.UserUncheckedUpdateWithoutMarkersInput
+	>;
+};
+
+export type UserCreateNestedOneWithoutResponsesInput = {
+	create?: Prisma.XOR<
+		Prisma.UserCreateWithoutResponsesInput,
+		Prisma.UserUncheckedCreateWithoutResponsesInput
+	>;
+	connectOrCreate?: Prisma.UserCreateOrConnectWithoutResponsesInput;
+	connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneRequiredWithoutResponsesNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.UserCreateWithoutResponsesInput,
+		Prisma.UserUncheckedCreateWithoutResponsesInput
+	>;
+	connectOrCreate?: Prisma.UserCreateOrConnectWithoutResponsesInput;
+	upsert?: Prisma.UserUpsertWithoutResponsesInput;
+	connect?: Prisma.UserWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.UserUpdateToOneWithWhereWithoutResponsesInput,
+			Prisma.UserUpdateWithoutResponsesInput
+		>,
+		Prisma.UserUncheckedUpdateWithoutResponsesInput
 	>;
 };
 
@@ -673,6 +739,8 @@ export type UserCreateWithoutSessionsInput = {
 	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationCreateNestedManyWithoutUserInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 };
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -688,6 +756,8 @@ export type UserUncheckedCreateWithoutSessionsInput = {
 	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutUserInput;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 };
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -731,6 +801,8 @@ export type UserUpdateWithoutSessionsInput = {
 	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUpdateManyWithoutUserNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -746,6 +818,8 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
 	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutUserNestedInput;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 };
 
 export type UserCreateWithoutAccountsInput = {
@@ -761,6 +835,8 @@ export type UserCreateWithoutAccountsInput = {
 	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationCreateNestedManyWithoutUserInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 };
 
 export type UserUncheckedCreateWithoutAccountsInput = {
@@ -776,6 +852,8 @@ export type UserUncheckedCreateWithoutAccountsInput = {
 	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutUserInput;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 };
 
 export type UserCreateOrConnectWithoutAccountsInput = {
@@ -819,6 +897,8 @@ export type UserUpdateWithoutAccountsInput = {
 	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUpdateManyWithoutUserNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -834,6 +914,200 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
 	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutUserNestedInput;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
+};
+
+export type UserCreateWithoutMarkersInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	email: string;
+	emailVerified?: boolean;
+	image?: string | null;
+	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
+	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
+	createdProjects?: Prisma.ProjectCreateNestedManyWithoutCreatorInput;
+	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
+	invitations?: Prisma.InvitationCreateNestedManyWithoutUserInput;
+	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
+	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
+};
+
+export type UserUncheckedCreateWithoutMarkersInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	email: string;
+	emailVerified?: boolean;
+	image?: string | null;
+	lastActiveOrganizationId?: string | null;
+	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
+	accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput;
+	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
+	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
+	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutUserInput;
+	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
+};
+
+export type UserCreateOrConnectWithoutMarkersInput = {
+	where: Prisma.UserWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.UserCreateWithoutMarkersInput,
+		Prisma.UserUncheckedCreateWithoutMarkersInput
+	>;
+};
+
+export type UserUpsertWithoutMarkersInput = {
+	update: Prisma.XOR<
+		Prisma.UserUpdateWithoutMarkersInput,
+		Prisma.UserUncheckedUpdateWithoutMarkersInput
+	>;
+	create: Prisma.XOR<
+		Prisma.UserCreateWithoutMarkersInput,
+		Prisma.UserUncheckedCreateWithoutMarkersInput
+	>;
+	where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutMarkersInput = {
+	where?: Prisma.UserWhereInput;
+	data: Prisma.XOR<
+		Prisma.UserUpdateWithoutMarkersInput,
+		Prisma.UserUncheckedUpdateWithoutMarkersInput
+	>;
+};
+
+export type UserUpdateWithoutMarkersInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	email?: Prisma.StringFieldUpdateOperationsInput | string;
+	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
+	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
+	createdProjects?: Prisma.ProjectUpdateManyWithoutCreatorNestedInput;
+	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
+	invitations?: Prisma.InvitationUpdateManyWithoutUserNestedInput;
+	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
+	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutMarkersInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	email?: Prisma.StringFieldUpdateOperationsInput | string;
+	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
+	accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput;
+	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
+	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
+	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutUserNestedInput;
+	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
+};
+
+export type UserCreateWithoutResponsesInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	email: string;
+	emailVerified?: boolean;
+	image?: string | null;
+	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
+	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
+	createdProjects?: Prisma.ProjectCreateNestedManyWithoutCreatorInput;
+	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
+	invitations?: Prisma.InvitationCreateNestedManyWithoutUserInput;
+	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+};
+
+export type UserUncheckedCreateWithoutResponsesInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	email: string;
+	emailVerified?: boolean;
+	image?: string | null;
+	lastActiveOrganizationId?: string | null;
+	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
+	accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput;
+	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
+	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
+	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutUserInput;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+};
+
+export type UserCreateOrConnectWithoutResponsesInput = {
+	where: Prisma.UserWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.UserCreateWithoutResponsesInput,
+		Prisma.UserUncheckedCreateWithoutResponsesInput
+	>;
+};
+
+export type UserUpsertWithoutResponsesInput = {
+	update: Prisma.XOR<
+		Prisma.UserUpdateWithoutResponsesInput,
+		Prisma.UserUncheckedUpdateWithoutResponsesInput
+	>;
+	create: Prisma.XOR<
+		Prisma.UserCreateWithoutResponsesInput,
+		Prisma.UserUncheckedCreateWithoutResponsesInput
+	>;
+	where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutResponsesInput = {
+	where?: Prisma.UserWhereInput;
+	data: Prisma.XOR<
+		Prisma.UserUpdateWithoutResponsesInput,
+		Prisma.UserUncheckedUpdateWithoutResponsesInput
+	>;
+};
+
+export type UserUpdateWithoutResponsesInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	email?: Prisma.StringFieldUpdateOperationsInput | string;
+	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
+	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
+	createdProjects?: Prisma.ProjectUpdateManyWithoutCreatorNestedInput;
+	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
+	invitations?: Prisma.InvitationUpdateManyWithoutUserNestedInput;
+	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutResponsesInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	email?: Prisma.StringFieldUpdateOperationsInput | string;
+	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
+	accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput;
+	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
+	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
+	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutUserNestedInput;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 };
 
 export type UserCreateWithoutLastActiveOrganizationInput = {
@@ -849,6 +1123,8 @@ export type UserCreateWithoutLastActiveOrganizationInput = {
 	createdProjects?: Prisma.ProjectCreateNestedManyWithoutCreatorInput;
 	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationCreateNestedManyWithoutUserInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 };
 
 export type UserUncheckedCreateWithoutLastActiveOrganizationInput = {
@@ -864,6 +1140,8 @@ export type UserUncheckedCreateWithoutLastActiveOrganizationInput = {
 	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutUserInput;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 };
 
 export type UserCreateOrConnectWithoutLastActiveOrganizationInput = {
@@ -936,6 +1214,8 @@ export type UserCreateWithoutMembershipsInput = {
 	createdProjects?: Prisma.ProjectCreateNestedManyWithoutCreatorInput;
 	invitations?: Prisma.InvitationCreateNestedManyWithoutUserInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 };
 
 export type UserUncheckedCreateWithoutMembershipsInput = {
@@ -951,6 +1231,8 @@ export type UserUncheckedCreateWithoutMembershipsInput = {
 	accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput;
 	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutUserInput;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 };
 
 export type UserCreateOrConnectWithoutMembershipsInput = {
@@ -994,6 +1276,8 @@ export type UserUpdateWithoutMembershipsInput = {
 	createdProjects?: Prisma.ProjectUpdateManyWithoutCreatorNestedInput;
 	invitations?: Prisma.InvitationUpdateManyWithoutUserNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutMembershipsInput = {
@@ -1009,6 +1293,8 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
 	accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput;
 	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutUserNestedInput;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 };
 
 export type UserCreateWithoutInvitationsInput = {
@@ -1024,6 +1310,8 @@ export type UserCreateWithoutInvitationsInput = {
 	createdProjects?: Prisma.ProjectCreateNestedManyWithoutCreatorInput;
 	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 };
 
 export type UserUncheckedCreateWithoutInvitationsInput = {
@@ -1039,6 +1327,8 @@ export type UserUncheckedCreateWithoutInvitationsInput = {
 	accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput;
 	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 };
 
 export type UserCreateOrConnectWithoutInvitationsInput = {
@@ -1082,6 +1372,8 @@ export type UserUpdateWithoutInvitationsInput = {
 	createdProjects?: Prisma.ProjectUpdateManyWithoutCreatorNestedInput;
 	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutInvitationsInput = {
@@ -1097,6 +1389,8 @@ export type UserUncheckedUpdateWithoutInvitationsInput = {
 	accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput;
 	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 };
 
 export type UserCreateWithoutCreatedProjectsInput = {
@@ -1112,6 +1406,8 @@ export type UserCreateWithoutCreatedProjectsInput = {
 	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationCreateNestedManyWithoutUserInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 };
 
 export type UserUncheckedCreateWithoutCreatedProjectsInput = {
@@ -1127,6 +1423,8 @@ export type UserUncheckedCreateWithoutCreatedProjectsInput = {
 	accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput;
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutUserInput;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 };
 
 export type UserCreateOrConnectWithoutCreatedProjectsInput = {
@@ -1170,6 +1468,8 @@ export type UserUpdateWithoutCreatedProjectsInput = {
 	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUpdateManyWithoutUserNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutCreatedProjectsInput = {
@@ -1185,6 +1485,8 @@ export type UserUncheckedUpdateWithoutCreatedProjectsInput = {
 	accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput;
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutUserNestedInput;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 };
 
 export type UserCreateManyLastActiveOrganizationInput = {
@@ -1210,6 +1512,8 @@ export type UserUpdateWithoutLastActiveOrganizationInput = {
 	createdProjects?: Prisma.ProjectUpdateManyWithoutCreatorNestedInput;
 	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUpdateManyWithoutUserNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutLastActiveOrganizationInput = {
@@ -1225,6 +1529,8 @@ export type UserUncheckedUpdateWithoutLastActiveOrganizationInput = {
 	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutUserNestedInput;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 };
 
 export type UserUncheckedUpdateManyWithoutLastActiveOrganizationInput = {
@@ -1247,6 +1553,8 @@ export type UserCountOutputType = {
 	createdProjects: number;
 	memberships: number;
 	invitations: number;
+	markers: number;
+	responses: number;
 };
 
 export type UserCountOutputTypeSelect<
@@ -1257,6 +1565,8 @@ export type UserCountOutputTypeSelect<
 	createdProjects?: boolean | UserCountOutputTypeCountCreatedProjectsArgs;
 	memberships?: boolean | UserCountOutputTypeCountMembershipsArgs;
 	invitations?: boolean | UserCountOutputTypeCountInvitationsArgs;
+	markers?: boolean | UserCountOutputTypeCountMarkersArgs;
+	responses?: boolean | UserCountOutputTypeCountResponsesArgs;
 };
 
 /**
@@ -1316,6 +1626,24 @@ export type UserCountOutputTypeCountInvitationsArgs<
 	where?: Prisma.InvitationWhereInput;
 };
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountMarkersArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	where?: Prisma.MarkerWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountResponsesArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	where?: Prisma.ResponseWhereInput;
+};
+
 export type UserSelect<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = runtime.Types.Extensions.GetSelect<
@@ -1334,6 +1662,8 @@ export type UserSelect<
 		memberships?: boolean | Prisma.User$membershipsArgs<ExtArgs>;
 		invitations?: boolean | Prisma.User$invitationsArgs<ExtArgs>;
 		lastActiveOrganization?: boolean | Prisma.User$lastActiveOrganizationArgs<ExtArgs>;
+		markers?: boolean | Prisma.User$markersArgs<ExtArgs>;
+		responses?: boolean | Prisma.User$responsesArgs<ExtArgs>;
 		_count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
 	},
 	ExtArgs["result"]["user"]
@@ -1406,6 +1736,8 @@ export type UserInclude<
 	memberships?: boolean | Prisma.User$membershipsArgs<ExtArgs>;
 	invitations?: boolean | Prisma.User$invitationsArgs<ExtArgs>;
 	lastActiveOrganization?: boolean | Prisma.User$lastActiveOrganizationArgs<ExtArgs>;
+	markers?: boolean | Prisma.User$markersArgs<ExtArgs>;
+	responses?: boolean | Prisma.User$responsesArgs<ExtArgs>;
 	_count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type UserIncludeCreateManyAndReturn<
@@ -1430,6 +1762,8 @@ export type $UserPayload<
 		memberships: Prisma.$MemberPayload<ExtArgs>[];
 		invitations: Prisma.$InvitationPayload<ExtArgs>[];
 		lastActiveOrganization: Prisma.$OrganizationPayload<ExtArgs> | null;
+		markers: Prisma.$MarkerPayload<ExtArgs>[];
+		responses: Prisma.$ResponsePayload<ExtArgs>[];
 	};
 	scalars: runtime.Types.Extensions.GetPayloadResult<
 		{
@@ -2018,6 +2352,28 @@ export interface Prisma__UserClient<
 		null,
 		ExtArgs,
 		GlobalOmitOptions
+	>;
+	markers<T extends Prisma.User$markersArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.User$markersArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		| runtime.Types.Result.GetResult<
+				Prisma.$MarkerPayload<ExtArgs>,
+				T,
+				"findMany",
+				GlobalOmitOptions
+		  >
+		| Null
+	>;
+	responses<T extends Prisma.User$responsesArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.User$responsesArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		| runtime.Types.Result.GetResult<
+				Prisma.$ResponsePayload<ExtArgs>,
+				T,
+				"findMany",
+				GlobalOmitOptions
+		  >
+		| Null
 	>;
 	/**
 	 * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -2634,6 +2990,58 @@ export type User$lastActiveOrganizationArgs<
 	 */
 	include?: Prisma.OrganizationInclude<ExtArgs> | null;
 	where?: Prisma.OrganizationWhereInput;
+};
+
+/**
+ * User.markers
+ */
+export type User$markersArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the Marker
+	 */
+	select?: Prisma.MarkerSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the Marker
+	 */
+	omit?: Prisma.MarkerOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.MarkerInclude<ExtArgs> | null;
+	where?: Prisma.MarkerWhereInput;
+	orderBy?: Prisma.MarkerOrderByWithRelationInput | Prisma.MarkerOrderByWithRelationInput[];
+	cursor?: Prisma.MarkerWhereUniqueInput;
+	take?: number;
+	skip?: number;
+	distinct?: Prisma.MarkerScalarFieldEnum | Prisma.MarkerScalarFieldEnum[];
+};
+
+/**
+ * User.responses
+ */
+export type User$responsesArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the Response
+	 */
+	select?: Prisma.ResponseSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the Response
+	 */
+	omit?: Prisma.ResponseOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.ResponseInclude<ExtArgs> | null;
+	where?: Prisma.ResponseWhereInput;
+	orderBy?: Prisma.ResponseOrderByWithRelationInput | Prisma.ResponseOrderByWithRelationInput[];
+	cursor?: Prisma.ResponseWhereUniqueInput;
+	take?: number;
+	skip?: number;
+	distinct?: Prisma.ResponseScalarFieldEnum | Prisma.ResponseScalarFieldEnum[];
 };
 
 /**
