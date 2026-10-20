@@ -5,8 +5,9 @@
 
 	import Header from "#lib/components/Header.svelte";
 	import MarkerPanel from "#lib/components/review/MarkerPanel.svelte";
-
 	import { Pane, Splitpanes } from "svelte-splitpanes";
+	import Timeline from "./Timeline.svelte";
+	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 
 	const STORAGE_KEY = "postpin:export-panes";
 
@@ -211,6 +212,10 @@
 			cancelled = true;
 		};
 	});
+
+	let videoPosition = $state(0);
+	let videoPaused = $state(true);
+	let videoPlaybackRate = $state(1);
 </script>
 
 {#if isLoading}
@@ -279,6 +284,9 @@
 									<div class="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
 										<!-- svelte-ignore a11y_media_has_caption -->
 										<video
+											bind:currentTime={videoPosition}
+											bind:paused={videoPaused}
+											bind:playbackRate={videoPlaybackRate}
 											src={originalUrl}
 											poster={thumbnailUrl}
 											controls
@@ -292,7 +300,16 @@
 
 					<!-- Timeline panel -->
 					{#if isTimelineVisible}
-						<Pane size={layout.left[1]} minSize={10} class="overflow-auto">
+						<Pane size={layout.left[1]} minSize={10} class="overflow-hidden">
+							{#if exportQuery.current?.timelineSnapshot}
+								<Timeline
+									snapshot={exportQuery.current!.timelineSnapshot as TimelineSnapshot}
+									bind:videoPositionSeconds={videoPosition}
+									bind:paused={videoPaused}
+									bind:playbackRate={videoPlaybackRate}
+								/>
+							{/if}
+
 							<!-- Timeline content -->
 						</Pane>
 					{/if}

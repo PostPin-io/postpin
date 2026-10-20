@@ -76,19 +76,233 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"UploadUrlResponse": {
+			"MultipartUploadPartUrl": {
 				"properties": {
-					"mediaId": {
-						"type": "string"
+					"partNumber": {
+						"type": "number",
+						"format": "double"
 					},
-					"uploadUrl": {
+					"url": {
 						"type": "string",
-						"description": "Presigned S3 PUT URL for the export's original file, valid for one hour."
+						"description": "Presigned S3 PUT URL for this part, valid for one day."
 					}
 				},
-				"required": ["mediaId", "uploadUrl"],
+				"required": ["partNumber", "url"],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"InitUploadResponse": {
+				"properties": {
+					"uploadId": {
+						"type": "string"
+					},
+					"partSize": {
+						"type": "number",
+						"format": "double",
+						"description": "Size of every part except the last one, in bytes."
+					},
+					"parts": {
+						"items": {
+							"$ref": "#/components/schemas/MultipartUploadPartUrl"
+						},
+						"type": "array"
+					},
+					"mediaId": {
+						"type": "string"
+					}
+				},
+				"required": ["uploadId", "partSize", "parts", "mediaId"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UploadedPart": {
+				"properties": {
+					"partNumber": {
+						"type": "number",
+						"format": "double"
+					},
+					"etag": {
+						"type": "string",
+						"description": "ETag response header of the part's PUT request"
+					}
+				},
+				"required": ["partNumber", "etag"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TrackType": {
+				"type": "string",
+				"enum": ["video", "audio"]
+			},
+			"Record_string.unknown_": {
+				"properties": {},
+				"additionalProperties": {},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"Clip": {
+				"properties": {
+					"metadata": {
+						"$ref": "#/components/schemas/Record_string.unknown_"
+					},
+					"speed": {
+						"type": "number",
+						"format": "double",
+						"description": "Constant playback speed, 1 is normal speed. Speed ramps aren't supported."
+					},
+					"sourceStartFrameIndex": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "null without media"
+					},
+					"durationFrameCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"startFrameIndex": {
+						"type": "number",
+						"format": "double"
+					},
+					"mediaId": {
+						"type": "string",
+						"nullable": true,
+						"description": "null for generators and titles"
+					},
+					"name": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"metadata",
+					"speed",
+					"sourceStartFrameIndex",
+					"durationFrameCount",
+					"startFrameIndex",
+					"mediaId",
+					"name",
+					"id"
+				],
+				"type": "object"
+			},
+			"Track": {
+				"properties": {
+					"clips": {
+						"items": {
+							"$ref": "#/components/schemas/Clip"
+						},
+						"type": "array",
+						"description": "Disabled clips are left out"
+					},
+					"name": {
+						"type": "string"
+					},
+					"type": {
+						"$ref": "#/components/schemas/TrackType"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": ["clips", "name", "type", "id"],
+				"type": "object"
+			},
+			"FrameRate": {
+				"properties": {
+					"dropFrame": {
+						"type": "boolean"
+					},
+					"fpsDenominator": {
+						"type": "number",
+						"format": "double"
+					},
+					"fpsNumerator": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": ["dropFrame", "fpsDenominator", "fpsNumerator"],
+				"type": "object"
+			},
+			"MediaItem": {
+				"properties": {
+					"metadata": {
+						"$ref": "#/components/schemas/Record_string.unknown_"
+					},
+					"startTimecode": {
+						"type": "string"
+					},
+					"frameRate": {
+						"$ref": "#/components/schemas/FrameRate",
+						"description": "Source frame indices count in this rate"
+					},
+					"filePath": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"enum": ["video", "audio"]
+					},
+					"name": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": ["metadata", "startTimecode", "frameRate", "filePath", "type", "name", "id"],
+				"type": "object"
+			},
+			"TimelineSnapshot": {
+				"properties": {
+					"metadata": {
+						"$ref": "#/components/schemas/Record_string.unknown_"
+					},
+					"durationFrameCount": {
+						"type": "number",
+						"format": "double",
+						"description": "Up to the end of the last clip"
+					},
+					"startFrameIndex": {
+						"type": "number",
+						"format": "double"
+					},
+					"frameRate": {
+						"$ref": "#/components/schemas/FrameRate"
+					},
+					"mediaItems": {
+						"items": {
+							"$ref": "#/components/schemas/MediaItem"
+						},
+						"type": "array"
+					},
+					"tracks": {
+						"items": {
+							"$ref": "#/components/schemas/Track"
+						},
+						"type": "array"
+					},
+					"name": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"metadata",
+					"durationFrameCount",
+					"startFrameIndex",
+					"frameRate",
+					"mediaItems",
+					"tracks",
+					"name",
+					"id"
+				],
+				"type": "object"
 			}
 		},
 		"securitySchemes": {}
@@ -124,7 +338,9 @@
 						"description": "Ok",
 						"content": {
 							"application/json": {
-								"schema": {}
+								"schema": {
+									"type": "string"
+								}
 							}
 						}
 					}
@@ -240,10 +456,13 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UploadUrlResponse"
+									"$ref": "#/components/schemas/InitUploadResponse"
 								}
 							}
 						}
+					},
+					"400": {
+						"description": "Invalid file size"
 					},
 					"404": {
 						"description": "Export not found"
@@ -252,6 +471,7 @@
 						"description": "Export media was already uploaded"
 					}
 				},
+				"description": "Starts a multipart upload of the export's original file. PUT each part's bytes to its URL,\nkeep the ETag response headers and pass them to complete-upload.",
 				"security": [],
 				"parameters": [
 					{
@@ -278,7 +498,24 @@
 							"type": "string"
 						}
 					}
-				]
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"fileSize": {
+										"type": "number",
+										"format": "double"
+									}
+								},
+								"required": ["fileSize"],
+								"type": "object"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/complete-upload": {
@@ -295,7 +532,7 @@
 						"description": "Upload missing or media already processing"
 					}
 				},
-				"description": "Call after the file was PUT to the upload URL: checks the original exists in storage and\nqueues transcoding, probing and thumbnailing.",
+				"description": "Call after all parts were PUT: assembles the original in storage, stores the timeline\nsnapshot and queues transcoding, probing and thumbnailing.",
 				"security": [],
 				"parameters": [
 					{
@@ -322,7 +559,92 @@
 							"type": "string"
 						}
 					}
-				]
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"timelineSnapshot": {
+										"$ref": "#/components/schemas/TimelineSnapshot"
+									},
+									"parts": {
+										"items": {
+											"$ref": "#/components/schemas/UploadedPart"
+										},
+										"type": "array"
+									},
+									"uploadId": {
+										"type": "string"
+									}
+								},
+								"required": ["timelineSnapshot", "parts", "uploadId"],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/abort-upload": {
+			"post": {
+				"operationId": "AbortUpload",
+				"responses": {
+					"204": {
+						"description": "No content"
+					},
+					"404": {
+						"description": "Export not found"
+					},
+					"409": {
+						"description": "Media already processing"
+					}
+				},
+				"description": "Discards an unfinished multipart upload, so its parts don't linger in storage.",
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "timelineId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "exportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"uploadId": {
+										"type": "string"
+									}
+								},
+								"required": ["uploadId"],
+								"type": "object"
+							}
+						}
+					}
+				}
 			}
 		}
 	},

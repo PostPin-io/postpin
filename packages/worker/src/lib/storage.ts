@@ -1,4 +1,4 @@
-import { createS3Client, getPresignedUrl } from "@postpin/shared/storage";
+import { createS3Client, getPresignedUrl } from "@postpin-io/shared/storage";
 import { env } from "./env.ts";
 
 export const s3Client = createS3Client(env);

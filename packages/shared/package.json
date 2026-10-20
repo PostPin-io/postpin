@@ -1,5 +1,5 @@
 {
-	"name": "@postpin/shared",
+	"name": "@postpin-io/shared",
 	"version": "1.0.0",
 	"private": true,
 	"license": "MIT",
@@ -9,7 +9,8 @@
 		"./queue": "./src/queue/index.ts",
 		"./queue/*": "./src/queue/*.ts",
 		"./storage": "./src/storage/index.ts",
-		"./db": "./src/db/index.ts"
+		"./db": "./src/db/index.ts",
+		"./types/*": "./src/types/*.ts"
 	},
 	"scripts": {
 		"db:generate": "prisma generate --config prisma7.config.ts",

@@ -1,6 +1,6 @@
 import { building } from "$app/env";
 import * as env from "$app/env/private";
-import { getFlowProducer, Queues, type TypedFlowProducer } from "@postpin/shared/queue";
+import { getFlowProducer, Queues, type TypedFlowProducer } from "@postpin-io/shared/queue";
 import { prisma } from "#lib/server/database.ts";
 
 const flowProducer = building ? (null as unknown as TypedFlowProducer) : getFlowProducer(env);

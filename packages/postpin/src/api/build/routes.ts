@@ -53,13 +53,162 @@ const models: TsoaRoute.Models = {
 		additionalProperties: false,
 	},
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-	UploadUrlResponse: {
+	MultipartUploadPartUrl: {
 		dataType: "refObject",
 		properties: {
-			mediaId: { dataType: "string", required: true },
-			uploadUrl: { dataType: "string", required: true },
+			partNumber: { dataType: "double", required: true },
+			url: { dataType: "string", required: true },
 		},
 		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	InitUploadResponse: {
+		dataType: "refObject",
+		properties: {
+			uploadId: { dataType: "string", required: true },
+			partSize: { dataType: "double", required: true },
+			parts: {
+				dataType: "array",
+				array: { dataType: "refObject", ref: "MultipartUploadPartUrl" },
+				required: true,
+			},
+			mediaId: { dataType: "string", required: true },
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	UploadedPart: {
+		dataType: "refObject",
+		properties: {
+			partNumber: { dataType: "double", required: true },
+			etag: { dataType: "string", required: true },
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	TrackType: {
+		dataType: "refAlias",
+		type: {
+			dataType: "union",
+			subSchemas: [
+				{ dataType: "enum", enums: ["video"] },
+				{ dataType: "enum", enums: ["audio"] },
+			],
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	"Record_string.unknown_": {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {},
+			additionalProperties: { dataType: "any" },
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	Clip: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				metadata: { ref: "Record_string.unknown_", required: true },
+				speed: { dataType: "double", required: true },
+				sourceStartFrameIndex: {
+					dataType: "union",
+					subSchemas: [{ dataType: "double" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
+				durationFrameCount: { dataType: "double", required: true },
+				startFrameIndex: { dataType: "double", required: true },
+				mediaId: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
+				name: { dataType: "string", required: true },
+				id: { dataType: "string", required: true },
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	Track: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				clips: { dataType: "array", array: { dataType: "refAlias", ref: "Clip" }, required: true },
+				name: { dataType: "string", required: true },
+				type: { ref: "TrackType", required: true },
+				id: { dataType: "string", required: true },
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	FrameRate: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				dropFrame: { dataType: "boolean", required: true },
+				fpsDenominator: { dataType: "double", required: true },
+				fpsNumerator: { dataType: "double", required: true },
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	MediaItem: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				metadata: { ref: "Record_string.unknown_", required: true },
+				startTimecode: { dataType: "string", required: true },
+				frameRate: { ref: "FrameRate", required: true },
+				filePath: { dataType: "string", required: true },
+				type: {
+					dataType: "union",
+					subSchemas: [
+						{ dataType: "enum", enums: ["video"] },
+						{ dataType: "enum", enums: ["audio"] },
+					],
+					required: true,
+				},
+				name: { dataType: "string", required: true },
+				id: { dataType: "string", required: true },
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	TimelineSnapshot: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				metadata: { ref: "Record_string.unknown_", required: true },
+				durationFrameCount: { dataType: "double", required: true },
+				startFrameIndex: { dataType: "double", required: true },
+				frameRate: { ref: "FrameRate", required: true },
+				mediaItems: {
+					dataType: "array",
+					array: { dataType: "refAlias", ref: "MediaItem" },
+					required: true,
+				},
+				tracks: {
+					dataType: "array",
+					array: { dataType: "refAlias", ref: "Track" },
+					required: true,
+				},
+				name: { dataType: "string", required: true },
+				id: { dataType: "string", required: true },
+			},
+			validators: {},
+		},
 	},
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 };
@@ -325,6 +474,13 @@ export function RegisterRoutes(server: any) {
 		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
 		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
 		exportId: { in: "path", name: "exportId", required: true, dataType: "string" },
+		body: {
+			in: "body",
+			name: "body",
+			required: true,
+			dataType: "nestedObjectLiteral",
+			nestedProperties: { fileSize: { dataType: "double", required: true } },
+		},
 	};
 	server.route({
 		method: "post",
@@ -377,6 +533,21 @@ export function RegisterRoutes(server: any) {
 		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
 		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
 		exportId: { in: "path", name: "exportId", required: true, dataType: "string" },
+		body: {
+			in: "body",
+			name: "body",
+			required: true,
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				timelineSnapshot: { ref: "TimelineSnapshot", required: true },
+				parts: {
+					dataType: "array",
+					array: { dataType: "refObject", ref: "UploadedPart" },
+					required: true,
+				},
+				uploadId: { dataType: "string", required: true },
+			},
+		},
 	};
 	server.route({
 		method: "post",
@@ -416,6 +587,65 @@ export function RegisterRoutes(server: any) {
 
 				return templateService.apiHandler({
 					methodName: "completeUpload",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsExportController_abortUpload: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+		exportId: { in: "path", name: "exportId", required: true, dataType: "string" },
+		body: {
+			in: "body",
+			name: "body",
+			required: true,
+			dataType: "nestedObjectLiteral",
+			nestedProperties: { uploadId: { dataType: "string", required: true } },
+		},
+	};
+	server.route({
+		method: "post",
+		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/abort-upload",
+		options: {
+			pre: [
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController.prototype.abortUpload),
+			],
+			handler: function ExportController_abortUpload(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsExportController_abortUpload,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new ExportController();
+
+				return templateService.apiHandler({
+					methodName: "abortUpload",
 					controller,
 					h,
 					validatedArgs,

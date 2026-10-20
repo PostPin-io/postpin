@@ -27,14 +27,15 @@ model Timeline {
 }
 
 model Export {
-  id         String   @id @default(cuid())
-  name       String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  timeline   Timeline @relation(fields: [timelineId], references: [id], onDelete: Cascade)
-  timelineId String
-  media      Media?   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  mediaId    String?  @unique
+  id               String   @id @default(cuid())
+  name             String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  timeline         Timeline @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+  timelineId       String
+  media            Media?   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId          String?  @unique
+  timelineSnapshot Json?
 
   @@index([timelineId])
   @@map("export")

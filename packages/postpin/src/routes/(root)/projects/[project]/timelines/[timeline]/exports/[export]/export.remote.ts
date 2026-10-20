@@ -5,7 +5,7 @@ import { s3Client } from "#lib/server/storage.ts";
 import { prisma } from "#lib/server/database.ts";
 import { getMediaJobs } from "#lib/server/media.ts";
 import * as v from "valibot";
-import { getPresignedUrl } from "@postpin/shared/storage";
+import { getPresignedUrl } from "@postpin-io/shared/storage";
 
 export const getExport = query(
 	v.object({ projectId: v.string(), timelineId: v.string(), exportId: v.string() }),
