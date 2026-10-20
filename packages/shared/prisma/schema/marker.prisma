@@ -1,0 +1,54 @@
+model Marker {
+  id String @id @default(cuid())
+
+  name        String
+  description String?
+
+  responses Response[]
+
+  frame Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  export     Export   @relation(fields: [exportId], references: [id])
+  exportId   String
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+  author     User     @relation(fields: [authorId], references: [id])
+  authorId   String
+
+  @@index([exportId])
+  @@index([categoryId])
+  @@map("marker")
+}
+
+model Category {
+  id String @id @default(cuid())
+
+  name  String
+  color String
+
+  markers Marker[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("category")
+}
+
+model Response {
+  marker   Marker @relation(fields: [markerId], references: [id])
+  markerId String
+
+  id       String @id @default(cuid())
+  content  String
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([markerId])
+  @@map("response")
+}

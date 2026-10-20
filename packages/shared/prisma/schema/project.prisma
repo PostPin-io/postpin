@@ -36,6 +36,7 @@ model Export {
   media            Media?   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   mediaId          String?  @unique
   timelineSnapshot Json?
+  markers          Marker[]
 
   @@index([timelineId])
   @@map("export")

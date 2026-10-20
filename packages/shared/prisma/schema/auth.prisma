@@ -14,6 +14,8 @@ model User {
 
   lastActiveOrganizationId String?
   lastActiveOrganization   Organization? @relation("LastActiveOrganization", fields: [lastActiveOrganizationId], references: [id], onDelete: SetNull)
+  markers                  Marker[]
+  responses                Response[]
 
   @@unique([email])
   @@map("user")
