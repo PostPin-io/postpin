@@ -26,6 +26,31 @@ export interface UploadProgress {
 	uploadedBytes: number;
 	totalBytes: number;
 }
+export interface Marker {
+	title: string;
+	description: string;
+	frame: number;
+	color: MarkerColor;
+	customData: string;
+}
+export enum MarkerColor {
+	Blue = "Blue",
+	Cyan = "Cyan",
+	Green = "Green",
+	Yellow = "Yellow",
+	Red = "Red",
+	Pink = "Pink",
+	Purple = "Purple",
+	Fuchsia = "Fuchsia",
+	Rose = "Rose",
+	Lavender = "Lavender",
+	Sky = "Sky",
+	Mint = "Mint",
+	Lemon = "Lemon",
+	Sand = "Sand",
+	Cocoa = "Cocoa",
+	Cream = "Cream",
+}
 export interface IMainAPIImpl {
 	getRenderPresets(): Promise<string[]> | string[];
 	renderPreview(targetDirPath: string, targetClipName: string): Promise<string> | string;
@@ -40,6 +65,15 @@ export interface IMainAPIImpl {
 	getLastSettings(): Promise<Settings> | Settings;
 	saveSettings(settings: Settings): Promise<boolean> | boolean;
 	pickOutputDirectory(): Promise<string> | string;
+	getMarkers(): Promise<Marker[]> | Marker[];
+	setMarkers(markers: Marker[]): Promise<boolean> | boolean;
+	setMarker(marker: Marker): Promise<boolean> | boolean;
+	clearMarkers(): Promise<boolean> | boolean;
+	deleteMarker(frame: number): Promise<boolean> | boolean;
+	getTimelineStartFrame(): Promise<number> | number;
+	test(): Promise<boolean> | boolean;
+	getProjectId(): Promise<string> | string;
+	getTimelineId(): Promise<string> | string;
 }
 export interface IMainAPIRenderer {
 	getRenderPresets(): Promise<string[]>;
@@ -55,6 +89,15 @@ export interface IMainAPIRenderer {
 	getLastSettings(): Promise<Settings>;
 	saveSettings(settings: Settings): Promise<boolean>;
 	pickOutputDirectory(): Promise<string>;
+	getMarkers(): Promise<Marker[]>;
+	setMarkers(markers: Marker[]): Promise<boolean>;
+	setMarker(marker: Marker): Promise<boolean>;
+	clearMarkers(): Promise<boolean>;
+	deleteMarker(frame: number): Promise<boolean>;
+	getTimelineStartFrame(): Promise<number>;
+	test(): Promise<boolean>;
+	getProjectId(): Promise<string>;
+	getTimelineId(): Promise<string>;
 	onRenderProgress(fn: (progress: RenderProgress) => void): () => void;
 	onUploadProgress(fn: (progress: UploadProgress) => void): () => void;
 }

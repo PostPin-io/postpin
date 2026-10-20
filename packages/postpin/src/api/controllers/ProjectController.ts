@@ -7,6 +7,7 @@ interface Project {
 	name: string;
 	createdAt: Date;
 	updatedAt: Date;
+	nleProjectId: string | null;
 }
 
 interface Timeline {
@@ -14,6 +15,7 @@ interface Timeline {
 	name: string;
 	createdAt: Date;
 	updatedAt: Date;
+	nleTimelineId: string | null;
 }
 
 interface ProjectWithTimelines extends Project {
@@ -30,6 +32,7 @@ export class ProjectController extends Controller {
 				name: true,
 				createdAt: true,
 				updatedAt: true,
+				nleProjectId: true,
 			},
 			orderBy: { updatedAt: "desc" },
 		});
@@ -45,8 +48,15 @@ export class ProjectController extends Controller {
 				name: true,
 				createdAt: true,
 				updatedAt: true,
+				nleProjectId: true,
 				timelines: {
-					select: { id: true, name: true, createdAt: true, updatedAt: true },
+					select: {
+						id: true,
+						name: true,
+						createdAt: true,
+						updatedAt: true,
+						nleTimelineId: true,
+					},
 					orderBy: { updatedAt: "desc" },
 				},
 			},

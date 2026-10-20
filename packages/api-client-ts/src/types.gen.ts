@@ -9,6 +9,7 @@ export type Project = {
 	name: string;
 	createdAt: string;
 	updatedAt: string;
+	nleProjectId: string | null;
 };
 
 export type Timeline = {
@@ -16,6 +17,7 @@ export type Timeline = {
 	name: string;
 	createdAt: string;
 	updatedAt: string;
+	nleTimelineId: string | null;
 };
 
 export type ProjectWithTimelines = {
@@ -23,7 +25,58 @@ export type ProjectWithTimelines = {
 	name: string;
 	createdAt: string;
 	updatedAt: string;
+	nleProjectId: string | null;
 	timelines: Array<Timeline>;
+};
+
+export type DefaultSelection36ResponsePayload = {
+	content: string;
+	markerId: string;
+	authorId: string;
+	updatedAt: string;
+	createdAt: string;
+	id: string;
+};
+
+export type ResponseModel = DefaultSelection36ResponsePayload;
+
+export type MarkerResponse = ResponseModel;
+
+export type DefaultSelection36MarkerPayload = {
+	nleId: string | null;
+	authorId: string;
+	categoryId: string;
+	exportId: string;
+	updatedAt: string;
+	createdAt: string;
+	frame: number;
+	description: string | null;
+	id: string;
+	name: string;
+};
+
+export type MarkerModel = DefaultSelection36MarkerPayload;
+
+export type MarkerWithResponses = {
+	nleId: string | null;
+	authorId: string;
+	categoryId: string;
+	exportId: string;
+	updatedAt: string;
+	createdAt: string;
+	frame: number;
+	description: string | null;
+	id: string;
+	name: string;
+	responses: Array<MarkerResponse>;
+};
+
+export type UploadMarker = {
+	nleId?: string | null;
+	categoryId: string;
+	frame: number;
+	description: string | null;
+	name: string;
 };
 
 export type MultipartUploadPartUrl = {
@@ -121,6 +174,24 @@ export type TimelineSnapshot = {
 	id: string;
 };
 
+export type DefaultSelection36CategoryPayload = {
+	projectId: string;
+	color: string;
+	updatedAt: string;
+	createdAt: string;
+	id: string;
+	name: string;
+};
+
+export type CategoryModel = DefaultSelection36CategoryPayload;
+
+export type Category = CategoryModel;
+
+export type CategoryCreateParams = {
+	color: string;
+	name: string;
+};
+
 export type GetOpenApiSpecData = {
 	body?: never;
 	path?: never;
@@ -192,8 +263,83 @@ export type GetProjectResponses = {
 
 export type GetProjectResponse = GetProjectResponses[keyof GetProjectResponses];
 
-export type CreateExportData = {
+export type GetMarkersData = {
 	body?: never;
+	path: {
+		projectId: string;
+		timelineId: string;
+		exportId: string;
+	};
+	query?: never;
+	url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers";
+};
+
+export type GetMarkersResponses = {
+	/**
+	 * Ok
+	 */
+	200: Array<MarkerWithResponses>;
+};
+
+export type GetMarkersResponse = GetMarkersResponses[keyof GetMarkersResponses];
+
+export type UploadMarkersData = {
+	body: Array<UploadMarker>;
+	path: {
+		projectId: string;
+		timelineId: string;
+		exportId: string;
+	};
+	query?: never;
+	url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers";
+};
+
+export type UploadMarkersErrors = {
+	/**
+	 * Export not found
+	 */
+	404: unknown;
+};
+
+export type UploadMarkersResponses = {
+	/**
+	 * No content
+	 */
+	204: void;
+};
+
+export type UploadMarkersResponse = UploadMarkersResponses[keyof UploadMarkersResponses];
+
+export type GetExportsData = {
+	body?: never;
+	path: {
+		projectId: string;
+		timelineId: string;
+	};
+	query?: never;
+	url: "/v1/projects/{projectId}/timelines/{timelineId}/exports";
+};
+
+export type GetExportsResponses = {
+	/**
+	 * Ok
+	 */
+	200: {
+		exports: Array<{
+			name: string;
+			createdAt: string;
+			id: string;
+		}>;
+	};
+};
+
+export type GetExportsResponse = GetExportsResponses[keyof GetExportsResponses];
+
+export type CreateExportData = {
+	body: {
+		nleProjectId: string | null;
+		nleTimelineId: string | null;
+	};
 	path: {
 		projectId: string;
 		timelineId: string;
@@ -324,3 +470,46 @@ export type AbortUploadResponses = {
 };
 
 export type AbortUploadResponse = AbortUploadResponses[keyof AbortUploadResponses];
+
+export type GetCategoriesData = {
+	body?: never;
+	path: {
+		projectId: string;
+	};
+	query?: never;
+	url: "/v1/projects/{projectId}/categories";
+};
+
+export type GetCategoriesResponses = {
+	/**
+	 * Ok
+	 */
+	200: Array<Category>;
+};
+
+export type GetCategoriesResponse = GetCategoriesResponses[keyof GetCategoriesResponses];
+
+export type CreateCategoryData = {
+	body: CategoryCreateParams;
+	path: {
+		projectId: string;
+	};
+	query?: never;
+	url: "/v1/projects/{projectId}/categories";
+};
+
+export type CreateCategoryErrors = {
+	/**
+	 * Project not found
+	 */
+	404: unknown;
+};
+
+export type CreateCategoryResponses = {
+	/**
+	 * Ok
+	 */
+	200: Category;
+};
+
+export type CreateCategoryResponse = CreateCategoryResponses[keyof CreateCategoryResponses];

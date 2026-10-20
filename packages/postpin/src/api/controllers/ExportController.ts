@@ -10,7 +10,7 @@ import {
 	type UploadedPart,
 } from "@postpin-io/shared/storage";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
-import { Body, Controller, Path, Post, Response, Route } from "tsoa";
+import { Body, Controller, Get, Path, Post, Response, Route } from "tsoa";
 import { HttpError } from "../HttpError.ts";
 import type { Prisma } from "@postpin-io/shared/db";
 
@@ -20,11 +20,32 @@ interface InitUploadResponse extends MultipartUpload {
 
 @Route("v1/projects/{projectId}/timelines/{timelineId}/exports")
 export class ExportController extends Controller {
+	@Get("")
+	public async getExports(
+		@Path() projectId: string,
+		@Path() timelineId: string,
+	): Promise<{ exports: { id: string; createdAt: Date; name: string }[] }> {
+		const timeline = await prisma.timeline.findFirst({
+			where: { id: timelineId, projectId },
+			select: {
+				exports: {
+					select: { id: true, createdAt: true, name: true },
+					orderBy: { createdAt: "desc" },
+				},
+			},
+		});
+		if (!timeline) {
+			throw new HttpError(404, "Timeline not found");
+		}
+		return { exports: timeline.exports };
+	}
+
 	@Post("")
 	@Response(404, "Export not found")
 	public async createExport(
 		@Path() projectId: string,
 		@Path() timelineId: string,
+		@Body() body: { nleTimelineId: string | null; nleProjectId: string | null },
 	): Promise<{ id: string }> {
 		const timeline = await prisma.timeline.findFirst({
 			where: { id: timelineId, projectId },
@@ -33,14 +54,40 @@ export class ExportController extends Controller {
 			throw new HttpError(404, "Timeline not found");
 		}
 
-		return await prisma.export.create({
-			data: {
-				timelineId,
-				name: `Export ${new Date().toISOString()}`,
-			},
-			select: {
-				id: true,
-			},
+		return prisma.$transaction(async (tx) => {
+			if (body.nleTimelineId !== timeline.nleTimelineId) {
+				await tx.timeline.updateMany({
+					where: { projectId, nleTimelineId: body.nleTimelineId },
+					data: { nleTimelineId: null },
+				});
+				await tx.timeline.update({
+					where: { id: timelineId },
+					data: {
+						nleTimelineId: body.nleTimelineId,
+					},
+				});
+			}
+			if (body.nleProjectId !== timeline.projectId) {
+				await tx.project.updateMany({
+					where: { id: projectId, nleProjectId: body.nleProjectId },
+					data: { nleProjectId: null },
+				});
+				await prisma.project.update({
+					where: { id: projectId },
+					data: {
+						nleProjectId: body.nleProjectId,
+					},
+				});
+			}
+			return tx.export.create({
+				data: {
+					timelineId,
+					name: `Export ${new Date().toISOString()}`,
+				},
+				select: {
+					id: true,
+				},
+			});
 		});
 	}
 

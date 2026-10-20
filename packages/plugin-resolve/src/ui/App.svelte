@@ -6,11 +6,17 @@
 		initUpload,
 		completeUpload,
 		abortUpload,
+		getMarkers,
+		getExports,
+		uploadMarkers,
 		type TimelineSnapshot,
+		getCategories,
+		createCategory,
 	} from "@postpin-io/api-client-ts";
 	import { createClient } from "@postpin-io/api-client-ts/client";
 	import {
 		MainAPI,
+		MarkerColor,
 		type RenderProgress,
 		type UploadProgress,
 	} from "../ipc/renderer/PostPinResolveAPI";
@@ -41,6 +47,7 @@
 	}
 
 	let timelineId = $state<string | null>(null);
+	let exportId = $state<string | null>(null);
 	// The select only yields a timeline id, so look up the project that owns it.
 	const projectId = $derived(
 		projectsWithTimelines.find((project) => project.timelines.some((t) => t.id === timelineId))
@@ -65,6 +72,9 @@
 			uploadProgress = progress;
 		}),
 	);
+
+	const nleProjectId = await MainAPI!.getProjectId!();
+	const nleTimelineId = await MainAPI!.getTimelineId!();
 
 	// Electron wraps errors thrown in the main process: "Error invoking remote method 'x': Error: msg".
 	// API calls with throwOnError throw the response body, which carries a message.
@@ -110,7 +120,14 @@
 			log.push("Render complete. Creating export...");
 			const exportResponse = await createExport({
 				client,
-				path: { projectId: projectId, timelineId: timelineId },
+				path: {
+					projectId: projectId,
+					timelineId: timelineId,
+				},
+				body: {
+					nleProjectId,
+					nleTimelineId,
+				},
 				throwOnError: true,
 			});
 			const exportId = exportResponse.data.id;
@@ -124,11 +141,7 @@
 			});
 			pendingUpload = { exportId, uploadId: upload.uploadId };
 			log.push(`Uploading ${formatMegabytes(fileSize)} in ${upload.parts.length} parts...`);
-			const parts = await MainAPI!.uploadRenderedFile!(
-				renderedPath,
-				upload.partSize,
-				upload.parts,
-			);
+			const parts = await MainAPI!.uploadRenderedFile!(renderedPath, upload.partSize, upload.parts);
 			log.push("Upload complete. Starting processing...");
 			await completeUpload({
 				client,
@@ -156,6 +169,126 @@
 			isBusy = false;
 		}
 	}
+
+	interface CustomData {
+		__postpin?: boolean;
+		id?: string;
+	}
+
+	const resolveColors: Record<MarkerColor, string> = {
+		Blue: "#3B82F6",
+		Cocoa: "#A0522D",
+		Cream: "#FFFDD0",
+		Cyan: "#00FFFF",
+		Green: "#00FF00",
+		Fuchsia: "#FF00FF",
+		Lavender: "#E6E6FA",
+		Lemon: "#FFF700",
+		Mint: "#98FF98",
+		Pink: "#FFC0CB",
+		Purple: "#800080",
+		Red: "#FF0000",
+		Rose: "#FF007F",
+		Sand: "#C2B280",
+		Sky: "#87CEEB",
+		Yellow: "#FFFF00",
+	};
+
+	async function syncMarkersUp() {
+		if (!projectId || !timelineId || !exportId) return;
+		const markers = await MainAPI!.getMarkers!();
+
+		const timelineStartFrame = await MainAPI!.getTimelineStartFrame!();
+		console.log("Timeline start frame:", timelineStartFrame);
+		const categories = await getCategories({ client, path: { projectId } });
+
+		let mappedMarkers: {
+			name: string;
+			description: string;
+			frame: number;
+			categoryId: string;
+			id?: string;
+		}[] = [];
+
+		for (const m of markers) {
+			let customData: CustomData = {};
+			try {
+				customData = JSON.parse(m.customData || "{}");
+			} catch (e) {
+				console.error("Error parsing custom data:", e);
+			}
+			const firstLine = m.description.split("\n")[0];
+			let categoryId: string | undefined = undefined;
+			if (firstLine.startsWith("#") && firstLine.length > 1) {
+				const categoryName = firstLine.substring(1).trim();
+				const category = categories.data?.find((c) => c.name === categoryName);
+				if (category) {
+					categoryId = category.id;
+				}
+			}
+			if (!categoryId) {
+				const newCategoryName = `Resolve ${m.color}`;
+				if (categories.data?.some((c) => c.name === newCategoryName)) {
+					categoryId = categories.data.find((c) => c.name === newCategoryName)!.id;
+				} else {
+					const newCategory = await createCategory({
+						client,
+						body: { name: newCategoryName, color: resolveColors[m.color] },
+						path: { projectId },
+					});
+					categoryId = newCategory.data!.id;
+				}
+			}
+			mappedMarkers.push({
+				name: m.title,
+				description: m.description,
+				frame: m.frame + timelineStartFrame,
+				categoryId: categoryId,
+				id: customData.__postpin ? customData.id : undefined,
+			});
+		}
+
+		console.log("Mapped markers for upload:", mappedMarkers);
+
+		await uploadMarkers({
+			client,
+			body: mappedMarkers,
+			path: {
+				projectId,
+				timelineId,
+				exportId,
+			},
+		});
+	}
+
+	async function syncMarkersDown() {
+		if (!projectId || !timelineId || !exportId) return;
+		const { data: markers } = await getMarkers({
+			client,
+			path: { projectId, timelineId, exportId },
+		});
+		const timelineStartFrame = await MainAPI!.getTimelineStartFrame!();
+		const mappedMarkers = markers!.map((m) => ({
+			title: m.name,
+			description: `#${m.categoryId}\n\n${m.description}`,
+			frame: m.frame - timelineStartFrame,
+			color: MarkerColor.Blue,
+			customData: JSON.stringify({
+				__postpin: true,
+				id: m.id,
+			} satisfies CustomData),
+		}));
+		await MainAPI!.setMarkers!(mappedMarkers);
+	}
+
+	async function test() {
+		const result = await MainAPI!.test!();
+		console.log("Test result:", result);
+	}
+
+	async function deleteMarkers() {
+		await MainAPI!.clearMarkers!();
+	}
 </script>
 
 <main class="flex flex-col gap-4 p-4">
@@ -163,15 +296,35 @@
 
 	<select bind:value={timelineId} class="select">
 		{#each projectsWithTimelines as project}
-			<optgroup label={project.name}>
+			<optgroup
+				label={`${project.name}${project.nleProjectId ? ` (${project.nleProjectId})${project.nleProjectId === nleProjectId ? " - Current" : ""}` : ""}`}
+			>
 				{#each project.timelines as timeline}
-					<option value={timeline.id}>{timeline.name}</option>
+					<option value={timeline.id}>
+						{timeline.name}
+						{#if timeline.nleTimelineId}
+							({timeline.nleTimelineId})
+							{#if timeline.nleTimelineId === nleTimelineId}
+								- Current
+							{/if}
+						{/if}
+					</option>
 				{/each}
 			</optgroup>
 		{:else}
 			<option disabled>No timelines found</option>
 		{/each}
 	</select>
+
+	{#if projectId && timelineId}
+		<select bind:value={exportId} class="select">
+			{#each (await getExports( { client, path: { projectId, timelineId } } )).data!.exports as timelineExport}
+				<option value={timelineExport.id}>{timelineExport.createdAt}</option>
+			{:else}
+				<option disabled>No exports found</option>
+			{/each}
+		</select>
+	{/if}
 
 	<label class="label">
 		<span class="label-text">Additionally render to Disk</span>
@@ -214,6 +367,21 @@
 		Render & Upload
 	</button>
 
+	{#if timelineId && exportId}
+		<div class="flex justify-between gap-2">
+			<button onclick={syncMarkersUp} disabled={isBusy} class="btn btn-secondary">
+				Sync Markers Up
+			</button>
+			<button onclick={syncMarkersDown} disabled={isBusy} class="btn btn-secondary">
+				Sync Markers Down
+			</button>
+			<button onclick={deleteMarkers} disabled={isBusy} class="btn btn-error">
+				Delete All Markers
+			</button>
+		</div>
+	{/if}
+	<button onclick={test} disabled={isBusy} class="btn btn-secondary"> Test </button>
+
 	{#if isBusy && renderProgress && renderProgress.percent < 100}
 		<div class="flex items-center gap-2">
 			<!-- Resolve stays at 0% while it prepares the render, so show an indeterminate bar until then -->
@@ -241,7 +409,9 @@
 			></progress>
 			<span class="text-sm whitespace-nowrap tabular-nums">
 				{Math.floor((uploadProgress.uploadedBytes / uploadProgress.totalBytes) * 100)}% ·
-				{formatMegabytes(uploadProgress.uploadedBytes)} / {formatMegabytes(uploadProgress.totalBytes)}
+				{formatMegabytes(uploadProgress.uploadedBytes)} / {formatMegabytes(
+					uploadProgress.totalBytes,
+				)}
 			</span>
 		</div>
 	{/if}

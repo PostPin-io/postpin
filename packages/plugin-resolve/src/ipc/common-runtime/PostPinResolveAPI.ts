@@ -7,4 +7,6 @@ export {
 	$eipc_validator$_UploadPartUrl,
 	$eipc_validator$_UploadedPart,
 	$eipc_validator$_UploadProgress,
+	$eipc_validator$_Marker,
+	$eipc_validator$_MarkerColor,
 } from "../_internal/common-runtime/PostPinResolveAPI.js";

@@ -3,9 +3,13 @@
 	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 	import Timecode from "./Timecode.svelte";
 	import { formatTimecode } from "./timecode";
+	import type { Prisma } from "@postpin-io/shared/db";
 
 	interface Props {
 		snapshot: TimelineSnapshot;
+		markers: Prisma.MarkerGetPayload<{
+			include: { category: true; author: true };
+		}>[];
 		videoPositionSeconds: number;
 		paused: boolean;
 		playbackRate: number;
@@ -16,6 +20,7 @@
 		videoPositionSeconds = $bindable(0),
 		paused = $bindable(true),
 		playbackRate = $bindable(1),
+		markers,
 	}: Props = $props();
 
 	const PLAYBACK_RATES = [0.25, 0.5, 1, 1.5, 2, 4];
@@ -273,6 +278,7 @@
 	}
 </script>
 
+<!-- <pre>{JSON.stringify({ markers }, null, 2)}</pre> -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="flex h-full flex-col outline-none" tabindex="0" onkeydown={onKeyDown}>
@@ -382,6 +388,17 @@
 					class="pointer-events-none absolute inset-y-0 left-0 z-30 w-px bg-red-500"
 					style="transform: translateX({playHeadPosition * pixelsPerFrame}px)"
 				></div>
+
+				{#each markers as marker (marker.id)}
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
+					<div
+						class="absolute top-0 h-full cursor-pointer border border-l-2"
+						style="left: {(marker.frame - snapshot.startFrameIndex) *
+							pixelsPerFrame}px; border-color: {marker.category.color}"
+						title={marker.name}
+						onclick={() => seek(marker.frame - snapshot.startFrameIndex)}
+					></div>
+				{/each}
 			</div>
 		</div>
 	</div>

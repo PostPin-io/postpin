@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, tick } from "svelte";
 	import { page } from "$app/state";
-	import { getExport, getUrl } from "./export.remote";
+	import { getExport, getMarkers, getUrl } from "./export.remote";
 
 	import Header from "#lib/components/Header.svelte";
 	import MarkerPanel from "#lib/components/review/MarkerPanel.svelte";
@@ -304,6 +304,11 @@
 							{#if exportQuery.current?.timelineSnapshot}
 								<Timeline
 									snapshot={exportQuery.current!.timelineSnapshot as TimelineSnapshot}
+									markers={await getMarkers({
+										exportId: page.params.export ?? "",
+										timelineId: page.params.timeline ?? "",
+										projectId: page.params.project ?? "",
+									})}
 									bind:videoPositionSeconds={videoPosition}
 									bind:paused={videoPaused}
 									bind:playbackRate={videoPlaybackRate}

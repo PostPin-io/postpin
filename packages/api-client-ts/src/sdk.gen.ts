@@ -9,11 +9,20 @@ import type {
 	CompleteUploadData,
 	CompleteUploadErrors,
 	CompleteUploadResponses,
+	CreateCategoryData,
+	CreateCategoryErrors,
+	CreateCategoryResponses,
 	CreateExportData,
 	CreateExportErrors,
 	CreateExportResponses,
+	GetCategoriesData,
+	GetCategoriesResponses,
 	GetDocsHtmlData,
 	GetDocsHtmlResponses,
+	GetExportsData,
+	GetExportsResponses,
+	GetMarkersData,
+	GetMarkersResponses,
 	GetOpenApiSpecData,
 	GetOpenApiSpecResponses,
 	GetProjectData,
@@ -24,6 +33,9 @@ import type {
 	InitUploadData,
 	InitUploadErrors,
 	InitUploadResponses,
+	UploadMarkersData,
+	UploadMarkersErrors,
+	UploadMarkersResponses,
 } from "./types.gen";
 
 export type Options<
@@ -76,12 +88,44 @@ export const getProject = <ThrowOnError extends boolean = false>(
 		...options,
 	});
 
+export const getMarkers = <ThrowOnError extends boolean = false>(
+	options: Options<GetMarkersData, ThrowOnError>,
+): RequestResult<GetMarkersResponses, unknown, ThrowOnError> =>
+	(options.client ?? client).get<GetMarkersResponses, unknown, ThrowOnError>({
+		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers",
+		...options,
+	});
+
+export const uploadMarkers = <ThrowOnError extends boolean = false>(
+	options: Options<UploadMarkersData, ThrowOnError>,
+): RequestResult<UploadMarkersResponses, UploadMarkersErrors, ThrowOnError> =>
+	(options.client ?? client).put<UploadMarkersResponses, UploadMarkersErrors, ThrowOnError>({
+		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers",
+		...options,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
+	});
+
+export const getExports = <ThrowOnError extends boolean = false>(
+	options: Options<GetExportsData, ThrowOnError>,
+): RequestResult<GetExportsResponses, unknown, ThrowOnError> =>
+	(options.client ?? client).get<GetExportsResponses, unknown, ThrowOnError>({
+		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports",
+		...options,
+	});
+
 export const createExport = <ThrowOnError extends boolean = false>(
 	options: Options<CreateExportData, ThrowOnError>,
 ): RequestResult<CreateExportResponses, CreateExportErrors, ThrowOnError> =>
 	(options.client ?? client).post<CreateExportResponses, CreateExportErrors, ThrowOnError>({
 		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports",
 		...options,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
 	});
 
 /**
@@ -124,6 +168,26 @@ export const abortUpload = <ThrowOnError extends boolean = false>(
 ): RequestResult<AbortUploadResponses, AbortUploadErrors, ThrowOnError> =>
 	(options.client ?? client).post<AbortUploadResponses, AbortUploadErrors, ThrowOnError>({
 		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/abort-upload",
+		...options,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
+	});
+
+export const getCategories = <ThrowOnError extends boolean = false>(
+	options: Options<GetCategoriesData, ThrowOnError>,
+): RequestResult<GetCategoriesResponses, unknown, ThrowOnError> =>
+	(options.client ?? client).get<GetCategoriesResponses, unknown, ThrowOnError>({
+		url: "/v1/projects/{projectId}/categories",
+		...options,
+	});
+
+export const createCategory = <ThrowOnError extends boolean = false>(
+	options: Options<CreateCategoryData, ThrowOnError>,
+): RequestResult<CreateCategoryResponses, CreateCategoryErrors, ThrowOnError> =>
+	(options.client ?? client).put<CreateCategoryResponses, CreateCategoryErrors, ThrowOnError>({
+		url: "/v1/projects/{projectId}/categories",
 		...options,
 		headers: {
 			"Content-Type": "application/json",

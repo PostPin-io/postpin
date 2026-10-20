@@ -8,7 +8,11 @@ import { SpecController } from "./../controllers/SpecController";
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ProjectController } from "./../controllers/ProjectController";
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { MarkerController } from "./../controllers/MarkerController";
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ExportController } from "./../controllers/ExportController";
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { CategoryController } from "./../controllers/CategoryController";
 import { boomify, isBoom, type Payload } from "@hapi/boom";
 import type { Request, ResponseToolkit, RouteOptionsPreAllOptions } from "@hapi/hapi";
 
@@ -22,6 +26,11 @@ const models: TsoaRoute.Models = {
 			name: { dataType: "string", required: true },
 			createdAt: { dataType: "datetime", required: true },
 			updatedAt: { dataType: "datetime", required: true },
+			nleProjectId: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
 		},
 		additionalProperties: false,
 	},
@@ -33,6 +42,11 @@ const models: TsoaRoute.Models = {
 			name: { dataType: "string", required: true },
 			createdAt: { dataType: "datetime", required: true },
 			updatedAt: { dataType: "datetime", required: true },
+			nleTimelineId: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
 		},
 		additionalProperties: false,
 	},
@@ -44,6 +58,11 @@ const models: TsoaRoute.Models = {
 			name: { dataType: "string", required: true },
 			createdAt: { dataType: "datetime", required: true },
 			updatedAt: { dataType: "datetime", required: true },
+			nleProjectId: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
 			timelines: {
 				dataType: "array",
 				array: { dataType: "refObject", ref: "Timeline" },
@@ -51,6 +70,117 @@ const models: TsoaRoute.Models = {
 			},
 		},
 		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	DefaultSelection__36_ResponsePayload_: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				content: { dataType: "string", required: true },
+				markerId: { dataType: "string", required: true },
+				authorId: { dataType: "string", required: true },
+				updatedAt: { dataType: "datetime", required: true },
+				createdAt: { dataType: "datetime", required: true },
+				id: { dataType: "string", required: true },
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	ResponseModel: {
+		dataType: "refAlias",
+		type: { ref: "DefaultSelection__36_ResponsePayload_", validators: {} },
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	MarkerResponse: {
+		dataType: "refAlias",
+		type: { ref: "ResponseModel", validators: {} },
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	DefaultSelection__36_MarkerPayload_: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				nleId: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
+				authorId: { dataType: "string", required: true },
+				categoryId: { dataType: "string", required: true },
+				exportId: { dataType: "string", required: true },
+				updatedAt: { dataType: "datetime", required: true },
+				createdAt: { dataType: "datetime", required: true },
+				frame: { dataType: "double", required: true },
+				description: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
+				id: { dataType: "string", required: true },
+				name: { dataType: "string", required: true },
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	MarkerModel: {
+		dataType: "refAlias",
+		type: { ref: "DefaultSelection__36_MarkerPayload_", validators: {} },
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	MarkerWithResponses: {
+		dataType: "refObject",
+		properties: {
+			nleId: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			authorId: { dataType: "string", required: true },
+			categoryId: { dataType: "string", required: true },
+			exportId: { dataType: "string", required: true },
+			updatedAt: { dataType: "datetime", required: true },
+			createdAt: { dataType: "datetime", required: true },
+			frame: { dataType: "double", required: true },
+			description: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			id: { dataType: "string", required: true },
+			name: { dataType: "string", required: true },
+			responses: {
+				dataType: "array",
+				array: { dataType: "refAlias", ref: "MarkerResponse" },
+				required: true,
+			},
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	UploadMarker: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				nleId: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				},
+				categoryId: { dataType: "string", required: true },
+				frame: { dataType: "double", required: true },
+				description: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
+				name: { dataType: "string", required: true },
+			},
+			validators: {},
+		},
 	},
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 	MultipartUploadPartUrl: {
@@ -206,6 +336,44 @@ const models: TsoaRoute.Models = {
 				},
 				name: { dataType: "string", required: true },
 				id: { dataType: "string", required: true },
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	DefaultSelection__36_CategoryPayload_: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				projectId: { dataType: "string", required: true },
+				color: { dataType: "string", required: true },
+				updatedAt: { dataType: "datetime", required: true },
+				createdAt: { dataType: "datetime", required: true },
+				id: { dataType: "string", required: true },
+				name: { dataType: "string", required: true },
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	CategoryModel: {
+		dataType: "refAlias",
+		type: { ref: "DefaultSelection__36_CategoryPayload_", validators: {} },
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	Category: {
+		dataType: "refAlias",
+		type: { ref: "CategoryModel", validators: {} },
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	CategoryCreateParams: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				color: { dataType: "string", required: true },
+				name: { dataType: "string", required: true },
 			},
 			validators: {},
 		},
@@ -419,9 +587,189 @@ export function RegisterRoutes(server: any) {
 		},
 	});
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsMarkerController_getMarkers: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+		exportId: { in: "path", name: "exportId", required: true, dataType: "string" },
+	};
+	server.route({
+		method: "get",
+		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers",
+		options: {
+			pre: [
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerController.prototype.getMarkers),
+			],
+			handler: function MarkerController_getMarkers(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsMarkerController_getMarkers,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new MarkerController();
+
+				return templateService.apiHandler({
+					methodName: "getMarkers",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsMarkerController_uploadMarkers: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+		exportId: { in: "path", name: "exportId", required: true, dataType: "string" },
+		markers: {
+			in: "body",
+			name: "markers",
+			required: true,
+			dataType: "array",
+			array: { dataType: "refAlias", ref: "UploadMarker" },
+		},
+	};
+	server.route({
+		method: "put",
+		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers",
+		options: {
+			pre: [
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerController.prototype.uploadMarkers),
+			],
+			handler: function MarkerController_uploadMarkers(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsMarkerController_uploadMarkers,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new MarkerController();
+
+				return templateService.apiHandler({
+					methodName: "uploadMarkers",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsExportController_getExports: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+	};
+	server.route({
+		method: "get",
+		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports",
+		options: {
+			pre: [
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController.prototype.getExports),
+			],
+			handler: function ExportController_getExports(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsExportController_getExports,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new ExportController();
+
+				return templateService.apiHandler({
+					methodName: "getExports",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 	const argsExportController_createExport: Record<string, TsoaRoute.ParameterSchema> = {
 		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
 		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+		body: {
+			in: "body",
+			name: "body",
+			required: true,
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				nleProjectId: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
+				nleTimelineId: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
+			},
+		},
 	};
 	server.route({
 		method: "post",
@@ -646,6 +994,107 @@ export function RegisterRoutes(server: any) {
 
 				return templateService.apiHandler({
 					methodName: "abortUpload",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsCategoryController_getCategories: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+	};
+	server.route({
+		method: "get",
+		path: "/v1/projects/{projectId}/categories",
+		options: {
+			pre: [
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(CategoryController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(CategoryController.prototype.getCategories),
+			],
+			handler: function CategoryController_getCategories(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsCategoryController_getCategories,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new CategoryController();
+
+				return templateService.apiHandler({
+					methodName: "getCategories",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsCategoryController_createCategory: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		body: { in: "body", name: "body", required: true, ref: "CategoryCreateParams" },
+	};
+	server.route({
+		method: "put",
+		path: "/v1/projects/{projectId}/categories",
+		options: {
+			pre: [
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(CategoryController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(CategoryController.prototype.createCategory),
+			],
+			handler: function CategoryController_createCategory(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsCategoryController_createCategory,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new CategoryController();
+
+				return templateService.apiHandler({
+					methodName: "createCategory",
 					controller,
 					h,
 					validatedArgs,
