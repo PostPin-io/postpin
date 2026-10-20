@@ -61,10 +61,12 @@
 	];
 </script>
 
-<div>
-	<h1 class="text-2xl font-bold">Marker</h1>
+<div class="flex h-full min-h-0 flex-col gap-4">
+	<h1 style="margin-left: 10px;" class="shrink-0 text-2xl font-bold">Marker</h1>
 
-	{#each markers as marker (marker.id)}
-		<Marker {marker} />
-	{/each}
+	<div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto *:shrink-0">
+		{#each markers as marker (marker.id)}
+			<Marker {marker} />
+		{/each}
+	</div>
 </div>

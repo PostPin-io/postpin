@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from "$app/paths";
 	import { authClient } from "#lib/auth-client.ts";
-	import { goto } from "$app/navigation";
+	import { goto, refreshAll } from "$app/navigation";
 	import { hasRole, MANAGER_ROLES } from "#lib/roles.ts";
 
 	const session = authClient.useSession();
@@ -24,6 +24,7 @@
 			return;
 		}
 		goto(resolve("/(root)/dashboard"), { replaceState: true });
+		refreshAll();
 	}
 
 	async function logout() {
@@ -98,9 +99,6 @@
 		</div>
 		<div class="navbar-center hidden lg:flex">
 			<ul class="menu menu-horizontal px-1">
-				<li>
-					<a href={resolve("/(root)/dbtests")}>dbtests</a>
-				</li>
 				<li>
 					<a href={resolve("/auth/login")}>Login</a>
 				</li>
