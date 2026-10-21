@@ -5,6 +5,8 @@
 		getMarkers,
 		changeCategoryColor,
 		deleteCategory,
+		isCategoryUsed,
+		mergeCategories,
 	} from "./MarkerPanel.remote";
 	import { page } from "$app/state";
 	import ColorPicker from "../ColorPicker.svelte";
@@ -12,12 +14,16 @@
 	import Trash from "@lucide/svelte/icons/trash";
 
 	let dialog: HTMLDialogElement;
+	let usedCategoryWarning: HTMLDialogElement;
 
 	let newCategoryName = $state("");
 
 	let projectId = $derived(page.params.project ?? "");
 	let categories = $derived(await getCategories(projectId));
 	let pendingColors: Record<string, string> = $state({});
+
+	let targetCategoryId = $state("");
+	let sourceCategoryId = $state("");
 
 	async function saveColor(category: { id: string; color: string }) {
 		const color = pendingColors[category.id];
@@ -38,6 +44,12 @@
 	}
 
 	async function removeCategory(id: string) {
+		if (await isCategoryUsed(id)) {
+			usedCategoryWarning?.showModal();
+			sourceCategoryId = id;
+
+			return;
+		}
 		await deleteCategory(id);
 		await getCategories(projectId).refresh();
 	}
@@ -55,6 +67,7 @@
 	}
 </script>
 
+<!-- Main Categories Dialog -->
 <dialog class="modal" bind:this={dialog}>
 	<div class="modal-box flex max-h-[80vh] flex-col gap-4">
 		<h2 class="text-lg font-bold">Categories</h2>
@@ -113,6 +126,16 @@
 	</form>
 </dialog>
 
+<!-- Category In-Use Warning Dialog -->
+<dialog class="modal" bind:this={usedCategoryWarning}>
+	<div class="modal-box">
+		{@render popupDelUsedCategory()}
+	</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
+
 {#snippet popupColorPicker(category: (typeof categories)[number])}
 	<button
 		type="button"
@@ -139,4 +162,71 @@
 			/>
 		</li>
 	</ul>
+{/snippet}
+
+{#snippet popupDelUsedCategory()}
+	<div class="space-y-5">
+		<div class="space-y-1">
+			<h3 class="text-lg font-bold">Category in Use</h3>
+			<p class="text-sm text-base-content/70">
+				This category is assigned to existing markers and can't be deleted yet. Choose another
+				category to move and merge those markers before deleting it.
+			</p>
+		</div>
+
+		<!-- Destination category + primary action -->
+		<fieldset class="fieldset w-full">
+			<legend class="fieldset-legend">Merge markers into</legend>
+
+			<div class="flex items-end gap-3">
+				<select
+					id="target-category"
+					class="select-bordered select min-w-0 flex-1"
+					bind:value={targetCategoryId}
+				>
+					<option value="" disabled>Select a destination category</option>
+
+					{#each categories.filter((c) => c.id !== sourceCategoryId) as category (category.id)}
+						<option value={category.id}>{category.name}</option>
+					{/each}
+				</select>
+
+				<button
+					type="button"
+					class="btn shrink-0 btn-primary"
+					disabled={!targetCategoryId || targetCategoryId === sourceCategoryId}
+					onclick={async () => {
+						await mergeCategories({ sourceCategoryId, targetCategoryId });
+						await Promise.all([getMarkers(page.params.export ?? "").refresh()]);
+						usedCategoryWarning?.close();
+					}}
+				>
+					Merge
+				</button>
+			</div>
+
+			<p class="mt-1 text-xs text-base-content/60">
+				All markers in this category will be reassigned to the selected category.
+			</p>
+		</fieldset>
+
+		<!-- Secondary actions -->
+		<div class="modal-action mt-4 flex justify-end gap-2">
+			<button
+				type="button"
+				class="btn btn-ghost btn-sm"
+				onclick={() => usedCategoryWarning?.close()}
+			>
+				Cancel
+			</button>
+
+			<button
+				type="button"
+				class="btn btn-outline btn-sm"
+				onclick={() => usedCategoryWarning?.close()}
+			>
+				Close
+			</button>
+		</div>
+	</div>
 {/snippet}

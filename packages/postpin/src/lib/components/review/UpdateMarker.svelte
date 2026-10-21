@@ -153,7 +153,7 @@
 				aria-label="New category"
 				onclick={openEditCategoriesModal}
 			>
-				<ClipboardList />
+				<ClipboardList size={20} />
 			</button>
 
 			<span class="badge badge-outline tabular-nums" title="Marker frame">
@@ -176,7 +176,7 @@
 				<input
 					bind:this={titleInputField}
 					type="text"
-					class="≈"
+					class="input w-full"
 					placeholder="Title"
 					aria-label="Marker title"
 					bind:value={name}

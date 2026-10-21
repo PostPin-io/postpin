@@ -81,11 +81,14 @@ export const deleteMarker = command(v.string(), async (id) => {
 	const event = getRequestEvent();
 
 	const marker = await prisma.marker.delete({
-		where: {
-			id: id,
-		},
+		where: { id },
 	});
-	await getMarkers(marker.exportId).refresh();
+
+	await Promise.all([
+		getMarkers(marker.exportId).refresh(),
+		isCategoryUsed(marker.categoryId).refresh(),
+	]);
+
 	return marker;
 });
 
@@ -143,6 +146,45 @@ export const createCategory = command(
 		return category;
 	},
 );
+
+export const isCategoryUsed = query(v.string(), async (categoryId: string) => {
+	const event = getRequestEvent();
+
+	const count = await prisma.marker.count({
+		where: {
+			categoryId: categoryId,
+		},
+	});
+
+	return count > 0;
+});
+export const mergeCategories = command(
+	v.object({
+		sourceCategoryId: v.string(),
+		targetCategoryId: v.string(),
+	}),
+	async (data) => {
+		const event = getRequestEvent();
+
+		const markers = await prisma.marker.updateMany({
+			where: {
+				categoryId: data.sourceCategoryId,
+			},
+			data: {
+				categoryId: data.targetCategoryId,
+			},
+		});
+
+		// Refresh isCategoryUsed for both categories so the client cache invalidates
+		await Promise.all([
+			isCategoryUsed(data.sourceCategoryId).refresh(),
+			isCategoryUsed(data.targetCategoryId).refresh(),
+		]);
+
+		return markers;
+	},
+);
+
 export const changeCategoryColor = command(
 	v.object({
 		id: v.string(),
