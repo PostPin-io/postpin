@@ -52,6 +52,7 @@ export const ModelName = {
 	Session: "Session",
 	Account: "Account",
 	Verification: "Verification",
+	DeviceCode: "DeviceCode",
 	Marker: "Marker",
 	Category: "Category",
 	Response: "Response",
@@ -106,6 +107,8 @@ export const SessionScalarFieldEnum = {
 	userAgent: "userAgent",
 	userId: "userId",
 	activeOrganizationId: "activeOrganizationId",
+	clientId: "clientId",
+	deviceName: "deviceName",
 } as const;
 
 export type SessionScalarFieldEnum =
@@ -141,6 +144,23 @@ export const VerificationScalarFieldEnum = {
 
 export type VerificationScalarFieldEnum =
 	(typeof VerificationScalarFieldEnum)[keyof typeof VerificationScalarFieldEnum];
+
+export const DeviceCodeScalarFieldEnum = {
+	id: "id",
+	deviceCode: "deviceCode",
+	userCode: "userCode",
+	userId: "userId",
+	expiresAt: "expiresAt",
+	status: "status",
+	lastPolledAt: "lastPolledAt",
+	pollingInterval: "pollingInterval",
+	clientId: "clientId",
+	scope: "scope",
+	deviceName: "deviceName",
+} as const;
+
+export type DeviceCodeScalarFieldEnum =
+	(typeof DeviceCodeScalarFieldEnum)[keyof typeof DeviceCodeScalarFieldEnum];
 
 export const MarkerScalarFieldEnum = {
 	id: "id",

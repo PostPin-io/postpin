@@ -5,6 +5,9 @@ import { sendEmail } from "./email";
 import { organization } from "better-auth/plugins";
 import { BETTER_AUTH_URL } from "$app/env/private";
 import { ac, roles } from "#lib/roles.ts";
+import { bearer, deviceAuthorization } from "better-auth/plugins";
+import { DEVICE_CLIENTS } from "#lib/device-clients.ts";
+import { createAuthMiddleware, getIP } from "better-auth/api";
 
 export const auth = betterAuth({
 	database: prismaAdapter(prisma, {
@@ -23,7 +26,36 @@ export const auth = betterAuth({
 				);
 			},
 		}),
+		deviceAuthorization({
+			verificationUri: `${BETTER_AUTH_URL}/auth/device`,
+			validateClient: (clientId) => Object.hasOwn(DEVICE_CLIENTS, clientId),
+		}),
+		bearer(),
 	],
+	hooks: {
+		after: createAuthMiddleware(async (ctx) => {
+			const deviceName = ctx.headers?.get("x-device-name")?.trim().slice(0, 100) || null;
+
+			if (ctx.path === "/device/code") {
+				const userCode = (ctx.context.returned as { user_code?: string } | undefined)?.user_code;
+				if (!deviceName || !userCode) return;
+				await prisma.deviceCode.update({ where: { userCode }, data: { deviceName } });
+			}
+
+			if (ctx.path === "/device/token") {
+				const session = ctx.context.newSession?.session;
+				if (!session) return;
+				await prisma.session.update({
+					where: { id: session.id },
+					data: {
+						clientId: ctx.body?.client_id,
+						deviceName,
+						ipAddress: ctx.headers ? getIP(ctx.headers, ctx.context.options) : null,
+					},
+				});
+			}
+		}),
+	},
 	user: {
 		changeEmail: {
 			enabled: true,

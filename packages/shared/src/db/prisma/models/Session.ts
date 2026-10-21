@@ -33,6 +33,8 @@ export type SessionMinAggregateOutputType = {
 	userAgent: string | null;
 	userId: string | null;
 	activeOrganizationId: string | null;
+	clientId: string | null;
+	deviceName: string | null;
 };
 
 export type SessionMaxAggregateOutputType = {
@@ -45,6 +47,8 @@ export type SessionMaxAggregateOutputType = {
 	userAgent: string | null;
 	userId: string | null;
 	activeOrganizationId: string | null;
+	clientId: string | null;
+	deviceName: string | null;
 };
 
 export type SessionCountAggregateOutputType = {
@@ -57,6 +61,8 @@ export type SessionCountAggregateOutputType = {
 	userAgent: number;
 	userId: number;
 	activeOrganizationId: number;
+	clientId: number;
+	deviceName: number;
 	_all: number;
 };
 
@@ -70,6 +76,8 @@ export type SessionMinAggregateInputType = {
 	userAgent?: true;
 	userId?: true;
 	activeOrganizationId?: true;
+	clientId?: true;
+	deviceName?: true;
 };
 
 export type SessionMaxAggregateInputType = {
@@ -82,6 +90,8 @@ export type SessionMaxAggregateInputType = {
 	userAgent?: true;
 	userId?: true;
 	activeOrganizationId?: true;
+	clientId?: true;
+	deviceName?: true;
 };
 
 export type SessionCountAggregateInputType = {
@@ -94,6 +104,8 @@ export type SessionCountAggregateInputType = {
 	userAgent?: true;
 	userId?: true;
 	activeOrganizationId?: true;
+	clientId?: true;
+	deviceName?: true;
 	_all?: true;
 };
 
@@ -180,6 +192,8 @@ export type SessionGroupByOutputType = {
 	userAgent: string | null;
 	userId: string;
 	activeOrganizationId: string | null;
+	clientId: string | null;
+	deviceName: string | null;
 	_count: SessionCountAggregateOutputType | null;
 	_min: SessionMinAggregateOutputType | null;
 	_max: SessionMaxAggregateOutputType | null;
@@ -210,6 +224,8 @@ export type SessionWhereInput = {
 	userAgent?: Prisma.StringNullableFilter<"Session"> | string | null;
 	userId?: Prisma.StringFilter<"Session"> | string;
 	activeOrganizationId?: Prisma.StringNullableFilter<"Session"> | string | null;
+	clientId?: Prisma.StringNullableFilter<"Session"> | string | null;
+	deviceName?: Prisma.StringNullableFilter<"Session"> | string | null;
 	user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
 	activeOrganization?: Prisma.XOR<
 		Prisma.OrganizationNullableScalarRelationFilter,
@@ -227,6 +243,8 @@ export type SessionOrderByWithRelationInput = {
 	userAgent?: Prisma.SortOrderInput | Prisma.SortOrder;
 	userId?: Prisma.SortOrder;
 	activeOrganizationId?: Prisma.SortOrderInput | Prisma.SortOrder;
+	clientId?: Prisma.SortOrderInput | Prisma.SortOrder;
+	deviceName?: Prisma.SortOrderInput | Prisma.SortOrder;
 	user?: Prisma.UserOrderByWithRelationInput;
 	activeOrganization?: Prisma.OrganizationOrderByWithRelationInput;
 };
@@ -245,6 +263,8 @@ export type SessionWhereUniqueInput = Prisma.AtLeast<
 		userAgent?: Prisma.StringNullableFilter<"Session"> | string | null;
 		userId?: Prisma.StringFilter<"Session"> | string;
 		activeOrganizationId?: Prisma.StringNullableFilter<"Session"> | string | null;
+		clientId?: Prisma.StringNullableFilter<"Session"> | string | null;
+		deviceName?: Prisma.StringNullableFilter<"Session"> | string | null;
 		user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
 		activeOrganization?: Prisma.XOR<
 			Prisma.OrganizationNullableScalarRelationFilter,
@@ -264,6 +284,8 @@ export type SessionOrderByWithAggregationInput = {
 	userAgent?: Prisma.SortOrderInput | Prisma.SortOrder;
 	userId?: Prisma.SortOrder;
 	activeOrganizationId?: Prisma.SortOrderInput | Prisma.SortOrder;
+	clientId?: Prisma.SortOrderInput | Prisma.SortOrder;
+	deviceName?: Prisma.SortOrderInput | Prisma.SortOrder;
 	_count?: Prisma.SessionCountOrderByAggregateInput;
 	_max?: Prisma.SessionMaxOrderByAggregateInput;
 	_min?: Prisma.SessionMinOrderByAggregateInput;
@@ -284,6 +306,8 @@ export type SessionScalarWhereWithAggregatesInput = {
 	userAgent?: Prisma.StringNullableWithAggregatesFilter<"Session"> | string | null;
 	userId?: Prisma.StringWithAggregatesFilter<"Session"> | string;
 	activeOrganizationId?: Prisma.StringNullableWithAggregatesFilter<"Session"> | string | null;
+	clientId?: Prisma.StringNullableWithAggregatesFilter<"Session"> | string | null;
+	deviceName?: Prisma.StringNullableWithAggregatesFilter<"Session"> | string | null;
 };
 
 export type SessionCreateInput = {
@@ -294,6 +318,8 @@ export type SessionCreateInput = {
 	updatedAt?: Date | string;
 	ipAddress?: string | null;
 	userAgent?: string | null;
+	clientId?: string | null;
+	deviceName?: string | null;
 	user: Prisma.UserCreateNestedOneWithoutSessionsInput;
 	activeOrganization?: Prisma.OrganizationCreateNestedOneWithoutSessionsInput;
 };
@@ -308,6 +334,8 @@ export type SessionUncheckedCreateInput = {
 	userAgent?: string | null;
 	userId: string;
 	activeOrganizationId?: string | null;
+	clientId?: string | null;
+	deviceName?: string | null;
 };
 
 export type SessionUpdateInput = {
@@ -318,6 +346,8 @@ export type SessionUpdateInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	deviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	user?: Prisma.UserUpdateOneRequiredWithoutSessionsNestedInput;
 	activeOrganization?: Prisma.OrganizationUpdateOneWithoutSessionsNestedInput;
 };
@@ -332,6 +362,8 @@ export type SessionUncheckedUpdateInput = {
 	userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	userId?: Prisma.StringFieldUpdateOperationsInput | string;
 	activeOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	deviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
 export type SessionCreateManyInput = {
@@ -344,6 +376,8 @@ export type SessionCreateManyInput = {
 	userAgent?: string | null;
 	userId: string;
 	activeOrganizationId?: string | null;
+	clientId?: string | null;
+	deviceName?: string | null;
 };
 
 export type SessionUpdateManyMutationInput = {
@@ -354,6 +388,8 @@ export type SessionUpdateManyMutationInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	deviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
 export type SessionUncheckedUpdateManyInput = {
@@ -366,6 +402,8 @@ export type SessionUncheckedUpdateManyInput = {
 	userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	userId?: Prisma.StringFieldUpdateOperationsInput | string;
 	activeOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	deviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
 export type SessionListRelationFilter = {
@@ -388,6 +426,8 @@ export type SessionCountOrderByAggregateInput = {
 	userAgent?: Prisma.SortOrder;
 	userId?: Prisma.SortOrder;
 	activeOrganizationId?: Prisma.SortOrder;
+	clientId?: Prisma.SortOrder;
+	deviceName?: Prisma.SortOrder;
 };
 
 export type SessionMaxOrderByAggregateInput = {
@@ -400,6 +440,8 @@ export type SessionMaxOrderByAggregateInput = {
 	userAgent?: Prisma.SortOrder;
 	userId?: Prisma.SortOrder;
 	activeOrganizationId?: Prisma.SortOrder;
+	clientId?: Prisma.SortOrder;
+	deviceName?: Prisma.SortOrder;
 };
 
 export type SessionMinOrderByAggregateInput = {
@@ -412,6 +454,8 @@ export type SessionMinOrderByAggregateInput = {
 	userAgent?: Prisma.SortOrder;
 	userId?: Prisma.SortOrder;
 	activeOrganizationId?: Prisma.SortOrder;
+	clientId?: Prisma.SortOrder;
+	deviceName?: Prisma.SortOrder;
 };
 
 export type SessionCreateNestedManyWithoutUserInput = {
@@ -590,6 +634,8 @@ export type SessionCreateWithoutUserInput = {
 	updatedAt?: Date | string;
 	ipAddress?: string | null;
 	userAgent?: string | null;
+	clientId?: string | null;
+	deviceName?: string | null;
 	activeOrganization?: Prisma.OrganizationCreateNestedOneWithoutSessionsInput;
 };
 
@@ -602,6 +648,8 @@ export type SessionUncheckedCreateWithoutUserInput = {
 	ipAddress?: string | null;
 	userAgent?: string | null;
 	activeOrganizationId?: string | null;
+	clientId?: string | null;
+	deviceName?: string | null;
 };
 
 export type SessionCreateOrConnectWithoutUserInput = {
@@ -658,6 +706,8 @@ export type SessionScalarWhereInput = {
 	userAgent?: Prisma.StringNullableFilter<"Session"> | string | null;
 	userId?: Prisma.StringFilter<"Session"> | string;
 	activeOrganizationId?: Prisma.StringNullableFilter<"Session"> | string | null;
+	clientId?: Prisma.StringNullableFilter<"Session"> | string | null;
+	deviceName?: Prisma.StringNullableFilter<"Session"> | string | null;
 };
 
 export type SessionCreateWithoutActiveOrganizationInput = {
@@ -668,6 +718,8 @@ export type SessionCreateWithoutActiveOrganizationInput = {
 	updatedAt?: Date | string;
 	ipAddress?: string | null;
 	userAgent?: string | null;
+	clientId?: string | null;
+	deviceName?: string | null;
 	user: Prisma.UserCreateNestedOneWithoutSessionsInput;
 };
 
@@ -680,6 +732,8 @@ export type SessionUncheckedCreateWithoutActiveOrganizationInput = {
 	ipAddress?: string | null;
 	userAgent?: string | null;
 	userId: string;
+	clientId?: string | null;
+	deviceName?: string | null;
 };
 
 export type SessionCreateOrConnectWithoutActiveOrganizationInput = {
@@ -734,6 +788,8 @@ export type SessionCreateManyUserInput = {
 	ipAddress?: string | null;
 	userAgent?: string | null;
 	activeOrganizationId?: string | null;
+	clientId?: string | null;
+	deviceName?: string | null;
 };
 
 export type SessionUpdateWithoutUserInput = {
@@ -744,6 +800,8 @@ export type SessionUpdateWithoutUserInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	deviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	activeOrganization?: Prisma.OrganizationUpdateOneWithoutSessionsNestedInput;
 };
 
@@ -756,6 +814,8 @@ export type SessionUncheckedUpdateWithoutUserInput = {
 	ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	activeOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	deviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
 export type SessionUncheckedUpdateManyWithoutUserInput = {
@@ -767,6 +827,8 @@ export type SessionUncheckedUpdateManyWithoutUserInput = {
 	ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	activeOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	deviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
 export type SessionCreateManyActiveOrganizationInput = {
@@ -778,6 +840,8 @@ export type SessionCreateManyActiveOrganizationInput = {
 	ipAddress?: string | null;
 	userAgent?: string | null;
 	userId: string;
+	clientId?: string | null;
+	deviceName?: string | null;
 };
 
 export type SessionUpdateWithoutActiveOrganizationInput = {
@@ -788,6 +852,8 @@ export type SessionUpdateWithoutActiveOrganizationInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	deviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	user?: Prisma.UserUpdateOneRequiredWithoutSessionsNestedInput;
 };
 
@@ -800,6 +866,8 @@ export type SessionUncheckedUpdateWithoutActiveOrganizationInput = {
 	ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	userId?: Prisma.StringFieldUpdateOperationsInput | string;
+	clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	deviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
 export type SessionUncheckedUpdateManyWithoutActiveOrganizationInput = {
@@ -811,6 +879,8 @@ export type SessionUncheckedUpdateManyWithoutActiveOrganizationInput = {
 	ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	userId?: Prisma.StringFieldUpdateOperationsInput | string;
+	clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	deviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
 export type SessionSelect<
@@ -826,6 +896,8 @@ export type SessionSelect<
 		userAgent?: boolean;
 		userId?: boolean;
 		activeOrganizationId?: boolean;
+		clientId?: boolean;
+		deviceName?: boolean;
 		user?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
 		activeOrganization?: boolean | Prisma.Session$activeOrganizationArgs<ExtArgs>;
 	},
@@ -845,6 +917,8 @@ export type SessionSelectCreateManyAndReturn<
 		userAgent?: boolean;
 		userId?: boolean;
 		activeOrganizationId?: boolean;
+		clientId?: boolean;
+		deviceName?: boolean;
 		user?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
 		activeOrganization?: boolean | Prisma.Session$activeOrganizationArgs<ExtArgs>;
 	},
@@ -864,6 +938,8 @@ export type SessionSelectUpdateManyAndReturn<
 		userAgent?: boolean;
 		userId?: boolean;
 		activeOrganizationId?: boolean;
+		clientId?: boolean;
+		deviceName?: boolean;
 		user?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
 		activeOrganization?: boolean | Prisma.Session$activeOrganizationArgs<ExtArgs>;
 	},
@@ -880,6 +956,8 @@ export type SessionSelectScalar = {
 	userAgent?: boolean;
 	userId?: boolean;
 	activeOrganizationId?: boolean;
+	clientId?: boolean;
+	deviceName?: boolean;
 };
 
 export type SessionOmit<
@@ -893,7 +971,9 @@ export type SessionOmit<
 	| "ipAddress"
 	| "userAgent"
 	| "userId"
-	| "activeOrganizationId",
+	| "activeOrganizationId"
+	| "clientId"
+	| "deviceName",
 	ExtArgs["result"]["session"]
 >;
 export type SessionInclude<
@@ -934,6 +1014,8 @@ export type $SessionPayload<
 			userAgent: string | null;
 			userId: string;
 			activeOrganizationId: string | null;
+			clientId: string | null;
+			deviceName: string | null;
 		},
 		ExtArgs["result"]["session"]
 	>;
@@ -1516,6 +1598,8 @@ export interface SessionFieldRefs {
 	readonly userAgent: Prisma.FieldRef<"Session", "String">;
 	readonly userId: Prisma.FieldRef<"Session", "String">;
 	readonly activeOrganizationId: Prisma.FieldRef<"Session", "String">;
+	readonly clientId: Prisma.FieldRef<"Session", "String">;
+	readonly deviceName: Prisma.FieldRef<"Session", "String">;
 }
 
 // Custom InputTypes

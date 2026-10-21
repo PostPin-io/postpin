@@ -394,6 +394,7 @@ export const ModelName = {
 	Session: "Session",
 	Account: "Account",
 	Verification: "Verification",
+	DeviceCode: "DeviceCode",
 	Marker: "Marker",
 	Category: "Category",
 	Response: "Response",
@@ -431,6 +432,7 @@ export type TypeMap<
 			| "session"
 			| "account"
 			| "verification"
+			| "deviceCode"
 			| "marker"
 			| "category"
 			| "response"
@@ -741,6 +743,80 @@ export type TypeMap<
 					args: Prisma.VerificationCountArgs<ExtArgs>;
 					result:
 						runtime.Types.Utils.Optional<Prisma.VerificationCountAggregateOutputType> | number;
+				};
+			};
+		};
+		DeviceCode: {
+			payload: Prisma.$DeviceCodePayload<ExtArgs>;
+			fields: Prisma.DeviceCodeFieldRefs;
+			operations: {
+				findUnique: {
+					args: Prisma.DeviceCodeFindUniqueArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCodePayload> | null;
+				};
+				findUniqueOrThrow: {
+					args: Prisma.DeviceCodeFindUniqueOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCodePayload>;
+				};
+				findFirst: {
+					args: Prisma.DeviceCodeFindFirstArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCodePayload> | null;
+				};
+				findFirstOrThrow: {
+					args: Prisma.DeviceCodeFindFirstOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCodePayload>;
+				};
+				findMany: {
+					args: Prisma.DeviceCodeFindManyArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCodePayload>[];
+				};
+				create: {
+					args: Prisma.DeviceCodeCreateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCodePayload>;
+				};
+				createMany: {
+					args: Prisma.DeviceCodeCreateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				createManyAndReturn: {
+					args: Prisma.DeviceCodeCreateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCodePayload>[];
+				};
+				delete: {
+					args: Prisma.DeviceCodeDeleteArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCodePayload>;
+				};
+				update: {
+					args: Prisma.DeviceCodeUpdateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCodePayload>;
+				};
+				deleteMany: {
+					args: Prisma.DeviceCodeDeleteManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateMany: {
+					args: Prisma.DeviceCodeUpdateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateManyAndReturn: {
+					args: Prisma.DeviceCodeUpdateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCodePayload>[];
+				};
+				upsert: {
+					args: Prisma.DeviceCodeUpsertArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCodePayload>;
+				};
+				aggregate: {
+					args: Prisma.DeviceCodeAggregateArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.AggregateDeviceCode>;
+				};
+				groupBy: {
+					args: Prisma.DeviceCodeGroupByArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.DeviceCodeGroupByOutputType>[];
+				};
+				count: {
+					args: Prisma.DeviceCodeCountArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.DeviceCodeCountAggregateOutputType> | number;
 				};
 			};
 		};
@@ -1769,6 +1845,8 @@ export const SessionScalarFieldEnum = {
 	userAgent: "userAgent",
 	userId: "userId",
 	activeOrganizationId: "activeOrganizationId",
+	clientId: "clientId",
+	deviceName: "deviceName",
 } as const;
 
 export type SessionScalarFieldEnum =
@@ -1804,6 +1882,23 @@ export const VerificationScalarFieldEnum = {
 
 export type VerificationScalarFieldEnum =
 	(typeof VerificationScalarFieldEnum)[keyof typeof VerificationScalarFieldEnum];
+
+export const DeviceCodeScalarFieldEnum = {
+	id: "id",
+	deviceCode: "deviceCode",
+	userCode: "userCode",
+	userId: "userId",
+	expiresAt: "expiresAt",
+	status: "status",
+	lastPolledAt: "lastPolledAt",
+	pollingInterval: "pollingInterval",
+	clientId: "clientId",
+	scope: "scope",
+	deviceName: "deviceName",
+} as const;
+
+export type DeviceCodeScalarFieldEnum =
+	(typeof DeviceCodeScalarFieldEnum)[keyof typeof DeviceCodeScalarFieldEnum];
 
 export const MarkerScalarFieldEnum = {
 	id: "id",
@@ -2263,6 +2358,7 @@ export type GlobalOmitConfig = {
 	session?: Prisma.SessionOmit;
 	account?: Prisma.AccountOmit;
 	verification?: Prisma.VerificationOmit;
+	deviceCode?: Prisma.DeviceCodeOmit;
 	marker?: Prisma.MarkerOmit;
 	category?: Prisma.CategoryOmit;
 	response?: Prisma.ResponseOmit;

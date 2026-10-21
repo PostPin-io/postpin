@@ -57,6 +57,15 @@ enum  MarkerColor {
 	Cream
 }
 
+structure LoginConfig {
+  serverBaseUrl: string
+}
+
+structure LoginCode {
+  userCode: string
+  verificationUri: string
+}
+
 [RendererAPI]
 [ContextBridge]
 [Validator=MyApp]
@@ -83,4 +92,14 @@ interface MainAPI {
   test() -> boolean
   getProjectId() -> string
   getTimelineId() -> string
+
+  // Auth
+  getSession() -> unknown
+  getSessionToken() -> string
+  logout() -> boolean
+  login(config: LoginConfig) -> boolean
+  [Event]
+  loginCode(code: LoginCode)
+  [Event]
+  sessionChanged(session: unknown)
 }

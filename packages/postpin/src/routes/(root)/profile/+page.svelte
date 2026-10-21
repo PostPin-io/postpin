@@ -2,13 +2,14 @@
 	import { untrack } from "svelte";
 	import { refreshAll } from "$app/navigation";
 	import { authClient } from "#lib/auth-client.ts";
-	import { getMemberships, getProfile } from "./profile.remote.ts";
+	import { getMemberships, getProfile, getSessions, revokeSession } from "./profile.remote.ts";
 	import NewOrgModal from "../../../lib/components/NewOrgModal.svelte";
 
 	type Message = { type: "success" | "error"; text: string } | null;
 
 	const profile = $derived(await getProfile());
 	const memberships = $derived(await getMemberships());
+	const sessions = $derived(await getSessions());
 
 	let name = $state(untrack(() => profile.name));
 	let savingName = $state(false);
@@ -27,6 +28,9 @@
 
 	let leaving = $state<string | null>(null);
 	let orgMessage = $state<Message>(null);
+
+	let revoking = $state<string | null>(null);
+	let sessionMessage = $state<Message>(null);
 
 	async function saveName() {
 		if (!name.trim()) {
@@ -129,6 +133,17 @@
 		// better-auth doesn't refresh these stores on leave; the navbar switcher reads them
 		authClient.$store.notify("$listOrg");
 		authClient.$store.notify("$sessionSignal");
+	}
+
+	async function signOutSession(id: string) {
+		revoking = id;
+		sessionMessage = null;
+		try {
+			await revokeSession(id);
+		} catch {
+			sessionMessage = { type: "error", text: "Could not sign out that session." };
+		}
+		revoking = null;
 	}
 
 	let dialog: NewOrgModal | null = null;
@@ -273,6 +288,57 @@
 			</div>
 		</fieldset>
 	</div>
+
+	<fieldset class="fieldset rounded-box border border-base-300 bg-base-100 p-4">
+		<legend class="fieldset-legend">Active Sessions</legend>
+		{@render alert(sessionMessage, () => (sessionMessage = null))}
+		<div class="overflow-x-auto">
+			<table class="table w-full table-sm">
+				<thead>
+					<tr>
+						<th>Device</th>
+						<th>IP address</th>
+						<th>Last active</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each sessions as session (session.id)}
+						<tr>
+							<td>
+								<div class="font-medium">
+									{session.app}
+									{#if session.current}<span class="badge badge-sm badge-primary">This device</span
+										>{/if}
+								</div>
+								{#if session.deviceName}
+									<div class="text-xs text-base-content/70">{session.deviceName}</div>
+								{/if}
+							</td>
+							<td class="font-mono text-xs">{session.ipAddress ?? "–"}</td>
+							<td title={`Signed in ${session.createdAt.toLocaleString()}`}>
+								{session.lastActive.toLocaleString()}
+							</td>
+							<td class="text-right">
+								{#if !session.current}
+									<button
+										type="button"
+										class="btn btn-ghost text-error btn-xs"
+										disabled={revoking !== null}
+										onclick={() => signOutSession(session.id)}
+									>
+										Sign out
+										{#if revoking === session.id}<span class="loading loading-xs loading-spinner"
+											></span>{/if}
+									</button>
+								{/if}
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+	</fieldset>
 
 	<fieldset class="fieldset rounded-box border border-base-300 bg-base-100 p-4">
 		<legend class="fieldset-legend">Organizations</legend>
