@@ -51,6 +51,13 @@ export enum MarkerColor {
 	Cocoa = "Cocoa",
 	Cream = "Cream",
 }
+export interface LoginConfig {
+	serverBaseUrl: string;
+}
+export interface LoginCode {
+	userCode: string;
+	verificationUri: string;
+}
 export interface IMainAPIImpl {
 	getRenderPresets(): Promise<string[]> | string[];
 	renderPreview(targetDirPath: string, targetClipName: string): Promise<string> | string;
@@ -74,6 +81,10 @@ export interface IMainAPIImpl {
 	test(): Promise<boolean> | boolean;
 	getProjectId(): Promise<string> | string;
 	getTimelineId(): Promise<string> | string;
+	getSession(): Promise<unknown> | unknown;
+	getSessionToken(): Promise<string> | string;
+	logout(): Promise<boolean> | boolean;
+	login(config: LoginConfig): Promise<boolean> | boolean;
 }
 export interface IMainAPIRenderer {
 	getRenderPresets(): Promise<string[]>;
@@ -98,6 +109,12 @@ export interface IMainAPIRenderer {
 	test(): Promise<boolean>;
 	getProjectId(): Promise<string>;
 	getTimelineId(): Promise<string>;
+	getSession(): Promise<unknown>;
+	getSessionToken(): Promise<string>;
+	logout(): Promise<boolean>;
+	login(config: LoginConfig): Promise<boolean>;
 	onRenderProgress(fn: (progress: RenderProgress) => void): () => void;
 	onUploadProgress(fn: (progress: UploadProgress) => void): () => void;
+	onLoginCode(fn: (code: LoginCode) => void): () => void;
+	onSessionChanged(fn: (session: unknown) => void): () => void;
 }

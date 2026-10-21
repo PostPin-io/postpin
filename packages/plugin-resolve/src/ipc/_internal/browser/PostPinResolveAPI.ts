@@ -10,6 +10,8 @@ import {
 	UploadProgress,
 	Marker,
 	MarkerColor,
+	LoginConfig,
+	LoginCode,
 	IMainAPIImpl,
 	IMainAPIRenderer,
 } from "../common/PostPinResolveAPI.js";
@@ -21,9 +23,11 @@ import {
 	$eipc_validator$_UploadProgress,
 	$eipc_validator$_Marker,
 	$eipc_validator$_MarkerColor,
+	$eipc_validator$_LoginConfig,
+	$eipc_validator$_LoginCode,
 } from "../common-runtime/PostPinResolveAPI.js";
 import * as $eipc$ from "../browser-runtime.js";
-const $$ipcPrefix$$ = "$eipc_message$_f2445539-522e-4108-9091-5aae84a1ddd2_$_PostPinResolveAPI_$_";
+const $$ipcPrefix$$ = "$eipc_message$_db11898d-8592-472f-b7ae-33b9ba9f8cc0_$_PostPinResolveAPI_$_";
 // Interfaces are declared as data and wired up by ../browser-runtime.ts:
 //   methods: [name, [[argName, validator], ...], resultValidator?]  ([Sync] methods append null|validator, 'sync')
 //   stores:  [name, stateValidator]
@@ -35,6 +39,8 @@ function $eipc_event_validator$_MyApp(event: Electron.IpcMainEvent | Electron.Ip
 export interface IMainAPIDispatcher {
 	dispatchRenderProgress(arg_progress: RenderProgress): void;
 	dispatchUploadProgress(arg_progress: UploadProgress): void;
+	dispatchLoginCode(arg_code: LoginCode): void;
+	dispatchSessionChanged(arg_session: unknown): void;
 }
 export const MainAPI = /*#__PURE__*/ $eipc$.defineInterface<
 	IMainAPIImpl,
@@ -75,9 +81,15 @@ export const MainAPI = /*#__PURE__*/ $eipc$.defineInterface<
 		["test", [], $eipc$.boolean],
 		["getProjectId", [], $eipc$.string],
 		["getTimelineId", [], $eipc$.string],
+		["getSession", [], $eipc$.unknown],
+		["getSessionToken", [], $eipc$.string],
+		["logout", [], $eipc$.boolean],
+		["login", [["config", $eipc_validator$_LoginConfig]], $eipc$.boolean],
 	],
 	events: [
 		["renderProgress", [["progress", $eipc_validator$_RenderProgress]]],
 		["uploadProgress", [["progress", $eipc_validator$_UploadProgress]]],
+		["loginCode", [["code", $eipc_validator$_LoginCode]]],
+		["sessionChanged", [["session", $eipc$.unknown]]],
 	],
 });

@@ -10,6 +10,8 @@ import {
 	UploadProgress,
 	Marker,
 	MarkerColor,
+	LoginConfig,
+	LoginCode,
 	IMainAPIImpl,
 	IMainAPIRenderer,
 } from "../common/PostPinResolveAPI.js";
@@ -21,8 +23,10 @@ import {
 	$eipc_validator$_UploadProgress,
 	$eipc_validator$_Marker,
 	$eipc_validator$_MarkerColor,
+	$eipc_validator$_LoginConfig,
+	$eipc_validator$_LoginCode,
 } from "../common-runtime/PostPinResolveAPI.js";
-const $$ipcPrefix$$ = "$eipc_message$_f2445539-522e-4108-9091-5aae84a1ddd2_$_PostPinResolveAPI_$_";
+const $$ipcPrefix$$ = "$eipc_message$_db11898d-8592-472f-b7ae-33b9ba9f8cc0_$_PostPinResolveAPI_$_";
 import { webFrame } from "electron/renderer";
 function $eipc_event_validator$_MyApp() {
 	if (
@@ -112,6 +116,34 @@ export const MainAPI: Partial<IMainAPIRenderer> = {
 	},
 	getTimelineId() {
 		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_getTimelineId");
+	},
+	getSession() {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_getSession");
+	},
+	getSessionToken() {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_getSessionToken");
+	},
+	logout() {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_logout");
+	},
+	login(config: LoginConfig) {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_login", config);
+	},
+	onLoginCode(fn: (code: LoginCode) => void) {
+		const handler = (e: unknown, code: LoginCode) => fn(code);
+		const $$channel$$ = $$ipcPrefix$$ + "MainAPI_$_loginCode";
+		ipcRenderer.on($$channel$$, handler);
+		return () => {
+			ipcRenderer.removeListener($$channel$$, handler);
+		};
+	},
+	onSessionChanged(fn: (session: unknown) => void) {
+		const handler = (e: unknown, session: unknown) => fn(session);
+		const $$channel$$ = $$ipcPrefix$$ + "MainAPI_$_sessionChanged";
+		ipcRenderer.on($$channel$$, handler);
+		return () => {
+			ipcRenderer.removeListener($$channel$$, handler);
+		};
 	},
 };
 const $eipc_impl$__init_MainAPI = (localBridged: Record<string, any>) => {

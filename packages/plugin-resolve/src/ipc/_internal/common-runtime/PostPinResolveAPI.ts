@@ -93,3 +93,20 @@ const $eipc_validator$_MarkerColor_values = new Set([
 export function $eipc_validator$_MarkerColor(value: any): boolean {
 	return $eipc_validator$_MarkerColor_values.has(value);
 }
+export function $eipc_validator$_LoginConfig(value: any): boolean {
+	if (!value || typeof value !== "object") return false;
+
+	// LoginConfig.serverBaseUrl
+	if (!(typeof value.serverBaseUrl === "string")) return false;
+	return true;
+}
+export function $eipc_validator$_LoginCode(value: any): boolean {
+	if (!value || typeof value !== "object") return false;
+
+	// LoginCode.userCode
+	if (!(typeof value.userCode === "string")) return false;
+
+	// LoginCode.verificationUri
+	if (!(typeof value.verificationUri === "string")) return false;
+	return true;
+}

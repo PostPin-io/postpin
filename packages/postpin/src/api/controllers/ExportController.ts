@@ -49,6 +49,7 @@ export class ExportController extends Controller {
 	): Promise<{ id: string }> {
 		const timeline = await prisma.timeline.findFirst({
 			where: { id: timelineId, projectId },
+			include: { project: { select: { nleProjectId: true } } },
 		});
 		if (!timeline) {
 			throw new HttpError(404, "Timeline not found");
@@ -56,10 +57,12 @@ export class ExportController extends Controller {
 
 		return prisma.$transaction(async (tx) => {
 			if (body.nleTimelineId !== timeline.nleTimelineId) {
-				await tx.timeline.updateMany({
-					where: { projectId, nleTimelineId: body.nleTimelineId },
-					data: { nleTimelineId: null },
-				});
+				if (body.nleTimelineId) {
+					await tx.timeline.updateMany({
+						where: { id: { not: timelineId }, nleTimelineId: body.nleTimelineId },
+						data: { nleTimelineId: null },
+					});
+				}
 				await tx.timeline.update({
 					where: { id: timelineId },
 					data: {
@@ -67,12 +70,14 @@ export class ExportController extends Controller {
 					},
 				});
 			}
-			if (body.nleProjectId !== timeline.projectId) {
-				await tx.project.updateMany({
-					where: { id: projectId, nleProjectId: body.nleProjectId },
-					data: { nleProjectId: null },
-				});
-				await prisma.project.update({
+			if (body.nleProjectId !== timeline.project.nleProjectId) {
+				if (body.nleProjectId) {
+					await tx.project.updateMany({
+						where: { id: { not: projectId }, nleProjectId: body.nleProjectId },
+						data: { nleProjectId: null },
+					});
+				}
+				await tx.project.update({
 					where: { id: projectId },
 					data: {
 						nleProjectId: body.nleProjectId,

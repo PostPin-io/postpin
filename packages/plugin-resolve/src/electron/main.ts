@@ -1,6 +1,6 @@
 // NOTE: Follow the security guide while implementing plugin app https://www.electronjs.org/docs/tutorial/security
 
-import { app, BrowserWindow, shell, dialog } from "electron";
+import { app, BrowserWindow, shell, dialog, safeStorage } from "electron";
 import path from "path";
 // @ts-ignore
 import WorkflowIntegrationModule from "./WorkflowIntegration.node";
@@ -37,6 +37,7 @@ import type {
 } from "@postpin-io/shared/types/TimelineSnapshot";
 
 import Store from "electron-store";
+import { getSession, login, logout } from "./auth";
 
 const store = new Store<{ lastSettings?: Partial<Settings> }>();
 
@@ -577,16 +578,7 @@ function setupIPC(win: BrowserWindow) {
 			return await timeline.GetStartFrame();
 		},
 		test: async () => {
-			const project = await getCurrentProject();
-			if (!project) return false;
-
-			const timeline = await project.GetCurrentTimeline();
-			if (!timeline) return false;
-
-			// save a 0 length marker and read it to check if it is still there
-			await timeline.AddMarker(0, "Red", "Test", "Test", 0);
-			const markers = await timeline.GetMarkers();
-			return markers && Object.keys(markers).length > 0;
+			return safeStorage.isAsyncEncryptionAvailable();
 		},
 		getProjectId: async () => {
 			const project = await getCurrentProject();
@@ -603,8 +595,30 @@ function setupIPC(win: BrowserWindow) {
 
 			return await timeline.GetUniqueId();
 		},
+		login: async () => {
+			await login((userCode, verificationUri) => {
+				dispatcher.dispatchLoginCode({ userCode, verificationUri });
+			});
+			dispatcher.dispatchSessionChanged(await getSession());
+			return true;
+		},
+		getSession: async () => {
+			const session = await getSession();
+			return session;
+		},
+		getSessionToken: async () => {
+			const session = await getSession();
+			return session?.session.token ?? "";
+		},
+		logout: async () => {
+			await logout();
+			dispatcher.dispatchSessionChanged(await getSession());
+			return true;
+		},
 	});
 }
+
+let currentlyRunningLogin: Promise<void> | null = null;
 
 function createWindow() {
 	const mainWindow = new BrowserWindow({

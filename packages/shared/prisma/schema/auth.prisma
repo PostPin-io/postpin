@@ -33,6 +33,9 @@ model Session {
   user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   activeOrganizationId String?
   activeOrganization   Organization? @relation(fields: [activeOrganizationId], references: [id], onDelete: SetNull)
+  // set for sessions created through the device authorization flow
+  clientId             String?
+  deviceName           String?
 
   @@unique([token])
   @@index([userId])
@@ -70,4 +73,22 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model DeviceCode {
+  id              String    @id
+  deviceCode      String
+  userCode        String
+  userId          String?
+  expiresAt       DateTime
+  status          String
+  lastPolledAt    DateTime?
+  pollingInterval Int?
+  clientId        String?
+  scope           String?
+  deviceName      String?
+
+  @@unique([deviceCode], map: "deviceCode_deviceCode_uidx")
+  @@unique([userCode], map: "deviceCode_userCode_uidx")
+  @@map("deviceCode")
 }
