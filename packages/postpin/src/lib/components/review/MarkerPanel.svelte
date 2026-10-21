@@ -11,12 +11,29 @@
 		onseek: (frame: number) => void;
 	}
 	let { currentFrame, onseek }: Props = $props();
-
+	let updateMarkerComponent: UpdateMarker | null = null;
 	const currentExportId = $derived(page.params.export ?? "");
 	const projectId = $derived(page.params.project ?? "");
+	const defaultCategory = $derived(localStorage.getItem("DefaultCategory") ?? "");
+
 	let markers = $derived(await getMarkers(currentExportId));
 	let markerAtPlayhead = $derived(markers.find((marker) => marker.frame === currentFrame));
 
+	let selectedMarkerId = $state<string | null>(null);
+	let selectedMarker = $derived(markers.find((marker) => marker.id === selectedMarkerId));
+
+	let isUpdateMarkerFocused = $state(false);
+
+	$effect(() => {
+		if (markerAtPlayhead) selectedMarkerId = markerAtPlayhead.id;
+	});
+
+	$effect(() => {
+		localStorage.setItem("DefaultCategory", defaultCategory);
+	});
+	$effect(() => {
+		localStorage.setItem("UpdateMarkerFocused", isUpdateMarkerFocused ? "true" : "false");
+	});
 	let creating = false;
 
 	async function addMarkerAtPlayhead() {
@@ -30,7 +47,7 @@
 				exportId: currentExportId,
 				name: "",
 				description: "",
-				categoryId,
+				categoryId: localStorage.getItem("DefaultCategory") ?? categoryId,
 				frame: currentFrame,
 			});
 		} finally {
@@ -43,10 +60,14 @@
 		if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
 
 		const target = event.target as HTMLElement | null;
+
 		if (target?.closest("input, textarea, select, [contenteditable]")) return;
 
 		event.preventDefault();
 		void addMarkerAtPlayhead();
+		if (localStorage.getItem("UpdateMarkerFocused") === "true") {
+			setTimeout(() => updateMarkerComponent?.focusTitleInputField(), 50);
+		}
 	}
 </script>
 
@@ -61,11 +82,15 @@
 			{/each}
 		</div>
 	</Pane>
-	{#if markerAtPlayhead}
+	{#if selectedMarker}
 		<Pane minSize={29} maxSize={70} class="overflow-auto">
 			<div class="h-full shrink-0 pb-10">
-				{#key markerAtPlayhead.id}
-					<UpdateMarker marker={markerAtPlayhead} />
+				{#key selectedMarker.id}
+					<UpdateMarker
+						bind:this={updateMarkerComponent}
+						marker={selectedMarker}
+						onclose={() => (selectedMarkerId = null)}
+					/>
 				{/key}
 			</div>
 		</Pane>
