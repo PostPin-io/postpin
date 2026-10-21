@@ -5,12 +5,15 @@
 	import { Pane, Splitpanes } from "svelte-splitpanes";
 
 	import { getMarkers, getCategories, createMarker, createCategory } from "./MarkerPanel.remote.ts";
+	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 
 	interface Props {
 		currentFrame: number;
 		onseek: (frame: number) => void;
+		startFrame: number;
+		frameRate: FrameRate;
 	}
-	let { currentFrame, onseek }: Props = $props();
+	let { currentFrame, onseek, frameRate, startFrame }: Props = $props();
 
 	const currentExportId = $derived(page.params.export ?? "");
 	const projectId = $derived(page.params.project ?? "");
@@ -55,7 +58,13 @@
 	<Pane class="overflow-auto">
 		<div class="flex h-full min-h-0 flex-1 flex-col gap-4 overflow-y-auto *:shrink-0">
 			{#each markers as marker (marker.id)}
-				<Marker {marker} active={marker.id === markerAtPlayhead?.id} onselect={onseek} />
+				<Marker
+					{marker}
+					active={marker.id === markerAtPlayhead?.id}
+					onselect={onseek}
+					{frameRate}
+					{startFrame}
+				/>
 			{:else}
 				<p class="px-3 text-sm text-base-content/60">No markers yet.</p>
 			{/each}
@@ -65,7 +74,7 @@
 		<Pane minSize={29} maxSize={70} class="overflow-auto">
 			<div class="h-full shrink-0 pb-10">
 				{#key markerAtPlayhead.id}
-					<UpdateMarker marker={markerAtPlayhead} />
+					<UpdateMarker marker={markerAtPlayhead} {startFrame} />
 				{/key}
 			</div>
 		</Pane>

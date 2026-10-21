@@ -1,7 +1,9 @@
 <script lang="ts">
 	import type { Prisma } from "@postpin-io/shared/db";
+	import Timecode from "./Timecode.svelte";
+	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 
-	let { marker, active = false, onselect }: Props = $props();
+	let { marker, active = false, onselect, frameRate, startFrame }: Props = $props();
 
 	interface Props {
 		active?: boolean;
@@ -12,6 +14,8 @@
 				category: true;
 			};
 		}>;
+		frameRate: FrameRate;
+		startFrame: number;
 	}
 
 	// Pick black or white text depending on the perceived brightness of the category color
@@ -65,9 +69,9 @@
 			class="flex items-center justify-between gap-3 border-t border-base-300 pt-2 text-xs text-base-content/60"
 		>
 			<span>By {marker.author.name}</span>
-			<span class="truncate font-mono text-[11px]" title={marker.frame.toString()}
-				>#{marker.frame}</span
-			>
+			<span class="truncate font-mono text-[11px]" title={marker.frame.toString()}>
+				<Timecode frame={marker.frame} {frameRate} {startFrame} />
+			</span>
 		</div>
 	</div>
 </article>

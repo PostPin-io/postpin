@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { onMount, tick } from "svelte";
 	import { page } from "$app/state";
-	import { getExport, getMarkers, getUrl } from "./export.remote";
+	import { getExport, getUrl } from "./export.remote";
 
 	import Header from "#lib/components/Header.svelte";
 	import MarkerPanel from "#lib/components/review/MarkerPanel.svelte";
 	import { Pane, Splitpanes } from "svelte-splitpanes";
 	import Timeline from "./Timeline.svelte";
 	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
+	import { frameAtSeconds, secondsAtFrame } from "./timecode";
+	import { getMarkers } from "#lib/components/review/MarkerPanel.remote.ts";
 
 	const STORAGE_KEY = "postpin:export-panes";
 
@@ -217,14 +219,11 @@
 	let videoPaused = $state(true);
 	let videoPlaybackRate = $state(1);
 
-	const fps = $derived.by(() => {
-		const rate = (exportQuery.current?.timelineSnapshot as TimelineSnapshot | undefined)?.frameRate;
-		return rate ? rate.fpsNumerator / rate.fpsDenominator : 24;
-	});
-	// Same frame <-> seconds mapping as the timeline playhead
-	const currentFrame = $derived(Math.floor(videoPosition * fps + 1e-6));
+	const snapshot = $derived(exportQuery.current?.timelineSnapshot as TimelineSnapshot | undefined);
+	// Absolute timeline frame, like marker frames
+	const currentFrame = $derived(snapshot ? frameAtSeconds(videoPosition, snapshot) : 0);
 	const seekToFrame = (frame: number) => {
-		videoPosition = (frame + 0.5) / fps;
+		if (snapshot) videoPosition = secondsAtFrame(frame, snapshot);
 	};
 </script>
 
@@ -314,11 +313,7 @@
 							{#if exportQuery.current?.timelineSnapshot}
 								<Timeline
 									snapshot={exportQuery.current!.timelineSnapshot as TimelineSnapshot}
-									markers={await getMarkers({
-										exportId: page.params.export ?? "",
-										timelineId: page.params.timeline ?? "",
-										projectId: page.params.project ?? "",
-									})}
+									markers={await getMarkers(page.params.export ?? "")}
 									bind:videoPositionSeconds={videoPosition}
 									bind:paused={videoPaused}
 									bind:playbackRate={videoPlaybackRate}
@@ -334,7 +329,12 @@
 			<!-- Marker panel -->
 			{#if isMarkerVisible}
 				<Pane size={layout.main[1]} minSize={20} maxSize={50} class="overflow-auto">
-					<MarkerPanel {currentFrame} onseek={seekToFrame} />
+					<MarkerPanel
+						{currentFrame}
+						onseek={seekToFrame}
+						startFrame={snapshot!.startFrameIndex}
+						frameRate={snapshot!.frameRate}
+					/>
 				</Pane>
 			{/if}
 		</Splitpanes>

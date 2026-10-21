@@ -1,6 +1,15 @@
-import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
+import type { FrameRate, TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 
 const pad = (value: number) => String(value).padStart(2, "0");
+
+type FrameTiming = Pick<TimelineSnapshot, "frameRate" | "startFrameIndex">;
+const fps = ({ frameRate }: FrameTiming) => frameRate.fpsNumerator / frameRate.fpsDenominator;
+
+export const frameAtSeconds = (seconds: number, timing: FrameTiming) =>
+	timing.startFrameIndex + Math.floor(seconds * fps(timing) + 1e-6);
+
+export const secondsAtFrame = (frame: number, timing: FrameTiming) =>
+	(frame - timing.startFrameIndex + 0.5) / fps(timing);
 
 /** Formats an absolute frame index as HH:MM:SS:FF, or HH:MM:SS;FF for drop-frame */
 export function formatTimecode(frame: number, frameRate: FrameRate): string {

@@ -45,28 +45,3 @@ export const getUrl = query(
 		return await getPresignedUrl(s3Client, env, object);
 	},
 );
-
-export const getMarkers = query(
-	v.object({ projectId: v.string(), timelineId: v.string(), exportId: v.string() }),
-	async ({ projectId, timelineId, exportId }) => {
-		return await prisma.marker.findMany({
-			orderBy: { frame: "desc" },
-			include: {
-				category: true,
-				responses: {
-					orderBy: { createdAt: "desc" },
-				},
-				author: true,
-			},
-			where: {
-				export: {
-					id: exportId,
-					timeline: {
-						id: timelineId,
-						projectId,
-					},
-				},
-			},
-		});
-	},
-);

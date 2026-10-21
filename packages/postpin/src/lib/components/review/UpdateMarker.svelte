@@ -5,7 +5,7 @@
 	import { updateMarker, deleteMarker, getCategories, createCategory } from "./MarkerPanel.remote";
 	import { page } from "$app/state";
 	import ClipboardList from "@lucide/svelte/icons/clipboard-list";
-	let { marker }: Props = $props();
+	let { marker, startFrame }: Props = $props();
 
 	interface Props {
 		marker: Prisma.MarkerGetPayload<{
@@ -14,6 +14,7 @@
 				category: true;
 			};
 		}>;
+		startFrame: number;
 	}
 
 	let editCategoriesModal: EditCategoriesModal;
@@ -98,7 +99,7 @@
 			</button>
 
 			<span class="badge badge-outline tabular-nums" title="Marker frame">
-				Frame {marker.frame}
+				Frame {marker.frame - startFrame}
 			</span>
 		</div>
 

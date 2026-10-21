@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { tick } from "svelte";
 	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
-	import Timecode from "./Timecode.svelte";
-	import { formatTimecode } from "./timecode";
+	import Timecode from "#lib/components/review/Timecode.svelte";
+	import { formatTimecode, frameAtSeconds, secondsAtFrame } from "./timecode";
 	import type { Prisma } from "@postpin-io/shared/db";
 
 	interface Props {
@@ -60,35 +60,31 @@
 
 	const fps = $derived(snapshot.frameRate.fpsNumerator / snapshot.frameRate.fpsDenominator);
 
-	// The frame on screen is the one that started before the time, hence floor
-	const secondsToFrame = (seconds: number) => Math.floor(seconds * fps + 1e-6);
-	// Middle of the frame, so the browser doesn't land on the previous one when seeking
-	const frameToSeconds = (frame: number) => (frame + 0.5) / fps;
+	// Frames are absolute timeline frames throughout, only pixel positions count from the start
+	const firstFrame = $derived(snapshot.startFrameIndex);
+	const lastFrame = $derived(snapshot.startFrameIndex + snapshot.durationFrameCount - 1);
+	const toX = (frame: number) => (frame - firstFrame) * pixelsPerFrame;
 
-	const clampFrame = (frame: number) =>
-		Math.min(Math.max(frame, 0), snapshot.durationFrameCount - 1);
+	const clampFrame = (frame: number) => Math.min(Math.max(frame, firstFrame), lastFrame);
 
-	let playHeadPosition = $derived(secondsToFrame(videoPositionSeconds));
+	let playHeadPosition = $derived(frameAtSeconds(videoPositionSeconds, snapshot));
 
 	function seek(frame: number) {
-		videoPositionSeconds = frameToSeconds(clampFrame(frame));
+		videoPositionSeconds = secondsAtFrame(clampFrame(frame), snapshot);
 	}
 
-	// Clip starts and ends on all tracks, relative to the timeline start
+	// Clip starts and ends on all tracks
 	let cuts = $derived(
 		[
 			...new Set([
-				0,
-				snapshot.durationFrameCount - 1,
+				firstFrame,
+				lastFrame,
 				...snapshot.tracks.flatMap((track) =>
-					track.clips.flatMap((clip) => {
-						const start = clip.startFrameIndex - snapshot.startFrameIndex;
+					track.clips.flatMap((clip) => [
+						clip.startFrameIndex,
 						// ensure that end is within the timeline
-						return [
-							start,
-							Math.min(start + clip.durationFrameCount, snapshot.durationFrameCount - 1),
-						];
-					}),
+						Math.min(clip.startFrameIndex + clip.durationFrameCount, lastFrame),
+					]),
 				),
 			]),
 		].sort((a, b) => a - b),
@@ -125,7 +121,7 @@
 		);
 		return Array.from(
 			{ length: Math.max(last - first + 1, 0) },
-			(_, i) => (first + i) * tickFrames,
+			(_, i) => firstFrame + (first + i) * tickFrames,
 		);
 	});
 
@@ -136,7 +132,7 @@
 	function frameAtClientX(clientX: number) {
 		// The rect moves with scrolling, so scrollLeft is already included
 		const x = clientX - content!.getBoundingClientRect().left;
-		return Math.floor(x / pixelsPerFrame);
+		return firstFrame + Math.floor(x / pixelsPerFrame);
 	}
 
 	function startScrub(event: PointerEvent & { currentTarget: HTMLElement }) {
@@ -167,7 +163,7 @@
 
 	// Page flip when the playhead leaves the view
 	$effect(() => {
-		const x = playHeadPosition * pixelsPerFrame;
+		const x = toX(playHeadPosition);
 		if (!lanes || dragging) return;
 		if (x < lanes.scrollLeft || x > lanes.scrollLeft + lanes.clientWidth - 20) {
 			lanes.scrollLeft = x - 20;
@@ -176,10 +172,10 @@
 
 	// Keeps the anchor frame at the same place on screen
 	async function setZoom(next: number, anchorFrame = playHeadPosition) {
-		const offset = anchorFrame * pixelsPerFrame - (lanes?.scrollLeft ?? 0);
+		const offset = toX(anchorFrame) - (lanes?.scrollLeft ?? 0);
 		zoom = Math.min(Math.max(next, 1), maxZoom);
 		await tick();
-		if (lanes) lanes.scrollLeft = anchorFrame * pixelsPerFrame - offset;
+		if (lanes) lanes.scrollLeft = toX(anchorFrame) - offset;
 	}
 
 	function onWheel(event: WheelEvent) {
@@ -263,10 +259,10 @@
 				changePlaybackRate(-1);
 				break;
 			case "Home":
-				seek(0);
+				seek(firstFrame);
 				break;
 			case "End":
-				seek(snapshot.durationFrameCount - 1);
+				seek(lastFrame);
 				break;
 			case " ":
 				paused = !paused;
@@ -352,15 +348,15 @@
 					{#each ticks as tickFrame (tickFrame)}
 						<div
 							class="absolute top-0 h-full border-l border-gray-400 pt-1 pl-1 font-mono text-xs text-gray-500"
-							style="left: {tickFrame * pixelsPerFrame}px"
+							style="left: {toX(tickFrame)}px"
 						>
-							{formatTimecode(snapshot.startFrameIndex + tickFrame, snapshot.frameRate)}
+							{formatTimecode(tickFrame, snapshot.frameRate)}
 						</div>
 					{/each}
 
 					<div
 						class="pointer-events-none absolute bottom-0 -ml-1.5 border-x-[6px] border-t-8 border-x-transparent border-t-red-500"
-						style="left: {playHeadPosition * pixelsPerFrame}px"
+						style="left: {toX(playHeadPosition)}px"
 					></div>
 				</div>
 
@@ -373,10 +369,10 @@
 								'video'
 									? 'border-blue-700 bg-blue-500'
 									: 'border-green-800 bg-green-600'}"
-								style="left: {(clip.startFrameIndex - snapshot.startFrameIndex) *
-									pixelsPerFrame}px; width: {clip.durationFrameCount * pixelsPerFrame}px"
+								style="left: {toX(clip.startFrameIndex)}px; width: {clip.durationFrameCount *
+									pixelsPerFrame}px"
 								title={clip.name}
-								onclick={() => seek(clip.startFrameIndex - snapshot.startFrameIndex)}
+								onclick={() => seek(clip.startFrameIndex)}
 							>
 								{clip.name}
 							</button>
@@ -386,17 +382,16 @@
 
 				<div
 					class="pointer-events-none absolute inset-y-0 left-0 z-30 w-px bg-red-500"
-					style="transform: translateX({playHeadPosition * pixelsPerFrame}px)"
+					style="transform: translateX({toX(playHeadPosition)}px)"
 				></div>
 
 				{#each markers as marker (marker.id)}
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
 						class="absolute top-0 h-full cursor-pointer border border-l-2"
-						style="left: {(marker.frame - snapshot.startFrameIndex) *
-							pixelsPerFrame}px; border-color: {marker.category.color}"
+						style="left: {toX(marker.frame)}px; border-color: {marker.category.color}"
 						title={marker.name}
-						onclick={() => seek(marker.frame - snapshot.startFrameIndex)}
+						onclick={() => seek(marker.frame)}
 					></div>
 				{/each}
 			</div>
