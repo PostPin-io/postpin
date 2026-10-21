@@ -97,7 +97,7 @@
 	async function openEditCategoriesModal() {
 		editCategoriesModal.open(page.params.project ?? "");
 	}
-	async function remove() {
+	export async function remove() {
 		removed = true;
 		clearTimeout(timer);
 		saving = true;
@@ -176,7 +176,7 @@
 				<input
 					bind:this={titleInputField}
 					type="text"
-					class="input w-full"
+					class="≈"
 					placeholder="Title"
 					aria-label="Marker title"
 					bind:value={name}
@@ -185,6 +185,7 @@
 				<button
 					type="button"
 					class="btn btn-square btn-ghost"
+					tabindex="-1"
 					class:btn-active={titleFocusToggled}
 					class:text-accent={titleFocusToggled}
 					title="When creating a new marker, you can immediately start typing the title"

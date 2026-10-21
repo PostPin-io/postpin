@@ -27,7 +27,7 @@ import {
 	$eipc_validator$_LoginCode,
 } from "../common-runtime/PostPinResolveAPI.js";
 import * as $eipc$ from "../browser-runtime.js";
-const $$ipcPrefix$$ = "$eipc_message$_db11898d-8592-472f-b7ae-33b9ba9f8cc0_$_PostPinResolveAPI_$_";
+const $$ipcPrefix$$ = "$eipc_message$_fa2491f6-c3e6-4f5a-989f-b29335043493_$_PostPinResolveAPI_$_";
 // Interfaces are declared as data and wired up by ../browser-runtime.ts:
 //   methods: [name, [[argName, validator], ...], resultValidator?]  ([Sync] methods append null|validator, 'sync')
 //   stores:  [name, stateValidator]

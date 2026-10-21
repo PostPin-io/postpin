@@ -58,6 +58,17 @@
 		}
 	}
 
+	function deleteKeypress(event: KeyboardEvent) {
+		if (!event.metaKey || (event.key !== "Backspace" && event.key !== "Delete")) return;
+		if (!selectedMarker || !updateMarkerComponent) return;
+
+		const target = event.target as HTMLElement | null;
+		if (target?.closest("input, textarea, select, [contenteditable]")) return;
+
+		event.preventDefault();
+		void updateMarkerComponent.remove();
+	}
+
 	function mKeypress(event: KeyboardEvent) {
 		if (event.key !== "m" && event.key !== "M") return;
 		if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
@@ -107,4 +118,4 @@
 	{/if}
 </Splitpanes>
 
-<svelte:window on:keydown={mKeypress} />
+<svelte:window on:keydown={mKeypress} on:keydown={deleteKeypress} />
