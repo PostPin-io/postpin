@@ -26,7 +26,7 @@ import {
 	$eipc_validator$_LoginConfig,
 	$eipc_validator$_LoginCode,
 } from "../common-runtime/PostPinResolveAPI.js";
-const $$ipcPrefix$$ = "$eipc_message$_fa2491f6-c3e6-4f5a-989f-b29335043493_$_PostPinResolveAPI_$_";
+const $$ipcPrefix$$ = "$eipc_message$_b827ff20cad6b63c33234b93195f61c0_$_PostPinResolveAPI_$_";
 import { webFrame } from "electron/renderer";
 function $eipc_event_validator$_MyApp() {
 	if (

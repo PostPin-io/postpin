@@ -7,3 +7,6 @@ allowBuilds:
   msgpackr-extract: true
   prisma: true
   sharp: true
+
+patchedDependencies:
+  "@marshallofsound/ipc@2.7.1": patches/@marshallofsound__ipc@2.7.1.patch
