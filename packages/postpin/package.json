@@ -55,6 +55,7 @@
 		"@aws-sdk/s3-request-presigner": "^3.1149.0",
 		"@hapi/boom": "^10.0.1",
 		"@hapi/hapi": "^21.4.10",
+		"@hueycolor/svelte": "^1.0.1",
 		"@lucide/svelte": "^1.57.0",
 		"@tsoa/runtime": "7.0.0-alpha.0",
 		"better-auth": "^1.7.7",
