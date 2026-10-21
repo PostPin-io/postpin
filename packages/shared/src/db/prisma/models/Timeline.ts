@@ -29,6 +29,7 @@ export type TimelineMinAggregateOutputType = {
 	createdAt: Date | null;
 	updatedAt: Date | null;
 	projectId: string | null;
+	nleTimelineId: string | null;
 };
 
 export type TimelineMaxAggregateOutputType = {
@@ -37,6 +38,7 @@ export type TimelineMaxAggregateOutputType = {
 	createdAt: Date | null;
 	updatedAt: Date | null;
 	projectId: string | null;
+	nleTimelineId: string | null;
 };
 
 export type TimelineCountAggregateOutputType = {
@@ -45,6 +47,7 @@ export type TimelineCountAggregateOutputType = {
 	createdAt: number;
 	updatedAt: number;
 	projectId: number;
+	nleTimelineId: number;
 	_all: number;
 };
 
@@ -54,6 +57,7 @@ export type TimelineMinAggregateInputType = {
 	createdAt?: true;
 	updatedAt?: true;
 	projectId?: true;
+	nleTimelineId?: true;
 };
 
 export type TimelineMaxAggregateInputType = {
@@ -62,6 +66,7 @@ export type TimelineMaxAggregateInputType = {
 	createdAt?: true;
 	updatedAt?: true;
 	projectId?: true;
+	nleTimelineId?: true;
 };
 
 export type TimelineCountAggregateInputType = {
@@ -70,6 +75,7 @@ export type TimelineCountAggregateInputType = {
 	createdAt?: true;
 	updatedAt?: true;
 	projectId?: true;
+	nleTimelineId?: true;
 	_all?: true;
 };
 
@@ -153,6 +159,7 @@ export type TimelineGroupByOutputType = {
 	createdAt: Date;
 	updatedAt: Date;
 	projectId: string;
+	nleTimelineId: string | null;
 	_count: TimelineCountAggregateOutputType | null;
 	_min: TimelineMinAggregateOutputType | null;
 	_max: TimelineMaxAggregateOutputType | null;
@@ -179,6 +186,7 @@ export type TimelineWhereInput = {
 	createdAt?: Prisma.DateTimeFilter<"Timeline"> | Date | string;
 	updatedAt?: Prisma.DateTimeFilter<"Timeline"> | Date | string;
 	projectId?: Prisma.StringFilter<"Timeline"> | string;
+	nleTimelineId?: Prisma.StringNullableFilter<"Timeline"> | string | null;
 	project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>;
 	exports?: Prisma.ExportListRelationFilter;
 };
@@ -189,6 +197,7 @@ export type TimelineOrderByWithRelationInput = {
 	createdAt?: Prisma.SortOrder;
 	updatedAt?: Prisma.SortOrder;
 	projectId?: Prisma.SortOrder;
+	nleTimelineId?: Prisma.SortOrderInput | Prisma.SortOrder;
 	project?: Prisma.ProjectOrderByWithRelationInput;
 	exports?: Prisma.ExportOrderByRelationAggregateInput;
 };
@@ -196,6 +205,7 @@ export type TimelineOrderByWithRelationInput = {
 export type TimelineWhereUniqueInput = Prisma.AtLeast<
 	{
 		id?: string;
+		nleTimelineId?: string;
 		AND?: Prisma.TimelineWhereInput | Prisma.TimelineWhereInput[];
 		OR?: Prisma.TimelineWhereInput[];
 		NOT?: Prisma.TimelineWhereInput | Prisma.TimelineWhereInput[];
@@ -206,7 +216,7 @@ export type TimelineWhereUniqueInput = Prisma.AtLeast<
 		project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>;
 		exports?: Prisma.ExportListRelationFilter;
 	},
-	"id"
+	"id" | "nleTimelineId"
 >;
 
 export type TimelineOrderByWithAggregationInput = {
@@ -215,6 +225,7 @@ export type TimelineOrderByWithAggregationInput = {
 	createdAt?: Prisma.SortOrder;
 	updatedAt?: Prisma.SortOrder;
 	projectId?: Prisma.SortOrder;
+	nleTimelineId?: Prisma.SortOrderInput | Prisma.SortOrder;
 	_count?: Prisma.TimelineCountOrderByAggregateInput;
 	_max?: Prisma.TimelineMaxOrderByAggregateInput;
 	_min?: Prisma.TimelineMinOrderByAggregateInput;
@@ -231,6 +242,7 @@ export type TimelineScalarWhereWithAggregatesInput = {
 	createdAt?: Prisma.DateTimeWithAggregatesFilter<"Timeline"> | Date | string;
 	updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Timeline"> | Date | string;
 	projectId?: Prisma.StringWithAggregatesFilter<"Timeline"> | string;
+	nleTimelineId?: Prisma.StringNullableWithAggregatesFilter<"Timeline"> | string | null;
 };
 
 export type TimelineCreateInput = {
@@ -238,6 +250,7 @@ export type TimelineCreateInput = {
 	name: string;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
+	nleTimelineId?: string | null;
 	project: Prisma.ProjectCreateNestedOneWithoutTimelinesInput;
 	exports?: Prisma.ExportCreateNestedManyWithoutTimelineInput;
 };
@@ -248,6 +261,7 @@ export type TimelineUncheckedCreateInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	projectId: string;
+	nleTimelineId?: string | null;
 	exports?: Prisma.ExportUncheckedCreateNestedManyWithoutTimelineInput;
 };
 
@@ -256,6 +270,7 @@ export type TimelineUpdateInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	project?: Prisma.ProjectUpdateOneRequiredWithoutTimelinesNestedInput;
 	exports?: Prisma.ExportUpdateManyWithoutTimelineNestedInput;
 };
@@ -266,6 +281,7 @@ export type TimelineUncheckedUpdateInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
+	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	exports?: Prisma.ExportUncheckedUpdateManyWithoutTimelineNestedInput;
 };
 
@@ -275,6 +291,7 @@ export type TimelineCreateManyInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	projectId: string;
+	nleTimelineId?: string | null;
 };
 
 export type TimelineUpdateManyMutationInput = {
@@ -282,6 +299,7 @@ export type TimelineUpdateManyMutationInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
 export type TimelineUncheckedUpdateManyInput = {
@@ -290,6 +308,7 @@ export type TimelineUncheckedUpdateManyInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
+	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
 export type TimelineListRelationFilter = {
@@ -308,6 +327,7 @@ export type TimelineCountOrderByAggregateInput = {
 	createdAt?: Prisma.SortOrder;
 	updatedAt?: Prisma.SortOrder;
 	projectId?: Prisma.SortOrder;
+	nleTimelineId?: Prisma.SortOrder;
 };
 
 export type TimelineMaxOrderByAggregateInput = {
@@ -316,6 +336,7 @@ export type TimelineMaxOrderByAggregateInput = {
 	createdAt?: Prisma.SortOrder;
 	updatedAt?: Prisma.SortOrder;
 	projectId?: Prisma.SortOrder;
+	nleTimelineId?: Prisma.SortOrder;
 };
 
 export type TimelineMinOrderByAggregateInput = {
@@ -324,6 +345,7 @@ export type TimelineMinOrderByAggregateInput = {
 	createdAt?: Prisma.SortOrder;
 	updatedAt?: Prisma.SortOrder;
 	projectId?: Prisma.SortOrder;
+	nleTimelineId?: Prisma.SortOrder;
 };
 
 export type TimelineScalarRelationFilter = {
@@ -448,6 +470,7 @@ export type TimelineCreateWithoutProjectInput = {
 	name: string;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
+	nleTimelineId?: string | null;
 	exports?: Prisma.ExportCreateNestedManyWithoutTimelineInput;
 };
 
@@ -456,6 +479,7 @@ export type TimelineUncheckedCreateWithoutProjectInput = {
 	name: string;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
+	nleTimelineId?: string | null;
 	exports?: Prisma.ExportUncheckedCreateNestedManyWithoutTimelineInput;
 };
 
@@ -509,6 +533,7 @@ export type TimelineScalarWhereInput = {
 	createdAt?: Prisma.DateTimeFilter<"Timeline"> | Date | string;
 	updatedAt?: Prisma.DateTimeFilter<"Timeline"> | Date | string;
 	projectId?: Prisma.StringFilter<"Timeline"> | string;
+	nleTimelineId?: Prisma.StringNullableFilter<"Timeline"> | string | null;
 };
 
 export type TimelineCreateWithoutExportsInput = {
@@ -516,6 +541,7 @@ export type TimelineCreateWithoutExportsInput = {
 	name: string;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
+	nleTimelineId?: string | null;
 	project: Prisma.ProjectCreateNestedOneWithoutTimelinesInput;
 };
 
@@ -525,6 +551,7 @@ export type TimelineUncheckedCreateWithoutExportsInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	projectId: string;
+	nleTimelineId?: string | null;
 };
 
 export type TimelineCreateOrConnectWithoutExportsInput = {
@@ -560,6 +587,7 @@ export type TimelineUpdateWithoutExportsInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	project?: Prisma.ProjectUpdateOneRequiredWithoutTimelinesNestedInput;
 };
 
@@ -569,6 +597,7 @@ export type TimelineUncheckedUpdateWithoutExportsInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
+	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
 export type TimelineCreateManyProjectInput = {
@@ -576,6 +605,7 @@ export type TimelineCreateManyProjectInput = {
 	name: string;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
+	nleTimelineId?: string | null;
 };
 
 export type TimelineUpdateWithoutProjectInput = {
@@ -583,6 +613,7 @@ export type TimelineUpdateWithoutProjectInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	exports?: Prisma.ExportUpdateManyWithoutTimelineNestedInput;
 };
 
@@ -591,6 +622,7 @@ export type TimelineUncheckedUpdateWithoutProjectInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	exports?: Prisma.ExportUncheckedUpdateManyWithoutTimelineNestedInput;
 };
 
@@ -599,6 +631,7 @@ export type TimelineUncheckedUpdateManyWithoutProjectInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
 /**
@@ -645,6 +678,7 @@ export type TimelineSelect<
 		createdAt?: boolean;
 		updatedAt?: boolean;
 		projectId?: boolean;
+		nleTimelineId?: boolean;
 		project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>;
 		exports?: boolean | Prisma.Timeline$exportsArgs<ExtArgs>;
 		_count?: boolean | Prisma.TimelineCountOutputTypeDefaultArgs<ExtArgs>;
@@ -661,6 +695,7 @@ export type TimelineSelectCreateManyAndReturn<
 		createdAt?: boolean;
 		updatedAt?: boolean;
 		projectId?: boolean;
+		nleTimelineId?: boolean;
 		project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>;
 	},
 	ExtArgs["result"]["timeline"]
@@ -675,6 +710,7 @@ export type TimelineSelectUpdateManyAndReturn<
 		createdAt?: boolean;
 		updatedAt?: boolean;
 		projectId?: boolean;
+		nleTimelineId?: boolean;
 		project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>;
 	},
 	ExtArgs["result"]["timeline"]
@@ -686,12 +722,13 @@ export type TimelineSelectScalar = {
 	createdAt?: boolean;
 	updatedAt?: boolean;
 	projectId?: boolean;
+	nleTimelineId?: boolean;
 };
 
 export type TimelineOmit<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = runtime.Types.Extensions.GetOmit<
-	"id" | "name" | "createdAt" | "updatedAt" | "projectId",
+	"id" | "name" | "createdAt" | "updatedAt" | "projectId" | "nleTimelineId",
 	ExtArgs["result"]["timeline"]
 >;
 export type TimelineInclude<
@@ -727,6 +764,7 @@ export type $TimelinePayload<
 			createdAt: Date;
 			updatedAt: Date;
 			projectId: string;
+			nleTimelineId: string | null;
 		},
 		ExtArgs["result"]["timeline"]
 	>;
@@ -1323,6 +1361,7 @@ export interface TimelineFieldRefs {
 	readonly createdAt: Prisma.FieldRef<"Timeline", "DateTime">;
 	readonly updatedAt: Prisma.FieldRef<"Timeline", "DateTime">;
 	readonly projectId: Prisma.FieldRef<"Timeline", "String">;
+	readonly nleTimelineId: Prisma.FieldRef<"Timeline", "String">;
 }
 
 // Custom InputTypes

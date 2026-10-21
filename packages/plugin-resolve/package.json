@@ -7,12 +7,14 @@
 		"setup:mac": "P=\"/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/com.postpin.resolve\" && sudo rm -rf \"$P\" && sudo mkdir -p \"$P\" && sudo chown \"$USER\" \"$P\"",
 		"build": "node build.mjs && vite build",
 		"install:mac": "P=\"/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/com.postpin.resolve\" && pnpm run build && rm -rf \"$P\"/* && cp -R dist/. \"$P\"",
-		"dev": "vite",
+		"dev:server": "vite",
 		"dev:electron": "node build.mjs --dev --watch --install",
+		"dev": "concurrently --kill-others-on-fail \"pnpm run generate:ipc:watch\" \"pnpm run dev:electron\" \"pnpm run dev:server\"",
 		"preview": "vite preview",
 		"check": "svelte-check --tsgo --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
 		"generate:ipc": "generate-ipc src/schema src/ipc && prettier --write src/ipc",
-		"generate:resolve": "python3 scripts/generate-resolve-types.py && prettier --write src/electron/resolve.ts"
+		"generate:resolve": "python3 scripts/generate-resolve-types.py && prettier --write src/electron/resolve.ts",
+		"generate:ipc:watch": "nodemon --watch src/schema -e eipc --exec \"pnpm run generate:ipc\""
 	},
 	"devDependencies": {
 		"@postpin-io/api-client-ts": "workspace:*",
@@ -21,9 +23,11 @@
 		"@tsconfig/svelte": "^5.0.8",
 		"@types/node": "^26.6.5",
 		"@typescript/native": "npm:typescript@7",
+		"concurrently": "^10.0.6",
 		"daisyui": "^5.7.47",
 		"electron": "^44.7.0",
 		"esbuild": "^0.28.2",
+		"nodemon": "^3.1.14",
 		"svelte": "^5.57.2",
 		"svelte-check": "^4.7.6",
 		"tailwindcss": "^4.3.3",

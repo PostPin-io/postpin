@@ -1815,6 +1815,7 @@ export const MarkerScalarFieldEnum = {
 	exportId: "exportId",
 	categoryId: "categoryId",
 	authorId: "authorId",
+	nleId: "nleId",
 } as const;
 
 export type MarkerScalarFieldEnum =
@@ -1947,6 +1948,7 @@ export const ProjectScalarFieldEnum = {
 	updatedAt: "updatedAt",
 	creatorId: "creatorId",
 	organizationId: "organizationId",
+	nleProjectId: "nleProjectId",
 } as const;
 
 export type ProjectScalarFieldEnum =
@@ -1958,6 +1960,7 @@ export const TimelineScalarFieldEnum = {
 	createdAt: "createdAt",
 	updatedAt: "updatedAt",
 	projectId: "projectId",
+	nleTimelineId: "nleTimelineId",
 } as const;
 
 export type TimelineScalarFieldEnum =
@@ -1971,6 +1974,7 @@ export const ExportScalarFieldEnum = {
 	timelineId: "timelineId",
 	mediaId: "mediaId",
 	timelineSnapshot: "timelineSnapshot",
+	timelineSnapshotHash: "timelineSnapshotHash",
 } as const;
 
 export type ExportScalarFieldEnum =

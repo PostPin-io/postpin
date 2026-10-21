@@ -15,6 +15,7 @@ import type {
 } from "./resolve";
 import {
 	MainAPI,
+	MarkerColor,
 	type RenderProgress,
 	type Settings,
 	type UploadedPart,
@@ -491,6 +492,116 @@ function setupIPC(win: BrowserWindow) {
 			});
 			if (canceled || filePaths.length === 0) return "";
 			return filePaths[0];
+		},
+		getMarkers: async () => {
+			const project = await getCurrentProject();
+			if (!project) return [];
+
+			const timeline = await project.GetCurrentTimeline();
+			if (!timeline) return [];
+
+			const markers = await timeline.GetMarkers();
+			if (!markers) return [];
+
+			return Object.entries(markers).map(([frameStr, marker]) => ({
+				title: marker.name,
+				description: marker.note,
+				frame: Number(frameStr),
+				color: marker.color as MarkerColor,
+				customData: marker.customData,
+			}));
+		},
+		setMarkers: async (markers) => {
+			const project = await getCurrentProject();
+			if (!project) return false;
+
+			const timeline = await project.GetCurrentTimeline();
+			if (!timeline) return false;
+
+			for (const marker of markers) {
+				await timeline.AddMarker(
+					marker.frame,
+					marker.color,
+					marker.title,
+					marker.description,
+					1,
+					marker.customData,
+				);
+			}
+
+			return true;
+		},
+		setMarker: async (marker) => {
+			const project = await getCurrentProject();
+			if (!project) return false;
+
+			const timeline = await project.GetCurrentTimeline();
+			if (!timeline) return false;
+
+			await timeline.AddMarker(
+				marker.frame,
+				marker.color,
+				marker.title,
+				marker.description,
+				1,
+				marker.customData,
+			);
+
+			return true;
+		},
+		clearMarkers: async () => {
+			const project = await getCurrentProject();
+			if (!project) return false;
+
+			const timeline = await project.GetCurrentTimeline();
+			if (!timeline) return false;
+
+			return await timeline.DeleteMarkersByColor("All");
+		},
+		deleteMarker: async (frame) => {
+			const project = await getCurrentProject();
+			if (!project) return false;
+
+			const timeline = await project.GetCurrentTimeline();
+			if (!timeline) return false;
+
+			return await timeline.DeleteMarkerAtFrame(frame);
+		},
+		getTimelineStartFrame: async () => {
+			const project = await getCurrentProject();
+			if (!project) return 0;
+
+			const timeline = await project.GetCurrentTimeline();
+			if (!timeline) return 0;
+
+			return await timeline.GetStartFrame();
+		},
+		test: async () => {
+			const project = await getCurrentProject();
+			if (!project) return false;
+
+			const timeline = await project.GetCurrentTimeline();
+			if (!timeline) return false;
+
+			// save a 0 length marker and read it to check if it is still there
+			await timeline.AddMarker(0, "Red", "Test", "Test", 0);
+			const markers = await timeline.GetMarkers();
+			return markers && Object.keys(markers).length > 0;
+		},
+		getProjectId: async () => {
+			const project = await getCurrentProject();
+			if (!project) throw new Error("No project open in Resolve");
+
+			return await project.GetUniqueId();
+		},
+		getTimelineId: async () => {
+			const project = await getCurrentProject();
+			if (!project) throw new Error("No project open in Resolve");
+
+			const timeline = await project.GetCurrentTimeline();
+			if (!timeline) throw new Error("No timeline open in Resolve");
+
+			return await timeline.GetUniqueId();
 		},
 	});
 }

@@ -30,6 +30,33 @@ structure UploadProgress {
   totalBytes: number
 }
 
+structure Marker {
+  title: string
+  description: string
+  frame: number
+  color: MarkerColor
+  customData: string
+}
+
+enum  MarkerColor {
+	Blue
+	Cyan
+	Green
+	Yellow
+	Red
+	Pink
+	Purple
+	Fuchsia
+	Rose
+	Lavender
+	Sky
+	Mint
+	Lemon
+	Sand
+	Cocoa
+	Cream
+}
+
 [RendererAPI]
 [ContextBridge]
 [Validator=MyApp]
@@ -47,4 +74,13 @@ interface MainAPI {
   getLastSettings() -> Settings
   saveSettings(settings: Settings) -> boolean
   pickOutputDirectory() -> string
+  getMarkers() -> Marker[]
+  setMarkers(markers: Marker[]) -> boolean
+  setMarker(marker: Marker) -> boolean
+  clearMarkers() -> boolean
+  deleteMarker(frame: number) -> boolean
+  getTimelineStartFrame() -> number
+  test() -> boolean
+  getProjectId() -> string
+  getTimelineId() -> string
 }

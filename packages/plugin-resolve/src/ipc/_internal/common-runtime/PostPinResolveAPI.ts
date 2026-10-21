@@ -53,3 +53,43 @@ export function $eipc_validator$_UploadProgress(value: any): boolean {
 	if (!(typeof value.totalBytes === "number")) return false;
 	return true;
 }
+export function $eipc_validator$_Marker(value: any): boolean {
+	if (!value || typeof value !== "object") return false;
+
+	// Marker.title
+	if (!(typeof value.title === "string")) return false;
+
+	// Marker.description
+	if (!(typeof value.description === "string")) return false;
+
+	// Marker.frame
+	if (!(typeof value.frame === "number")) return false;
+
+	// Marker.color
+	if (!$eipc_validator$_MarkerColor(value.color)) return false;
+
+	// Marker.customData
+	if (!(typeof value.customData === "string")) return false;
+	return true;
+}
+const $eipc_validator$_MarkerColor_values = new Set([
+	"Blue",
+	"Cyan",
+	"Green",
+	"Yellow",
+	"Red",
+	"Pink",
+	"Purple",
+	"Fuchsia",
+	"Rose",
+	"Lavender",
+	"Sky",
+	"Mint",
+	"Lemon",
+	"Sand",
+	"Cocoa",
+	"Cream",
+]);
+export function $eipc_validator$_MarkerColor(value: any): boolean {
+	return $eipc_validator$_MarkerColor_values.has(value);
+}

@@ -9,35 +9,38 @@ model Project {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   organizationId String
   categories     Category[]
+  nleProjectId   String?      @unique
 
   @@index([creatorId])
   @@map("project")
 }
 
 model Timeline {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId String
-  exports   Export[]
+  id            String   @id @default(cuid())
+  name          String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId     String
+  exports       Export[]
+  nleTimelineId String?  @unique
 
   @@index([projectId])
   @@map("timeline")
 }
 
 model Export {
-  id               String   @id @default(cuid())
-  name             String
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  timeline         Timeline @relation(fields: [timelineId], references: [id], onDelete: Cascade)
-  timelineId       String
-  media            Media?   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  mediaId          String?  @unique
-  timelineSnapshot Json?
-  markers          Marker[]
+  id                   String   @id @default(cuid())
+  name                 String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  timeline             Timeline @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+  timelineId           String
+  media                Media?   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId              String?  @unique
+  timelineSnapshot     Json?
+  timelineSnapshotHash String?
+  markers              Marker[]
 
   @@index([timelineId])
   @@map("export")

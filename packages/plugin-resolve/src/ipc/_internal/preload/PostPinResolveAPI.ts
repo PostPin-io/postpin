@@ -8,6 +8,8 @@ import {
 	UploadPartUrl,
 	UploadedPart,
 	UploadProgress,
+	Marker,
+	MarkerColor,
 	IMainAPIImpl,
 	IMainAPIRenderer,
 } from "../common/PostPinResolveAPI.js";
@@ -17,8 +19,10 @@ import {
 	$eipc_validator$_UploadPartUrl,
 	$eipc_validator$_UploadedPart,
 	$eipc_validator$_UploadProgress,
+	$eipc_validator$_Marker,
+	$eipc_validator$_MarkerColor,
 } from "../common-runtime/PostPinResolveAPI.js";
-const $$ipcPrefix$$ = "$eipc_message$_614bedfc-fcf5-4af9-991d-b7027b00fd1c_$_PostPinResolveAPI_$_";
+const $$ipcPrefix$$ = "$eipc_message$_f2445539-522e-4108-9091-5aae84a1ddd2_$_PostPinResolveAPI_$_";
 import { webFrame } from "electron/renderer";
 function $eipc_event_validator$_MyApp() {
 	if (
@@ -81,6 +85,33 @@ export const MainAPI: Partial<IMainAPIRenderer> = {
 	},
 	pickOutputDirectory() {
 		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_pickOutputDirectory");
+	},
+	getMarkers() {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_getMarkers");
+	},
+	setMarkers(markers: Marker[]) {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_setMarkers", markers);
+	},
+	setMarker(marker: Marker) {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_setMarker", marker);
+	},
+	clearMarkers() {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_clearMarkers");
+	},
+	deleteMarker(frame: number) {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_deleteMarker", frame);
+	},
+	getTimelineStartFrame() {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_getTimelineStartFrame");
+	},
+	test() {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_test");
+	},
+	getProjectId() {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_getProjectId");
+	},
+	getTimelineId() {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "MainAPI_$_getTimelineId");
 	},
 };
 const $eipc_impl$__init_MainAPI = (localBridged: Record<string, any>) => {

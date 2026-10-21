@@ -17,6 +17,7 @@ model Marker {
   categoryId String
   author     User     @relation(fields: [authorId], references: [id])
   authorId   String
+  nleId      String?  @unique
 
   @@index([exportId])
   @@index([categoryId])

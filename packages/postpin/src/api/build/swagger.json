@@ -22,9 +22,13 @@
 					"updatedAt": {
 						"type": "string",
 						"format": "date-time"
+					},
+					"nleProjectId": {
+						"type": "string",
+						"nullable": true
 					}
 				},
-				"required": ["id", "name", "createdAt", "updatedAt"],
+				"required": ["id", "name", "createdAt", "updatedAt", "nleProjectId"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -43,9 +47,13 @@
 					"updatedAt": {
 						"type": "string",
 						"format": "date-time"
+					},
+					"nleTimelineId": {
+						"type": "string",
+						"nullable": true
 					}
 				},
-				"required": ["id", "name", "createdAt", "updatedAt"],
+				"required": ["id", "name", "createdAt", "updatedAt", "nleTimelineId"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -65,6 +73,10 @@
 						"type": "string",
 						"format": "date-time"
 					},
+					"nleProjectId": {
+						"type": "string",
+						"nullable": true
+					},
 					"timelines": {
 						"items": {
 							"$ref": "#/components/schemas/Timeline"
@@ -72,9 +84,183 @@
 						"type": "array"
 					}
 				},
-				"required": ["id", "name", "createdAt", "updatedAt", "timelines"],
+				"required": ["id", "name", "createdAt", "updatedAt", "nleProjectId", "timelines"],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"DefaultSelection__36_ResponsePayload_": {
+				"properties": {
+					"content": {
+						"type": "string"
+					},
+					"markerId": {
+						"type": "string"
+					},
+					"authorId": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": ["content", "markerId", "authorId", "updatedAt", "createdAt", "id"],
+				"type": "object"
+			},
+			"ResponseModel": {
+				"$ref": "#/components/schemas/DefaultSelection__36_ResponsePayload_",
+				"description": "Model Response"
+			},
+			"MarkerResponse": {
+				"$ref": "#/components/schemas/ResponseModel",
+				"description": "Model Response"
+			},
+			"DefaultSelection__36_MarkerPayload_": {
+				"properties": {
+					"nleId": {
+						"type": "string",
+						"nullable": true
+					},
+					"authorId": {
+						"type": "string"
+					},
+					"categoryId": {
+						"type": "string"
+					},
+					"exportId": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"frame": {
+						"type": "number",
+						"format": "double"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"nleId",
+					"authorId",
+					"categoryId",
+					"exportId",
+					"updatedAt",
+					"createdAt",
+					"frame",
+					"description",
+					"id",
+					"name"
+				],
+				"type": "object"
+			},
+			"MarkerModel": {
+				"$ref": "#/components/schemas/DefaultSelection__36_MarkerPayload_",
+				"description": "Model Marker"
+			},
+			"MarkerWithResponses": {
+				"properties": {
+					"nleId": {
+						"type": "string",
+						"nullable": true
+					},
+					"authorId": {
+						"type": "string"
+					},
+					"categoryId": {
+						"type": "string"
+					},
+					"exportId": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"frame": {
+						"type": "number",
+						"format": "double"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"responses": {
+						"items": {
+							"$ref": "#/components/schemas/MarkerResponse"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"nleId",
+					"authorId",
+					"categoryId",
+					"exportId",
+					"updatedAt",
+					"createdAt",
+					"frame",
+					"description",
+					"id",
+					"name",
+					"responses"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UploadMarker": {
+				"properties": {
+					"nleId": {
+						"type": "string",
+						"nullable": true
+					},
+					"categoryId": {
+						"type": "string"
+					},
+					"frame": {
+						"type": "number",
+						"format": "double"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"required": ["categoryId", "frame", "description", "name"],
+				"type": "object"
 			},
 			"MultipartUploadPartUrl": {
 				"properties": {
@@ -303,6 +489,52 @@
 					"id"
 				],
 				"type": "object"
+			},
+			"DefaultSelection__36_CategoryPayload_": {
+				"properties": {
+					"projectId": {
+						"type": "string"
+					},
+					"color": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"required": ["projectId", "color", "updatedAt", "createdAt", "id", "name"],
+				"type": "object"
+			},
+			"CategoryModel": {
+				"$ref": "#/components/schemas/DefaultSelection__36_CategoryPayload_",
+				"description": "Model Category"
+			},
+			"Category": {
+				"$ref": "#/components/schemas/CategoryModel",
+				"description": "Model Category"
+			},
+			"CategoryCreateParams": {
+				"properties": {
+					"color": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"required": ["color", "name"],
+				"type": "object"
 			}
 		},
 		"securitySchemes": {}
@@ -402,7 +634,161 @@
 				]
 			}
 		},
+		"/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers": {
+			"get": {
+				"operationId": "GetMarkers",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/MarkerWithResponses"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "timelineId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "exportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"put": {
+				"operationId": "UploadMarkers",
+				"responses": {
+					"204": {
+						"description": "No content"
+					},
+					"404": {
+						"description": "Export not found"
+					}
+				},
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "timelineId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "exportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"items": {
+									"$ref": "#/components/schemas/UploadMarker"
+								},
+								"type": "array"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/v1/projects/{projectId}/timelines/{timelineId}/exports": {
+			"get": {
+				"operationId": "GetExports",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"exports": {
+											"items": {
+												"properties": {
+													"name": {
+														"type": "string"
+													},
+													"createdAt": {
+														"type": "string",
+														"format": "date-time"
+													},
+													"id": {
+														"type": "string"
+													}
+												},
+												"required": ["name", "createdAt", "id"],
+												"type": "object"
+											},
+											"type": "array"
+										}
+									},
+									"required": ["exports"],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "timelineId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
 			"post": {
 				"operationId": "CreateExport",
 				"responses": {
@@ -444,7 +830,28 @@
 							"type": "string"
 						}
 					}
-				]
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"nleProjectId": {
+										"type": "string",
+										"nullable": true
+									},
+									"nleTimelineId": {
+										"type": "string",
+										"nullable": true
+									}
+								},
+								"required": ["nleProjectId", "nleTimelineId"],
+								"type": "object"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/init-upload": {
@@ -641,6 +1048,76 @@
 								},
 								"required": ["uploadId"],
 								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/v1/projects/{projectId}/categories": {
+			"get": {
+				"operationId": "GetCategories",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/Category"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"put": {
+				"operationId": "CreateCategory",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Category"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Project not found"
+					}
+				},
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CategoryCreateParams"
 							}
 						}
 					}
