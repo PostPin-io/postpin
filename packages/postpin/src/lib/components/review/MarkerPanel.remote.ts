@@ -159,7 +159,7 @@ export const changeCategoryColor = command(
 				color: data.color,
 			},
 		});
-
+		await getCategories(category.projectId).refresh();
 		return category;
 	},
 );

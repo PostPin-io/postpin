@@ -2,6 +2,7 @@
 	import {
 		createCategory,
 		getCategories,
+		getMarkers,
 		changeCategoryColor,
 		deleteCategory,
 	} from "./MarkerPanel.remote";
@@ -22,7 +23,12 @@
 		const color = pendingColors[category.id];
 		if (!color || color.toLowerCase() === category.color.toLowerCase()) return;
 		await changeCategoryColor({ id: category.id, color });
-		await getCategories(projectId).refresh();
+
+		await Promise.all([
+			getCategories(projectId).refresh(),
+			getMarkers(page.params.export ?? "").refresh(),
+		]);
+
 		delete pendingColors[category.id];
 	}
 
@@ -103,7 +109,7 @@
 		</div>
 	</div>
 	<form method="dialog" class="modal-backdrop">
-		<button aria-label="Close">close</button>
+		<button>close</button>
 	</form>
 </dialog>
 
