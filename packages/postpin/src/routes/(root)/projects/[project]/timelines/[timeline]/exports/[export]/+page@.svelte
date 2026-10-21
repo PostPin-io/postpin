@@ -216,6 +216,16 @@
 	let videoPosition = $state(0);
 	let videoPaused = $state(true);
 	let videoPlaybackRate = $state(1);
+
+	const fps = $derived.by(() => {
+		const rate = (exportQuery.current?.timelineSnapshot as TimelineSnapshot | undefined)?.frameRate;
+		return rate ? rate.fpsNumerator / rate.fpsDenominator : 24;
+	});
+	// Same frame <-> seconds mapping as the timeline playhead
+	const currentFrame = $derived(Math.floor(videoPosition * fps + 1e-6));
+	const seekToFrame = (frame: number) => {
+		videoPosition = (frame + 0.5) / fps;
+	};
 </script>
 
 {#if isLoading}
@@ -324,7 +334,7 @@
 			<!-- Marker panel -->
 			{#if isMarkerVisible}
 				<Pane size={layout.main[1]} minSize={20} maxSize={50} class="overflow-auto">
-					<MarkerPanel />
+					<MarkerPanel {currentFrame} onseek={seekToFrame} />
 				</Pane>
 			{/if}
 		</Splitpanes>
