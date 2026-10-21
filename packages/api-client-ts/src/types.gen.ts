@@ -503,6 +503,10 @@ export type CreateCategoryErrors = {
 	 * Project not found
 	 */
 	404: unknown;
+	/**
+	 * Category name already exists
+	 */
+	409: unknown;
 };
 
 export type CreateCategoryResponses = {

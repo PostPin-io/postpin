@@ -62,21 +62,6 @@ export class MarkerController extends Controller {
 			throw new HttpError(404, "Export not found");
 		}
 
-		const category = await prisma.category.upsert({
-			where: {
-				projectId_name: {
-					projectId,
-					name: "test",
-				},
-			},
-			update: {},
-			create: {
-				projectId,
-				name: "test",
-				color: "red",
-			},
-		});
-
 		const authorId = await prisma.user
 			.findFirstOrThrow({ select: { id: true } })
 			.then((user) => user.id);
@@ -85,7 +70,7 @@ export class MarkerController extends Controller {
 				...marker,
 				exportId,
 				authorId,
-				categoryId: category.id,
+				categoryId: marker.categoryId,
 				nleId: marker.nleId ?? undefined,
 			})),
 		});

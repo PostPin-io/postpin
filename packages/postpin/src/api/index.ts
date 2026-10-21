@@ -13,6 +13,16 @@ declare module "@hapi/hapi" {
 const server = Hapi.server({
 	routes: { cors: { origin: ["*"] } },
 });
+server.ext("onPreResponse", (request, h) => {
+	const { response } = request;
+	if ("isBoom" in response && response.isBoom) {
+		console.error(
+			`[api] ${request.method.toUpperCase()} ${request.path} -> ${response.output.statusCode}`,
+			response,
+		);
+	}
+	return h.continue;
+});
 const ready = server
 	.register({
 		plugin: { name: "tsoa-routes", register: RegisterRoutes },
