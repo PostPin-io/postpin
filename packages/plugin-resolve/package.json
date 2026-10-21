@@ -21,6 +21,7 @@
 		"@postpin-io/shared": "workspace:*",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
 		"@tsconfig/svelte": "^5.0.8",
+		"@types/delta-e": "^0.0.2",
 		"@types/node": "^26.6.5",
 		"@typescript/native": "npm:typescript@7",
 		"concurrently": "^10.0.6",
@@ -39,6 +40,7 @@
 		"@marshallofsound/ipc": "^2.7.1",
 		"@tailwindcss/vite": "^4.3.3",
 		"better-auth": "^1.7.11",
+		"delta-e": "^0.0.8",
 		"electron-store": "^12.0.0"
 	}
 }

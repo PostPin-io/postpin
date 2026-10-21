@@ -14,6 +14,7 @@
 		createCategory,
 	} from "@postpin-io/api-client-ts";
 	import { createClient } from "@postpin-io/api-client-ts/client";
+	import DeltaE from "delta-e";
 	import {
 		MainAPI,
 		MarkerColor,
@@ -194,13 +195,55 @@
 		Yellow: "#FFFF00",
 	};
 
+	// sRGB hex -> CIE L*a*b* (D65), the color space delta-e compares in
+	function hexToLab(hex: string) {
+		const [r, g, b] = [1, 3, 5].map((i) => {
+			const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+			return c > 0.04045 ? ((c + 0.055) / 1.055) ** 2.4 : c / 12.92;
+		});
+		const f = (t: number) => (t > 216 / 24389 ? Math.cbrt(t) : ((24389 / 27) * t + 16) / 116);
+		const x = f((0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047);
+		const y = f(0.2126 * r + 0.7152 * g + 0.0722 * b);
+		const z = f((0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883);
+		return { L: 116 * y - 16, A: 500 * (x - y), B: 200 * (y - z) };
+	}
+
+	function closestResolveColor(hex: string): MarkerColor {
+		const lab = hexToLab(hex);
+		let best = MarkerColor.Blue;
+		let bestDistance = Infinity;
+		for (const [color, colorHex] of Object.entries(resolveColors) as [MarkerColor, string][]) {
+			const distance = DeltaE.getDeltaE00(lab, hexToLab(colorHex));
+			if (distance < bestDistance) {
+				best = color;
+				bestDistance = distance;
+			}
+		}
+		return best;
+	}
+
+	// Markers carry their category as a "#Name" first line, followed by a blank line and the description
+	function parseCategoryTag(description: string) {
+		const [firstLine, ...rest] = description.split("\n");
+		if (!firstLine.startsWith("#") || firstLine.length < 2)
+			return { categoryName: null, description };
+		return {
+			categoryName: firstLine.substring(1).trim(),
+			description: rest.join("\n").trimStart(),
+		};
+	}
+
+	function withCategoryTag(categoryName: string, description: string | null) {
+		return description ? `#${categoryName}\n\n${description}` : `#${categoryName}`;
+	}
+
 	async function syncMarkersUp() {
 		if (!projectId || !timelineId || !exportId) return;
 		const markers = await MainAPI!.getMarkers!();
 
 		const timelineStartFrame = await MainAPI!.getTimelineStartFrame!();
 		console.log("Timeline start frame:", timelineStartFrame);
-		const categories = await getCategories({ client, path: { projectId } });
+		const { data: categories = [] } = await getCategories({ client, path: { projectId } });
 
 		let mappedMarkers: {
 			name: string;
@@ -217,33 +260,23 @@
 			} catch (e) {
 				console.error("Error parsing custom data:", e);
 			}
-			const firstLine = m.description.split("\n")[0];
-			let categoryId: string | undefined = undefined;
-			if (firstLine.startsWith("#") && firstLine.length > 1) {
-				const categoryName = firstLine.substring(1).trim();
-				const category = categories.data?.find((c) => c.name === categoryName);
-				if (category) {
-					categoryId = category.id;
-				}
-			}
-			if (!categoryId) {
-				const newCategoryName = `Resolve ${m.color}`;
-				if (categories.data?.some((c) => c.name === newCategoryName)) {
-					categoryId = categories.data.find((c) => c.name === newCategoryName)!.id;
-				} else {
-					const newCategory = await createCategory({
-						client,
-						body: { name: newCategoryName, color: resolveColors[m.color] },
-						path: { projectId },
-					});
-					categoryId = newCategory.data!.id;
-				}
+			const parsed = parseCategoryTag(m.description);
+			const categoryName = parsed.categoryName ?? `Resolve ${m.color}`;
+			let category = categories.find((c) => c.name === categoryName);
+			if (!category) {
+				({ data: category } = await createCategory({
+					client,
+					body: { name: categoryName, color: resolveColors[m.color] },
+					path: { projectId },
+					throwOnError: true,
+				}));
+				categories.push(category);
 			}
 			mappedMarkers.push({
 				name: m.title,
-				description: m.description,
+				description: parsed.description,
 				frame: m.frame + timelineStartFrame,
-				categoryId: categoryId,
+				categoryId: category.id,
 				id: customData.__postpin ? customData.id : undefined,
 			});
 		}
@@ -267,17 +300,24 @@
 			client,
 			path: { projectId, timelineId, exportId },
 		});
+		const { data: categories = [] } = await getCategories({ client, path: { projectId } });
+		const categoriesById = new Map(categories.map((c) => [c.id, c]));
 		const timelineStartFrame = await MainAPI!.getTimelineStartFrame!();
-		const mappedMarkers = markers!.map((m) => ({
-			title: m.name,
-			description: `#${m.categoryId}\n\n${m.description}`,
-			frame: m.frame - timelineStartFrame,
-			color: MarkerColor.Blue,
-			customData: JSON.stringify({
-				__postpin: true,
-				id: m.id,
-			} satisfies CustomData),
-		}));
+		const mappedMarkers = markers!.map((m) => {
+			const category = categoriesById.get(m.categoryId);
+			return {
+				title: m.name,
+				description: category
+					? withCategoryTag(category.name, m.description)
+					: (m.description ?? ""),
+				frame: m.frame - timelineStartFrame,
+				color: category ? closestResolveColor(category.color) : MarkerColor.Blue,
+				customData: JSON.stringify({
+					__postpin: true,
+					id: m.id,
+				} satisfies CustomData),
+			};
+		});
 		await MainAPI!.setMarkers!(mappedMarkers);
 	}
 
