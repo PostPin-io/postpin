@@ -9,6 +9,7 @@ import * as v from "valibot";
 import { getPresignedUrl } from "@postpin-io/shared/storage";
 import { seekSprites, type SeekSprites } from "@postpin-io/shared/types/SeekSprites";
 import type { ShotThumbnails } from "@postpin-io/shared/types/ShotThumbnails";
+import type { MovieBarcode } from "@postpin-io/shared/types/MovieBarcode";
 
 export const getExport = query(
 	v.object({ projectId: v.string(), timelineId: v.string(), exportId: v.string() }),
@@ -112,5 +113,19 @@ export const getShotThumbnails = query(
 				),
 			),
 		};
+	},
+);
+
+export const getMovieBarcode = query(
+	v.object({
+		mediaId: v.string(),
+	}),
+	async (object) => {
+		await requireMediaAccess(object.mediaId);
+		const media = await prisma.media.findUniqueOrThrow({
+			where: { id: object.mediaId },
+			select: { movieBarcode: true },
+		});
+		return media?.movieBarcode as MovieBarcode | null;
 	},
 );

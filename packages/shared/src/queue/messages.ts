@@ -43,3 +43,7 @@ export interface SeekSpritesMessage {
 export interface ShotThumbnailsMessage {
 	mediaId: string;
 }
+
+export interface MovieBarcodeMessage {
+	mediaId: string;
+}

@@ -90,4 +90,7 @@ export async function seekSprites(job: TypedJob<typeof Queues.light, "seekSprite
 			} satisfies SeekSprites,
 		},
 	});
+
+	// movieBarcode is this job's parent and reads the proxy from here
+	return { proxyId: proxy.id };
 }

@@ -11,6 +11,7 @@ import {
 } from "bullmq";
 import type { RedisEnv } from "../env/index.ts";
 import type {
+	MovieBarcodeMessage,
 	ProbeMessage,
 	SeekSpritesMessage,
 	SetMediaProcessingDoneMessage,
@@ -29,6 +30,7 @@ export const JobWeights: {
 	setMediaProcessingDone: 1,
 	seekSprites: 50,
 	shotThumbnails: 50,
+	movieBarcode: 50,
 };
 
 export const JobLabels: {
@@ -40,6 +42,7 @@ export const JobLabels: {
 	setMediaProcessingDone: "Done",
 	seekSprites: "Seek Thumbnails",
 	shotThumbnails: "Shot Thumbnails",
+	movieBarcode: "Movie Barcode",
 };
 
 export const Queues = { heavy: "media-heavy", light: "media-light" } as const;
@@ -54,6 +57,7 @@ export interface QueueJobs {
 		setMediaProcessingDone: SetMediaProcessingDoneMessage;
 		seekSprites: SeekSpritesMessage;
 		shotThumbnails: ShotThumbnailsMessage;
+		movieBarcode: MovieBarcodeMessage;
 	};
 }
 

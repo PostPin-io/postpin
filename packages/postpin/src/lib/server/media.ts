@@ -55,11 +55,19 @@ export async function startMediaProcessing(mediaId: string) {
 				opts: { failParentOnFailure: true },
 			},
 			{
-				name: "seekSprites",
+				name: "movieBarcode",
 				queueName: Queues.light,
 				data: { mediaId },
 				opts: { failParentOnFailure: true },
-				children: [transcodeJob(mediaId, r480!)],
+				children: [
+					{
+						name: "seekSprites",
+						queueName: Queues.light,
+						data: { mediaId },
+						opts: { failParentOnFailure: true },
+						children: [transcodeJob(mediaId, r480!)],
+					},
+				],
 			},
 			{
 				name: "shotThumbnails",

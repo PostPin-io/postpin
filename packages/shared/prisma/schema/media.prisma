@@ -10,6 +10,7 @@ model Media {
   export         Export?
   seekSprites    Json?
   shotThumbnails Json?
+  movieBarcode   Json?
 
   @@map("media")
 }

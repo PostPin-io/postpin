@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { onMount, tick } from "svelte";
 	import { page } from "$app/state";
-	import { getExport, getProcessingJobs, getSeekSprites, getUrl } from "./export.remote";
+	import {
+		getExport,
+		getMovieBarcode,
+		getProcessingJobs,
+		getSeekSprites,
+		getUrl,
+	} from "./export.remote";
 
 	import Header from "#lib/components/Header.svelte";
 	import MarkerPanel from "#lib/components/review/MarkerPanel.svelte";
@@ -21,6 +27,7 @@
 	import { jobStateBadges } from "../../../../../../queuetests/job-status";
 	import CheckCircle from "@lucide/svelte/icons/check-circle";
 	import ShotGrid from "./ShotGrid.svelte";
+	import MovieBarcode from "./MovieBarcode.svelte";
 
 	const STORAGE_KEY = "postpin:export-panes";
 
@@ -362,18 +369,16 @@
 					<ul class="list dropdown-content card z-1 w-60 rounded-box bg-base-100 p-2 shadow-sm">
 						{#each processingJobsQuery?.current as job (job.id)}
 							{@const Icon = jobStateBadges[job.state ?? "unknown"].icon}
-							<!-- <div class="flex items-center gap-2" title={job.failedReason}>
-									<span class="w-32">{job.label}</span>
-
-									<span class="w-20">{job.state}</span>
-									{#if job.state === "active" || job.state === "waiting"}
-										<progress class="progress w-24" value={job.progress * 100} max="100"></progress>
-									{/if}
-								</div> -->
-
 							<li class="list-row">
 								<div class="{jobStateBadges[job.state ?? 'unknown'].color} w-4">
-									<Icon />
+									{#if job.state === "active"}
+										<div
+											class="radial-progress"
+											style="--value:{job.progress * 100}; --size:1rem; --thickness: 2px;"
+										></div>
+									{:else}
+										<Icon size={16} />
+									{/if}
 								</div>
 								<div>
 									<span class="ml-2 font-semibold text-nowrap">{job.label}</span>
@@ -455,6 +460,14 @@
 			<!-- Marker panel -->
 			{#if isMarkerVisible}
 				<Pane size={layout.main[1]} minSize={20} maxSize={50} class="overflow-auto">
+					{#if true}
+						{@const barcode = await getMovieBarcode({
+							mediaId: media?.id ?? "",
+						})}
+						{#if barcode}
+							<MovieBarcode data={barcode} />
+						{/if}
+					{/if}
 					<MarkerPanel
 						{currentFrame}
 						onseek={seekToFrame}
