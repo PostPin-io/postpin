@@ -8,6 +8,7 @@ import { requireMediaAccess } from "#lib/server/org-access.ts";
 import * as v from "valibot";
 import { getPresignedUrl } from "@postpin-io/shared/storage";
 import { seekSprites, type SeekSprites } from "@postpin-io/shared/types/SeekSprites";
+import type { ShotThumbnails } from "@postpin-io/shared/types/ShotThumbnails";
 
 export const getExport = query(
 	v.object({ projectId: v.string(), timelineId: v.string(), exportId: v.string() }),
@@ -79,6 +80,35 @@ export const getSeekSprites = query(
 			urls: await Promise.all(
 				Array.from({ length: sheets }, (_, index) =>
 					getPresignedUrl(s3Client, env, { mediaId: object.mediaId, type: "sprite", index }),
+				),
+			),
+		};
+	},
+);
+
+export const getShotThumbnails = query(
+	v.object({
+		mediaId: v.string(),
+	}),
+	async (object) => {
+		await requireMediaAccess(object.mediaId);
+		const media = await prisma.media.findUnique({
+			where: { id: object.mediaId },
+			select: { shotThumbnails: true },
+		});
+		if (!media?.shotThumbnails) error(404, "Shot thumbnails not found");
+		const { count, width, height } = media.shotThumbnails as ShotThumbnails;
+		return {
+			count,
+			width,
+			height,
+			urls: await Promise.all(
+				Array.from({ length: count }, (_, index) =>
+					getPresignedUrl(s3Client, env, {
+						mediaId: object.mediaId,
+						type: "shotThumbnails",
+						index,
+					}),
 				),
 			),
 		};

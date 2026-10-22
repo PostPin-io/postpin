@@ -61,6 +61,12 @@ export async function startMediaProcessing(mediaId: string) {
 				opts: { failParentOnFailure: true },
 				children: [transcodeJob(mediaId, r480!)],
 			},
+			{
+				name: "shotThumbnails",
+				data: { mediaId },
+				queueName: Queues.light,
+				opts: { failParentOnFailure: true },
+			},
 			transcodeJob(mediaId, r1080!),
 			transcodeJob(mediaId, r720!),
 		],

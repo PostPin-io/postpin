@@ -20,7 +20,7 @@
 		frameAtSeconds,
 		secondsAtFrame,
 		type FrameTiming,
-	} from "../../../routes/(root)/projects/[project]/timelines/[timeline]/exports/[export]/timecode";
+	} from "@postpin-io/shared/logic/timecode";
 
 	let {
 		source,

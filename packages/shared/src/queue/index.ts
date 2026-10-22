@@ -14,6 +14,7 @@ import type {
 	ProbeMessage,
 	SeekSpritesMessage,
 	SetMediaProcessingDoneMessage,
+	ShotThumbnailsMessage,
 	ThumbnailMessage,
 	TranscodeMessage,
 } from "./messages.ts";
@@ -27,6 +28,7 @@ export const JobWeights: {
 	probe: 10,
 	setMediaProcessingDone: 1,
 	seekSprites: 50,
+	shotThumbnails: 50,
 };
 
 export const JobLabels: {
@@ -37,6 +39,7 @@ export const JobLabels: {
 	probe: "Analyze Media",
 	setMediaProcessingDone: "Done",
 	seekSprites: "Seek Thumbnails",
+	shotThumbnails: "Shot Thumbnails",
 };
 
 export const Queues = { heavy: "media-heavy", light: "media-light" } as const;
@@ -50,6 +53,7 @@ export interface QueueJobs {
 		probe: ProbeMessage;
 		setMediaProcessingDone: SetMediaProcessingDoneMessage;
 		seekSprites: SeekSpritesMessage;
+		shotThumbnails: ShotThumbnailsMessage;
 	};
 }
 

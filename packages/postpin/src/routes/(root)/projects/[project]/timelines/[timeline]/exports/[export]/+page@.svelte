@@ -9,7 +9,10 @@
 	import { Pane, Splitpanes } from "svelte-splitpanes";
 	import Timeline from "./Timeline.svelte";
 	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
-	import { frameAtSeconds, secondsAtFrame } from "./timecode";
+	import {
+		frameAtSeconds,
+		secondsAtFrame,
+	} from "../../../../../../../../../../shared/src/logic/timecode";
 	import { getMarkers } from "#lib/components/review/MarkerPanel.remote.ts";
 	import type { ThumbnailImage } from "@videojs/html";
 	import { seekSprites as seekSpritesSchema } from "@postpin-io/shared/types/SeekSprites";
@@ -17,6 +20,7 @@
 	import Hourglass from "@lucide/svelte/icons/hourglass";
 	import { jobStateBadges } from "../../../../../../queuetests/job-status";
 	import CheckCircle from "@lucide/svelte/icons/check-circle";
+	import ShotGrid from "./ShotGrid.svelte";
 
 	const STORAGE_KEY = "postpin:export-panes";
 
@@ -297,6 +301,8 @@
 			},
 		}));
 	});
+
+	let viewMode: "shot-grid" | "timeline" = $state("timeline");
 </script>
 
 {#if isLoading}
@@ -377,6 +383,9 @@
 					</ul>
 				</details>
 			{/if}
+
+			<button class="btn" onclick={() => (viewMode = "timeline")}>Timeline</button>
+			<button class="btn" onclick={() => (viewMode = "shot-grid")}>Shot Grid</button>
 		</Header>
 
 		<Splitpanes
@@ -396,6 +405,14 @@
 						<div class="flex h-full min-h-0 flex-col">
 							{#if !media}
 								<p>Nothing uploaded yet.</p>
+							{:else if viewMode === "shot-grid" && snapshot}
+								<ShotGrid
+									{snapshot}
+									mediaId={media.id}
+									thumbnailsReady={!!media.shotThumbnails}
+									{currentFrame}
+									onSeek={seekToFrame}
+								/>
 							{:else}
 								<!-- Video -->
 								{#if media.status !== "PENDING" && videoSource && snapshot}

@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { tick } from "svelte";
 	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
-	import Timecode from "#lib/components/review/Timecode.svelte";
-	import { formatTimecode, frameAtSeconds, secondsAtFrame } from "./timecode";
 	import type { Prisma } from "@postpin-io/shared/db";
 	import { onMount } from "svelte";
 	import type { ThumbnailElement, ThumbnailImage } from "@videojs/html";
+	import {
+		formatTimecode,
+		frameAtSeconds,
+		secondsAtFrame,
+	} from "@postpin-io/shared/logic/timecode";
 
 	interface Props {
 		snapshot: TimelineSnapshot;

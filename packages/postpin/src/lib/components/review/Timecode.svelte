@@ -1,9 +1,6 @@
 <script lang="ts">
+	import { formatTimecode, parseTimecode } from "@postpin-io/shared/logic/timecode";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
-	import {
-		formatTimecode,
-		parseTimecode,
-	} from "../../../routes/(root)/projects/[project]/timelines/[timeline]/exports/[export]/timecode";
 
 	interface Props {
 		/** Absolute timeline frame */
