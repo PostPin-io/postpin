@@ -1,6 +1,7 @@
 import { prisma } from "#lib/server/database.ts";
 import { getRequestEvent, command, query } from "$app/server";
 import { page } from "$app/state";
+import { Prisma } from "@postpin-io/shared/db";
 import * as v from "valibot";
 
 export const getMarkers = query(v.string(), async (exportId: string) => {
@@ -205,14 +206,54 @@ export const changeCategoryColor = command(
 		return category;
 	},
 );
-export const deleteCategory = command(v.string(), async (id) => {
-	const event = getRequestEvent();
 
-	const category = await prisma.category.delete({
-		where: {
-			id: id,
-		},
+export const deleteCategory = command(v.string(), async (id) => {
+	const category = await prisma.category.findUnique({
+		where: { id },
 	});
+
+	if (!category) {
+		return { success: false, reason: "NOT_FOUND" as const };
+	}
+
+	try {
+		await prisma.category.delete({
+			where: { id },
+		});
+	} catch (error) {
+		if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+			return {
+				success: false,
+				reason: "CATEGORY_IN_USE" as const,
+			};
+		}
+
+		throw error;
+	}
+
 	await getCategories(category.projectId).refresh();
-	return category;
+
+	return { success: true as const };
 });
+
+export const renameCategory = command(
+	v.object({
+		id: v.string(),
+		name: v.string(),
+	}),
+	async (data) => {
+		const event = getRequestEvent();
+
+		const category = await prisma.category.update({
+			where: {
+				id: data.id,
+			},
+			data: {
+				name: data.name,
+			},
+		});
+		await getMarkers(page.params.export ?? "").refresh();
+		await getCategories(category.projectId).refresh();
+		return category;
+	},
+);

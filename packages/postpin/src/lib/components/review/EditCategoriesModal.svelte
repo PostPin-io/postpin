@@ -7,12 +7,15 @@
 		deleteCategory,
 		isCategoryUsed,
 		mergeCategories,
+		renameCategory,
 	} from "./MarkerPanel.remote";
 	import { page } from "$app/state";
 	import ColorPicker from "../ColorPicker.svelte";
-	import CircleDashed from "@lucide/svelte/icons/circle-dashed";
+	import Pencil from "@lucide/svelte/icons/pencil";
+	import Check from "@lucide/svelte/icons/check";
 	import Trash from "@lucide/svelte/icons/trash";
-
+	import { is } from "valibot";
+	import { HueyRoot, hueyColor } from "@hueycolor/svelte";
 	let dialog: HTMLDialogElement;
 	let usedCategoryWarning: HTMLDialogElement;
 
@@ -24,6 +27,10 @@
 
 	let targetCategoryId = $state("");
 	let sourceCategoryId = $state("");
+
+	let isRenaming: string | null = $state(null);
+
+	const randomColor = () => "#" + hueyColor("#ffffff").randomize().toHex();
 
 	async function saveColor(category: { id: string; color: string }) {
 		const color = pendingColors[category.id];
@@ -59,11 +66,16 @@
 		if (newCategoryName.trim() === "") return;
 		await createCategory({
 			name: newCategoryName.trim(),
-			color: "#ffffff",
+			color: randomColor(),
 			projectId,
 		});
 		await getCategories(projectId).refresh();
 		newCategoryName = "";
+	}
+	async function renameCategoryHandler(id: string, name: string) {
+		if (name.trim() === "") return;
+		await renameCategory({ id, name: name.trim() });
+		await getCategories(projectId).refresh();
 	}
 </script>
 
@@ -76,22 +88,51 @@
 			{#each categories as category (category.id)}
 				<li class="list-row items-center">
 					{@render popupColorPicker(category)}
-					<span class="truncate">{category.name}</span>
-					<button
-						type="button"
-						class="btn btn-square btn-ghost btn-sm"
-						aria-label="Delete category"
-						onclick={() => removeCategory(category.id)}
-					>
-						<Trash class="size-[1.1em]" />
-					</button>
-					<button
-						type="button"
-						class="btn btn-square btn-ghost btn-sm"
-						aria-label="Category options"
-					>
-						<CircleDashed class="size-[1.1em]" />
-					</button>
+					{#if isRenaming === category.id}
+						<input
+							type="text"
+							class="input input-sm"
+							bind:value={category.name}
+							onblur={() => {
+								renameCategoryHandler(category.id, category.name);
+								isRenaming = null;
+							}}
+						/>
+
+						<button
+							type="button"
+							class="btn btn-square btn-ghost btn-sm"
+							aria-label="Confirm renaming"
+							onclick={() => {
+								renameCategoryHandler(category.id, category.name);
+								getMarkers(page.params.export ?? "").refresh();
+								isRenaming = null;
+							}}
+						>
+							<Check class="size-[1.1em]" />
+						</button>
+					{/if}
+					{#if isRenaming !== category.id}
+						<span class="truncate">{category.name}</span>
+						<button
+							type="button"
+							class="btn btn-square btn-ghost btn-sm"
+							aria-label="Delete category"
+							onclick={() => removeCategory(category.id)}
+						>
+							<Trash class="size-[1.1em]" />
+						</button>
+						<button
+							type="button"
+							class="btn btn-square btn-ghost btn-sm"
+							title="rename category"
+							onclick={() => {
+								isRenaming = category.id;
+							}}
+						>
+							<Pencil class="size-[1.1em]" />
+						</button>
+					{/if}
 				</li>
 			{:else}
 				<li class="p-4 text-center text-sm opacity-60">No categories yet</li>
@@ -197,7 +238,7 @@
 					disabled={!targetCategoryId || targetCategoryId === sourceCategoryId}
 					onclick={async () => {
 						await mergeCategories({ sourceCategoryId, targetCategoryId });
-						await Promise.all([getMarkers(page.params.export ?? "").refresh()]);
+						await getMarkers(page.params.export ?? "").refresh();
 						usedCategoryWarning?.close();
 					}}
 				>

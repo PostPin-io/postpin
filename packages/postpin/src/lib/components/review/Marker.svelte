@@ -3,11 +3,12 @@
 	import Timecode from "./Timecode.svelte";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 
-	let { marker, active = false, onselect, frameRate, startFrame }: Props = $props();
+	let { marker, active = false, onselect, frameRate, startFrame, onchoose }: Props = $props();
 
 	interface Props {
 		active?: boolean;
 		onselect?: (frame: number) => void;
+		onchoose?: () => void;
 		marker: Prisma.MarkerGetPayload<{
 			include: {
 				author: true;
@@ -36,7 +37,12 @@
 	role="button"
 	tabindex="0"
 	aria-pressed={active}
-	onclick={() => onselect?.(marker.frame)}
+	onclick={(e) => {
+		onchoose?.();
+		if (e.metaKey) {
+			onselect?.(marker.frame);
+		}
+	}}
 	onkeydown={(e) => {
 		if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
 			e.preventDefault();
@@ -45,7 +51,7 @@
 	}}
 >
 	<details
-		class="group collapse-arrow collapse border border-l-4 border-base-300 bg-base-100"
+		class=" group collapse-arrow collapse border border-l-4 border-base-300 bg-base-100"
 		style:border-left-color={marker.category.color}
 	>
 		<summary class="collapse-title font-semibold">

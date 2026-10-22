@@ -27,9 +27,10 @@
 
 	let isUpdateMarkerFocused = $state(false);
 
-	$effect(() => {
-		if (markerAtPlayhead) selectedMarkerId = markerAtPlayhead.id;
-	});
+	// Automatically select the marker at the playhead when it changes
+	// $effect(() => {
+	// 	if (markerAtPlayhead) selectedMarkerId = markerAtPlayhead.id;
+	// });
 
 	$effect(() => {
 		localStorage.setItem("DefaultCategory", defaultCategory);
@@ -43,14 +44,25 @@
 		if (creating || markerAtPlayhead) return;
 		creating = true;
 		try {
-			let categoryId = (await getCategories(projectId))[0]?.id;
+			let categories = await getCategories(projectId);
+
+			let categoryId = categories[0]?.id;
 			categoryId ??= (await createCategory({ name: "General", color: "#ffffff", projectId })).id;
 
+			let defaultCategoryId = localStorage.getItem("DefaultCategory");
+
+			if (defaultCategoryId) {
+				if (categories.find((c) => c.id === defaultCategoryId)) {
+					categoryId = defaultCategoryId;
+				} else {
+					localStorage.setItem("DefaultCategory", categoryId);
+				}
+			}
 			await createMarker({
 				exportId: currentExportId,
 				name: "",
 				description: "",
-				categoryId: localStorage.getItem("DefaultCategory") ?? categoryId,
+				categoryId: categoryId,
 				frame: currentFrame,
 			});
 		} finally {
@@ -82,6 +94,10 @@
 		if (localStorage.getItem("UpdateMarkerFocused") === "true") {
 			setTimeout(() => updateMarkerComponent?.focusTitleInputField(), 50);
 		}
+		setSelectedMarkerId(markerAtPlayhead?.id ?? null);
+	}
+	export function setSelectedMarkerId(id: string | null) {
+		selectedMarkerId = id;
 	}
 </script>
 
@@ -92,7 +108,10 @@
 			{#each markers as marker (marker.id)}
 				<Marker
 					{marker}
-					active={marker.id === markerAtPlayhead?.id}
+					active={marker.id === selectedMarkerId}
+					onchoose={() => {
+						selectedMarkerId = marker.id;
+					}}
 					onselect={onseek}
 					{frameRate}
 					{startFrame}
