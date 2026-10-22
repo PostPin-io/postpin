@@ -2,6 +2,7 @@ import { building } from "$app/env";
 import * as env from "$app/env/private";
 import { getFlowProducer, Queues, type TypedFlowProducer } from "@postpin-io/shared/queue";
 import { prisma } from "#lib/server/database.ts";
+import { s3Client } from "./storage";
 
 const flowProducer = building ? (null as unknown as TypedFlowProducer) : getFlowProducer(env);
 
@@ -68,4 +69,21 @@ export async function getMediaJobs(mediaId: string) {
 			failedReason: job.failedReason,
 		})),
 	);
+}
+
+export async function deleteMediaFiles(mediaId: string) {
+	let ContinuationToken: string | undefined;
+	do {
+		const res = await s3Client.listObjectsV2({
+			Bucket: env.S3_BUCKET,
+			Prefix: `${mediaId}/`,
+			ContinuationToken,
+		});
+		const Objects = (res.Contents ?? []).map((obj) => ({ Key: obj.Key! }));
+		// DeleteObjects rejects an empty list with MalformedXML
+		if (Objects.length > 0) {
+			await s3Client.deleteObjects({ Bucket: env.S3_BUCKET, Delete: { Objects } });
+		}
+		ContinuationToken = res.NextContinuationToken;
+	} while (ContinuationToken);
 }

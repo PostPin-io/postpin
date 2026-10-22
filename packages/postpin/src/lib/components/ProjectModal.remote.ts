@@ -1,6 +1,9 @@
 import { prisma } from "#lib/server/database.ts";
+import { s3Client } from "#lib/server/storage.ts";
 import { getRequestEvent, command } from "$app/server";
 import * as v from "valibot";
+import { S3_BUCKET } from "$app/env/private";
+import { deleteMediaFiles } from "#lib/server/media.ts";
 
 export const createProject = command(
 	v.object({
@@ -25,6 +28,17 @@ export const deleteProject = command(
 	async (data) => {
 		const event = getRequestEvent();
 		const currentOrganizationId = event.locals.session!.activeOrganizationId!;
+
+		const media = await prisma.media.findMany({
+			where: {
+				export: {
+					timeline: {
+						projectId: data.id,
+					},
+				},
+			},
+		});
+		await Promise.all(media.map((m) => deleteMediaFiles(m.id)));
 
 		await prisma.project.delete({
 			where: {

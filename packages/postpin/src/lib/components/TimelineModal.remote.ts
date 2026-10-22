@@ -1,4 +1,5 @@
 import { prisma } from "#lib/server/database.ts";
+import { deleteMediaFiles } from "#lib/server/media.ts";
 import { getRequestEvent, command } from "$app/server";
 import * as v from "valibot";
 
@@ -34,6 +35,22 @@ export const deleteTimeline = command(
 		const event = getRequestEvent();
 		const currentOrganizationId = event.locals.session?.activeOrganizationId;
 		if (!currentOrganizationId) throw new Error("No active organization");
+
+		const media = await prisma.media.findMany({
+			where: {
+				export: {
+					timelineId: data.id,
+				},
+			},
+		});
+		await Promise.all(media.map((m) => deleteMediaFiles(m.id)));
+
+		await prisma.project.delete({
+			where: {
+				id: data.id,
+				organizationId: currentOrganizationId,
+			},
+		});
 
 		await prisma.timeline.delete({
 			where: {

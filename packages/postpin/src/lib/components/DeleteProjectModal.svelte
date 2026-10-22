@@ -10,6 +10,7 @@
 
 	export function open(deletableProject: { id: string; name: string }) {
 		project = deletableProject;
+		errorMessage = null;
 
 		dialog?.showModal();
 	}

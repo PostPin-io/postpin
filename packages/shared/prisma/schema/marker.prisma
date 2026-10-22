@@ -11,9 +11,9 @@ model Marker {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  export     Export   @relation(fields: [exportId], references: [id])
+  export     Export   @relation(fields: [exportId], references: [id], onDelete: Cascade)
   exportId   String
-  category   Category @relation(fields: [categoryId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   categoryId String
   author     User     @relation(fields: [authorId], references: [id])
   authorId   String
@@ -35,7 +35,7 @@ model Category {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  project   Project @relation(fields: [projectId], references: [id])
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId String
 
   @@unique([projectId, name])
@@ -43,7 +43,7 @@ model Category {
 }
 
 model Response {
-  marker   Marker @relation(fields: [markerId], references: [id])
+  marker   Marker @relation(fields: [markerId], references: [id], onDelete: Cascade)
   markerId String
 
   id       String @id @default(cuid())
