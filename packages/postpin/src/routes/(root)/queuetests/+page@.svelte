@@ -1,24 +1,13 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { clearJobs, getJobs } from "./queuetests.remote";
-	import type { JobState } from "bullmq";
+	import { jobStateBadges } from "./job-status";
 
 	function formatDate(ms: number | undefined) {
 		return ms
 			? new Date(ms).toLocaleString(undefined, { dateStyle: "short", timeStyle: "medium" })
 			: "N/A";
 	}
-
-	const jobStateBadges: Record<JobState | "unknown", { badge: string; text: string }> = {
-		active: { badge: "badge-primary", text: "Active" },
-		completed: { badge: "badge-success", text: "Completed" },
-		failed: { badge: "badge-error", text: "Failed" },
-		delayed: { badge: "badge-warning", text: "Delayed" },
-		"waiting-children": { badge: "badge-info", text: "Waiting Children" },
-		waiting: { badge: "badge-info", text: "Waiting" },
-		prioritized: { badge: "badge-info", text: "Prioritized" },
-		unknown: { badge: "badge-ghost", text: "Unknown" },
-	};
 
 	onMount(() => {
 		const interval = setInterval(() => {

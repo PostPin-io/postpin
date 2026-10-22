@@ -35,3 +35,7 @@ export interface ProbeMessage {
 export interface SetMediaProcessingDoneMessage {
 	mediaId: string;
 }
+
+export interface SeekSpritesMessage {
+	mediaId: string;
+}

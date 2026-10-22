@@ -1,13 +1,14 @@
 model Media {
-  id         String      @id @default(cuid())
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  status     MediaStatus @default(PENDING)
-  original   MediaFile   @relation("MediaOriginal", fields: [originalId], references: [id], onDelete: Cascade)
-  originalId String      @unique
-  proxies    MediaFile[] @relation("MediaProxies")
-  thumbnail  Thumbnail?
-  export     Export?
+  id          String      @id @default(cuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  status      MediaStatus @default(PENDING)
+  original    MediaFile   @relation("MediaOriginal", fields: [originalId], references: [id], onDelete: Cascade)
+  originalId  String      @unique
+  proxies     MediaFile[] @relation("MediaProxies")
+  thumbnail   Thumbnail?
+  export      Export?
+  seekSprites Json?
 
   @@map("media")
 }
@@ -30,6 +31,9 @@ model MediaFile {
   width      Int?
   height     Int?
   frameRate  Float?
+  /// RFC 6381, e.g. "avc1.64002a,mp4a.40.2"
+  codecs     String?
+  hls        Json?
 
   audioCodec String?
   sampleRate Int?

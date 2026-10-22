@@ -5,6 +5,7 @@
 	"license": "MIT",
 	"type": "module",
 	"exports": {
+		"./auth/*": "./src/auth/*.ts",
 		"./env": "./src/env/index.ts",
 		"./queue": "./src/queue/index.ts",
 		"./queue/*": "./src/queue/*.ts",

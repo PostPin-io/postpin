@@ -45,6 +45,7 @@ export type MediaCountAggregateOutputType = {
 	updatedAt: number;
 	status: number;
 	originalId: number;
+	seekSprites: number;
 	_all: number;
 };
 
@@ -70,6 +71,7 @@ export type MediaCountAggregateInputType = {
 	updatedAt?: true;
 	status?: true;
 	originalId?: true;
+	seekSprites?: true;
 	_all?: true;
 };
 
@@ -152,6 +154,7 @@ export type MediaGroupByOutputType = {
 	updatedAt: Date;
 	status: $Enums.MediaStatus;
 	originalId: string;
+	seekSprites: runtime.JsonValue | null;
 	_count: MediaCountAggregateOutputType | null;
 	_min: MediaMinAggregateOutputType | null;
 	_max: MediaMaxAggregateOutputType | null;
@@ -178,6 +181,7 @@ export type MediaWhereInput = {
 	updatedAt?: Prisma.DateTimeFilter<"Media"> | Date | string;
 	status?: Prisma.EnumMediaStatusFilter<"Media"> | $Enums.MediaStatus;
 	originalId?: Prisma.StringFilter<"Media"> | string;
+	seekSprites?: Prisma.JsonNullableFilter<"Media">;
 	original?: Prisma.XOR<Prisma.MediaFileScalarRelationFilter, Prisma.MediaFileWhereInput>;
 	proxies?: Prisma.MediaFileListRelationFilter;
 	thumbnail?: Prisma.XOR<
@@ -193,6 +197,7 @@ export type MediaOrderByWithRelationInput = {
 	updatedAt?: Prisma.SortOrder;
 	status?: Prisma.SortOrder;
 	originalId?: Prisma.SortOrder;
+	seekSprites?: Prisma.SortOrderInput | Prisma.SortOrder;
 	original?: Prisma.MediaFileOrderByWithRelationInput;
 	proxies?: Prisma.MediaFileOrderByRelationAggregateInput;
 	thumbnail?: Prisma.ThumbnailOrderByWithRelationInput;
@@ -209,6 +214,7 @@ export type MediaWhereUniqueInput = Prisma.AtLeast<
 		createdAt?: Prisma.DateTimeFilter<"Media"> | Date | string;
 		updatedAt?: Prisma.DateTimeFilter<"Media"> | Date | string;
 		status?: Prisma.EnumMediaStatusFilter<"Media"> | $Enums.MediaStatus;
+		seekSprites?: Prisma.JsonNullableFilter<"Media">;
 		original?: Prisma.XOR<Prisma.MediaFileScalarRelationFilter, Prisma.MediaFileWhereInput>;
 		proxies?: Prisma.MediaFileListRelationFilter;
 		thumbnail?: Prisma.XOR<
@@ -226,6 +232,7 @@ export type MediaOrderByWithAggregationInput = {
 	updatedAt?: Prisma.SortOrder;
 	status?: Prisma.SortOrder;
 	originalId?: Prisma.SortOrder;
+	seekSprites?: Prisma.SortOrderInput | Prisma.SortOrder;
 	_count?: Prisma.MediaCountOrderByAggregateInput;
 	_max?: Prisma.MediaMaxOrderByAggregateInput;
 	_min?: Prisma.MediaMinOrderByAggregateInput;
@@ -240,6 +247,7 @@ export type MediaScalarWhereWithAggregatesInput = {
 	updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Media"> | Date | string;
 	status?: Prisma.EnumMediaStatusWithAggregatesFilter<"Media"> | $Enums.MediaStatus;
 	originalId?: Prisma.StringWithAggregatesFilter<"Media"> | string;
+	seekSprites?: Prisma.JsonNullableWithAggregatesFilter<"Media">;
 };
 
 export type MediaCreateInput = {
@@ -247,6 +255,7 @@ export type MediaCreateInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	original: Prisma.MediaFileCreateNestedOneWithoutOriginalOfInput;
 	proxies?: Prisma.MediaFileCreateNestedManyWithoutProxyOfInput;
 	thumbnail?: Prisma.ThumbnailCreateNestedOneWithoutMediaInput;
@@ -259,6 +268,7 @@ export type MediaUncheckedCreateInput = {
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
 	originalId: string;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	proxies?: Prisma.MediaFileUncheckedCreateNestedManyWithoutProxyOfInput;
 	thumbnail?: Prisma.ThumbnailUncheckedCreateNestedOneWithoutMediaInput;
 	export?: Prisma.ExportUncheckedCreateNestedOneWithoutMediaInput;
@@ -269,6 +279,7 @@ export type MediaUpdateInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	original?: Prisma.MediaFileUpdateOneRequiredWithoutOriginalOfNestedInput;
 	proxies?: Prisma.MediaFileUpdateManyWithoutProxyOfNestedInput;
 	thumbnail?: Prisma.ThumbnailUpdateOneWithoutMediaNestedInput;
@@ -281,6 +292,7 @@ export type MediaUncheckedUpdateInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
 	originalId?: Prisma.StringFieldUpdateOperationsInput | string;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	proxies?: Prisma.MediaFileUncheckedUpdateManyWithoutProxyOfNestedInput;
 	thumbnail?: Prisma.ThumbnailUncheckedUpdateOneWithoutMediaNestedInput;
 	export?: Prisma.ExportUncheckedUpdateOneWithoutMediaNestedInput;
@@ -292,6 +304,7 @@ export type MediaCreateManyInput = {
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
 	originalId: string;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 };
 
 export type MediaUpdateManyMutationInput = {
@@ -299,6 +312,7 @@ export type MediaUpdateManyMutationInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 };
 
 export type MediaUncheckedUpdateManyInput = {
@@ -307,6 +321,7 @@ export type MediaUncheckedUpdateManyInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
 	originalId?: Prisma.StringFieldUpdateOperationsInput | string;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 };
 
 export type MediaCountOrderByAggregateInput = {
@@ -315,6 +330,7 @@ export type MediaCountOrderByAggregateInput = {
 	updatedAt?: Prisma.SortOrder;
 	status?: Prisma.SortOrder;
 	originalId?: Prisma.SortOrder;
+	seekSprites?: Prisma.SortOrder;
 };
 
 export type MediaMaxOrderByAggregateInput = {
@@ -490,6 +506,7 @@ export type MediaCreateWithoutOriginalInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	proxies?: Prisma.MediaFileCreateNestedManyWithoutProxyOfInput;
 	thumbnail?: Prisma.ThumbnailCreateNestedOneWithoutMediaInput;
 	export?: Prisma.ExportCreateNestedOneWithoutMediaInput;
@@ -500,6 +517,7 @@ export type MediaUncheckedCreateWithoutOriginalInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	proxies?: Prisma.MediaFileUncheckedCreateNestedManyWithoutProxyOfInput;
 	thumbnail?: Prisma.ThumbnailUncheckedCreateNestedOneWithoutMediaInput;
 	export?: Prisma.ExportUncheckedCreateNestedOneWithoutMediaInput;
@@ -518,6 +536,7 @@ export type MediaCreateWithoutProxiesInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	original: Prisma.MediaFileCreateNestedOneWithoutOriginalOfInput;
 	thumbnail?: Prisma.ThumbnailCreateNestedOneWithoutMediaInput;
 	export?: Prisma.ExportCreateNestedOneWithoutMediaInput;
@@ -529,6 +548,7 @@ export type MediaUncheckedCreateWithoutProxiesInput = {
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
 	originalId: string;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnail?: Prisma.ThumbnailUncheckedCreateNestedOneWithoutMediaInput;
 	export?: Prisma.ExportUncheckedCreateNestedOneWithoutMediaInput;
 };
@@ -566,6 +586,7 @@ export type MediaUpdateWithoutOriginalInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	proxies?: Prisma.MediaFileUpdateManyWithoutProxyOfNestedInput;
 	thumbnail?: Prisma.ThumbnailUpdateOneWithoutMediaNestedInput;
 	export?: Prisma.ExportUpdateOneWithoutMediaNestedInput;
@@ -576,6 +597,7 @@ export type MediaUncheckedUpdateWithoutOriginalInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	proxies?: Prisma.MediaFileUncheckedUpdateManyWithoutProxyOfNestedInput;
 	thumbnail?: Prisma.ThumbnailUncheckedUpdateOneWithoutMediaNestedInput;
 	export?: Prisma.ExportUncheckedUpdateOneWithoutMediaNestedInput;
@@ -606,6 +628,7 @@ export type MediaUpdateWithoutProxiesInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	original?: Prisma.MediaFileUpdateOneRequiredWithoutOriginalOfNestedInput;
 	thumbnail?: Prisma.ThumbnailUpdateOneWithoutMediaNestedInput;
 	export?: Prisma.ExportUpdateOneWithoutMediaNestedInput;
@@ -617,6 +640,7 @@ export type MediaUncheckedUpdateWithoutProxiesInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
 	originalId?: Prisma.StringFieldUpdateOperationsInput | string;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnail?: Prisma.ThumbnailUncheckedUpdateOneWithoutMediaNestedInput;
 	export?: Prisma.ExportUncheckedUpdateOneWithoutMediaNestedInput;
 };
@@ -626,6 +650,7 @@ export type MediaCreateWithoutThumbnailInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	original: Prisma.MediaFileCreateNestedOneWithoutOriginalOfInput;
 	proxies?: Prisma.MediaFileCreateNestedManyWithoutProxyOfInput;
 	export?: Prisma.ExportCreateNestedOneWithoutMediaInput;
@@ -637,6 +662,7 @@ export type MediaUncheckedCreateWithoutThumbnailInput = {
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
 	originalId: string;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	proxies?: Prisma.MediaFileUncheckedCreateNestedManyWithoutProxyOfInput;
 	export?: Prisma.ExportUncheckedCreateNestedOneWithoutMediaInput;
 };
@@ -674,6 +700,7 @@ export type MediaUpdateWithoutThumbnailInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	original?: Prisma.MediaFileUpdateOneRequiredWithoutOriginalOfNestedInput;
 	proxies?: Prisma.MediaFileUpdateManyWithoutProxyOfNestedInput;
 	export?: Prisma.ExportUpdateOneWithoutMediaNestedInput;
@@ -685,6 +712,7 @@ export type MediaUncheckedUpdateWithoutThumbnailInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
 	originalId?: Prisma.StringFieldUpdateOperationsInput | string;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	proxies?: Prisma.MediaFileUncheckedUpdateManyWithoutProxyOfNestedInput;
 	export?: Prisma.ExportUncheckedUpdateOneWithoutMediaNestedInput;
 };
@@ -694,6 +722,7 @@ export type MediaCreateWithoutExportInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	original: Prisma.MediaFileCreateNestedOneWithoutOriginalOfInput;
 	proxies?: Prisma.MediaFileCreateNestedManyWithoutProxyOfInput;
 	thumbnail?: Prisma.ThumbnailCreateNestedOneWithoutMediaInput;
@@ -705,6 +734,7 @@ export type MediaUncheckedCreateWithoutExportInput = {
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
 	originalId: string;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	proxies?: Prisma.MediaFileUncheckedCreateNestedManyWithoutProxyOfInput;
 	thumbnail?: Prisma.ThumbnailUncheckedCreateNestedOneWithoutMediaInput;
 };
@@ -742,6 +772,7 @@ export type MediaUpdateWithoutExportInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	original?: Prisma.MediaFileUpdateOneRequiredWithoutOriginalOfNestedInput;
 	proxies?: Prisma.MediaFileUpdateManyWithoutProxyOfNestedInput;
 	thumbnail?: Prisma.ThumbnailUpdateOneWithoutMediaNestedInput;
@@ -753,6 +784,7 @@ export type MediaUncheckedUpdateWithoutExportInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
 	originalId?: Prisma.StringFieldUpdateOperationsInput | string;
+	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	proxies?: Prisma.MediaFileUncheckedUpdateManyWithoutProxyOfNestedInput;
 	thumbnail?: Prisma.ThumbnailUncheckedUpdateOneWithoutMediaNestedInput;
 };
@@ -801,6 +833,7 @@ export type MediaSelect<
 		updatedAt?: boolean;
 		status?: boolean;
 		originalId?: boolean;
+		seekSprites?: boolean;
 		original?: boolean | Prisma.MediaFileDefaultArgs<ExtArgs>;
 		proxies?: boolean | Prisma.Media$proxiesArgs<ExtArgs>;
 		thumbnail?: boolean | Prisma.Media$thumbnailArgs<ExtArgs>;
@@ -819,6 +852,7 @@ export type MediaSelectCreateManyAndReturn<
 		updatedAt?: boolean;
 		status?: boolean;
 		originalId?: boolean;
+		seekSprites?: boolean;
 		original?: boolean | Prisma.MediaFileDefaultArgs<ExtArgs>;
 	},
 	ExtArgs["result"]["media"]
@@ -833,6 +867,7 @@ export type MediaSelectUpdateManyAndReturn<
 		updatedAt?: boolean;
 		status?: boolean;
 		originalId?: boolean;
+		seekSprites?: boolean;
 		original?: boolean | Prisma.MediaFileDefaultArgs<ExtArgs>;
 	},
 	ExtArgs["result"]["media"]
@@ -844,12 +879,13 @@ export type MediaSelectScalar = {
 	updatedAt?: boolean;
 	status?: boolean;
 	originalId?: boolean;
+	seekSprites?: boolean;
 };
 
 export type MediaOmit<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = runtime.Types.Extensions.GetOmit<
-	"id" | "createdAt" | "updatedAt" | "status" | "originalId",
+	"id" | "createdAt" | "updatedAt" | "status" | "originalId" | "seekSprites",
 	ExtArgs["result"]["media"]
 >;
 export type MediaInclude<
@@ -889,6 +925,7 @@ export type $MediaPayload<
 			updatedAt: Date;
 			status: $Enums.MediaStatus;
 			originalId: string;
+			seekSprites: runtime.JsonValue | null;
 		},
 		ExtArgs["result"]["media"]
 	>;
@@ -1486,6 +1523,7 @@ export interface MediaFieldRefs {
 	readonly updatedAt: Prisma.FieldRef<"Media", "DateTime">;
 	readonly status: Prisma.FieldRef<"Media", "MediaStatus">;
 	readonly originalId: Prisma.FieldRef<"Media", "String">;
+	readonly seekSprites: Prisma.FieldRef<"Media", "Json">;
 }
 
 // Custom InputTypes

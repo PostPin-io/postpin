@@ -1946,6 +1946,7 @@ export const MediaScalarFieldEnum = {
 	updatedAt: "updatedAt",
 	status: "status",
 	originalId: "originalId",
+	seekSprites: "seekSprites",
 } as const;
 
 export type MediaScalarFieldEnum = (typeof MediaScalarFieldEnum)[keyof typeof MediaScalarFieldEnum];
@@ -1964,6 +1965,8 @@ export const MediaFileScalarFieldEnum = {
 	width: "width",
 	height: "height",
 	frameRate: "frameRate",
+	codecs: "codecs",
+	hls: "hls",
 	audioCodec: "audioCodec",
 	sampleRate: "sampleRate",
 	channels: "channels",
@@ -2168,6 +2171,16 @@ export type ListEnumMediaStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
 >;
 
 /**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Json">;
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "QueryMode">;
+
+/**
  * Reference to a field of type 'BigInt'
  */
 export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "BigInt">;
@@ -2186,16 +2199,6 @@ export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "
  * Reference to a field of type 'Float[]'
  */
 export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Float[]">;
-
-/**
- * Reference to a field of type 'Json'
- */
-export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Json">;
-
-/**
- * Reference to a field of type 'QueryMode'
- */
-export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "QueryMode">;
 
 /**
  * Batch Payload for updateMany & deleteMany & createMany

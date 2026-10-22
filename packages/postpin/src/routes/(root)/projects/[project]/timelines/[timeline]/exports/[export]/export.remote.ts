@@ -1,21 +1,33 @@
 import * as env from "$app/env/private";
 import { error } from "@sveltejs/kit";
-import { query } from "$app/server";
+import { getRequestEvent, query } from "$app/server";
 import { s3Client } from "#lib/server/storage.ts";
 import { prisma } from "#lib/server/database.ts";
 import { getMediaJobs } from "#lib/server/media.ts";
+import { requireMediaAccess } from "#lib/server/org-access.ts";
 import * as v from "valibot";
 import { getPresignedUrl } from "@postpin-io/shared/storage";
+import { seekSprites, type SeekSprites } from "@postpin-io/shared/types/SeekSprites";
 
 export const getExport = query(
 	v.object({ projectId: v.string(), timelineId: v.string(), exportId: v.string() }),
 	async ({ projectId, timelineId, exportId }) => {
+		const { user } = getRequestEvent().locals;
+		if (!user) error(401, "Not signed in");
+
 		const exp = await prisma.export.findFirst({
-			where: { id: exportId, timelineId, timeline: { projectId } },
+			where: {
+				id: exportId,
+				timelineId,
+				timeline: {
+					projectId,
+					project: { organization: { members: { some: { userId: user.id } } } },
+				},
+			},
 			include: {
 				media: {
 					include: {
-						original: true,
+						original: { omit: { hls: true } },
 						proxies: true,
 						thumbnail: true,
 					},
@@ -26,14 +38,17 @@ export const getExport = query(
 
 		const media = exp.media && {
 			...exp.media,
-			jobs:
-				exp.media.status === "PROCESSING" || exp.media.status === "FAILED"
-					? await getMediaJobs(exp.media.id)
-					: [],
+			// the byte ranges are only for the playlist routes; the page polls this every second while processing
+			proxies: exp.media.proxies.map(({ hls, ...proxy }) => ({ ...proxy, hasHls: hls !== null })),
 		};
 		return { ...exp, media };
 	},
 );
+
+export const getProcessingJobs = query(v.object({ mediaId: v.string() }), async ({ mediaId }) => {
+	await requireMediaAccess(mediaId);
+	return await getMediaJobs(mediaId);
+});
 
 export const getUrl = query(
 	v.object({
@@ -42,6 +57,30 @@ export const getUrl = query(
 		proxyId: v.optional(v.string()),
 	}),
 	async (object) => {
+		await requireMediaAccess(object.mediaId);
 		return await getPresignedUrl(s3Client, env, object);
+	},
+);
+
+export const getSeekSprites = query(
+	v.object({
+		mediaId: v.string(),
+	}),
+	async (object) => {
+		await requireMediaAccess(object.mediaId);
+		const media = await prisma.media.findUnique({
+			where: { id: object.mediaId },
+			select: { seekSprites: true },
+		});
+		if (!media?.seekSprites) error(404, "Seek sprites not found");
+		const { sheets } = v.parse(seekSprites, media.seekSprites);
+		return {
+			seekSprites: media.seekSprites as SeekSprites,
+			urls: await Promise.all(
+				Array.from({ length: sheets }, (_, index) =>
+					getPresignedUrl(s3Client, env, { mediaId: object.mediaId, type: "sprite", index }),
+				),
+			),
+		};
 	},
 );

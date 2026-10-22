@@ -12,11 +12,32 @@ import {
 import type { RedisEnv } from "../env/index.ts";
 import type {
 	ProbeMessage,
+	SeekSpritesMessage,
 	SetMediaProcessingDoneMessage,
 	ThumbnailMessage,
 	TranscodeMessage,
 } from "./messages.ts";
 export type * from "./messages.ts";
+
+export const JobWeights: {
+	[N in keyof QueueJobs["media-heavy"] | keyof QueueJobs["media-light"]]: number;
+} = {
+	transcode: 100,
+	thumbnail: 10,
+	probe: 10,
+	setMediaProcessingDone: 1,
+	seekSprites: 50,
+};
+
+export const JobLabels: {
+	[N in keyof QueueJobs["media-heavy"] | keyof QueueJobs["media-light"]]: string;
+} = {
+	transcode: "Transcode",
+	thumbnail: "Generate Thumbnail",
+	probe: "Analyze Media",
+	setMediaProcessingDone: "Done",
+	seekSprites: "Seek Thumbnails",
+};
 
 export const Queues = { heavy: "media-heavy", light: "media-light" } as const;
 
@@ -28,6 +49,7 @@ export interface QueueJobs {
 		thumbnail: ThumbnailMessage;
 		probe: ProbeMessage;
 		setMediaProcessingDone: SetMediaProcessingDoneMessage;
+		seekSprites: SeekSpritesMessage;
 	};
 }
 

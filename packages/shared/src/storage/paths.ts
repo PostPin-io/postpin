@@ -4,12 +4,13 @@ import type { S3Env } from "../env/index.ts";
 
 export interface S3Object {
 	mediaId: string;
-	type: "thumbnail" | "original" | "proxy";
+	type: "thumbnail" | "original" | "proxy" | "sprite";
 	proxyId?: string;
+	index?: number;
 }
 
-export function getS3ObjectPath({ mediaId, type, proxyId }: S3Object) {
-	return `${mediaId}/${type}${proxyId ? `-${proxyId}` : ""}`;
+export function getS3ObjectPath({ mediaId, type, proxyId, index }: S3Object) {
+	return `${mediaId}/${type}${proxyId ? `-${proxyId}` : ""}${index !== undefined ? `-${index}` : ""}`;
 }
 
 export function getPresignedUrl(
@@ -17,6 +18,7 @@ export function getPresignedUrl(
 	env: S3Env,
 	object: S3Object,
 	method: "get" | "put" = "get",
+	expiresIn: number = 60 * 60,
 ) {
 	const key = getS3ObjectPath(object);
 	return getSignedUrl(
@@ -25,7 +27,7 @@ export function getPresignedUrl(
 			? new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: key })
 			: new PutObjectCommand({ Bucket: env.S3_BUCKET, Key: key }),
 		{
-			expiresIn: 60 * 60,
+			expiresIn,
 		},
 	);
 }

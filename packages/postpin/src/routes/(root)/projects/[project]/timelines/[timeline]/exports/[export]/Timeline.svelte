@@ -4,6 +4,8 @@
 	import Timecode from "#lib/components/review/Timecode.svelte";
 	import { formatTimecode, frameAtSeconds, secondsAtFrame } from "./timecode";
 	import type { Prisma } from "@postpin-io/shared/db";
+	import { onMount } from "svelte";
+	import type { ThumbnailElement, ThumbnailImage } from "@videojs/html";
 
 	interface Props {
 		snapshot: TimelineSnapshot;
@@ -13,6 +15,7 @@
 		videoPositionSeconds: number;
 		paused: boolean;
 		playbackRate: number;
+		seekThumbnails: ThumbnailImage[] | undefined;
 	}
 
 	let {
@@ -21,7 +24,12 @@
 		paused = $bindable(true),
 		playbackRate = $bindable(1),
 		markers,
+		seekThumbnails,
 	}: Props = $props();
+
+	let hover = $state<{ time: number; x: number; y: number } | null>(null);
+	let preview = $state<ThumbnailElement>();
+	let thumbnailReady = $state(false);
 
 	const PLAYBACK_RATES = [0.25, 0.5, 1, 1.5, 2, 4];
 
@@ -272,6 +280,28 @@
 		}
 		event.preventDefault();
 	}
+
+	onMount(async () => {
+		// registers <media-thumbnail>; browser only
+		await import("@videojs/html/ui/thumbnail");
+		thumbnailReady = true;
+	});
+
+	// thumbnails has no attribute, and a property set before the element is defined would be lost
+	$effect(() => {
+		if (preview && thumbnailReady) preview.thumbnails = seekThumbnails;
+	});
+	$effect(() => {
+		if (preview && thumbnailReady && hover) preview.time = hover.time;
+	});
+
+	function showPreview(event: PointerEvent & { currentTarget: HTMLElement }) {
+		if (!seekThumbnails || seekThumbnails.length === 0) return;
+		const frame = clampFrame(frameAtClientX(event.clientX));
+		const ruler = event.currentTarget.getBoundingClientRect();
+		// time in the video, which starts at the timeline's first frame
+		hover = { time: (frame - firstFrame) / fps, x: event.clientX, y: ruler.top };
+	}
 </script>
 
 <!-- <pre>{JSON.stringify({ markers }, null, 2)}</pre> -->
@@ -279,15 +309,6 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="flex h-full flex-col outline-none" tabindex="0" onkeydown={onKeyDown}>
 	<div class="flex items-center justify-between gap-2 border-b border-gray-300 p-2">
-		<div class="flex items-center gap-2">
-			<Timecode
-				frame={playHeadPosition}
-				frameRate={snapshot.frameRate}
-				startFrame={snapshot.startFrameIndex}
-			/>
-			<span class="font-mono">|</span>
-			<span class="font-mono"> {playbackRate}×</span>
-		</div>
 		<span class="text-xs text-gray-500">
 			Space play/pause · ←/→ frame · ↑/↓ previous/next cut · +/- speed
 		</span>
@@ -341,9 +362,13 @@
 					class="sticky top-0 z-20 h-12 cursor-ew-resize overflow-hidden border-b border-gray-300 bg-base-100 select-none"
 					tabindex="-1"
 					onpointerdown={startScrub}
-					onpointermove={scrub}
 					onpointerup={endScrub}
 					onpointercancel={endScrub}
+					onpointermove={(event) => {
+						scrub(event);
+						showPreview(event);
+					}}
+					onpointerleave={() => (hover = null)}
 				>
 					{#each ticks as tickFrame (tickFrame)}
 						<div
@@ -397,4 +422,11 @@
 			</div>
 		</div>
 	</div>
+	{#if thumbnailReady && hover}
+		<media-thumbnail
+			bind:this={preview}
+			class="pointer-events-none fixed z-50 rounded-sm shadow-lg"
+			style="left: {hover.x - 80}px; top: {hover.y - 98}px"
+		></media-thumbnail>
+	{/if}
 </div>

@@ -31,6 +31,7 @@ export async function ensureCORS(client: S3, env: S3Env, origin: string): Promis
 				AllowedMethods: ["GET", "PUT", "POST", "DELETE", "HEAD"],
 				AllowedOrigins: [origin],
 				MaxAgeSeconds: 3000,
+				ExposeHeaders: ["Content-Range", "Content-Length", "ETag"],
 			},
 		],
 	};
@@ -49,6 +50,7 @@ export async function ensureCORS(client: S3, env: S3Env, origin: string): Promis
 				rule.AllowedHeaders?.join(",") === expectedRule.AllowedHeaders?.join(",") &&
 				rule.AllowedMethods?.join(",") === expectedRule.AllowedMethods?.join(",") &&
 				rule.AllowedOrigins?.join(",") === expectedRule.AllowedOrigins?.join(",") &&
+				rule.ExposeHeaders?.join(",") === expectedRule.ExposeHeaders?.join(",") &&
 				rule.MaxAgeSeconds === expectedRule.MaxAgeSeconds
 			);
 		})

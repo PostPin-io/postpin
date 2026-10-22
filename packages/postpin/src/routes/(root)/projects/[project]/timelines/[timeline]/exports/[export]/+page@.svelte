@@ -1,15 +1,22 @@
 <script lang="ts">
 	import { onMount, tick } from "svelte";
 	import { page } from "$app/state";
-	import { getExport, getUrl } from "./export.remote";
+	import { getExport, getProcessingJobs, getSeekSprites, getUrl } from "./export.remote";
 
 	import Header from "#lib/components/Header.svelte";
 	import MarkerPanel from "#lib/components/review/MarkerPanel.svelte";
+	import VideoPlayer, { HLS, type VideoSource } from "#lib/components/review/VideoPlayer.svelte";
 	import { Pane, Splitpanes } from "svelte-splitpanes";
 	import Timeline from "./Timeline.svelte";
 	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 	import { frameAtSeconds, secondsAtFrame } from "./timecode";
 	import { getMarkers } from "#lib/components/review/MarkerPanel.remote.ts";
+	import type { ThumbnailImage } from "@videojs/html";
+	import { seekSprites as seekSpritesSchema } from "@postpin-io/shared/types/SeekSprites";
+	import * as v from "valibot";
+	import Hourglass from "@lucide/svelte/icons/hourglass";
+	import { jobStateBadges } from "../../../../../../queuetests/job-status";
+	import CheckCircle from "@lucide/svelte/icons/check-circle";
 
 	const STORAGE_KEY = "postpin:export-panes";
 
@@ -106,6 +113,11 @@
 			exportId: page.params.export ?? "",
 		}),
 	);
+	const processingJobsQuery = $derived(
+		exportQuery?.current?.media?.id
+			? getProcessingJobs({ mediaId: exportQuery.current.media.id })
+			: undefined,
+	);
 
 	const exp = $derived(await exportQuery);
 	const media = $derived(exp?.media);
@@ -118,10 +130,17 @@
 	let originalUrl = $state<string | undefined>(undefined);
 	let thumbnailUrl = $state<string | undefined>(undefined);
 
-	$effect(() => {
-		const currentMedia = media;
+	// The export is refetched every second while processing; depending on these values instead of `media` keeps that
+	// from signing new URLs, and so reloading the video, on every refetch
+	const mediaId = $derived(media?.id);
+	const mediaStatus = $derived(media?.status);
+	const hasThumbnail = $derived(!!media?.thumbnail);
 
-		if (!currentMedia || currentMedia.status === "PENDING") {
+	$effect(() => {
+		const id = mediaId;
+		const withThumbnail = hasThumbnail;
+
+		if (!id || mediaStatus === "PENDING") {
 			originalUrl = undefined;
 			thumbnailUrl = undefined;
 			return;
@@ -132,13 +151,13 @@
 		async function loadUrls() {
 			try {
 				const original = await getUrl({
-					mediaId: currentMedia!.id,
+					mediaId: id!,
 					type: "original",
 				});
 
-				const thumbnail = currentMedia!.thumbnail
+				const thumbnail = withThumbnail
 					? await getUrl({
-							mediaId: currentMedia!.id,
+							mediaId: id!,
 							type: "thumbnail",
 						})
 					: undefined;
@@ -169,10 +188,9 @@
 
 		const interval = setInterval(async () => {
 			try {
-				const current = exportQuery.current;
-
-				if (current?.media?.status === "PROCESSING") {
-					await exportQuery.refresh();
+				const current = processingJobsQuery?.current;
+				if (current?.some((job) => job.state === "active" || job.state === "waiting")) {
+					await processingJobsQuery?.refresh();
 				}
 			} catch (error) {
 				console.error("Failed to refresh export:", error);
@@ -225,6 +243,60 @@
 	const seekToFrame = (frame: number) => {
 		if (snapshot) videoPosition = secondsAtFrame(frame, snapshot);
 	};
+
+	// HLS as soon as one rendition is ready, the original until then
+	const hlsReady = $derived(
+		media?.proxies.some((proxy) => proxy.status === "COMPLETED" && proxy.hasHls) ?? false,
+	);
+	const videoSource = $derived<VideoSource | undefined>(
+		media && hlsReady
+			? { src: `/media/${media.id}/master.m3u8`, type: HLS }
+			: originalUrl
+				? { src: originalUrl, type: "video/mp4" }
+				: undefined,
+	);
+
+	const QUALITY_KEY = "postpin:video-quality";
+	let videoQuality = $state<number | "auto">(loadQuality());
+
+	function loadQuality(): number | "auto" {
+		try {
+			const saved = Number(localStorage.getItem(QUALITY_KEY));
+			return saved > 0 ? saved : "auto";
+		} catch {
+			return "auto";
+		}
+	}
+
+	$effect(() => {
+		const quality = videoQuality;
+		try {
+			localStorage.setItem(QUALITY_KEY, String(quality));
+		} catch {
+			// private mode or blocked storage: the choice just isn't remembered
+		}
+	});
+
+	const spriteInfo = $derived(mediaId ? await getSeekSprites({ mediaId }).catch(() => null) : null);
+	const seekThumbnails = $derived.by((): ThumbnailImage[] => {
+		if (!spriteInfo) return [];
+		const { seekSprites, urls: spriteUrls } = spriteInfo;
+		if (!seekSprites || spriteUrls.length === 0) return [];
+		const perSheet = spriteInfo.seekSprites.columns * spriteInfo.seekSprites.rows;
+		return Array.from({ length: spriteInfo.seekSprites.count }, (_, i) => ({
+			url: spriteUrls[Math.floor(i / perSheet)]!,
+			startTime: i * spriteInfo.seekSprites.interval,
+			endTime: (i + 1) * spriteInfo.seekSprites.interval,
+			width: spriteInfo.seekSprites.tileWidth,
+			height: spriteInfo.seekSprites.tileHeight,
+			coords: {
+				x: (i % spriteInfo.seekSprites.columns) * spriteInfo.seekSprites.tileWidth,
+				y:
+					Math.floor((i % perSheet) / spriteInfo.seekSprites.columns) *
+					spriteInfo.seekSprites.tileHeight,
+			},
+		}));
+	});
 </script>
 
 {#if isLoading}
@@ -252,7 +324,60 @@
 	</div>
 {:else}
 	<div class="flex h-full min-h-0 flex-col overflow-hidden">
-		<Header />
+		<Header>
+			{@const totalProgress =
+				((processingJobsQuery?.current?.reduce(
+					(sum, job) =>
+						sum +
+						(job.state === "active" || job.state === "waiting"
+							? (job.progress ?? 0.5)
+							: job.state === "completed"
+								? 1
+								: 0) *
+							job.weight,
+					0,
+				) ?? 0) /
+					(processingJobsQuery?.current?.reduce((sum, job) => sum + job.weight, 0) ?? 1)) *
+				100}
+			{#if media}
+				<details class="dropdown">
+					<summary class="btn m-1">
+						{#if totalProgress < 100}
+							<div
+								class="radial-progress"
+								style="--value:{totalProgress}; --size:1.5rem; --thickness: 3px;"
+							>
+								<!-- <Hourglass size={12} /> -->
+							</div>
+						{:else}
+							<CheckCircle size={16} />
+						{/if}
+					</summary>
+					<ul class="list dropdown-content card z-1 w-60 rounded-box bg-base-100 p-2 shadow-sm">
+						{#each processingJobsQuery?.current as job (job.id)}
+							{@const Icon = jobStateBadges[job.state ?? "unknown"].icon}
+							<!-- <div class="flex items-center gap-2" title={job.failedReason}>
+									<span class="w-32">{job.label}</span>
+
+									<span class="w-20">{job.state}</span>
+									{#if job.state === "active" || job.state === "waiting"}
+										<progress class="progress w-24" value={job.progress * 100} max="100"></progress>
+									{/if}
+								</div> -->
+
+							<li class="list-row">
+								<div class="{jobStateBadges[job.state ?? 'unknown'].color} w-4">
+									<Icon />
+								</div>
+								<div>
+									<span class="ml-2 font-semibold text-nowrap">{job.label}</span>
+								</div>
+							</li>
+						{/each}
+					</ul>
+				</details>
+			{/if}
+		</Header>
 
 		<Splitpanes
 			theme="daisy-theme"
@@ -272,35 +397,18 @@
 							{#if !media}
 								<p>Nothing uploaded yet.</p>
 							{:else}
-								<!-- Processing jobs -->
-								<div class="shrink-0">
-									{#each media.jobs as job (job.id)}
-										<div class="flex items-center gap-2" title={job.failedReason}>
-											<span class="w-32">{job.label}</span>
-
-											<span class="w-20">{job.state}</span>
-
-											{#if job.state === "active" || job.state === "waiting"}
-												<progress class="progress w-24" value={job.progress * 100} max="100"
-												></progress>
-											{/if}
-										</div>
-									{/each}
-								</div>
-
 								<!-- Video -->
-								{#if media.status !== "PENDING" && originalUrl}
-									<div class="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
-										<!-- svelte-ignore a11y_media_has_caption -->
-										<video
+								{#if media.status !== "PENDING" && videoSource && snapshot}
+									<div class="min-h-0 flex-1 overflow-hidden">
+										<VideoPlayer
+											source={videoSource}
+											poster={thumbnailUrl}
+											timing={snapshot}
 											bind:currentTime={videoPosition}
 											bind:paused={videoPaused}
 											bind:playbackRate={videoPlaybackRate}
-											src={originalUrl}
-											poster={thumbnailUrl}
-											controls
-											class="max-h-full max-w-full"
-										></video>
+											bind:quality={videoQuality}
+										/>
 									</div>
 								{/if}
 							{/if}
@@ -314,6 +422,7 @@
 								<Timeline
 									snapshot={exportQuery.current!.timelineSnapshot as TimelineSnapshot}
 									markers={await getMarkers(page.params.export ?? "")}
+									{seekThumbnails}
 									bind:videoPositionSeconds={videoPosition}
 									bind:paused={videoPaused}
 									bind:playbackRate={videoPlaybackRate}

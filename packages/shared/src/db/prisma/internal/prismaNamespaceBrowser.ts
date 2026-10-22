@@ -208,6 +208,7 @@ export const MediaScalarFieldEnum = {
 	updatedAt: "updatedAt",
 	status: "status",
 	originalId: "originalId",
+	seekSprites: "seekSprites",
 } as const;
 
 export type MediaScalarFieldEnum = (typeof MediaScalarFieldEnum)[keyof typeof MediaScalarFieldEnum];
@@ -226,6 +227,8 @@ export const MediaFileScalarFieldEnum = {
 	width: "width",
 	height: "height",
 	frameRate: "frameRate",
+	codecs: "codecs",
+	hls: "hls",
 	audioCodec: "audioCodec",
 	sampleRate: "sampleRate",
 	channels: "channels",

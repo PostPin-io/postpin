@@ -1,6 +1,6 @@
 import type { Queues } from "@postpin-io/shared/queue";
 import type { TypedJob } from "../lib/worker.ts";
-import { ffmpeg } from "../lib/ffmpeg.ts";
+import { encodeHls } from "../lib/hls.ts";
 import { getOriginalUrl, s3Client } from "../lib/storage.ts";
 import { env } from "../lib/env.ts";
 import { Upload } from "@aws-sdk/lib-storage";
@@ -39,27 +39,25 @@ export async function transcode(job: TypedJob<typeof Queues.heavy, "transcode">)
 	});
 	// ffmpeg reports progress several times a second; only forward it to Redis once a second
 	let lastProgressUpdate = 0;
-	const transcodedStream = ffmpeg(
-		[
-			"-i",
-			presignedSourceUrl,
-			"-c:v",
-			job.data.video.codec,
-			"-b:v",
-			job.data.video.bitRate.toString(),
-			"-s",
-			`${job.data.video.width}x${job.data.video.height}`,
-			"-c:a",
-			job.data.audio.codec,
-			"-b:a",
-			job.data.audio.bitRate.toString(),
-			"-f",
-			"mp4",
-			"-movflags",
-			"frag_keyframe+empty_moov",
-			"-nostdin",
-			"pipe:1",
-		],
+	const result = await encodeHls(
+		presignedSourceUrl,
+		{
+			width: job.data.video.width,
+			height: job.data.video.height,
+			videoBitRate: job.data.video.bitRate,
+			audioBitRate: job.data.audio.bitRate,
+		},
+		// lib-storage aborts the multipart upload itself when the body stream errors
+		(body) =>
+			new Upload({
+				client: s3Client,
+				params: {
+					Bucket: env.S3_BUCKET,
+					Key: targetPath,
+					Body: body,
+					ContentType: "video/mp4",
+				},
+			}).done(),
 		(progress) => {
 			const now = Date.now();
 			if (now - lastProgressUpdate < 1000) return;
@@ -67,25 +65,20 @@ export async function transcode(job: TypedJob<typeof Queues.heavy, "transcode">)
 			job.updateProgress(progress).catch(console.error);
 		},
 	);
-	await Promise.all([
-		new Upload({
-			client: s3Client,
-			params: {
-				Bucket: env.S3_BUCKET,
-				Key: targetPath,
-				Body: transcodedStream.stdout,
-				ContentType: "video/mp4",
-			},
-		}).done(),
-		transcodedStream.done,
-	]);
 	await prisma.mediaFile.update({
 		where: {
 			id: proxy.id,
 		},
 		data: {
 			status: "COMPLETED",
+			hls: result.hls,
+			codecs: result.codecs,
+			size: BigInt(result.bytes),
+			duration: result.hls.segments.reduce((sum, segment) => sum + segment.duration, 0),
+			audioCodec: result.hasAudio ? job.data.audio.codec : null,
 		},
 	});
 	await job.updateProgress(1);
+	// parent jobs (seek sprites) read the proxy they depend on from this
+	return { proxyId: proxy.id };
 }

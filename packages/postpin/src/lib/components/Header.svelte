@@ -3,6 +3,7 @@
 	import { authClient } from "#lib/auth-client.ts";
 	import { goto, refreshAll } from "$app/navigation";
 	import { hasRole, MANAGER_ROLES } from "#lib/roles.ts";
+	import type { Snippet } from "svelte";
 
 	const session = authClient.useSession();
 	const organizations = authClient.useListOrganizations();
@@ -31,6 +32,12 @@
 		await authClient.signOut();
 		await goto(resolve("/auth/login"));
 	}
+
+	interface Props {
+		children?: Snippet;
+	}
+
+	let { children }: Props = $props();
 </script>
 
 <!-- 
@@ -104,6 +111,9 @@
 				</li>
 			</ul>
 		</div>
+		{#if children}
+			<div class="navbar-center hidden lg:flex">{@render children()}</div>
+		{/if}
 		<div class="navbar-end">
 			<input type="text" placeholder="Search" class="input w-64 lg:w-auto" />
 			<div class="dropdown dropdown-end ml-2">

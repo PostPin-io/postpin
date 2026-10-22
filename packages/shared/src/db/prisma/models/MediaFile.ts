@@ -61,6 +61,7 @@ export type MediaFileMinAggregateOutputType = {
 	width: number | null;
 	height: number | null;
 	frameRate: number | null;
+	codecs: string | null;
 	audioCodec: string | null;
 	sampleRate: number | null;
 	channels: number | null;
@@ -80,6 +81,7 @@ export type MediaFileMaxAggregateOutputType = {
 	width: number | null;
 	height: number | null;
 	frameRate: number | null;
+	codecs: string | null;
 	audioCodec: string | null;
 	sampleRate: number | null;
 	channels: number | null;
@@ -99,6 +101,8 @@ export type MediaFileCountAggregateOutputType = {
 	width: number;
 	height: number;
 	frameRate: number;
+	codecs: number;
+	hls: number;
 	audioCodec: number;
 	sampleRate: number;
 	channels: number;
@@ -141,6 +145,7 @@ export type MediaFileMinAggregateInputType = {
 	width?: true;
 	height?: true;
 	frameRate?: true;
+	codecs?: true;
 	audioCodec?: true;
 	sampleRate?: true;
 	channels?: true;
@@ -160,6 +165,7 @@ export type MediaFileMaxAggregateInputType = {
 	width?: true;
 	height?: true;
 	frameRate?: true;
+	codecs?: true;
 	audioCodec?: true;
 	sampleRate?: true;
 	channels?: true;
@@ -179,6 +185,8 @@ export type MediaFileCountAggregateInputType = {
 	width?: true;
 	height?: true;
 	frameRate?: true;
+	codecs?: true;
+	hls?: true;
 	audioCodec?: true;
 	sampleRate?: true;
 	channels?: true;
@@ -287,6 +295,8 @@ export type MediaFileGroupByOutputType = {
 	width: number | null;
 	height: number | null;
 	frameRate: number | null;
+	codecs: string | null;
+	hls: runtime.JsonValue | null;
 	audioCodec: string | null;
 	sampleRate: number | null;
 	channels: number | null;
@@ -326,6 +336,8 @@ export type MediaFileWhereInput = {
 	width?: Prisma.IntNullableFilter<"MediaFile"> | number | null;
 	height?: Prisma.IntNullableFilter<"MediaFile"> | number | null;
 	frameRate?: Prisma.FloatNullableFilter<"MediaFile"> | number | null;
+	codecs?: Prisma.StringNullableFilter<"MediaFile"> | string | null;
+	hls?: Prisma.JsonNullableFilter<"MediaFile">;
 	audioCodec?: Prisma.StringNullableFilter<"MediaFile"> | string | null;
 	sampleRate?: Prisma.IntNullableFilter<"MediaFile"> | number | null;
 	channels?: Prisma.IntNullableFilter<"MediaFile"> | number | null;
@@ -347,6 +359,8 @@ export type MediaFileOrderByWithRelationInput = {
 	width?: Prisma.SortOrderInput | Prisma.SortOrder;
 	height?: Prisma.SortOrderInput | Prisma.SortOrder;
 	frameRate?: Prisma.SortOrderInput | Prisma.SortOrder;
+	codecs?: Prisma.SortOrderInput | Prisma.SortOrder;
+	hls?: Prisma.SortOrderInput | Prisma.SortOrder;
 	audioCodec?: Prisma.SortOrderInput | Prisma.SortOrder;
 	sampleRate?: Prisma.SortOrderInput | Prisma.SortOrder;
 	channels?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -373,6 +387,8 @@ export type MediaFileWhereUniqueInput = Prisma.AtLeast<
 		width?: Prisma.IntNullableFilter<"MediaFile"> | number | null;
 		height?: Prisma.IntNullableFilter<"MediaFile"> | number | null;
 		frameRate?: Prisma.FloatNullableFilter<"MediaFile"> | number | null;
+		codecs?: Prisma.StringNullableFilter<"MediaFile"> | string | null;
+		hls?: Prisma.JsonNullableFilter<"MediaFile">;
 		audioCodec?: Prisma.StringNullableFilter<"MediaFile"> | string | null;
 		sampleRate?: Prisma.IntNullableFilter<"MediaFile"> | number | null;
 		channels?: Prisma.IntNullableFilter<"MediaFile"> | number | null;
@@ -399,6 +415,8 @@ export type MediaFileOrderByWithAggregationInput = {
 	width?: Prisma.SortOrderInput | Prisma.SortOrder;
 	height?: Prisma.SortOrderInput | Prisma.SortOrder;
 	frameRate?: Prisma.SortOrderInput | Prisma.SortOrder;
+	codecs?: Prisma.SortOrderInput | Prisma.SortOrder;
+	hls?: Prisma.SortOrderInput | Prisma.SortOrder;
 	audioCodec?: Prisma.SortOrderInput | Prisma.SortOrder;
 	sampleRate?: Prisma.SortOrderInput | Prisma.SortOrder;
 	channels?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -430,6 +448,8 @@ export type MediaFileScalarWhereWithAggregatesInput = {
 	width?: Prisma.IntNullableWithAggregatesFilter<"MediaFile"> | number | null;
 	height?: Prisma.IntNullableWithAggregatesFilter<"MediaFile"> | number | null;
 	frameRate?: Prisma.FloatNullableWithAggregatesFilter<"MediaFile"> | number | null;
+	codecs?: Prisma.StringNullableWithAggregatesFilter<"MediaFile"> | string | null;
+	hls?: Prisma.JsonNullableWithAggregatesFilter<"MediaFile">;
 	audioCodec?: Prisma.StringNullableWithAggregatesFilter<"MediaFile"> | string | null;
 	sampleRate?: Prisma.IntNullableWithAggregatesFilter<"MediaFile"> | number | null;
 	channels?: Prisma.IntNullableWithAggregatesFilter<"MediaFile"> | number | null;
@@ -448,6 +468,8 @@ export type MediaFileCreateInput = {
 	width?: number | null;
 	height?: number | null;
 	frameRate?: number | null;
+	codecs?: string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: string | null;
 	sampleRate?: number | null;
 	channels?: number | null;
@@ -469,6 +491,8 @@ export type MediaFileUncheckedCreateInput = {
 	width?: number | null;
 	height?: number | null;
 	frameRate?: number | null;
+	codecs?: string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: string | null;
 	sampleRate?: number | null;
 	channels?: number | null;
@@ -488,6 +512,8 @@ export type MediaFileUpdateInput = {
 	width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	frameRate?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+	codecs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sampleRate?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	channels?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
@@ -509,6 +535,8 @@ export type MediaFileUncheckedUpdateInput = {
 	width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	frameRate?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+	codecs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sampleRate?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	channels?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
@@ -529,6 +557,8 @@ export type MediaFileCreateManyInput = {
 	width?: number | null;
 	height?: number | null;
 	frameRate?: number | null;
+	codecs?: string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: string | null;
 	sampleRate?: number | null;
 	channels?: number | null;
@@ -547,6 +577,8 @@ export type MediaFileUpdateManyMutationInput = {
 	width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	frameRate?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+	codecs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sampleRate?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	channels?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
@@ -566,6 +598,8 @@ export type MediaFileUncheckedUpdateManyInput = {
 	width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	frameRate?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+	codecs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sampleRate?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	channels?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
@@ -607,6 +641,8 @@ export type MediaFileCountOrderByAggregateInput = {
 	width?: Prisma.SortOrder;
 	height?: Prisma.SortOrder;
 	frameRate?: Prisma.SortOrder;
+	codecs?: Prisma.SortOrder;
+	hls?: Prisma.SortOrder;
 	audioCodec?: Prisma.SortOrder;
 	sampleRate?: Prisma.SortOrder;
 	channels?: Prisma.SortOrder;
@@ -637,6 +673,7 @@ export type MediaFileMaxOrderByAggregateInput = {
 	width?: Prisma.SortOrder;
 	height?: Prisma.SortOrder;
 	frameRate?: Prisma.SortOrder;
+	codecs?: Prisma.SortOrder;
 	audioCodec?: Prisma.SortOrder;
 	sampleRate?: Prisma.SortOrder;
 	channels?: Prisma.SortOrder;
@@ -656,6 +693,7 @@ export type MediaFileMinOrderByAggregateInput = {
 	width?: Prisma.SortOrder;
 	height?: Prisma.SortOrder;
 	frameRate?: Prisma.SortOrder;
+	codecs?: Prisma.SortOrder;
 	audioCodec?: Prisma.SortOrder;
 	sampleRate?: Prisma.SortOrder;
 	channels?: Prisma.SortOrder;
@@ -813,6 +851,8 @@ export type MediaFileCreateWithoutOriginalOfInput = {
 	width?: number | null;
 	height?: number | null;
 	frameRate?: number | null;
+	codecs?: string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: string | null;
 	sampleRate?: number | null;
 	channels?: number | null;
@@ -833,6 +873,8 @@ export type MediaFileUncheckedCreateWithoutOriginalOfInput = {
 	width?: number | null;
 	height?: number | null;
 	frameRate?: number | null;
+	codecs?: string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: string | null;
 	sampleRate?: number | null;
 	channels?: number | null;
@@ -859,6 +901,8 @@ export type MediaFileCreateWithoutProxyOfInput = {
 	width?: number | null;
 	height?: number | null;
 	frameRate?: number | null;
+	codecs?: string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: string | null;
 	sampleRate?: number | null;
 	channels?: number | null;
@@ -878,6 +922,8 @@ export type MediaFileUncheckedCreateWithoutProxyOfInput = {
 	width?: number | null;
 	height?: number | null;
 	frameRate?: number | null;
+	codecs?: string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: string | null;
 	sampleRate?: number | null;
 	channels?: number | null;
@@ -930,6 +976,8 @@ export type MediaFileUpdateWithoutOriginalOfInput = {
 	width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	frameRate?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+	codecs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sampleRate?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	channels?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
@@ -950,6 +998,8 @@ export type MediaFileUncheckedUpdateWithoutOriginalOfInput = {
 	width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	frameRate?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+	codecs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sampleRate?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	channels?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
@@ -1000,6 +1050,8 @@ export type MediaFileScalarWhereInput = {
 	width?: Prisma.IntNullableFilter<"MediaFile"> | number | null;
 	height?: Prisma.IntNullableFilter<"MediaFile"> | number | null;
 	frameRate?: Prisma.FloatNullableFilter<"MediaFile"> | number | null;
+	codecs?: Prisma.StringNullableFilter<"MediaFile"> | string | null;
+	hls?: Prisma.JsonNullableFilter<"MediaFile">;
 	audioCodec?: Prisma.StringNullableFilter<"MediaFile"> | string | null;
 	sampleRate?: Prisma.IntNullableFilter<"MediaFile"> | number | null;
 	channels?: Prisma.IntNullableFilter<"MediaFile"> | number | null;
@@ -1018,6 +1070,8 @@ export type MediaFileCreateManyProxyOfInput = {
 	width?: number | null;
 	height?: number | null;
 	frameRate?: number | null;
+	codecs?: string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: string | null;
 	sampleRate?: number | null;
 	channels?: number | null;
@@ -1036,6 +1090,8 @@ export type MediaFileUpdateWithoutProxyOfInput = {
 	width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	frameRate?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+	codecs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sampleRate?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	channels?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
@@ -1055,6 +1111,8 @@ export type MediaFileUncheckedUpdateWithoutProxyOfInput = {
 	width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	frameRate?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+	codecs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sampleRate?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	channels?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
@@ -1074,6 +1132,8 @@ export type MediaFileUncheckedUpdateManyWithoutProxyOfInput = {
 	width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	frameRate?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+	codecs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	hls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	audioCodec?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sampleRate?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	channels?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
@@ -1096,6 +1156,8 @@ export type MediaFileSelect<
 		width?: boolean;
 		height?: boolean;
 		frameRate?: boolean;
+		codecs?: boolean;
+		hls?: boolean;
 		audioCodec?: boolean;
 		sampleRate?: boolean;
 		channels?: boolean;
@@ -1122,6 +1184,8 @@ export type MediaFileSelectCreateManyAndReturn<
 		width?: boolean;
 		height?: boolean;
 		frameRate?: boolean;
+		codecs?: boolean;
+		hls?: boolean;
 		audioCodec?: boolean;
 		sampleRate?: boolean;
 		channels?: boolean;
@@ -1147,6 +1211,8 @@ export type MediaFileSelectUpdateManyAndReturn<
 		width?: boolean;
 		height?: boolean;
 		frameRate?: boolean;
+		codecs?: boolean;
+		hls?: boolean;
 		audioCodec?: boolean;
 		sampleRate?: boolean;
 		channels?: boolean;
@@ -1169,6 +1235,8 @@ export type MediaFileSelectScalar = {
 	width?: boolean;
 	height?: boolean;
 	frameRate?: boolean;
+	codecs?: boolean;
+	hls?: boolean;
 	audioCodec?: boolean;
 	sampleRate?: boolean;
 	channels?: boolean;
@@ -1190,6 +1258,8 @@ export type MediaFileOmit<
 	| "width"
 	| "height"
 	| "frameRate"
+	| "codecs"
+	| "hls"
 	| "audioCodec"
 	| "sampleRate"
 	| "channels",
@@ -1238,6 +1308,11 @@ export type $MediaFilePayload<
 			width: number | null;
 			height: number | null;
 			frameRate: number | null;
+			/**
+			 * RFC 6381, e.g. "avc1.64002a,mp4a.40.2"
+			 */
+			codecs: string | null;
+			hls: runtime.JsonValue | null;
 			audioCodec: string | null;
 			sampleRate: number | null;
 			channels: number | null;
@@ -1849,6 +1924,8 @@ export interface MediaFileFieldRefs {
 	readonly width: Prisma.FieldRef<"MediaFile", "Int">;
 	readonly height: Prisma.FieldRef<"MediaFile", "Int">;
 	readonly frameRate: Prisma.FieldRef<"MediaFile", "Float">;
+	readonly codecs: Prisma.FieldRef<"MediaFile", "String">;
+	readonly hls: Prisma.FieldRef<"MediaFile", "Json">;
 	readonly audioCodec: Prisma.FieldRef<"MediaFile", "String">;
 	readonly sampleRate: Prisma.FieldRef<"MediaFile", "Int">;
 	readonly channels: Prisma.FieldRef<"MediaFile", "Int">;

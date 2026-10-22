@@ -68,3 +68,8 @@
 .splitpanes.daisy-theme.splitpanes--horizontal > .splitpanes__splitter::after {
 	margin-top: 1px;
 }
+
+select {
+	padding-top: 0;
+	padding-bottom: 0;
+}
