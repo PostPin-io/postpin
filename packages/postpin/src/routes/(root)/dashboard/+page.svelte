@@ -288,11 +288,7 @@
 								<td class="w-44">
 									<div class="aspect-video w-36 overflow-hidden rounded-md bg-base-300">
 										{#if latest?.media}
-											<a
-												href={projectHref}
-												class="group relative block size-full"
-												aria-label="Open {project.name}"
-											>
+											<a href={projectHref} class="group relative block size-full">
 												<img
 													src={await getUrl({ mediaId: latest.media.id, type: "thumbnail" })}
 													alt="Thumbnail of {project.name}"
@@ -301,7 +297,10 @@
 												/>
 											</a>
 										{:else}
-											<div class="flex size-full items-center justify-center text-base-content/30">
+											<div
+												onclick={() => (window.location.href = projectHref)}
+												class="flex size-full items-center justify-center text-base-content/30"
+											>
 												<Apeture />
 											</div>
 										{/if}

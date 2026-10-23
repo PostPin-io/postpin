@@ -18,7 +18,7 @@
 	import ArrowLeft from "@lucide/svelte/icons/arrow-left";
 	import ArrowRight from "@lucide/svelte/icons/arrow-right";
 	import Timecode from "./Timecode.svelte";
-	import { seekToMarker } from "./VideoPlayer";
+	import { nextPlaybackRate, seekToMarker } from "./VideoPlayer";
 	import {
 		frameAtSeconds,
 		secondsAtFrame,
@@ -215,6 +215,12 @@
 		else if (!paused && el.paused) el.play().catch(() => (paused = true));
 	});
 
+	// Pausing on purpose resets the speed; temporary pauses such as scrubbing keep it
+	function togglePlayback() {
+		paused = !paused;
+		if (paused) playbackRate = 1;
+	}
+
 	$effect(() => {
 		if (media && media.playbackRate !== playbackRate) media.playbackRate = playbackRate;
 	});
@@ -252,7 +258,13 @@
 				editable={true}
 			/>
 			<span class="font-mono">|</span>
-			<span class="font-mono"> {playbackRate}×</span>
+			<button
+				class="font-mono"
+				title="Change playback speed"
+				onclick={() => (playbackRate = nextPlaybackRate(playbackRate))}
+			>
+				{playbackRate}×
+			</button>
 		</div>
 
 		<div class="flex items-center justify-center">
@@ -267,7 +279,7 @@
 			<button
 				class="btn btn-square btn-ghost btn-xs"
 				aria-label={paused ? "Play" : "Pause"}
-				onclick={() => (paused = !paused)}
+				onclick={togglePlayback}
 			>
 				{#if paused}
 					<Play size={16} />

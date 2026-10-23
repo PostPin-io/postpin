@@ -4,7 +4,7 @@
 	import type { Prisma } from "@postpin-io/shared/db";
 	import { onMount } from "svelte";
 	import type { ThumbnailElement, ThumbnailImage } from "@videojs/html";
-	import { seekToMarker } from "#lib/components/review/VideoPlayer.ts";
+	import { PLAYBACK_RATES, seekToMarker } from "#lib/components/review/VideoPlayer.ts";
 	import {
 		formatTimecode,
 		frameAtSeconds,
@@ -34,8 +34,6 @@
 	let hover = $state<{ time: number; x: number; y: number } | null>(null);
 	let preview = $state<ThumbnailElement>();
 	let thumbnailReady = $state(false);
-
-	const PLAYBACK_RATES = [0.25, 0.5, 1, 1.5, 2, 4];
 
 	// Most zoomed in: this many pixels per frame
 	const MAX_PIXELS_PER_FRAME = 20;
@@ -253,6 +251,16 @@
 		autoScrollId = requestAnimationFrame(autoScroll);
 	}
 
+	// Window-wide so the shortcut keeps working after clicking elsewhere, e.g. the speed button
+	function onSpeedKeyDown(event: KeyboardEvent) {
+		if (event.key !== "+" && event.key !== "-") return;
+		if (event.ctrlKey || event.metaKey || event.altKey) return;
+		if ((event.target as HTMLElement | null)?.closest("input, textarea, select, [contenteditable]"))
+			return;
+		event.preventDefault();
+		changePlaybackRate(event.key === "+" ? 1 : -1);
+	}
+
 	function onKeyDown(event: KeyboardEvent) {
 		if (event.target instanceof HTMLInputElement) return;
 		const step = event.shiftKey ? Math.round(fps) : 1;
@@ -271,12 +279,6 @@
 			case "ArrowDown":
 				seekToCut(1);
 				break;
-			case "+":
-				changePlaybackRate(1);
-				break;
-			case "-":
-				changePlaybackRate(-1);
-				break;
 			case "Home":
 				seek(firstFrame);
 				break;
@@ -285,6 +287,7 @@
 				break;
 			case " ":
 				paused = !paused;
+				if (paused) playbackRate = 1;
 				break;
 			default:
 				return;
@@ -441,3 +444,5 @@
 		></media-thumbnail>
 	{/if}
 </div>
+
+<svelte:window onkeydown={onSpeedKeyDown} />

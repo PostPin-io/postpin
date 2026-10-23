@@ -22,6 +22,7 @@
 
 	let inputField_TC: HTMLInputElement | null = $state(null);
 	let inputField_Frame: HTMLInputElement | null = $state(null);
+	let isTC = $state(true);
 
 	$effect(() => {
 		if (editingField == "editing_TC") {
@@ -73,31 +74,41 @@
 </script>
 
 <div class="flex gap-1 font-mono">
-	<span>TC</span>
-	<input
-		type="text"
-		bind:this={inputField_TC}
-		readonly={editingField !== "editing_TC"}
-		value={formatTimecode(frame, frameRate)}
-		class="box-content w-[11ch] border-0 bg-transparent px-1 py-0 outline-none [font:inherit]
+	{#if isTC}
+		<span>
+			<button title="click to switch to Frame" class="cursor-pointer" onclick={() => (isTC = false)}
+				>TC</button
+			></span
+		>
+		<input
+			type="text"
+			bind:this={inputField_TC}
+			readonly={editingField !== "editing_TC"}
+			value={formatTimecode(frame, frameRate)}
+			class="box-content w-[11ch] border-0 bg-transparent px-1 py-0 outline-none [font:inherit]
                        {editingField == 'editing_TC' || error
-			? 'rounded-sm ring-1'
-			: 'cursor-pointer'} {error ? 'ring-red-500' : 'ring-primary'}"
-		onclick={() => {
-			editingField = "editing_TC";
-		}}
-		onblur={() => {
-			setTimecodeValue(inputField_TC?.value ?? "");
-		}}
-		onkeydown={(e) => {
-			error = false;
-			if (e.key === "Enter" || e.key === "Escape") {
+				? 'rounded-sm ring-1'
+				: 'cursor-pointer'} {error ? 'ring-red-500' : 'ring-primary'}"
+			onclick={() => {
+				editingField = "editing_TC";
+			}}
+			onblur={() => {
 				setTimecodeValue(inputField_TC?.value ?? "");
-			}
-		}}
-	/>
-	<span
-		>| <input
+			}}
+			onkeydown={(e) => {
+				error = false;
+				if (e.key === "Enter" || e.key === "Escape") {
+					setTimecodeValue(inputField_TC?.value ?? "");
+				}
+			}}
+		/>
+	{:else}
+		<span>
+			<button title="click to switch to TC" class="cursor-pointer" onclick={() => (isTC = true)}
+				>F
+			</button></span
+		>
+		<input
 			type="text"
 			bind:this={inputField_Frame}
 			readonly={editingField !== "editingFrame"}
@@ -123,6 +134,6 @@
 					setFrameValue(inputField_Frame?.value ?? "");
 				}
 			}}
-		/></span
-	>
+		/>
+	{/if}
 </div>
