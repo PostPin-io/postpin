@@ -209,6 +209,8 @@ export const MediaScalarFieldEnum = {
 	status: "status",
 	originalId: "originalId",
 	seekSprites: "seekSprites",
+	shotThumbnails: "shotThumbnails",
+	movieBarcode: "movieBarcode",
 } as const;
 
 export type MediaScalarFieldEnum = (typeof MediaScalarFieldEnum)[keyof typeof MediaScalarFieldEnum];

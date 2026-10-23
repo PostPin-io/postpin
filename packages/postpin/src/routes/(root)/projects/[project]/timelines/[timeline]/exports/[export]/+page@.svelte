@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { onMount, tick } from "svelte";
 	import { page } from "$app/state";
-	import { getExport, getProcessingJobs, getSeekSprites, getUrl } from "./export.remote";
+	import {
+		getExport,
+		getMovieBarcode,
+		getProcessingJobs,
+		getSeekSprites,
+		getUrl,
+	} from "./export.remote";
 
 	import Header from "#lib/components/Header.svelte";
 	import MarkerPanel from "#lib/components/review/MarkerPanel.svelte";
@@ -10,7 +16,10 @@
 	import { Pane, Splitpanes } from "svelte-splitpanes";
 	import Timeline from "./Timeline.svelte";
 	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
-	import { frameAtSeconds, secondsAtFrame } from "./timecode";
+	import {
+		frameAtSeconds,
+		secondsAtFrame,
+	} from "../../../../../../../../../../shared/src/logic/timecode";
 	import { getMarkers } from "#lib/components/review/MarkerPanel.remote.ts";
 	import type { ThumbnailImage } from "@videojs/html";
 	import { seekSprites as seekSpritesSchema } from "@postpin-io/shared/types/SeekSprites";
@@ -18,6 +27,8 @@
 	import Hourglass from "@lucide/svelte/icons/hourglass";
 	import { jobStateBadges } from "../../../../../../queuetests/job-status";
 	import CheckCircle from "@lucide/svelte/icons/check-circle";
+	import ShotGrid from "./ShotGrid.svelte";
+	import MovieBarcode from "./MovieBarcode.svelte";
 
 	const STORAGE_KEY = "postpin:export-panes";
 
@@ -299,6 +310,8 @@
 			},
 		}));
 	});
+
+	let viewMode: "shot-grid" | "timeline" = $state("timeline");
 </script>
 
 {#if isLoading}
@@ -358,18 +371,16 @@
 					<ul class="list dropdown-content card z-1 w-60 rounded-box bg-base-100 p-2 shadow-sm">
 						{#each processingJobsQuery?.current as job (job.id)}
 							{@const Icon = jobStateBadges[job.state ?? "unknown"].icon}
-							<!-- <div class="flex items-center gap-2" title={job.failedReason}>
-									<span class="w-32">{job.label}</span>
-
-									<span class="w-20">{job.state}</span>
-									{#if job.state === "active" || job.state === "waiting"}
-										<progress class="progress w-24" value={job.progress * 100} max="100"></progress>
-									{/if}
-								</div> -->
-
 							<li class="list-row">
 								<div class="{jobStateBadges[job.state ?? 'unknown'].color} w-4">
-									<Icon />
+									{#if job.state === "active"}
+										<div
+											class="radial-progress"
+											style="--value:{job.progress * 100}; --size:1rem; --thickness: 2px;"
+										></div>
+									{:else}
+										<Icon size={16} />
+									{/if}
 								</div>
 								<div>
 									<span class="ml-2 font-semibold text-nowrap">{job.label}</span>
@@ -379,6 +390,9 @@
 					</ul>
 				</details>
 			{/if}
+
+			<button class="btn" onclick={() => (viewMode = "timeline")}>Timeline</button>
+			<button class="btn" onclick={() => (viewMode = "shot-grid")}>Shot Grid</button>
 		</Header>
 
 		<Splitpanes
@@ -398,6 +412,14 @@
 						<div class="flex h-full min-h-0 flex-col">
 							{#if !media}
 								<p>Nothing uploaded yet.</p>
+							{:else if viewMode === "shot-grid" && snapshot}
+								<ShotGrid
+									{snapshot}
+									mediaId={media.id}
+									thumbnailsReady={!!media.shotThumbnails}
+									{currentFrame}
+									onSeek={seekToFrame}
+								/>
 							{:else}
 								<!-- Video -->
 								{#if media.status !== "PENDING" && videoSource && snapshot}
@@ -441,6 +463,14 @@
 			<!-- Marker panel -->
 			{#if isMarkerVisible}
 				<Pane size={layout.main[1]} minSize={20} maxSize={50} class="overflow-auto">
+					{#if true}
+						{@const barcode = await getMovieBarcode({
+							mediaId: media?.id ?? "",
+						})}
+						{#if barcode}
+							<MovieBarcode data={barcode} />
+						{/if}
+					{/if}
 					<MarkerPanel
 						{currentFrame}
 						onseek={seekToFrame}

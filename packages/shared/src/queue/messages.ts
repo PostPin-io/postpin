@@ -39,3 +39,11 @@ export interface SetMediaProcessingDoneMessage {
 export interface SeekSpritesMessage {
 	mediaId: string;
 }
+
+export interface ShotThumbnailsMessage {
+	mediaId: string;
+}
+
+export interface MovieBarcodeMessage {
+	mediaId: string;
+}
