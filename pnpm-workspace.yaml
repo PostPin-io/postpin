@@ -4,8 +4,10 @@ packages:
 allowBuilds:
   "@prisma/engines": true
   esbuild: true
+  grpc-tools: true
   msgpackr-extract: true
   prisma: true
+  protobufjs: true
   sharp: true
 
 patchedDependencies:
