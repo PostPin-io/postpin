@@ -6,7 +6,7 @@
 	import type { Prisma } from "@postpin-io/shared/db";
 	import { onMount } from "svelte";
 	import type { ThumbnailElement, ThumbnailImage } from "@videojs/html";
-
+	import { seekToMarker } from "#lib/components/review/VideoPlayer.ts";
 	interface Props {
 		snapshot: TimelineSnapshot;
 		markers: Prisma.MarkerGetPayload<{
@@ -104,6 +104,11 @@
 				? cuts.findLast((frame) => frame < playHeadPosition)
 				: cuts.find((frame) => frame > playHeadPosition);
 		if (cut !== undefined) seek(cut);
+	}
+
+	function seekToAdjacentMarker(direction: -1 | 1) {
+		const frame = seekToMarker(direction, { markers, playHeadPosition });
+		if (frame !== undefined) seek(frame);
 	}
 
 	function changePlaybackRate(direction: -1 | 1) {
@@ -249,10 +254,12 @@
 		const step = event.shiftKey ? Math.round(fps) : 1;
 		switch (event.key) {
 			case "ArrowLeft":
-				seek(playHeadPosition - step);
+				if (event.metaKey) seek(playHeadPosition - step);
+				else seekToAdjacentMarker(-1);
 				break;
 			case "ArrowRight":
-				seek(playHeadPosition + step);
+				if (event.metaKey) seek(playHeadPosition + step);
+				else seekToAdjacentMarker(1);
 				break;
 			case "ArrowUp":
 				seekToCut(-1);

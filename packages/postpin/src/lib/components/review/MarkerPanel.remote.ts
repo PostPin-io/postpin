@@ -2,6 +2,7 @@ import { prisma } from "#lib/server/database.ts";
 import { getRequestEvent, command, query } from "$app/server";
 import { page } from "$app/state";
 import { Prisma } from "@postpin-io/shared/db";
+
 import * as v from "valibot";
 
 export const getMarkers = query(v.string(), async (exportId: string) => {
@@ -11,6 +12,22 @@ export const getMarkers = query(v.string(), async (exportId: string) => {
 	const markers = await prisma.marker.findMany({
 		where: {
 			exportId: exportId,
+		},
+		orderBy: { frame: "desc" },
+		include: {
+			author: true,
+			category: true,
+		},
+	});
+
+	return markers;
+});
+export const getMarkersbyCategory = query(v.string(), async (categoryId: string) => {
+	const event = getRequestEvent();
+
+	const markers = await prisma.marker.findMany({
+		where: {
+			categoryId: categoryId,
 		},
 		orderBy: { frame: "desc" },
 		include: {

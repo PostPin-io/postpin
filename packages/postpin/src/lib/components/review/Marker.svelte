@@ -1,10 +1,30 @@
 <script lang="ts">
 	import type { Prisma } from "@postpin-io/shared/db";
 	import Timecode from "./Timecode.svelte";
+	import CategoryBadge from "./CategoryBadge.svelte";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 
 	let { marker, active = false, onselect, frameRate, startFrame, onchoose }: Props = $props();
 
+	// 1. Use $state() for Svelte 5 reactivity
+	let isOpen = $state(false);
+
+	// 2. Functions to control the state programmatically
+	export function toggleCollapse() {
+		isOpen = !isOpen;
+	}
+
+	export function open() {
+		isOpen = true;
+	}
+
+	export function collapse() {
+		isOpen = false;
+	}
+
+	export function isExpanded() {
+		return isOpen;
+	}
 	interface Props {
 		active?: boolean;
 		onselect?: (frame: number) => void;
@@ -18,16 +38,11 @@
 		frameRate: FrameRate;
 		startFrame: number;
 	}
-
-	// Pick black or white text depending on the perceived brightness of the category color
-	function textColor(hex: string) {
-		const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
-		if (!m) return undefined;
-		const n = parseInt(m[1], 16);
-		const luminance = 0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255);
-		return luminance > 150 ? "#000000" : "#ffffff";
-	}
 </script>
+
+{#snippet categoryBadge(classes: string)}
+	<CategoryBadge category={marker.category} class={classes} />
+{/snippet}
 
 <!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
 <article
@@ -40,6 +55,7 @@
 	onclick={(e) => {
 		onchoose?.();
 		if (e.metaKey) {
+			e.preventDefault();
 			onselect?.(marker.frame);
 		}
 	}}
@@ -50,14 +66,20 @@
 		}
 	}}
 >
+	<!-- 3. Bind the open state directly to the <details> element -->
 	<details
-		class=" group collapse-arrow collapse border border-l-4 border-base-300 bg-base-100"
+		class="group collapse-arrow collapse border border-l-4 border-base-300 bg-base-100"
 		style:border-left-color={marker.category.color}
+		bind:open={isOpen}
 	>
-		<summary class="collapse-title font-semibold">
-			<div class="max-w-xs truncate group-open:max-w-none group-open:whitespace-normal">
-				{marker.name || "Untitled marker"}
-			</div>
+		<summary class="collapse-title px-3 py-3 font-semibold">
+			{#if marker.name?.trim()}
+				<div class="max-w-xs truncate text-xs group-open:max-w-none group-open:whitespace-normal">
+					{marker.name}
+				</div>
+			{:else}
+				{@render categoryBadge("badge-md px-3 font-semibold")}
+			{/if}
 		</summary>
 		<div class="collapse-content text-sm">
 			<div class="card-body gap-2 p-3">
@@ -69,14 +91,9 @@
 					class="flex items-center justify-between gap-3 border-t border-base-300 pt-2 text-xs text-base-content/60"
 				>
 					<div class="flex items-center gap-3">
-						<span
-							class="badge badge-outline p-0 px-2 badge-sm"
-							style:background-color={marker.category.color}
-							style:border-color={marker.category.color}
-							style:color={textColor(marker.category.color)}
-						>
-							{marker.category.name}
-						</span>
+						{#if marker.name?.trim()}
+							{@render categoryBadge("badge-sm p-0 px-2")}
+						{/if}
 
 						<span>By {marker.author.name}</span>
 

@@ -156,9 +156,9 @@
 				<ClipboardList size={20} />
 			</button>
 
-			<span class="badge badge-outline tabular-nums" title="Marker frame">
+			<!-- <span class="badge badge-outline tabular-nums" title="Marker frame">
 				Frame {marker.frame - startFrame}
-			</span>
+			</span> -->
 
 			<button
 				type="button"

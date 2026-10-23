@@ -5,6 +5,7 @@
 
 	import Header from "#lib/components/Header.svelte";
 	import MarkerPanel from "#lib/components/review/MarkerPanel.svelte";
+	import { markerFilter } from "#lib/components/review/markerFilter.svelte.ts";
 	import VideoPlayer, { HLS, type VideoSource } from "#lib/components/review/VideoPlayer.svelte";
 	import { Pane, Splitpanes } from "svelte-splitpanes";
 	import Timeline from "./Timeline.svelte";
@@ -126,7 +127,8 @@
 	let isLayoutReady = $state(false);
 
 	let isLoading = $derived(!exp || !isMounted || !isLayoutReady);
-
+	let allMarkers = $derived(await getMarkers(page.params.export ?? ""));
+	let markers = $derived(markerFilter.apply(allMarkers));
 	let originalUrl = $state<string | undefined>(undefined);
 	let thumbnailUrl = $state<string | undefined>(undefined);
 
@@ -404,6 +406,7 @@
 											source={videoSource}
 											poster={thumbnailUrl}
 											timing={snapshot}
+											{markers}
 											bind:currentTime={videoPosition}
 											bind:paused={videoPaused}
 											bind:playbackRate={videoPlaybackRate}
@@ -421,7 +424,7 @@
 							{#if exportQuery.current?.timelineSnapshot}
 								<Timeline
 									snapshot={exportQuery.current!.timelineSnapshot as TimelineSnapshot}
-									markers={await getMarkers(page.params.export ?? "")}
+									{markers}
 									{seekThumbnails}
 									bind:videoPositionSeconds={videoPosition}
 									bind:paused={videoPaused}

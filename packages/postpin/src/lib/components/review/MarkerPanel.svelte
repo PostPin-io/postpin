@@ -1,10 +1,20 @@
 <script lang="ts">
 	import { page } from "$app/state";
+	import { tick } from "svelte";
 	import Marker from "./Marker.svelte";
 	import UpdateMarker from "./UpdateMarker.svelte";
+	import CategoryBadge from "./CategoryBadge.svelte";
+	import { markerFilter } from "./markerFilter.svelte.ts";
+	import Ellipsis from "@lucide/svelte/icons/ellipsis";
 	import { Pane, Splitpanes } from "svelte-splitpanes";
 
-	import { getMarkers, getCategories, createMarker, createCategory } from "./MarkerPanel.remote.ts";
+	import {
+		getMarkers,
+		getMarkersbyCategory,
+		getCategories,
+		createMarker,
+		createCategory,
+	} from "./MarkerPanel.remote.ts";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 
 	interface Props {
@@ -22,10 +32,23 @@
 	let markers = $derived(await getMarkers(currentExportId));
 	let markerAtPlayhead = $derived(markers.find((marker) => marker.frame === currentFrame));
 
+	let markersComponents: Marker[] = $state([]);
+
+	let categories = $derived(await getCategories(projectId));
+	let filteredMarkers = $derived(markerFilter.apply(markers));
 	let selectedMarkerId = $state<string | null>(null);
 	let selectedMarker = $derived(markers.find((marker) => marker.id === selectedMarkerId));
 
 	let isUpdateMarkerFocused = $state(false);
+
+	function toggleCollapseAllMarkers() {
+		const anyMarkerOpen = markersComponents.some((marker) => marker?.isExpanded());
+		if (anyMarkerOpen) {
+			markersComponents.forEach((marker) => marker?.collapse());
+		} else {
+			markersComponents.forEach((marker) => marker?.open());
+		}
+	}
 
 	// Automatically select the marker at the playhead when it changes
 	// $effect(() => {
@@ -41,7 +64,8 @@
 	let creating = false;
 
 	async function addMarkerAtPlayhead() {
-		if (creating || markerAtPlayhead) return;
+		if (markerAtPlayhead) return markerAtPlayhead;
+		if (creating) return;
 		creating = true;
 		try {
 			let categories = await getCategories(projectId);
@@ -58,7 +82,7 @@
 					localStorage.setItem("DefaultCategory", categoryId);
 				}
 			}
-			await createMarker({
+			return await createMarker({
 				exportId: currentExportId,
 				name: "",
 				description: "",
@@ -90,25 +114,79 @@
 		if (target?.closest("input, textarea, select, [contenteditable]")) return;
 
 		event.preventDefault();
-		void addMarkerAtPlayhead();
+		void addAndSelectMarker();
+	}
+
+	async function addAndSelectMarker() {
+		const marker = await addMarkerAtPlayhead();
+		if (!marker) return;
+		selectedMarkerId = marker.id;
 		if (localStorage.getItem("UpdateMarkerFocused") === "true") {
+			// Wait for the markers list and UpdateMarker to render with the new marker
+			await tick();
 			setTimeout(() => updateMarkerComponent?.focusTitleInputField(), 50);
 		}
-		setSelectedMarkerId(markerAtPlayhead?.id ?? null);
 	}
 	export function setSelectedMarkerId(id: string | null) {
 		selectedMarkerId = id;
 	}
 </script>
 
-<h1 style="margin-left: 10px;" class="shrink-0 text-2xl font-bold">Marker</h1>
+<div class="mb-4 flex max-w-full items-center justify-between px-2">
+	<h1 class="shrink-0 text-2xl font-bold">Marker</h1>
+
+	<div class="dropdown dropdown-left">
+		<div tabindex="0" role="button" class="btn m-1 btn-circle btn-ghost">
+			<Ellipsis class="h-6 w-6" />
+		</div>
+		<ul tabindex="-1" class="menu dropdown-content z-1 w-52 rounded-box bg-base-100 p-2 shadow-sm">
+			<li>
+				<details>
+					<summary>Filter for Category</summary>
+					<ul>
+						<li>
+							<a
+								class={markerFilter.categoryIds.length === 0 ? "menu-active" : ""}
+								onclick={() => markerFilter.clear()}>All</a
+							>
+						</li>
+						{#each categories as category (category.id)}
+							<li>
+								<label class="flex cursor-pointer items-center gap-2">
+									<input
+										type="checkbox"
+										class="checkbox checkbox-xs"
+										checked={markerFilter.isActive(category.id)}
+										onchange={() => markerFilter.toggle(category.id)}
+									/>
+									<CategoryBadge {category} class="badge-xs" />
+								</label>
+							</li>
+						{/each}
+					</ul>
+				</details>
+			</li>
+			{#if markersComponents.length > 0}
+				<li onclick={() => toggleCollapseAllMarkers()}>
+					{#if markersComponents.some((marker) => marker?.isExpanded())}
+						<a>Collapse All</a>
+					{:else}
+						<a>Expand All</a>
+					{/if}
+				</li>
+			{/if}
+		</ul>
+	</div>
+</div>
+
 <Splitpanes theme="daisy-theme" horizontal class="h-full" style="height: 100%;">
 	<Pane class="overflow-auto">
 		<div class="flex h-full min-h-0 flex-1 flex-col gap-4 overflow-y-auto *:shrink-0">
-			{#each markers as marker (marker.id)}
+			{#each filteredMarkers as marker, index (marker.id)}
 				<Marker
 					{marker}
 					active={marker.id === selectedMarkerId}
+					bind:this={markersComponents[index]}
 					onchoose={() => {
 						selectedMarkerId = marker.id;
 					}}
@@ -116,8 +194,6 @@
 					{frameRate}
 					{startFrame}
 				/>
-			{:else}
-				<p class="px-3 text-sm text-base-content/60">No markers yet.</p>
 			{/each}
 		</div>
 	</Pane>

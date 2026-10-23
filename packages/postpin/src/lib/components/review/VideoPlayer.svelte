@@ -15,7 +15,10 @@
 	import Maximize from "@lucide/svelte/icons/maximize";
 	import Volume2 from "@lucide/svelte/icons/volume-2";
 	import VolumeX from "@lucide/svelte/icons/volume-x";
+	import ArrowLeft from "@lucide/svelte/icons/arrow-left";
+	import ArrowRight from "@lucide/svelte/icons/arrow-right";
 	import Timecode from "./Timecode.svelte";
+	import { seekToMarker } from "./VideoPlayer";
 	import {
 		frameAtSeconds,
 		secondsAtFrame,
@@ -25,6 +28,7 @@
 	let {
 		source,
 		poster,
+		markers,
 		timing,
 		currentTime = $bindable(0),
 		paused = $bindable(true),
@@ -32,6 +36,7 @@
 		quality = $bindable<number | "auto">("auto"),
 	}: {
 		source: VideoSource;
+		markers: { frame: number }[];
 		poster?: string;
 		timing: FrameTiming;
 		currentTime?: number;
@@ -118,6 +123,14 @@
 		recentReloads.push(now);
 		reloads++;
 	}
+
+	function seekToAdjacentMarker(direction: -1 | 1) {
+		const markerFrame = seekToMarker(direction, { markers, playHeadPosition: frame });
+		if (markerFrame !== undefined) currentTime = secondsAtFrame(markerFrame, timing);
+	}
+
+	const seekToNextMarker = () => seekToAdjacentMarker(1);
+	const seekToPreviousMarker = () => seekToAdjacentMarker(-1);
 
 	$effect(() => {
 		const host = element;
@@ -242,17 +255,35 @@
 			<span class="font-mono"> {playbackRate}×</span>
 		</div>
 
-		<button
-			class="btn btn-square btn-ghost btn-xs"
-			aria-label={paused ? "Play" : "Pause"}
-			onclick={() => (paused = !paused)}
-		>
-			{#if paused}
-				<Play size={16} />
-			{:else}
-				<Pause size={16} />
-			{/if}
-		</button>
+		<div class="flex items-center justify-center">
+			<button
+				class="btn btn-square btn-ghost btn-xs"
+				title="Jump to previous Marker on the left"
+				onclick={() => seekToPreviousMarker()}
+			>
+				<ArrowLeft size={16} />
+			</button>
+
+			<button
+				class="btn btn-square btn-ghost btn-xs"
+				aria-label={paused ? "Play" : "Pause"}
+				onclick={() => (paused = !paused)}
+			>
+				{#if paused}
+					<Play size={16} />
+				{:else}
+					<Pause size={16} />
+				{/if}
+			</button>
+
+			<button
+				class="btn btn-square btn-ghost btn-xs"
+				title="Jump to next Marker on the right"
+				onclick={() => seekToNextMarker()}
+			>
+				<ArrowRight size={16} />
+			</button>
+		</div>
 
 		<div class="flex items-center gap-1 justify-self-end">
 			{#if qualities.length > 0}
