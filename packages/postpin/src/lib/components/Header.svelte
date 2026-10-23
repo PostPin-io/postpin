@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from "$app/paths";
+	import { page } from "$app/state";
 	import { authClient } from "#lib/auth-client.ts";
 	import { goto, refreshAll } from "$app/navigation";
 	import { hasRole, MANAGER_ROLES } from "#lib/roles.ts";
@@ -103,14 +104,21 @@
 					>Settings</a
 				>
 			{/if}
-		</div>
-		<div class="navbar-center hidden lg:flex">
 			<ul class="menu menu-horizontal px-1">
-				<li>
-					<a href={resolve("/auth/login")}>Login</a>
-				</li>
+				{#if page.params.project && page.params.timeline}
+					<li>
+						<a
+							href={resolve("/(root)/projects/[project]/timelines/[timeline]/exports", {
+								project: page.params.project,
+								timeline: page.params.timeline,
+							})}
+							class="btn btn-ghost btn-sm">Exports</a
+						>
+					</li>
+				{/if}
 			</ul>
 		</div>
+		<div class="navbar-center hidden lg:flex"></div>
 		{#if children}
 			<div class="navbar-center hidden lg:flex">{@render children()}</div>
 		{/if}

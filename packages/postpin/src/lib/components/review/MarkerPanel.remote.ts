@@ -66,6 +66,37 @@ export const createMarker = command(
 	},
 );
 
+export const createMarkers = command(
+	v.object({
+		exportId: v.string(),
+		markers: v.array(
+			v.object({
+				name: v.string(),
+				description: v.string(),
+				frame: v.pipe(v.number(), v.integer(), v.minValue(0)),
+				categoryId: v.string(),
+			}),
+		),
+	}),
+	async (data) => {
+		const event = getRequestEvent();
+		const authorId = event.locals.user!.id;
+
+		const result = await prisma.marker.createMany({
+			data: data.markers.map((marker) => ({
+				name: marker.name,
+				description: marker.description,
+				frame: marker.frame,
+				categoryId: marker.categoryId,
+				exportId: data.exportId,
+				authorId,
+			})),
+		});
+		await getMarkers(data.exportId).refresh();
+		return result;
+	},
+);
+
 export const updateMarker = command(
 	v.object({
 		id: v.string(),
@@ -109,6 +140,28 @@ export const deleteMarker = command(v.string(), async (id) => {
 
 	return marker;
 });
+
+export const deleteMarkers = command(
+	v.object({ exportId: v.string(), ids: v.array(v.string()) }),
+	async (data) => {
+		const markers = await prisma.marker.findMany({
+			where: { id: { in: data.ids }, exportId: data.exportId },
+			select: { id: true, categoryId: true },
+		});
+
+		const result = await prisma.marker.deleteMany({
+			where: { id: { in: markers.map((marker) => marker.id) } },
+		});
+
+		const categoryIds = new Set(markers.map((marker) => marker.categoryId));
+		await Promise.all([
+			getMarkers(data.exportId).refresh(),
+			...[...categoryIds].map((categoryId) => isCategoryUsed(categoryId).refresh()),
+		]);
+
+		return result;
+	},
+);
 
 export const changeDescription = command(
 	v.object({

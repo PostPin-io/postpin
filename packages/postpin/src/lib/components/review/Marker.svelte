@@ -4,7 +4,17 @@
 	import CategoryBadge from "./CategoryBadge.svelte";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 
-	let { marker, active = false, onselect, frameRate, startFrame, onchoose }: Props = $props();
+	let {
+		marker,
+		active = false,
+		onselect,
+		frameRate,
+		startFrame,
+		onchoose,
+		ontoggle,
+		onrange,
+		onreposition,
+	}: Props = $props();
 
 	// 1. Use $state() for Svelte 5 reactivity
 	let isOpen = $state(false);
@@ -29,6 +39,10 @@
 		active?: boolean;
 		onselect?: (frame: number) => void;
 		onchoose?: () => void;
+		ontoggle?: () => void;
+		onrange?: () => void;
+		/** Called with the new absolute frame when the marker's timecode is edited */
+		onreposition?: (frame: number) => void;
 		marker: Prisma.MarkerGetPayload<{
 			include: {
 				author: true;
@@ -53,10 +67,19 @@
 	tabindex="0"
 	aria-pressed={active}
 	onclick={(e) => {
-		onchoose?.();
-		if (e.metaKey) {
+		if (e.shiftKey) {
 			e.preventDefault();
+			onrange?.();
+		} else if (e.metaKey) {
+			// Multi-select instead of expanding the marker
+			e.preventDefault();
+			ontoggle?.();
+		} else if (e.altKey) {
+			e.preventDefault();
+			onchoose?.();
 			onselect?.(marker.frame);
+		} else {
+			onchoose?.();
 		}
 	}}
 	onkeydown={(e) => {
@@ -106,7 +129,12 @@
 					</div>
 
 					<span class="truncate font-mono text-[11px]" title={marker.frame.toString()}>
-						<Timecode frame={marker.frame} {frameRate} {startFrame} />
+						<Timecode
+							bind:frame={() => marker.frame, (f) => onreposition?.(f)}
+							{frameRate}
+							{startFrame}
+							editable={true}
+						/>
 					</span>
 				</div>
 			</div>

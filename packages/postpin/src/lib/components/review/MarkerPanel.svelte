@@ -13,8 +13,12 @@
 		getMarkersbyCategory,
 		getCategories,
 		createMarker,
+		createMarkers,
+		updateMarker,
+		deleteMarkers,
 		createCategory,
 	} from "./MarkerPanel.remote.ts";
+	import { copyMarkers, readMarkerClipboard } from "./markerClipboard.ts";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 
 	interface Props {
@@ -36,7 +40,9 @@
 
 	let categories = $derived(await getCategories(projectId));
 	let filteredMarkers = $derived(markerFilter.apply(markers));
-	let selectedMarkerId = $state<string | null>(null);
+	let selectedMarkerIds = $state<string[]>([]);
+	// The editor is only shown while exactly one marker is selected
+	let selectedMarkerId = $derived(selectedMarkerIds.length === 1 ? selectedMarkerIds[0] : null);
 	let selectedMarker = $derived(markers.find((marker) => marker.id === selectedMarkerId));
 
 	let isUpdateMarkerFocused = $state(false);
@@ -63,25 +69,30 @@
 	});
 	let creating = false;
 
+	async function resolveDefaultCategory() {
+		let categories = await getCategories(projectId);
+
+		let categoryId = categories[0]?.id;
+		categoryId ??= (await createCategory({ name: "General", color: "#ffffff", projectId })).id;
+
+		let defaultCategoryId = localStorage.getItem("DefaultCategory");
+
+		if (defaultCategoryId) {
+			if (categories.find((c) => c.id === defaultCategoryId)) {
+				categoryId = defaultCategoryId;
+			} else {
+				localStorage.setItem("DefaultCategory", categoryId);
+			}
+		}
+		return { categoryId, categoryIds: new Set(categories.map((c) => c.id)) };
+	}
+
 	async function addMarkerAtPlayhead() {
 		if (markerAtPlayhead) return markerAtPlayhead;
 		if (creating) return;
 		creating = true;
 		try {
-			let categories = await getCategories(projectId);
-
-			let categoryId = categories[0]?.id;
-			categoryId ??= (await createCategory({ name: "General", color: "#ffffff", projectId })).id;
-
-			let defaultCategoryId = localStorage.getItem("DefaultCategory");
-
-			if (defaultCategoryId) {
-				if (categories.find((c) => c.id === defaultCategoryId)) {
-					categoryId = defaultCategoryId;
-				} else {
-					localStorage.setItem("DefaultCategory", categoryId);
-				}
-			}
+			const { categoryId } = await resolveDefaultCategory();
 			return await createMarker({
 				exportId: currentExportId,
 				name: "",
@@ -96,13 +107,90 @@
 
 	function deleteKeypress(event: KeyboardEvent) {
 		if (!event.metaKey || (event.key !== "Backspace" && event.key !== "Delete")) return;
-		if (!selectedMarker || !updateMarkerComponent) return;
+		if (isTypingTarget(event)) return;
 
-		const target = event.target as HTMLElement | null;
-		if (target?.closest("input, textarea, select, [contenteditable]")) return;
+		if (selectedMarkerIds.length > 1) {
+			event.preventDefault();
+			void deleteSelectedMarkers();
+		} else if (selectedMarker && updateMarkerComponent) {
+			event.preventDefault();
+			void updateMarkerComponent.remove();
+		}
+	}
+
+	async function deleteSelectedMarkers() {
+		const ids = markers
+			.filter((marker) => selectedMarkerIds.includes(marker.id))
+			.map((marker) => marker.id);
+		if (ids.length === 0) return;
+		await deleteMarkers({ exportId: currentExportId, ids });
+		selectedMarkerIds = [];
+	}
+
+	function selectAllKeypress(event: KeyboardEvent) {
+		if (!event.metaKey || event.altKey || event.shiftKey) return;
+		if (event.key !== "a" && event.key !== "A") return;
+		if (isTypingTarget(event) || filteredMarkers.length === 0) return;
 
 		event.preventDefault();
-		void updateMarkerComponent.remove();
+		selectedMarkerIds = filteredMarkers.map((marker) => marker.id);
+	}
+
+	function isTypingTarget(event: KeyboardEvent) {
+		const target = event.target as HTMLElement | null;
+		return !!target?.closest("input, textarea, select, [contenteditable]");
+	}
+
+	function escapeKeypress(event: KeyboardEvent) {
+		if (event.key !== "Escape" || selectedMarkerIds.length === 0) return;
+		if (isTypingTarget(event)) return;
+		selectedMarkerIds = [];
+	}
+
+	function copyKeypress(event: KeyboardEvent) {
+		if (!event.metaKey || event.altKey || event.shiftKey) return;
+		if (event.key !== "c" && event.key !== "C") return;
+		if (selectedMarkerIds.length === 0 || isTypingTarget(event)) return;
+		// Keep the native copy when the user selected text
+		if (!window.getSelection()?.isCollapsed) return;
+
+		const selected = markers.filter((marker) => selectedMarkerIds.includes(marker.id));
+		if (selected.length === 0) return;
+		event.preventDefault();
+		copyMarkers(selected);
+	}
+
+	let pasting = false;
+
+	async function pasteMarkers() {
+		const clipboard = readMarkerClipboard();
+		if (clipboard.length === 0 || pasting) return;
+		pasting = true;
+		try {
+			const { categoryId: fallbackCategoryId, categoryIds } = await resolveDefaultCategory();
+			await createMarkers({
+				exportId: currentExportId,
+				markers: clipboard.map((item) => ({
+					name: item.name,
+					description: item.description,
+					// The copied category may belong to another project
+					categoryId: categoryIds.has(item.categoryId) ? item.categoryId : fallbackCategoryId,
+					frame: Math.max(0, currentFrame + item.offset),
+				})),
+			});
+		} finally {
+			pasting = false;
+		}
+	}
+
+	function pasteKeypress(event: KeyboardEvent) {
+		if (!event.metaKey || event.altKey || event.shiftKey) return;
+		if (event.key !== "v" && event.key !== "V") return;
+		if (isTypingTarget(event)) return;
+		if (readMarkerClipboard().length === 0) return;
+
+		event.preventDefault();
+		void pasteMarkers();
 	}
 
 	function mKeypress(event: KeyboardEvent) {
@@ -120,7 +208,7 @@
 	async function addAndSelectMarker() {
 		const marker = await addMarkerAtPlayhead();
 		if (!marker) return;
-		selectedMarkerId = marker.id;
+		selectedMarkerIds = [marker.id];
 		if (localStorage.getItem("UpdateMarkerFocused") === "true") {
 			// Wait for the markers list and UpdateMarker to render with the new marker
 			await tick();
@@ -128,7 +216,40 @@
 		}
 	}
 	export function setSelectedMarkerId(id: string | null) {
-		selectedMarkerId = id;
+		selectedMarkerIds = id ? [id] : [];
+	}
+
+	let anchorMarkerId: string | null = null;
+
+	function selectRange(id: string) {
+		const ids = filteredMarkers.map((marker) => marker.id);
+		const from = anchorMarkerId ? ids.indexOf(anchorMarkerId) : -1;
+		const to = ids.indexOf(id);
+		if (from === -1 || to === -1) {
+			selectedMarkerIds = [id];
+			anchorMarkerId = id;
+			return;
+		}
+		selectedMarkerIds = ids.slice(Math.min(from, to), Math.max(from, to) + 1);
+	}
+
+	async function repositionMarker(marker: (typeof markers)[number], frame: number) {
+		if (!Number.isInteger(frame) || frame < 0 || frame === marker.frame) return;
+		await updateMarker({
+			id: marker.id,
+			exportId: marker.exportId,
+			name: marker.name ?? "",
+			description: marker.description ?? "",
+			categoryId: marker.categoryId,
+			frame,
+		});
+	}
+
+	function toggleMarkerSelection(id: string) {
+		anchorMarkerId = id;
+		selectedMarkerIds = selectedMarkerIds.includes(id)
+			? selectedMarkerIds.filter((selectedId) => selectedId !== id)
+			: [...selectedMarkerIds, id];
 	}
 </script>
 
@@ -185,12 +306,16 @@
 			{#each filteredMarkers as marker, index (marker.id)}
 				<Marker
 					{marker}
-					active={marker.id === selectedMarkerId}
+					active={selectedMarkerIds.includes(marker.id)}
 					bind:this={markersComponents[index]}
 					onchoose={() => {
-						selectedMarkerId = marker.id;
+						selectedMarkerIds = [marker.id];
+						anchorMarkerId = marker.id;
 					}}
+					onrange={() => selectRange(marker.id)}
+					ontoggle={() => toggleMarkerSelection(marker.id)}
 					onselect={onseek}
+					onreposition={(frame) => repositionMarker(marker, frame)}
 					{frameRate}
 					{startFrame}
 				/>
@@ -204,7 +329,7 @@
 					<UpdateMarker
 						bind:this={updateMarkerComponent}
 						marker={selectedMarker}
-						onclose={() => (selectedMarkerId = null)}
+						onclose={() => (selectedMarkerIds = [])}
 						{startFrame}
 					/>
 				{/key}
@@ -213,4 +338,11 @@
 	{/if}
 </Splitpanes>
 
-<svelte:window on:keydown={mKeypress} on:keydown={deleteKeypress} />
+<svelte:window
+	on:keydown={mKeypress}
+	on:keydown={deleteKeypress}
+	on:keydown={escapeKeypress}
+	on:keydown={copyKeypress}
+	on:keydown={pasteKeypress}
+	on:keydown={selectAllKeypress}
+/>
