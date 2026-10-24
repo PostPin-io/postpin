@@ -40,6 +40,10 @@
 	let markersComponents: Marker[] = $state([]);
 
 	let categories = $derived(await getCategories(projectId));
+	let categorySearch = $state("");
+	let filteredCategories = $derived(
+		categories.filter((c) => c.name.toLowerCase().includes(categorySearch.trim().toLowerCase())),
+	);
 	let filteredMarkers = $derived(markerFilter.apply(markers));
 	let selectedMarkerIds = $state<string[]>([]);
 	// The editor is only shown while exactly one marker is selected
@@ -259,13 +263,22 @@
 				<details>
 					<summary>Filter for Category</summary>
 					<ul>
+						<li class="p-0 menu-title">
+							<input
+								type="search"
+								class="input w-full input-xs"
+								placeholder="Search categories"
+								aria-label="Search categories"
+								bind:value={categorySearch}
+							/>
+						</li>
 						<li>
 							<a
 								class={markerFilter.categoryIds.length === 0 ? "menu-active" : ""}
 								onclick={() => markerFilter.clear()}>All</a
 							>
 						</li>
-						{#each categories as category (category.id)}
+						{#each filteredCategories as category (category.id)}
 							<li>
 								<label class="flex cursor-pointer items-center gap-2">
 									<input

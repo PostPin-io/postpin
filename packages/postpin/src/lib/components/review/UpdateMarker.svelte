@@ -1,10 +1,12 @@
 <script lang="ts">
 	import EditCategoriesModal from "./EditCategoriesModal.svelte";
+	import CategorySelector from "../CategorySelector.svelte";
 
 	import type { Prisma } from "@postpin-io/shared/db";
 	import { updateMarker, deleteMarker, getCategories, createCategory } from "./MarkerPanel.remote";
 	import { page } from "$app/state";
 	import ClipboardList from "@lucide/svelte/icons/clipboard-list";
+	import Trash from "@lucide/svelte/icons/trash";
 	import { onDestroy, onMount } from "svelte";
 	import X from "@lucide/svelte/icons/x";
 	import CircleArrowLeft from "@lucide/svelte/icons/circle-arrow-left";
@@ -129,48 +131,47 @@
 <section class="card mx-1 h-full border border-base-300 bg-base-200 shadow-sm">
 	<div class="card-body h-full gap-3 p-4">
 		<div class="flex items-center justify-between gap-3">
-			<h2 class="card-title text-base">Edit marker</h2>
+			<div class="flex-screen flex gap-2">
+				<h2 class="card-title text-base">Edit marker</h2>
 
-			<select
-				class="select min-w-0 flex-1"
-				aria-label="Category"
-				value={categoryId}
-				onchange={(e) => {
-					selectedCategoryId = e.currentTarget.value;
-					localStorage.setItem("DefaultCategory", selectedCategoryId);
-					void persist();
-				}}
-			>
-				{#each categories as category (category.id)}
-					<option value={category.id}>{category.name}</option>
-				{/each}
-			</select>
+				<CategorySelector
+					value={categoryId}
+					onselect={(id) => {
+						selectedCategoryId = id;
+						localStorage.setItem("DefaultCategory", id);
+						void persist();
+					}}
+				/>
 
-			<button
-				type="button"
-				class="btn btn-square btn-outline"
-				title="New category"
-				aria-label="New category"
-				onclick={openEditCategoriesModal}
-			>
-				<ClipboardList size={20} />
-			</button>
+				<button
+					type="button"
+					class="btn btn-square"
+					title="New category"
+					aria-label="New category"
+					onclick={openEditCategoriesModal}
+				>
+					<ClipboardList size={20} />
+				</button>
 
-			<!-- <span class="badge badge-outline tabular-nums" title="Marker frame">
-				Frame {marker.frame - startFrame}
-			</span> -->
-
-			<button
-				type="button"
-				class="btn btn-square btn-ghost"
-				title="Close"
-				aria-label="Close marker editor"
-				onclick={() => onclose?.()}
-			>
-				<X />
-			</button>
+				<!-- <span class="badge badge-outline tabular-nums" title="Marker frame">
+					Frame {marker.frame - startFrame}
+					</span> -->
+			</div>
+			<div class="flex flex-wrap gap-2">
+				<button
+					type="button"
+					class="btn btn-square btn-ghost"
+					title="Close"
+					aria-label="Close marker editor"
+					onclick={() => onclose?.()}
+				>
+					<X />
+				</button>
+				<button type="button" class="btn btn-outline btn-error" disabled={saving} onclick={remove}>
+					<Trash size={20} />
+				</button>
+			</div>
 		</div>
-
 		<form class="flex h-full flex-col gap-2" onsubmit={(e) => e.preventDefault()}>
 			<div class="flex items-center gap-2">
 				<input
@@ -206,9 +207,7 @@
 				<span class="flex items-center gap-2 text-xs text-base-content/60" aria-live="polite">
 					{#if saving}<span class="loading loading-xs loading-spinner"></span>Saving…{/if}
 				</span>
-				<button type="button" class="btn btn-outline btn-error" disabled={saving} onclick={remove}>
-					Delete
-				</button>
+				≈
 			</div>
 		</form>
 	</div>

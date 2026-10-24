@@ -25,6 +25,11 @@
 	let categories = $derived(await getCategories(projectId));
 	let pendingColors: Record<string, string> = $state({});
 
+	let search = $state("");
+	let filtered = $derived(
+		categories.filter((c) => c.name.toLowerCase().includes(search.trim().toLowerCase())),
+	);
+
 	let targetCategoryId = $state("");
 	let sourceCategoryId = $state("");
 
@@ -47,6 +52,7 @@
 
 	export function open(projectIdParam: string) {
 		projectId = projectIdParam;
+		search = "";
 		dialog?.showModal();
 	}
 
@@ -84,8 +90,16 @@
 	<div class="modal-box flex max-h-[80vh] flex-col gap-4">
 		<h2 class="text-lg font-bold">Categories</h2>
 
+		<input
+			type="search"
+			class="input w-full input-sm"
+			placeholder="Search categories"
+			aria-label="Search categories"
+			bind:value={search}
+		/>
+
 		<ul class="list min-h-0 flex-1 overflow-y-auto rounded-box border border-base-300">
-			{#each categories as category (category.id)}
+			{#each filtered as category (category.id)}
 				<li class="list-row items-center">
 					{@render popupColorPicker(category)}
 					{#if isRenaming === category.id}
@@ -135,7 +149,9 @@
 					{/if}
 				</li>
 			{:else}
-				<li class="p-4 text-center text-sm opacity-60">No categories yet</li>
+				<li class="p-4 text-center text-sm opacity-60">
+					{search.trim() ? "No categories found" : "No categories yet"}
+				</li>
 			{/each}
 		</ul>
 
