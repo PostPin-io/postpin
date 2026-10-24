@@ -1,1 +1,1 @@
-import "../ipc/preload/PostPinResolveAPI";
+import "@postpin-io/plugin-electron/preload";

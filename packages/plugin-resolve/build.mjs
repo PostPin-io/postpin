@@ -61,7 +61,10 @@ const builds = [
 		},
 		assetNames: "[name]",
 		format: "cjs",
-		define: { DEV_SERVER_URL: JSON.stringify(dev ? "http://localhost:5183" : "") },
+		define: {
+			DEV_SERVER_URL: JSON.stringify(dev ? "http://localhost:5183" : ""),
+			DEFAULT_SERVER_URL: JSON.stringify(dev ? "http://localhost:5173" : "https://postpin.io"),
+		},
 	},
 	{
 		entryPoints: ["src/electron/preload.ts"],

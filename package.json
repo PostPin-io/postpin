@@ -4,7 +4,7 @@
 	"type": "module",
 	"scripts": {
 		"sync-env": "node ./scripts/sync-env.mjs",
-		"dev": "pnpm run sync-env && pnpm --filter @postpin-io/postpin run generate:api && pnpm --filter @postpin-io/postpin run build:api-client && pnpm -r  --reporter append-only run dev",
+		"dev": "pnpm run sync-env && pnpm --filter @postpin-io/postpin run generate:api && pnpm --filter @postpin-io/postpin run build:api-client && pnpm -r --parallel --reporter append-only run dev",
 		"build": "pnpm -r run build",
 		"prepare": "husky",
 		"format": "prettier --write . '!packages/**' && pnpm -r run format",

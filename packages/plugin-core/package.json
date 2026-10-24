@@ -1,0 +1,31 @@
+{
+	"name": "@postpin-io/plugin-core",
+	"version": "1.0.0",
+	"private": true,
+	"license": "MIT",
+	"type": "module",
+	"exports": {
+		"./ui/*": "./src/ui/*",
+		"./*": "./src/*.ts"
+	},
+	"scripts": {
+		"check": "svelte-check --tsgo --tsconfig ./tsconfig.json",
+		"typecheck": "svelte-check --tsgo --tsconfig ./tsconfig.json",
+		"lint": "svelte-check --tsgo --tsconfig ./tsconfig.json"
+	},
+	"dependencies": {
+		"@postpin-io/api-client-ts": "workspace:*",
+		"@postpin-io/shared": "workspace:*",
+		"delta-e": "^0.0.8"
+	},
+	"peerDependencies": {
+		"svelte": "^5.57.2"
+	},
+	"devDependencies": {
+		"@types/delta-e": "^0.0.2",
+		"@typescript/native": "npm:typescript@7",
+		"svelte": "^5.57.2",
+		"svelte-check": "^4.7.6",
+		"typescript": "^6.0.3"
+	}
+}

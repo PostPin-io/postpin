@@ -1,0 +1,36 @@
+{
+	"name": "@postpin-io/plugin-electron",
+	"version": "1.0.0",
+	"description": "Electron main-process glue shared by the Resolve plugin and PostPin Desktop",
+	"private": true,
+	"license": "MIT",
+	"type": "module",
+	"exports": {
+		"./main": "./src/main/index.ts",
+		"./preload": "./src/preload.ts",
+		"./renderer": "./src/renderer.ts"
+	},
+	"scripts": {
+		"generate:ipc": "generate-ipc src/schema src/ipc && prettier --write src/ipc",
+		"generate:ipc:watch": "nodemon --watch src/schema -e eipc --exec \"pnpm run generate:ipc\"",
+		"dev": "pnpm run generate:ipc:watch",
+		"typecheck": "tsc --noEmit",
+		"lint": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@marshallofsound/ipc": "^2.7.1",
+		"@postpin-io/plugin-core": "workspace:*",
+		"@postpin-io/shared": "workspace:*",
+		"better-auth": "^1.7.11",
+		"electron-store": "^12.0.0"
+	},
+	"peerDependencies": {
+		"electron": ">=36"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.5",
+		"electron": "~36.3.2",
+		"nodemon": "^3.1.14",
+		"typescript": "^7.0.2"
+	}
+}

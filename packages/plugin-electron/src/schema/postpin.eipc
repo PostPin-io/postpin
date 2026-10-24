@@ -1,0 +1,104 @@
+module PostPin
+
+validator App = AND(
+    is_main_frame is true
+)
+
+structure PaletteColor {
+  id: string
+  hex: string
+  name?: string
+}
+
+structure Capabilities {
+  hostName: string
+  palette: PaletteColor[]
+  anyColor: boolean
+  renderPresets: boolean
+  renderToDisk: boolean
+  snapshotClips: boolean
+  customMarkerData: boolean
+}
+
+structure NleMarker {
+  title: string
+  description: string
+  frame: number
+  color: string
+  customData?: string
+}
+
+structure RenderProgress {
+  percent: number
+  estimatedTimeRemainingMs: number
+}
+
+structure UploadPartUrl {
+  partNumber: number
+  url: string
+}
+
+structure UploadedPart {
+  partNumber: number
+  etag: string
+}
+
+structure UploadProgress {
+  uploadedBytes: number
+  totalBytes: number
+}
+
+structure Settings {
+  renderToDisk: boolean
+  outputPath: string
+  filename: string
+}
+
+structure LoginConfig {
+  serverBaseUrl: string
+}
+
+structure LoginCode {
+  userCode: string
+  verificationUri: string
+}
+
+[RendererAPI]
+[ContextBridge]
+[Validator=App]
+interface CommonAPI {
+  getServerUrl() -> string
+  getDefaultServerUrl() -> string
+  getSession() -> unknown
+  login(config: LoginConfig) -> boolean
+  logout() -> boolean
+  [Event]
+  loginCode(code: LoginCode)
+  [Event]
+  sessionChanged(session: unknown)
+  getSettings() -> Settings
+  saveSettings(settings: Settings) -> boolean
+  getFileSize(path: string) -> number
+  uploadFile(path: string, partSize: number, parts: UploadPartUrl[]) -> UploadedPart[]
+  [Event]
+  uploadProgress(progress: UploadProgress)
+  openInBrowser(path: string) -> boolean
+  pickDirectory() -> string
+}
+
+[RendererAPI]
+[ContextBridge]
+[Validator=App]
+interface NleAPI {
+  getCapabilities() -> Capabilities
+  getProjectId() -> string
+  getTimelineId() -> string
+  getMarkers() -> NleMarker[]
+  setMarkers(markers: NleMarker[]) -> boolean
+  clearMarkers() -> boolean
+  getRenderPresets() -> string[]
+  renderPreview() -> string
+  [Event]
+  renderProgress(progress: RenderProgress)
+  buildTimelineSnapshot() -> unknown
+}

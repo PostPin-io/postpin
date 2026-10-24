@@ -1,10 +1,12 @@
 // NOTE: Follow the security guide while implementing plugin app https://www.electronjs.org/docs/tutorial/security
 
-import { app, BrowserWindow, shell, dialog, safeStorage } from "electron";
+import { app, BrowserWindow } from "electron";
 import path from "path";
+import os from "os";
 // @ts-ignore
 import WorkflowIntegrationModule from "./WorkflowIntegration.node";
 import type {
+	MarkerColor,
 	MediaPoolItem,
 	Project,
 	ProjectManager,
@@ -13,20 +15,6 @@ import type {
 	TimelineItem,
 	WorkflowIntegrationModule as WI,
 } from "./resolve";
-import {
-	MainAPI,
-	MarkerColor,
-	type RenderProgress,
-	type Settings,
-	type UploadedPart,
-	type UploadPartUrl,
-	type UploadProgress,
-} from "../ipc/browser/PostPinResolveAPI";
-import { createReadStream } from "fs";
-import { stat } from "fs/promises";
-import http, { type IncomingMessage } from "http";
-import https from "https";
-import { pipeline } from "stream/promises";
 import { setTimeout as sleep } from "timers/promises";
 import type {
 	Clip,
@@ -35,21 +23,41 @@ import type {
 	TimelineSnapshot,
 	Track,
 } from "@postpin-io/shared/types/TimelineSnapshot";
-
-import Store from "electron-store";
-import { getSession, login, logout } from "./auth";
-
-const store = new Store<{ lastSettings?: Partial<Settings> }>();
+import type { NleBridge, PaletteColor, RenderProgress } from "@postpin-io/plugin-core/bridge";
+import { createWindow, exposeHostBridge, exposeNleBridge } from "@postpin-io/plugin-electron/main";
 
 declare const DEV_SERVER_URL: string;
+declare const DEFAULT_SERVER_URL: string;
 
 const PLUGIN_ID = "io.postpin.plugin.resolve";
+const CLIENT_ID = "io.postpin.plugin-resolve";
 
 const WorkflowIntegration: WI = WorkflowIntegrationModule;
 
-// Cached objects
-let resolveObj: Resolve | null = null;
-let projectManagerObj: ProjectManager | null = null;
+// Resolve's fixed marker colors; the id is the color name the Resolve API takes
+const RESOLVE_PALETTE: PaletteColor[] = [
+	{ id: "Blue", hex: "#3B82F6" },
+	{ id: "Cyan", hex: "#00FFFF" },
+	{ id: "Green", hex: "#00FF00" },
+	{ id: "Yellow", hex: "#FFFF00" },
+	{ id: "Red", hex: "#FF0000" },
+	{ id: "Pink", hex: "#FFC0CB" },
+	{ id: "Purple", hex: "#800080" },
+	{ id: "Fuchsia", hex: "#FF00FF" },
+	{ id: "Rose", hex: "#FF007F" },
+	{ id: "Lavender", hex: "#E6E6FA" },
+	{ id: "Sky", hex: "#87CEEB" },
+	{ id: "Mint", hex: "#98FF98" },
+	{ id: "Lemon", hex: "#FFF700" },
+	{ id: "Sand", hex: "#C2B280" },
+	{ id: "Cocoa", hex: "#A0522D" },
+	{ id: "Cream", hex: "#FFFDD0" },
+];
+
+// Cached as promises, so concurrent first calls share one initialization of the native module.
+// A failed (null) result isn't kept, so the next call tries again.
+let resolvePromise: Promise<Resolve | null> | null = null;
+let projectManagerPromise: Promise<ProjectManager | null> | null = null;
 
 // Initialize Resolve interface and returns Resolve object.
 async function initResolveInterface() {
@@ -77,32 +85,31 @@ function cleanup() {
 		console.log("Error: Failed to cleanup Resolve interface!");
 	}
 
-	resolveObj = null;
-	projectManagerObj = null;
+	resolvePromise = null;
+	projectManagerPromise = null;
 }
 
 // Gets Resolve object.
-async function getResolve() {
-	if (!resolveObj) {
-		resolveObj = await initResolveInterface();
-	}
-
-	return resolveObj;
+function getResolve() {
+	resolvePromise ??= initResolveInterface().then((resolve) => {
+		if (!resolve) resolvePromise = null;
+		return resolve;
+	});
+	return resolvePromise;
 }
 
 // Gets project manager object.
-async function getProjectManager() {
-	if (!projectManagerObj) {
+function getProjectManager() {
+	projectManagerPromise ??= (async () => {
 		const resolve = await getResolve();
-		if (resolve) {
-			projectManagerObj = (await resolve.GetProjectManager()) ?? null;
-			if (!projectManagerObj) {
-				console.log("Error: Failed to get ProjectManager object!");
-			}
+		const projectManager = resolve ? ((await resolve.GetProjectManager()) ?? null) : null;
+		if (!projectManager) {
+			console.log("Error: Failed to get ProjectManager object!");
+			projectManagerPromise = null;
 		}
-	}
-
-	return projectManagerObj;
+		return projectManager;
+	})();
+	return projectManagerPromise;
 }
 
 // Gets current project object.
@@ -116,6 +123,16 @@ async function getCurrentProject() {
 	}
 
 	return project;
+}
+
+async function getCurrentTimeline() {
+	const project = await getCurrentProject();
+	if (!project) throw new Error("No project open in Resolve");
+
+	const timeline = await project.GetCurrentTimeline();
+	if (!timeline) throw new Error("No timeline open in Resolve");
+
+	return timeline;
 }
 
 // Resolve API calls can throw synchronously on an error response, so `.catch()` on the
@@ -249,404 +266,186 @@ async function renderPreview(
 	}
 }
 
-const UPLOAD_CONCURRENCY = 4;
-const UPLOAD_PART_ATTEMPTS = 3;
-const UPLOAD_PROGRESS_INTERVAL_MS = 200;
-
-// PUTs the byte range [start, end] of the file and returns the ETag S3 assigned to the part.
-async function uploadPart(
-	sourcePath: string,
-	uploadUrl: string,
-	start: number,
-	end: number,
-	onBytes: (byteCount: number) => void,
-) {
-	const url = new URL(uploadUrl);
-
-	// @ts-ignore
-	const request = (url.protocol === "https:" ? https : http).request(url, {
-		method: "PUT",
-		headers: { "Content-Length": end - start + 1 },
-	});
-	const response = new Promise<IncomingMessage>((resolve, reject) => {
-		request.once("response", resolve);
-		request.once("error", reject);
-	});
-
-	const source = createReadStream(sourcePath, { start, end });
-	source.on("data", (chunk) => onBytes(chunk.length));
-	const [, res] = await Promise.all([pipeline(source, request), response]);
-
-	let body = "";
-	for await (const chunk of res) body += chunk;
-	if (!res.statusCode || res.statusCode >= 300) {
-		throw new Error(`status ${res.statusCode}: ${body}`);
-	}
-
-	const etag = res.headers.etag;
-	if (!etag) throw new Error("no ETag in response");
-	return etag;
-}
-
-// Uploads the file as S3 multipart upload, part n being bytes [(n - 1) * partSize, n * partSize).
-async function uploadRenderedFile(
-	sourcePath: string,
-	partSize: number,
-	parts: UploadPartUrl[],
-	onProgress: (progress: UploadProgress) => void,
-): Promise<UploadedPart[]> {
-	const { size } = await stat(sourcePath);
-	const expectedPartCount = Math.max(1, Math.ceil(size / partSize));
-	if (parts.length !== expectedPartCount) {
-		throw new Error(`Expected ${expectedPartCount} upload URLs, got ${parts.length}`);
-	}
-
-	let uploadedBytes = 0;
-	let lastProgressAt = 0;
-	const reportProgress = (force = false) => {
-		const now = Date.now();
-		if (!force && now - lastProgressAt < UPLOAD_PROGRESS_INTERVAL_MS) return;
-		lastProgressAt = now;
-		onProgress({ uploadedBytes, totalBytes: size });
-	};
-	reportProgress(true);
-
-	const queue = [...parts];
-	const uploaded: UploadedPart[] = [];
-	const worker = async () => {
-		for (let part = queue.shift(); part; part = queue.shift()) {
-			const start = (part.partNumber - 1) * partSize;
-			const end = Math.min(start + partSize, size) - 1;
-			for (let attempt = 1; ; attempt++) {
-				let partBytes = 0;
-				try {
-					const etag = await uploadPart(sourcePath, part.url, start, end, (byteCount) => {
-						partBytes += byteCount;
-						uploadedBytes += byteCount;
-						reportProgress();
-					});
-					uploaded.push({ partNumber: part.partNumber, etag });
-					break;
-				} catch (err) {
-					// The part starts over, so its bytes no longer count
-					uploadedBytes -= partBytes;
-					if (attempt >= UPLOAD_PART_ATTEMPTS) {
-						// Stop the other workers from picking up more parts
-						queue.length = 0;
-						const message = err instanceof Error ? err.message : String(err);
-						throw new Error(`Upload of part ${part.partNumber} failed: ${message}`);
-					}
-					await sleep(1000 * attempt);
-				}
-			}
-		}
-	};
-	await Promise.all(Array.from({ length: Math.min(UPLOAD_CONCURRENCY, parts.length) }, worker));
-
-	reportProgress(true);
-	return uploaded;
-}
-
-// Gets render presets string list.
-async function getRenderPresets(): Promise<string[]> {
+async function buildTimelineSnapshot(): Promise<TimelineSnapshot | null> {
 	const project = await getCurrentProject();
-	if (!project) return [];
+	if (!project) return null;
 
-	return await project.GetRenderPresetList();
+	const timeline = await project.GetCurrentTimeline();
+	if (!timeline) return null;
+
+	const settings = await timeline.GetSettings();
+	const frameRate = toFrameRate(
+		Number(settings.timelineFrameRate),
+		settings.timelineDropFrameTimecode === "1",
+	);
+	const fps = (rate: FrameRate) => rate.fpsNumerator / rate.fpsDenominator;
+
+	const mediaItems = new Map<string, MediaItem>();
+	const convertMedia = async (media: MediaPoolItem) => {
+		const id = await media.GetUniqueId();
+		const props = await media.GetClipProperty();
+		const mediaFps = Number(props.FPS);
+		const mediaItem: MediaItem = {
+			id,
+			name: await media.GetName(),
+			type: props.Type === "Audio" ? "audio" : "video",
+			filePath: props["File Path"],
+			// Audio-only media has no frame rate of its own
+			frameRate: mediaFps > 0 ? toFrameRate(mediaFps, props["Drop frame"] === "1") : frameRate,
+			startTimecode: props["Start TC"],
+			metadata: await media.GetMetadata(),
+		};
+		mediaItems.set(id, mediaItem);
+		return mediaItem;
+	};
+
+	const convertClip = async (item: TimelineItem): Promise<Clip | null> => {
+		if (!(await item.GetClipEnabled())) return null;
+
+		const durationFrameCount = Math.round(await item.GetDuration(true));
+		const mediaPoolItem = await orNull(async () => await item.GetMediaPoolItem());
+		const media = mediaPoolItem && (await convertMedia(mediaPoolItem));
+
+		let sourceStartFrameIndex = null;
+		let speed = 1;
+		if (media) {
+			// Source times are seconds since the media's 00:00:00:00, which makes them absolute.
+			// GetSourceStartFrame() is relative to the media start and sometimes off by a frame.
+			const sourceStart = await item.GetSourceStartTime();
+			const sourceEnd = await item.GetSourceEndTime();
+			sourceStartFrameIndex = Math.floor(sourceStart * fps(media.frameRate) + 0.001);
+			// The API has no speed or retime curve, so speed is the average over the clip.
+			const timelineSeconds = durationFrameCount / fps(frameRate);
+			speed = Math.round(((sourceEnd - sourceStart) / timelineSeconds) * 1e4) / 1e4;
+		}
+
+		return {
+			id: await item.GetUniqueId(),
+			name: await item.GetName(),
+			mediaId: media?.id ?? null,
+			startFrameIndex: Math.round(await item.GetStart(true)),
+			durationFrameCount,
+			sourceStartFrameIndex,
+			speed,
+			metadata: {},
+		};
+	};
+
+	const tracks = (
+		await Promise.all(
+			(["video", "audio"] as const).map(async (type) => {
+				const trackCount = await timeline.GetTrackCount(type);
+				return await Promise.all(
+					// Resolve track indices are 1-based
+					Array.from({ length: trackCount }, async (_, i): Promise<Track> => {
+						const index = i + 1;
+						const items = (await timeline.GetIsTrackEnabled(type, index))
+							? await timeline.GetItemListInTrack(type, index)
+							: [];
+						const clips = await Promise.all(items.map(convertClip));
+						return {
+							id: `${type}${index}`,
+							type,
+							name: await timeline.GetTrackName(type, index),
+							clips: clips.filter((clip) => clip !== null),
+						};
+					}),
+				);
+			}),
+		)
+	).flat();
+
+	// GetEndFrame() is exclusive, it equals the last clip's GetEnd()
+	const startFrameIndex = await timeline.GetStartFrame();
+	return {
+		id: await timeline.GetUniqueId(),
+		name: await timeline.GetName(),
+		tracks,
+		mediaItems: [...mediaItems.values()],
+		frameRate,
+		startFrameIndex,
+		durationFrameCount: (await timeline.GetEndFrame()) - startFrameIndex,
+		metadata: {},
+	};
 }
 
-function setupIPC(win: BrowserWindow) {
-	const dispatcher = MainAPI.for(win.webContents).setImplementation({
-		renderPreview: (targetDirPath, targetClipName) =>
-			renderPreview(targetDirPath, targetClipName, (progress) =>
-				dispatcher.dispatchRenderProgress(progress),
-			),
-		getRenderPresets,
-		getFileSize: async (path) => (await stat(path)).size,
-		uploadRenderedFile: (sourcePath, partSize, parts) =>
-			uploadRenderedFile(sourcePath, partSize, parts, (progress) =>
-				dispatcher.dispatchUploadProgress(progress),
-			),
-		openInBrowser: async (path: string) => {
-			shell.openExternal(`http://localhost:5173${path.startsWith("/") ? "" : "/"}${path}`);
-			return true;
-		},
-		buildTimelineSnapshot: async () => {
-			const project = await getCurrentProject();
-			if (!project) return null;
+const resolveBridge: NleBridge = {
+	getCapabilities: async () => ({
+		hostName: "Resolve",
+		palette: RESOLVE_PALETTE,
+		renderPresets: true,
+		renderToDisk: true,
+		snapshotClips: true,
+		customMarkerData: true,
+	}),
+	getProjectId: async () => {
+		const project = await getCurrentProject();
+		if (!project) throw new Error("No project open in Resolve");
 
-			const timeline = await project.GetCurrentTimeline();
-			if (!timeline) return null;
+		return await project.GetUniqueId();
+	},
+	getTimelineId: async () => await (await getCurrentTimeline()).GetUniqueId(),
+	// Resolve marker frames are relative to the timeline start, bridge frames are absolute
+	getMarkers: async () => {
+		const timeline = await getCurrentTimeline();
+		const startFrame = await timeline.GetStartFrame();
+		const markers = (await timeline.GetMarkers()) ?? {};
 
-			const settings = await timeline.GetSettings();
-			const frameRate = toFrameRate(
-				Number(settings.timelineFrameRate),
-				settings.timelineDropFrameTimecode === "1",
-			);
-			const fps = (rate: FrameRate) => rate.fpsNumerator / rate.fpsDenominator;
+		return Object.entries(markers).map(([frameStr, marker]) => ({
+			title: marker.name,
+			description: marker.note,
+			frame: Number(frameStr) + startFrame,
+			color: marker.color,
+			customData: marker.customData ?? null,
+		}));
+	},
+	setMarkers: async (markers) => {
+		const timeline = await getCurrentTimeline();
+		const startFrame = await timeline.GetStartFrame();
 
-			const mediaItems = new Map<string, MediaItem>();
-			const convertMedia = async (media: MediaPoolItem) => {
-				const id = await media.GetUniqueId();
-				const props = await media.GetClipProperty();
-				const mediaFps = Number(props.FPS);
-				const mediaItem: MediaItem = {
-					id,
-					name: await media.GetName(),
-					type: props.Type === "Audio" ? "audio" : "video",
-					filePath: props["File Path"],
-					// Audio-only media has no frame rate of its own
-					frameRate: mediaFps > 0 ? toFrameRate(mediaFps, props["Drop frame"] === "1") : frameRate,
-					startTimecode: props["Start TC"],
-					metadata: await media.GetMetadata(),
-				};
-				mediaItems.set(id, mediaItem);
-				return mediaItem;
-			};
-
-			const convertClip = async (item: TimelineItem): Promise<Clip | null> => {
-				if (!(await item.GetClipEnabled())) return null;
-
-				const durationFrameCount = Math.round(await item.GetDuration(true));
-				const mediaPoolItem = await orNull(async () => await item.GetMediaPoolItem());
-				const media = mediaPoolItem && (await convertMedia(mediaPoolItem));
-
-				let sourceStartFrameIndex = null;
-				let speed = 1;
-				if (media) {
-					// Source times are seconds since the media's 00:00:00:00, which makes them absolute.
-					// GetSourceStartFrame() is relative to the media start and sometimes off by a frame.
-					const sourceStart = await item.GetSourceStartTime();
-					const sourceEnd = await item.GetSourceEndTime();
-					sourceStartFrameIndex = Math.floor(sourceStart * fps(media.frameRate) + 0.001);
-					// The API has no speed or retime curve, so speed is the average over the clip.
-					const timelineSeconds = durationFrameCount / fps(frameRate);
-					speed = Math.round(((sourceEnd - sourceStart) / timelineSeconds) * 1e4) / 1e4;
-				}
-
-				return {
-					id: await item.GetUniqueId(),
-					name: await item.GetName(),
-					mediaId: media?.id ?? null,
-					startFrameIndex: Math.round(await item.GetStart(true)),
-					durationFrameCount,
-					sourceStartFrameIndex,
-					speed,
-					metadata: {},
-				};
-			};
-
-			const tracks = (
-				await Promise.all(
-					(["video", "audio"] as const).map(async (type) => {
-						const trackCount = await timeline.GetTrackCount(type);
-						return await Promise.all(
-							// Resolve track indices are 1-based
-							Array.from({ length: trackCount }, async (_, i): Promise<Track> => {
-								const index = i + 1;
-								const items = (await timeline.GetIsTrackEnabled(type, index))
-									? await timeline.GetItemListInTrack(type, index)
-									: [];
-								const clips = await Promise.all(items.map(convertClip));
-								return {
-									id: `${type}${index}`,
-									type,
-									name: await timeline.GetTrackName(type, index),
-									clips: clips.filter((clip) => clip !== null),
-								};
-							}),
-						);
-					}),
-				)
-			).flat();
-
-			// GetEndFrame() is exclusive, it equals the last clip's GetEnd()
-			const startFrameIndex = await timeline.GetStartFrame();
-			const result: TimelineSnapshot = {
-				id: await timeline.GetUniqueId(),
-				name: await timeline.GetName(),
-				tracks,
-				mediaItems: [...mediaItems.values()],
-				frameRate,
-				startFrameIndex,
-				durationFrameCount: (await timeline.GetEndFrame()) - startFrameIndex,
-				metadata: {},
-			};
-			return result;
-		},
-		getLastSettings: async () => {
-			const settings = store.get("lastSettings") ?? {};
-			return {
-				filename: settings.filename ?? "",
-				outputPath: settings.outputPath ?? "",
-				renderToDisk: settings.renderToDisk ?? false,
-			};
-		},
-		saveSettings: async (settings) => {
-			store.set("lastSettings", settings);
-			return true;
-		},
-		pickOutputDirectory: async () => {
-			const { canceled, filePaths } = await dialog.showOpenDialog(win, {
-				title: "Select Output Directory",
-				properties: ["openDirectory"],
-			});
-			if (canceled || filePaths.length === 0) return "";
-			return filePaths[0];
-		},
-		getMarkers: async () => {
-			const project = await getCurrentProject();
-			if (!project) return [];
-
-			const timeline = await project.GetCurrentTimeline();
-			if (!timeline) return [];
-
-			const markers = await timeline.GetMarkers();
-			if (!markers) return [];
-
-			return Object.entries(markers).map(([frameStr, marker]) => ({
-				title: marker.name,
-				description: marker.note,
-				frame: Number(frameStr),
-				color: marker.color as MarkerColor,
-				customData: marker.customData,
-			}));
-		},
-		setMarkers: async (markers) => {
-			const project = await getCurrentProject();
-			if (!project) return false;
-
-			const timeline = await project.GetCurrentTimeline();
-			if (!timeline) return false;
-
-			for (const marker of markers) {
-				await timeline.AddMarker(
-					marker.frame,
-					marker.color,
-					marker.title,
-					marker.description,
-					1,
-					marker.customData,
-				);
-			}
-
-			return true;
-		},
-		setMarker: async (marker) => {
-			const project = await getCurrentProject();
-			if (!project) return false;
-
-			const timeline = await project.GetCurrentTimeline();
-			if (!timeline) return false;
-
+		for (const marker of markers) {
 			await timeline.AddMarker(
-				marker.frame,
-				marker.color,
+				marker.frame - startFrame,
+				marker.color as MarkerColor,
 				marker.title,
 				marker.description,
 				1,
-				marker.customData,
+				marker.customData ?? undefined,
 			);
+		}
+	},
+	clearMarkers: async () => {
+		await (await getCurrentTimeline()).DeleteMarkersByColor("All");
+	},
+	getRenderPresets: async () => {
+		const project = await getCurrentProject();
+		if (!project) return [];
 
-			return true;
-		},
-		clearMarkers: async () => {
-			const project = await getCurrentProject();
-			if (!project) return false;
+		return await project.GetRenderPresetList();
+	},
+	renderPreview: (onProgress) =>
+		renderPreview(os.tmpdir(), `postpin-preview-${Date.now()}`, onProgress),
+	buildTimelineSnapshot,
+};
 
-			const timeline = await project.GetCurrentTimeline();
-			if (!timeline) return false;
-
-			return await timeline.DeleteMarkersByColor("All");
-		},
-		deleteMarker: async (frame) => {
-			const project = await getCurrentProject();
-			if (!project) return false;
-
-			const timeline = await project.GetCurrentTimeline();
-			if (!timeline) return false;
-
-			return await timeline.DeleteMarkerAtFrame(frame);
-		},
-		getTimelineStartFrame: async () => {
-			const project = await getCurrentProject();
-			if (!project) return 0;
-
-			const timeline = await project.GetCurrentTimeline();
-			if (!timeline) return 0;
-
-			return await timeline.GetStartFrame();
-		},
-		test: async () => {
-			return safeStorage.isAsyncEncryptionAvailable();
-		},
-		getProjectId: async () => {
-			const project = await getCurrentProject();
-			if (!project) throw new Error("No project open in Resolve");
-
-			return await project.GetUniqueId();
-		},
-		getTimelineId: async () => {
-			const project = await getCurrentProject();
-			if (!project) throw new Error("No project open in Resolve");
-
-			const timeline = await project.GetCurrentTimeline();
-			if (!timeline) throw new Error("No timeline open in Resolve");
-
-			return await timeline.GetUniqueId();
-		},
-		login: async () => {
-			await login((userCode, verificationUri) => {
-				dispatcher.dispatchLoginCode({ userCode, verificationUri });
-			});
-			dispatcher.dispatchSessionChanged(await getSession());
-			return true;
-		},
-		getSession: async () => {
-			const session = await getSession();
-			return session;
-		},
-		getSessionToken: async () => {
-			const session = await getSession();
-			return session?.session.token ?? "";
-		},
-		logout: async () => {
-			await logout();
-			dispatcher.dispatchSessionChanged(await getSession());
-			return true;
-		},
-	});
-}
-
-let currentlyRunningLogin: Promise<void> | null = null;
-
-function createWindow() {
-	const mainWindow = new BrowserWindow({
-		width: 900,
-		height: 825,
-		useContentSize: true,
-		webPreferences: {
-			preload: path.join(__dirname, "preload.js"),
-		},
+function openWindow() {
+	const win = createWindow({
+		preloadPath: path.join(__dirname, "preload.js"),
+		devServerUrl: DEV_SERVER_URL,
+		url: path.join(__dirname, "ui/index.html"),
 	});
 
-	setupIPC(mainWindow);
+	exposeHostBridge(win, { clientId: CLIENT_ID, defaultServerUrl: DEFAULT_SERVER_URL });
+	exposeNleBridge(win, resolveBridge);
 
-	mainWindow.on("close", () => {
+	win.on("close", () => {
 		cleanup();
 		app.quit();
 	});
-
-	if (DEV_SERVER_URL) {
-		mainWindow.loadURL(DEV_SERVER_URL);
-		mainWindow.webContents.openDevTools({ mode: "detach" });
-	} else {
-		mainWindow.loadFile(path.join(__dirname, "ui/index.html"));
-	}
 }
 
 app.whenReady().then(() => {
-	createWindow();
+	openWindow();
 });
 
 app.on("window-all-closed", () => {
@@ -657,5 +456,5 @@ app.on("window-all-closed", () => {
 });
 
 app.on("activate", () => {
-	if (BrowserWindow.getAllWindows().length === 0) createWindow();
+	if (BrowserWindow.getAllWindows().length === 0) openWindow();
 });

@@ -1,0 +1,4 @@
+@import "tailwindcss";
+@plugin "daisyui";
+/* the UI components live in plugin-core, which Tailwind doesn't scan by default */
+@source "../../node_modules/@postpin-io/plugin-core/src/ui";

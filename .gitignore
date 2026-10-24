@@ -1,5 +1,6 @@
 .env
 .DS_Store
 node_modules
+.svelte-check
 dev-data
 packages/api-client-ts/.src-tmp
