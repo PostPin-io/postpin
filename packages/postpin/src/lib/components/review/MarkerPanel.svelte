@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from "$app/state";
 	import { tick } from "svelte";
+	import { isTypingTarget } from "#lib/keyboard.ts";
 	import Marker from "./Marker.svelte";
 	import UpdateMarker from "./UpdateMarker.svelte";
 	import CategoryBadge from "./CategoryBadge.svelte";
@@ -136,11 +137,6 @@
 		selectedMarkerIds = filteredMarkers.map((marker) => marker.id);
 	}
 
-	function isTypingTarget(event: KeyboardEvent) {
-		const target = event.target as HTMLElement | null;
-		return !!target?.closest("input, textarea, select, [contenteditable]");
-	}
-
 	function escapeKeypress(event: KeyboardEvent) {
 		if (event.key !== "Escape" || selectedMarkerIds.length === 0) return;
 		if (isTypingTarget(event)) return;
@@ -197,9 +193,7 @@
 		if (event.key !== "m" && event.key !== "M") return;
 		if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
 
-		const target = event.target as HTMLElement | null;
-
-		if (target?.closest("input, textarea, select, [contenteditable]")) return;
+		if (isTypingTarget(event)) return;
 
 		event.preventDefault();
 		void addAndSelectMarker();

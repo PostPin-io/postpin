@@ -251,48 +251,16 @@
 		autoScrollId = requestAnimationFrame(autoScroll);
 	}
 
-	// Window-wide so the shortcut keeps working after clicking elsewhere, e.g. the speed button
-	function onSpeedKeyDown(event: KeyboardEvent) {
-		if (event.key !== "+" && event.key !== "-") return;
-		if (event.ctrlKey || event.metaKey || event.altKey) return;
-		if ((event.target as HTMLElement | null)?.closest("input, textarea, select, [contenteditable]"))
-			return;
-		event.preventDefault();
-		changePlaybackRate(event.key === "+" ? 1 : -1);
+	// Keyboard actions, triggered by the page's global key handler
+	export function stepFrames(direction: -1 | 1, bySecond: boolean) {
+		seek(playHeadPosition + direction * (bySecond ? Math.round(fps) : 1));
 	}
-
-	function onKeyDown(event: KeyboardEvent) {
-		if (event.target instanceof HTMLInputElement) return;
-		const step = event.shiftKey ? Math.round(fps) : 1;
-		switch (event.key) {
-			case "ArrowLeft":
-				if (event.metaKey) seek(playHeadPosition - step);
-				else seekToAdjacentMarker(-1);
-				break;
-			case "ArrowRight":
-				if (event.metaKey) seek(playHeadPosition + step);
-				else seekToAdjacentMarker(1);
-				break;
-			case "ArrowUp":
-				seekToCut(-1);
-				break;
-			case "ArrowDown":
-				seekToCut(1);
-				break;
-			case "Home":
-				seek(firstFrame);
-				break;
-			case "End":
-				seek(lastFrame);
-				break;
-			case " ":
-				paused = !paused;
-				if (paused) playbackRate = 1;
-				break;
-			default:
-				return;
-		}
-		event.preventDefault();
+	export { seekToAdjacentMarker, seekToCut, changePlaybackRate };
+	export function seekToStart() {
+		seek(firstFrame);
+	}
+	export function seekToEnd() {
+		seek(lastFrame);
 	}
 
 	onMount(async () => {
@@ -319,9 +287,7 @@
 </script>
 
 <!-- <pre>{JSON.stringify({ markers }, null, 2)}</pre> -->
-<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="flex h-full flex-col outline-none" tabindex="0" onkeydown={onKeyDown}>
+<div class="flex h-full flex-col">
 	<div class="flex items-center justify-between gap-2 border-b border-gray-300 p-2">
 		<span class="text-xs text-gray-500">
 			Space play/pause · ←/→ frame · ↑/↓ previous/next cut · +/- speed
@@ -444,5 +410,3 @@
 		></media-thumbnail>
 	{/if}
 </div>
-
-<svelte:window onkeydown={onSpeedKeyDown} />

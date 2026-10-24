@@ -83,7 +83,7 @@
 		}
 	}}
 	onkeydown={(e) => {
-		if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+		if (e.target === e.currentTarget && e.key === "Enter") {
 			e.preventDefault();
 			onselect?.(marker.frame);
 		}

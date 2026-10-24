@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from "svelte";
+	import { isInsideOverlay, isPlainKey, isTypingTarget } from "#lib/keyboard.ts";
 	import { page } from "$app/state";
 	import {
 		getExport,
@@ -250,6 +251,53 @@
 	let videoPaused = $state(true);
 	let videoPlaybackRate = $state(1);
 
+	let timeline = $state<Timeline>();
+
+	// Single global keyboard handler. Shortcuts work wherever focus is, except while typing or
+	// inside modals. Components with their own shortcuts (MarkerPanel) skip the same targets.
+	function onGlobalKeyDown(event: KeyboardEvent) {
+		if (event.defaultPrevented || !isPlainKey(event, { allowMeta: true })) return;
+		if (isTypingTarget(event) || isInsideOverlay(event)) return;
+
+		const step = (direction: -1 | 1) => timeline?.stepFrames(direction, event.shiftKey);
+		switch (event.key) {
+			case " ":
+				// preventDefault also stops the native click on a focused button
+				if (event.repeat || event.metaKey) return;
+				videoPaused = !videoPaused;
+				if (videoPaused) videoPlaybackRate = 1;
+				break;
+			case "ArrowLeft":
+				if (event.metaKey) step(-1);
+				else timeline?.seekToAdjacentMarker(-1);
+				break;
+			case "ArrowRight":
+				if (event.metaKey) step(1);
+				else timeline?.seekToAdjacentMarker(1);
+				break;
+			case "ArrowUp":
+				timeline?.seekToCut(-1);
+				break;
+			case "ArrowDown":
+				timeline?.seekToCut(1);
+				break;
+			case "Home":
+				timeline?.seekToStart();
+				break;
+			case "End":
+				timeline?.seekToEnd();
+				break;
+			case "+":
+			case "-":
+				if (event.metaKey) return;
+				timeline?.changePlaybackRate(event.key === "+" ? 1 : -1);
+				break;
+			default:
+				return;
+		}
+		event.preventDefault();
+	}
+
 	const snapshot = $derived(exportQuery.current?.timelineSnapshot as TimelineSnapshot | undefined);
 	// Absolute timeline frame, like marker frames
 	const currentFrame = $derived(snapshot ? frameAtSeconds(videoPosition, snapshot) : 0);
@@ -313,6 +361,8 @@
 
 	let viewMode: "shot-grid" | "timeline" = $state("timeline");
 </script>
+
+<svelte:window onkeydown={onGlobalKeyDown} />
 
 {#if isLoading}
 	<div class="flex h-full min-h-0 flex-col overflow-hidden">
@@ -445,6 +495,7 @@
 						<Pane size={layout.left[1]} minSize={10} class="overflow-hidden">
 							{#if exportQuery.current?.timelineSnapshot}
 								<Timeline
+									bind:this={timeline}
 									snapshot={exportQuery.current!.timelineSnapshot as TimelineSnapshot}
 									{markers}
 									{seekThumbnails}
