@@ -4,6 +4,7 @@
 	import { isTypingTarget } from "#lib/keyboard.ts";
 	import Marker from "./Marker.svelte";
 	import UpdateMarker from "./UpdateMarker.svelte";
+	import ResponseMarker from "./ResponseMarker.svelte";
 	import CategoryBadge from "./CategoryBadge.svelte";
 	import { markerFilter } from "./markerFilter.svelte.ts";
 	import Ellipsis from "@lucide/svelte/icons/ellipsis";
@@ -51,6 +52,27 @@
 	let selectedMarker = $derived(markers.find((marker) => marker.id === selectedMarkerId));
 
 	let isUpdateMarkerFocused = $state(false);
+
+	// The response window replaces the editor for the marker being responded to
+	let respondingMarkerId = $state<string | null>(null);
+	let isResponding = $derived(
+		respondingMarkerId !== null && respondingMarkerId === selectedMarkerId,
+	);
+	let responseMarkerComponent: ResponseMarker | null = null;
+
+	$effect(() => {
+		if (respondingMarkerId !== null && respondingMarkerId !== selectedMarkerId) {
+			respondingMarkerId = null;
+		}
+	});
+
+	async function respondTo(id: string) {
+		selectedMarkerIds = [id];
+		anchorMarkerId = id;
+		respondingMarkerId = id;
+		await tick();
+		setTimeout(() => responseMarkerComponent?.focusInput(), 50);
+	}
 
 	function toggleCollapseAllMarkers() {
 		const anyMarkerOpen = markersComponents.some((marker) => marker?.isExpanded());
@@ -251,99 +273,113 @@
 	}
 </script>
 
-<div class="mb-4 flex max-w-full items-center justify-between px-2">
-	<h1 class="shrink-0 text-2xl font-bold">Marker</h1>
+<div class="flex h-full min-h-0 flex-1 flex-col">
+	<div class="mb-4 flex max-w-full shrink-0 items-center justify-between px-2">
+		<h1 class="text-lg font-bold">Marker</h1>
 
-	<div class="dropdown dropdown-left">
-		<div tabindex="0" role="button" class="btn m-1 btn-circle btn-ghost">
-			<Ellipsis class="h-6 w-6" />
-		</div>
-		<ul tabindex="-1" class="menu dropdown-content z-1 w-52 rounded-box bg-base-100 p-2 shadow-sm">
-			<li>
-				<details>
-					<summary>Filter for Category</summary>
-					<ul>
-						<li class="p-0 menu-title">
-							<input
-								type="search"
-								class="input w-full input-xs"
-								placeholder="Search categories"
-								aria-label="Search categories"
-								bind:value={categorySearch}
-							/>
-						</li>
-						<li>
-							<a
-								class={markerFilter.categoryIds.length === 0 ? "menu-active" : ""}
-								onclick={() => markerFilter.clear()}>All</a
-							>
-						</li>
-						{#each filteredCategories as category (category.id)}
-							<li>
-								<label class="flex cursor-pointer items-center gap-2">
-									<input
-										type="checkbox"
-										class="checkbox checkbox-xs"
-										checked={markerFilter.isActive(category.id)}
-										onchange={() => markerFilter.toggle(category.id)}
-									/>
-									<CategoryBadge {category} class="badge-xs" />
-								</label>
+		<div class="dropdown dropdown-left">
+			<div tabindex="0" role="button" class="btn m-1 btn-circle btn-ghost">
+				<Ellipsis class="h-6 w-6" />
+			</div>
+			<ul
+				tabindex="-1"
+				class="menu dropdown-content z-1 w-52 rounded-box bg-base-100 p-2 shadow-sm"
+			>
+				<li>
+					<details>
+						<summary>Filter for Category</summary>
+						<ul>
+							<li class="p-0 menu-title">
+								<input
+									type="search"
+									class="input w-full input-xs"
+									placeholder="Search categories"
+									aria-label="Search categories"
+									bind:value={categorySearch}
+								/>
 							</li>
-						{/each}
-					</ul>
-				</details>
-			</li>
-			{#if markersComponents.length > 0}
-				<li onclick={() => toggleCollapseAllMarkers()}>
-					{#if markersComponents.some((marker) => marker?.isExpanded())}
-						<a>Collapse All</a>
-					{:else}
-						<a>Expand All</a>
-					{/if}
+							<li>
+								<a
+									class={markerFilter.categoryIds.length === 0 ? "menu-active" : ""}
+									onclick={() => markerFilter.clear()}>All</a
+								>
+							</li>
+							{#each filteredCategories as category (category.id)}
+								<li>
+									<label class="flex cursor-pointer items-center gap-2">
+										<input
+											type="checkbox"
+											class="checkbox checkbox-xs"
+											checked={markerFilter.isActive(category.id)}
+											onchange={() => markerFilter.toggle(category.id)}
+										/>
+										<CategoryBadge {category} class="badge-xs" />
+									</label>
+								</li>
+							{/each}
+						</ul>
+					</details>
 				</li>
-			{/if}
-		</ul>
-	</div>
-</div>
-
-<Splitpanes theme="daisy-theme" horizontal class="h-full" style="height: 100%;">
-	<Pane class="overflow-auto">
-		<div class="flex h-full min-h-0 flex-1 flex-col gap-4 overflow-y-auto *:shrink-0">
-			{#each filteredMarkers as marker, index (marker.id)}
-				<Marker
-					{marker}
-					active={selectedMarkerIds.includes(marker.id)}
-					bind:this={markersComponents[index]}
-					onchoose={() => {
-						selectedMarkerIds = [marker.id];
-						anchorMarkerId = marker.id;
-					}}
-					onrange={() => selectRange(marker.id)}
-					ontoggle={() => toggleMarkerSelection(marker.id)}
-					onselect={onseek}
-					onreposition={(frame) => repositionMarker(marker, frame)}
-					{frameRate}
-					{startFrame}
-				/>
-			{/each}
+				{#if markersComponents.length > 0}
+					<li onclick={() => toggleCollapseAllMarkers()}>
+						{#if markersComponents.some((marker) => marker?.isExpanded())}
+							<a>Collapse All</a>
+						{:else}
+							<a>Expand All</a>
+						{/if}
+					</li>
+				{/if}
+			</ul>
 		</div>
-	</Pane>
-	{#if selectedMarker}
-		<Pane minSize={29} maxSize={70} class="overflow-auto">
-			<div class="h-full shrink-0 pb-10">
-				{#key selectedMarker.id}
-					<UpdateMarker
-						bind:this={updateMarkerComponent}
-						marker={selectedMarker}
-						onclose={() => (selectedMarkerIds = [])}
+	</div>
+
+	<Splitpanes theme="daisy-theme" horizontal class="min-h-0 flex-1">
+		<Pane class="overflow-auto">
+			<div class="flex h-full min-h-0 flex-1 flex-col gap-4 overflow-y-auto *:shrink-0">
+				{#each filteredMarkers as marker, index (marker.id)}
+					<Marker
+						{marker}
+						active={selectedMarkerIds.includes(marker.id)}
+						bind:this={markersComponents[index]}
+						onchoose={() => {
+							selectedMarkerIds = [marker.id];
+							anchorMarkerId = marker.id;
+						}}
+						onrange={() => selectRange(marker.id)}
+						ontoggle={() => toggleMarkerSelection(marker.id)}
+						onselect={onseek}
+						onreposition={(frame) => repositionMarker(marker, frame)}
+						onrespond={() => respondTo(marker.id)}
+						{frameRate}
 						{startFrame}
 					/>
-				{/key}
+				{/each}
 			</div>
 		</Pane>
-	{/if}
-</Splitpanes>
+		{#if selectedMarker}
+			<Pane minSize={29} maxSize={70} class="overflow-auto">
+				<div class="h-full shrink-0 pb-10">
+					{#key selectedMarker.id}
+						{#if isResponding}
+							<ResponseMarker
+								bind:this={responseMarkerComponent}
+								marker={selectedMarker}
+								onclose={() => (respondingMarkerId = null)}
+							/>
+						{:else}
+							<UpdateMarker
+								bind:this={updateMarkerComponent}
+								marker={selectedMarker}
+								onclose={() => (selectedMarkerIds = [])}
+								{startFrame}
+							/>
+						{/if}
+					{/key}
+				</div>
+			</Pane>
+		{/if}
+	</Splitpanes>
+</div>
 
 <svelte:window
 	on:keydown={mKeypress}

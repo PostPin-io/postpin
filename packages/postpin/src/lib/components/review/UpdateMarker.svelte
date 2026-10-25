@@ -34,6 +34,7 @@
 
 	let selectedCategoryId = $state<string>(marker.categoryId);
 	let saving = $state(false);
+	let fieldFocused = $state(false);
 
 	let projectId = $derived(page.params.project ?? "");
 	let categories = $derived(await getCategories(projectId));
@@ -118,6 +119,13 @@
 		if (timer) void persist();
 	});
 
+	async function finish(event: KeyboardEvent) {
+		if (event.key !== "Enter" || !(event.metaKey || event.ctrlKey)) return;
+		event.preventDefault();
+		await persist();
+		onclose?.();
+	}
+
 	export function focusTitleInputField() {
 		titleInputField?.focus();
 	}
@@ -129,7 +137,7 @@
 </script>
 
 <section class="card mx-1 h-full border border-base-300 bg-base-200 shadow-sm">
-	<div class="card-body h-full gap-3 p-4">
+	<div class="card-body h-full min-h-0 w-full gap-3 p-4">
 		<div class="flex items-center justify-between gap-3">
 			<div class="flex-screen flex gap-2">
 				<h2 class="card-title text-base">Edit marker</h2>
@@ -172,7 +180,12 @@
 				</button>
 			</div>
 		</div>
-		<form class="flex h-full flex-col gap-2" onsubmit={(e) => e.preventDefault()}>
+		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+		<form
+			class="flex min-h-0 flex-1 flex-col gap-2"
+			onkeydown={finish}
+			onsubmit={(e) => e.preventDefault()}
+		>
 			<div class="flex items-center gap-2">
 				<input
 					bind:this={titleInputField}
@@ -181,6 +194,8 @@
 					placeholder="Title"
 					aria-label="Marker title"
 					bind:value={name}
+					onfocus={() => (fieldFocused = true)}
+					onblur={() => (fieldFocused = false)}
 					oninput={() => schedule()}
 				/>
 				<button
@@ -195,19 +210,23 @@
 					<CircleArrowLeft />
 				</button>
 			</div>
+
 			<textarea
-				class="textarea h-full w-full resize-none"
+				class="textarea min-h-0 w-full flex-1 resize-none"
 				rows="2"
 				placeholder="Description"
 				aria-label="Marker description"
 				bind:value={description}
+				onfocus={() => (fieldFocused = true)}
+				onblur={() => (fieldFocused = false)}
 				oninput={() => schedule()}></textarea>
-
-			<div class="flex items-center justify-between gap-2">
+			<div class="flex shrink-0 items-center justify-between gap-2">
 				<span class="flex items-center gap-2 text-xs text-base-content/60" aria-live="polite">
 					{#if saving}<span class="loading loading-xs loading-spinner"></span>Saving…{/if}
 				</span>
-				≈
+				{#if fieldFocused}
+					<span class="text-xs text-base-content/60">⌘/Ctrl + Enter to close</span>
+				{/if}
 			</div>
 		</form>
 	</div>

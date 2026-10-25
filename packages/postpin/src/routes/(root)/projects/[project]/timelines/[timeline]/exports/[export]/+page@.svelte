@@ -513,7 +513,7 @@
 
 			<!-- Marker panel -->
 			{#if isMarkerVisible}
-				<Pane size={layout.main[1]} minSize={20} maxSize={50} class="overflow-auto">
+				<Pane size={layout.main[1]} minSize={20} maxSize={50} class="flex flex-col overflow-hidden">
 					{#if true}
 						{@const barcode = await getMovieBarcode({
 							mediaId: media?.id ?? "",

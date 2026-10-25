@@ -184,6 +184,31 @@ export const changeDescription = command(
 	},
 );
 
+export const getResponses = query(v.string(), async (markerId: string) => {
+	return prisma.response.findMany({
+		where: { markerId },
+		orderBy: { createdAt: "asc" },
+		include: { author: true },
+	});
+});
+
+export const createResponse = command(
+	v.object({
+		markerId: v.string(),
+		content: v.pipe(v.string(), v.trim(), v.minLength(1)),
+	}),
+	async (data) => {
+		const event = getRequestEvent();
+		const authorId = event.locals.user!.id;
+
+		const response = await prisma.response.create({
+			data: { markerId: data.markerId, content: data.content, authorId },
+		});
+		await getResponses(data.markerId).refresh();
+		return response;
+	},
+);
+
 export const getCategories = query(v.string(), async (projectId: string) => {
 	const event = getRequestEvent();
 
