@@ -17,6 +17,7 @@ export const getMarkers = query(v.string(), async (exportId: string) => {
 		include: {
 			author: true,
 			category: true,
+			responses: { select: { content: true } },
 		},
 	});
 
@@ -204,7 +205,14 @@ export const createResponse = command(
 		const response = await prisma.response.create({
 			data: { markerId: data.markerId, content: data.content, authorId },
 		});
-		await getResponses(data.markerId).refresh();
+		const marker = await prisma.marker.findUniqueOrThrow({
+			where: { id: data.markerId },
+			select: { exportId: true },
+		});
+		await Promise.all([
+			getResponses(data.markerId).refresh(),
+			getMarkers(marker.exportId).refresh(),
+		]);
 		return response;
 	},
 );

@@ -22,6 +22,8 @@
 	} from "./MarkerPanel.remote.ts";
 	import { copyMarkers, readMarkerClipboard } from "./markerClipboard.ts";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
+	import ChevronUp from "@lucide/svelte/icons/chevron-up";
+	import ChevronDown from "@lucide/svelte/icons/chevron-down";
 
 	interface Props {
 		currentFrame: number;
@@ -36,6 +38,7 @@
 	const defaultCategory = $derived(localStorage.getItem("DefaultCategory") ?? "");
 
 	let markers = $derived(await getMarkers(currentExportId));
+
 	let markerAtPlayhead = $derived(markers.find((marker) => marker.frame === currentFrame));
 
 	let markersComponents: Marker[] = $state([]);
@@ -45,8 +48,49 @@
 	let filteredCategories = $derived(
 		categories.filter((c) => c.name.toLowerCase().includes(categorySearch.trim().toLowerCase())),
 	);
-	let filteredMarkers = $derived(markerFilter.apply(markers));
+	type SortField = "updatedAt" | "createdAt" | "user" | "timecode";
+	const sortFields: { value: SortField; label: string }[] = [
+		{ value: "updatedAt", label: "Updated at" },
+		{ value: "createdAt", label: "Created at" },
+		{ value: "user", label: "User" },
+		{ value: "timecode", label: "Timecode" },
+	];
+
+	let sortDirection: "asc" | "desc" = $state("desc");
+	let sortField: SortField = $state("updatedAt");
+
+	function sortMarkers<T extends (typeof markers)[number]>(list: T[]): T[] {
+		const dir = sortDirection === "asc" ? 1 : -1;
+		const compare = (a: T, b: T) => {
+			switch (sortField) {
+				case "updatedAt":
+					return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+				case "createdAt":
+					return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+				case "user":
+					return (a.author?.name ?? "").localeCompare(b.author?.name ?? "");
+				case "timecode":
+					return a.frame - b.frame;
+			}
+		};
+		return [...list].sort((a, b) => dir * compare(a, b));
+	}
+
+	let filteredMarkers = $derived(sortMarkers(markerFilter.apply(markers)));
 	let selectedMarkerIds = $state<string[]>([]);
+
+	let search = $state("");
+	let textFilteredMarkers = $derived(
+		sortMarkers(
+			markers.filter((c) => {
+				const query = search.trim().toLowerCase();
+				return [c.name, c.description ?? "", ...c.responses.map((r) => r.content)].some((text) =>
+					text.toLowerCase().includes(query),
+				);
+			}),
+		),
+	);
+
 	// The editor is only shown while exactly one marker is selected
 	let selectedMarkerId = $derived(selectedMarkerIds.length === 1 ? selectedMarkerIds[0] : null);
 	let selectedMarker = $derived(markers.find((marker) => marker.id === selectedMarkerId));
@@ -275,9 +319,37 @@
 
 <div class="flex h-full min-h-0 flex-1 flex-col">
 	<div class="mb-4 flex max-w-full shrink-0 items-center justify-between px-2">
-		<h1 class="text-lg font-bold">Marker</h1>
-
-		<div class="dropdown dropdown-left">
+		<div class="flex-screen flex gap-2">
+			<h1 class="  text-lg font-bold">Marker</h1>
+			<input
+				type="search"
+				class="input w-1/2 self-end input-xs"
+				placeholder="Search "
+				bind:value={search}
+			/>
+			<button
+				type="button"
+				aria-label="Toggle sort direction"
+				onclick={() => {
+					sortDirection = sortDirection == "asc" ? "desc" : "asc";
+				}}
+			>
+				{#if sortDirection == "asc"}
+					<ChevronUp />
+				{:else}
+					<ChevronDown />
+				{/if}
+			</button>
+		</div>
+		<div
+			class="dropdown dropdown-left"
+			onfocusout={(event) => {
+				// Collapse all submenus once focus leaves the dropdown
+				const next = event.relatedTarget as Node | null;
+				if (next && event.currentTarget.contains(next)) return;
+				event.currentTarget.querySelectorAll("details").forEach((d) => (d.open = false));
+			}}
+		>
 			<div tabindex="0" role="button" class="btn m-1 btn-circle btn-ghost">
 				<Ellipsis class="h-6 w-6" />
 			</div>
@@ -294,7 +366,6 @@
 									type="search"
 									class="input w-full input-xs"
 									placeholder="Search categories"
-									aria-label="Search categories"
 									bind:value={categorySearch}
 								/>
 							</li>
@@ -320,6 +391,21 @@
 						</ul>
 					</details>
 				</li>
+				<li>
+					<details>
+						<summary>Sort by</summary>
+						<ul>
+							{#each sortFields as field (field.value)}
+								<li>
+									<a
+										class={sortField === field.value ? "menu-active" : ""}
+										onclick={() => (sortField = field.value)}>{field.label}</a
+									>
+								</li>
+							{/each}
+						</ul>
+					</details>
+				</li>
 				{#if markersComponents.length > 0}
 					<li onclick={() => toggleCollapseAllMarkers()}>
 						{#if markersComponents.some((marker) => marker?.isExpanded())}
@@ -336,24 +422,48 @@
 	<Splitpanes theme="daisy-theme" horizontal class="min-h-0 flex-1">
 		<Pane class="overflow-auto">
 			<div class="flex h-full min-h-0 flex-1 flex-col gap-4 overflow-y-auto *:shrink-0">
-				{#each filteredMarkers as marker, index (marker.id)}
-					<Marker
-						{marker}
-						active={selectedMarkerIds.includes(marker.id)}
-						bind:this={markersComponents[index]}
-						onchoose={() => {
-							selectedMarkerIds = [marker.id];
-							anchorMarkerId = marker.id;
-						}}
-						onrange={() => selectRange(marker.id)}
-						ontoggle={() => toggleMarkerSelection(marker.id)}
-						onselect={onseek}
-						onreposition={(frame) => repositionMarker(marker, frame)}
-						onrespond={() => respondTo(marker.id)}
-						{frameRate}
-						{startFrame}
-					/>
-				{/each}
+				{#if search.trim() == ""}
+					{#each filteredMarkers as marker, index (marker.id)}
+						<Marker
+							{marker}
+							active={selectedMarkerIds.includes(marker.id)}
+							bind:this={markersComponents[index]}
+							onchoose={() => {
+								selectedMarkerIds = [marker.id];
+								anchorMarkerId = marker.id;
+							}}
+							onrange={() => selectRange(marker.id)}
+							ontoggle={() => toggleMarkerSelection(marker.id)}
+							onselect={onseek}
+							onreposition={(frame) => repositionMarker(marker, frame)}
+							onrespond={() => respondTo(marker.id)}
+							{frameRate}
+							{startFrame}
+						/>
+					{/each}
+				{:else}
+					{#each textFilteredMarkers as marker, index (marker.id)}
+						<Marker
+							{marker}
+							active={selectedMarkerIds.includes(marker.id)}
+							bind:this={markersComponents[index]}
+							onchoose={() => {
+								selectedMarkerIds = [marker.id];
+								anchorMarkerId = marker.id;
+							}}
+							onrange={() => selectRange(marker.id)}
+							ontoggle={() => toggleMarkerSelection(marker.id)}
+							onselect={onseek}
+							onreposition={(frame) => repositionMarker(marker, frame)}
+							onrespond={() => respondTo(marker.id)}
+							{frameRate}
+							{startFrame}
+						/>
+					{/each}
+					{#if filteredMarkers.length === 0}
+						<p class="p-4">No markers found.</p>
+					{/if}
+				{/if}
 			</div>
 		</Pane>
 		{#if selectedMarker}
