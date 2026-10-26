@@ -12,31 +12,21 @@
 <script lang="ts">
 	import { untrack } from "svelte";
 	import type { HlsJsVideoElement } from "@videojs/html/media/hlsjs-video";
-	import Maximize from "@lucide/svelte/icons/maximize";
-	import Volume2 from "@lucide/svelte/icons/volume-2";
-	import VolumeX from "@lucide/svelte/icons/volume-x";
-	import ArrowLeft from "@lucide/svelte/icons/arrow-left";
-	import ArrowRight from "@lucide/svelte/icons/arrow-right";
-	import Timecode from "./Timecode.svelte";
-	import { nextPlaybackRate, seekToMarker } from "./VideoPlayer";
-	import {
-		frameAtSeconds,
-		secondsAtFrame,
-		type FrameTiming,
-	} from "@postpin-io/shared/logic/timecode";
+	import type { FrameTiming } from "@postpin-io/shared/logic/timecode";
 
 	let {
 		source,
 		poster,
-		markers,
 		timing,
 		currentTime = $bindable(0),
 		paused = $bindable(true),
 		playbackRate = $bindable(1),
 		quality = $bindable<number | "auto">("auto"),
+		qualities = $bindable<number[]>([]),
+
+		muted = $bindable(false),
 	}: {
 		source: VideoSource;
-		markers: { frame: number }[];
 		poster?: string;
 		timing: FrameTiming;
 		currentTime?: number;
@@ -44,22 +34,24 @@
 		playbackRate?: number;
 		/** Rendition height to lock to, or "auto" */
 		quality?: number | "auto";
+		/** Rendition heights available once the playlist has loaded */
+		qualities?: number[];
+		muted?: boolean;
 	} = $props();
 
 	let element = $state<HTMLElement>();
 	/** The element once <hlsjs-video> is defined and set up */
 	let media = $state<HlsJsVideoElement>();
-	let qualities = $state<number[]>([]);
-	let muted = $state(false);
 
 	const fps = $derived(timing.frameRate.fpsNumerator / timing.frameRate.fpsDenominator);
-	// Absolute timeline frame, like marker frames
-	const frame = $derived(frameAtSeconds(currentTime, timing));
 
 	// A seek in flight owns currentTime until it lands; timeupdates from the old position would undo it
 	let seeking = false;
 	let seekTarget = 0;
 	let seekId = 0;
+
+	// Playing before the source has loaded fails and would flip paused back to true
+	let ready = $state(false);
 
 	let reloads = $state(0);
 	let recentReloads: number[] = [];
@@ -124,14 +116,6 @@
 		reloads++;
 	}
 
-	function seekToAdjacentMarker(direction: -1 | 1) {
-		const markerFrame = seekToMarker(direction, { markers, playHeadPosition: frame });
-		if (markerFrame !== undefined) currentTime = secondsAtFrame(markerFrame, timing);
-	}
-
-	const seekToNextMarker = () => seekToAdjacentMarker(1);
-	const seekToPreviousMarker = () => seekToAdjacentMarker(-1);
-
 	$effect(() => {
 		const host = element;
 		if (!host) return;
@@ -165,6 +149,7 @@
 			video.addEventListener("ratechange", () => (playbackRate = video.playbackRate));
 			video.addEventListener("volumechange", () => (muted = video.muted));
 			video.addEventListener("loadedmetadata", () => {
+				ready = true;
 				updateQualities();
 				video.videoRenditions?.addEventListener("addrendition", updateQualities);
 			});
@@ -177,6 +162,7 @@
 			cancelAnimationFrame(frame);
 			el?.pause();
 			media = undefined;
+			ready = false;
 		};
 	});
 
@@ -210,7 +196,7 @@
 
 	$effect(() => {
 		const el = media;
-		if (!el) return;
+		if (!el || !ready) return;
 		if (paused && !el.paused) el.pause();
 		else if (!paused && el.paused) el.play().catch(() => (paused = true));
 	});
@@ -221,8 +207,25 @@
 		if (paused) playbackRate = 1;
 	}
 
+	export function toggleMute() {
+		if (media) media.muted = !media.muted;
+	}
+
+	export function requestFullscreen() {
+		void media?.requestFullscreen();
+	}
+
+	function onVideoClick() {
+		togglePlayback();
+		flashIndicator(paused ? "pause" : "play");
+	}
+
 	$effect(() => {
 		if (media && media.playbackRate !== playbackRate) media.playbackRate = playbackRate;
+	});
+
+	$effect(() => {
+		if (media && media.muted !== muted) media.muted = muted;
 	});
 
 	$effect(() => {
@@ -242,84 +245,72 @@
 		}
 		if (renditions.selectedIndex !== index) renditions.selectedIndex = index;
 	});
+
+	let indicator = $state<{ id: number; kind: "play" | "pause" }>();
+	let indicatorId = 0;
+	let indicatorTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function flashIndicator(kind: "play" | "pause") {
+		clearTimeout(indicatorTimer);
+		indicator = { id: ++indicatorId, kind };
+		indicatorTimer = setTimeout(() => (indicator = undefined), 1000);
+	}
+
+	$effect(() => () => clearTimeout(indicatorTimer));
 </script>
 
 <div class="group relative flex h-full w-full flex-col">
 	<div class="relative min-h-0 flex-1">
-		<hlsjs-video bind:this={element} playsinline class="absolute inset-0 block"></hlsjs-video>
-	</div>
+		<hlsjs-video
+			bind:this={element}
+			playsinline
+			class="absolute inset-0 block"
+			onclick={onVideoClick}
+		></hlsjs-video>
 
-	<div class="grid w-full shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-1 border-t-1 p-1">
-		<div class="flex items-center gap-2 justify-self-start">
-			<Timecode
-				bind:frame={() => frame, (f) => (currentTime = secondsAtFrame(f, timing))}
-				frameRate={timing.frameRate}
-				startFrame={timing.startFrameIndex}
-				editable={true}
-			/>
-			<span class="font-mono">|</span>
-			<button
-				class="font-mono"
-				title="Change playback speed"
-				onclick={() => (playbackRate = nextPlaybackRate(playbackRate))}
-			>
-				{playbackRate}×
-			</button>
-		</div>
-
-		<div class="flex items-center justify-center">
-			<button
-				class="btn btn-square btn-ghost btn-xs"
-				title="Jump to previous Marker on the left"
-				onclick={() => seekToPreviousMarker()}
-			>
-				<ArrowLeft size={16} />
-			</button>
-
-			<button
-				class="btn btn-square btn-ghost btn-xs"
-				aria-label={paused ? "Play" : "Pause"}
-				onclick={togglePlayback}
-			>
-				{#if paused}
-					<Play size={16} />
-				{:else}
-					<Pause size={16} />
-				{/if}
-			</button>
-
-			<button
-				class="btn btn-square btn-ghost btn-xs"
-				title="Jump to next Marker on the right"
-				onclick={() => seekToNextMarker()}
-			>
-				<ArrowRight size={16} />
-			</button>
-		</div>
-
-		<div class="flex items-center gap-1 justify-self-end">
-			{#if qualities.length > 0}
-				<select class="select w-24 select-xs" bind:value={quality} aria-label="Quality">
-					<option value="auto">Auto</option>
-					{#each qualities as height (height)}
-						<option value={height}>{height}p</option>
-					{/each}
-				</select>
-			{/if}
-			<button
-				class="btn btn-square btn-ghost btn-xs"
-				aria-label={muted ? "Unmute" : "Mute"}
-				onclick={() => media && (media.muted = !media.muted)}
-			>
-				{#if muted}<VolumeX size={16} />{:else}<Volume2 size={16} />{/if}
-			</button>
-			<button
-				class="btn btn-square btn-ghost btn-xs"
-				aria-label="Fullscreen"
-				onclick={() => void media?.requestFullscreen()}
-			>
-				<Maximize size={16} />
-			</button>
-		</div>
+		{#if indicator}
+			{#key indicator.id}
+				<div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+					<div class="indicator rounded-full bg-black/60 p-5 text-white">
+						{#if indicator.kind === "play"}
+							<Play size={32} class="fill-current" />
+						{:else}
+							<Pause size={32} class="fill-current" />
+						{/if}
+					</div>
+				</div>
+			{/key}
+		{/if}
 	</div>
 </div>
+
+<style>
+	.indicator {
+		animation: indicator-flash 800ms ease-out forwards;
+	}
+
+	@keyframes indicator-flash {
+		from {
+			opacity: 0.9;
+			transform: scale(0.8);
+		}
+		to {
+			opacity: 0;
+			transform: scale(1.2);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.indicator {
+			animation-name: indicator-fade;
+		}
+		@keyframes indicator-fade {
+			from {
+				opacity: 0.9;
+			}
+			to {
+				opacity: 0;
+			}
+		}
+	}
+</style>

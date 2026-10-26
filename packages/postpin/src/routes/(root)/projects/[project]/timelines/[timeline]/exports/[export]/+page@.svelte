@@ -13,6 +13,7 @@
 	import Header from "#lib/components/Header.svelte";
 	import MarkerPanel from "#lib/components/review/MarkerPanel.svelte";
 	import { markerFilter } from "#lib/components/review/markerFilter.svelte.ts";
+	import VideoMenuBar from "#lib/components/review/VideoMenuBar.svelte";
 	import VideoPlayer, { HLS, type VideoSource } from "#lib/components/review/VideoPlayer.svelte";
 	import { Pane, Splitpanes } from "svelte-splitpanes";
 	import Timeline from "./Timeline.svelte";
@@ -360,6 +361,9 @@
 	});
 
 	let viewMode: "shot-grid" | "timeline" = $state("timeline");
+	let player = $state<VideoPlayer>();
+	let videoQualities = $state<number[]>([]);
+	let videoMuted = $state(false);
 </script>
 
 <svelte:window onkeydown={onGlobalKeyDown} />
@@ -440,9 +444,6 @@
 					</ul>
 				</details>
 			{/if}
-
-			<button class="btn" onclick={() => (viewMode = "timeline")}>Timeline</button>
-			<button class="btn" onclick={() => (viewMode = "shot-grid")}>Shot Grid</button>
 		</Header>
 
 		<Splitpanes
@@ -462,29 +463,46 @@
 						<div class="flex h-full min-h-0 flex-col">
 							{#if !media}
 								<p>Nothing uploaded yet.</p>
-							{:else if viewMode === "shot-grid" && snapshot}
-								<ShotGrid
-									{snapshot}
-									mediaId={media.id}
-									thumbnailsReady={!!media.shotThumbnails}
-									{currentFrame}
-									onSeek={seekToFrame}
-								/>
 							{:else}
-								<!-- Video -->
-								{#if media.status !== "PENDING" && videoSource && snapshot}
-									<div class="min-h-0 flex-1 overflow-hidden">
+								<div class="min-h-0 flex-1 overflow-hidden">
+									{#if viewMode === "shot-grid" && snapshot}
+										<ShotGrid
+											{snapshot}
+											mediaId={media.id}
+											thumbnailsReady={!!media.shotThumbnails}
+											{currentFrame}
+											onSeek={seekToFrame}
+										/>
+									{:else if media.status !== "PENDING" && videoSource && snapshot}
 										<VideoPlayer
+											bind:this={player}
 											source={videoSource}
 											poster={thumbnailUrl}
 											timing={snapshot}
-											{markers}
 											bind:currentTime={videoPosition}
 											bind:paused={videoPaused}
 											bind:playbackRate={videoPlaybackRate}
 											bind:quality={videoQuality}
+											bind:qualities={videoQualities}
+											bind:muted={videoMuted}
 										/>
-									</div>
+									{/if}
+								</div>
+								{#if snapshot}
+									<VideoMenuBar
+										{markers}
+										timing={snapshot}
+										bind:currentTime={videoPosition}
+										bind:paused={videoPaused}
+										bind:playbackRate={videoPlaybackRate}
+										bind:quality={videoQuality}
+										bind:viewMode
+										qualities={videoQualities}
+										muted={videoMuted}
+										playerAvailable={viewMode === "timeline" && !!player}
+										onToggleMute={() => player?.toggleMute()}
+										onFullscreen={() => player?.requestFullscreen()}
+									/>
 								{/if}
 							{/if}
 						</div>
