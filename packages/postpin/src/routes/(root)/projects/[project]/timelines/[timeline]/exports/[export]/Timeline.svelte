@@ -442,10 +442,13 @@
 		</div>
 	</div>
 	{#if thumbnailReady && hover}
-		<media-thumbnail
-			bind:this={preview}
-			class="pointer-events-none fixed z-50 rounded-sm shadow-lg"
+		<!-- The element sets its own inline width/height to clip the sprite sheet to one tile. Moving it
+		with a reactive style attribute would overwrite those, so only this wrapper is positioned. -->
+		<div
+			class="pointer-events-none fixed z-50"
 			style="left: {hover.x - 80}px; top: {hover.y - 98}px"
-		></media-thumbnail>
+		>
+			<media-thumbnail bind:this={preview} class="rounded-sm shadow-lg"></media-thumbnail>
+		</div>
 	{/if}
 </div>
