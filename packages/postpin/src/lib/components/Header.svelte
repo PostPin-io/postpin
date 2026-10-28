@@ -5,7 +5,9 @@
 	import { goto, refreshAll } from "$app/navigation";
 	import { hasRole, MANAGER_ROLES } from "#lib/roles.ts";
 	import type { Snippet } from "svelte";
-
+	import Share from "@lucide/svelte/icons/share";
+	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
+	let sharingSetupModal: SharingSetupModal | null = null;
 	const session = authClient.useSession();
 	const organizations = authClient.useListOrganizations();
 	const activeMember = authClient.useActiveMember();
@@ -123,7 +125,14 @@
 			<div class="navbar-center hidden lg:flex">{@render children()}</div>
 		{/if}
 		<div class="navbar-end">
-			<input type="text" placeholder="Search" class="input w-64 lg:w-auto" />
+			<button
+				class="btn btn-square btn-ghost"
+				aria-label="Share"
+				onclick={() => sharingSetupModal?.open()}
+			>
+				<Share class="h-5 w-5" />
+			</button>
+
 			<div class="dropdown dropdown-end ml-2">
 				<div tabindex="0" role="button" class="btn btn-ghost">
 					{$session.data?.user.name ?? "Account"}
@@ -167,3 +176,5 @@
 		</ul>
 	</div>
 </header>
+
+<SharingSetupModal bind:this={sharingSetupModal} />

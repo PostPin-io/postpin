@@ -4,6 +4,7 @@
 	import { getExportList } from "./exportlist.remote.ts";
 	import { getUrl } from "../../../../../videotests/videotests.remote.ts";
 	import RenameExportModal from "#lib/components/RenameExportModal.svelte";
+	import DeleteExportModal from "#lib/components/DeleteExportModal.svelte";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
@@ -12,6 +13,7 @@
 	import FileDown from "@lucide/svelte/icons/file-down";
 	import Link from "@lucide/svelte/icons/link";
 	import Pencil from "@lucide/svelte/icons/pencil";
+	import Trash2 from "@lucide/svelte/icons/trash-2";
 
 	let viewMode: "table" | "card" = $state("card");
 	let sortField: "name" | "created" | "updated" = $state("updated");
@@ -19,6 +21,7 @@
 	let loadingStatus = $state(true);
 
 	let renameExportDialog: RenameExportModal | null = null;
+	let deleteExportDialog: DeleteExportModal | null = null;
 
 	let exports = $derived(await getExportList(page.params.timeline || ""));
 
@@ -52,6 +55,11 @@
 		renameExportDialog?.open(singleExport);
 	}
 
+	function deleteExport(singleExport: (typeof exports)[number]) {
+		closeMenu(singleExport.id);
+		deleteExportDialog?.open(singleExport);
+	}
+
 	onMount(() => {
 		const storedMode = localStorage.getItem("ExportsView");
 		const storedFieldStatus = localStorage.getItem("SortFieldStatus");
@@ -81,7 +89,7 @@
 </script>
 
 <!--
-	Ein Dropdown für alle Aktionen eines Exports (Öffnen, Link kopieren, Umbenennen).
+	Ein Dropdown für alle Aktionen eines Exports (Öffnen, Link kopieren, Umbenennen, Löschen).
 	Nutzt das Popover-API von daisyUI 5: Das Menü liegt im Top-Layer des Browsers
 	und wird deshalb nicht von overflow-Containern (Tabelle, Card) abgeschnitten.
 -->
@@ -118,6 +126,12 @@
 			<button type="button" onclick={() => renameExport(singleExport)}>
 				<Pencil class="size-4" />
 				Rename export
+			</button>
+		</li>
+		<li>
+			<button type="button" class="text-error" onclick={() => deleteExport(singleExport)}>
+				<Trash2 class="size-4" />
+				Delete export
 			</button>
 		</li>
 	</ul>
@@ -349,3 +363,4 @@
 </div>
 
 <RenameExportModal bind:this={renameExportDialog} />
+<DeleteExportModal bind:this={deleteExportDialog} />
