@@ -88,6 +88,8 @@
 	function saveLayout(key: keyof PaneLayout, event: CustomEvent<{ size: number }[]>) {
 		const sizes = event.detail.map((pane) => pane.size);
 
+		// The collapsed timeline's fixed size must not overwrite the saved layout
+		if (key === "left" && timelineCollapsed) return;
 		layout[key] = normalizeSizes(sizes);
 
 		try {
@@ -361,6 +363,25 @@
 	});
 
 	let viewMode: "shot-grid" | "timeline" = $state("timeline");
+	const COLLAPSED_KEY = "postpin:timeline-collapsed";
+	let timelineCollapsed = $state(
+		typeof localStorage !== "undefined" && localStorage.getItem(COLLAPSED_KEY) === "true",
+	);
+	$effect(() => {
+		try {
+			localStorage.setItem(COLLAPSED_KEY, String(timelineCollapsed));
+		} catch (error) {
+			console.error("Failed to save timeline collapse state:", error);
+		}
+	});
+	let timelineCollapsedHeight = $state(0);
+	let leftPanesHeight = $state(0);
+	// Collapsed timeline gets exactly the space it needs, in percent of the pane column
+	const collapsedPercent = $derived(
+		timelineCollapsed && leftPanesHeight > 0 && timelineCollapsedHeight > 0
+			? Math.min((timelineCollapsedHeight / leftPanesHeight) * 100, 85)
+			: undefined,
+	);
 	let player = $state<VideoPlayer>();
 	let videoQualities = $state<number[]>([]);
 	let videoMuted = $state(false);
@@ -453,80 +474,94 @@
 		>
 			<!-- Main content -->
 			<Pane size={layout.main[0]} minSize={isMarkerVisible ? 25 : 100} class="overflow-auto">
-				<Splitpanes
-					theme="daisy-theme"
-					horizontal
-					on:resized={(event) => saveLayout("left", event)}
-				>
-					<!-- Video and jobs -->
-					<Pane size={layout.left[0]} minSize={isTimelineVisible ? 15 : 100} class="overflow-auto">
-						<div class="flex h-full min-h-0 flex-col">
-							{#if !media}
-								<p>Nothing uploaded yet.</p>
-							{:else}
-								<div class="min-h-0 flex-1 overflow-hidden">
-									{#if viewMode === "shot-grid" && snapshot}
-										<ShotGrid
-											{snapshot}
-											mediaId={media.id}
-											thumbnailsReady={!!media.shotThumbnails}
-											{currentFrame}
-											onSeek={seekToFrame}
-										/>
-									{:else if media.status !== "PENDING" && videoSource && snapshot}
-										<VideoPlayer
-											bind:this={player}
-											source={videoSource}
-											poster={thumbnailUrl}
+				<div class="h-full" bind:clientHeight={leftPanesHeight}>
+					<Splitpanes
+						theme="daisy-theme"
+						horizontal
+						on:resized={(event) => saveLayout("left", event)}
+					>
+						<!-- Video and jobs -->
+						<Pane
+							size={collapsedPercent !== undefined ? 100 - collapsedPercent : layout.left[0]}
+							minSize={isTimelineVisible ? 15 : 100}
+							class="overflow-auto"
+						>
+							<div class="flex h-full min-h-0 flex-col">
+								{#if !media}
+									<p>Nothing uploaded yet.</p>
+								{:else}
+									<div class="min-h-0 flex-1 overflow-hidden">
+										{#if viewMode === "shot-grid" && snapshot}
+											<ShotGrid
+												{snapshot}
+												mediaId={media.id}
+												thumbnailsReady={!!media.shotThumbnails}
+												{currentFrame}
+												onSeek={seekToFrame}
+											/>
+										{:else if media.status !== "PENDING" && videoSource && snapshot}
+											<VideoPlayer
+												bind:this={player}
+												source={videoSource}
+												poster={thumbnailUrl}
+												timing={snapshot}
+												bind:currentTime={videoPosition}
+												bind:paused={videoPaused}
+												bind:playbackRate={videoPlaybackRate}
+												bind:quality={videoQuality}
+												bind:qualities={videoQualities}
+												bind:muted={videoMuted}
+											/>
+										{/if}
+									</div>
+									{#if snapshot}
+										<VideoMenuBar
+											{markers}
 											timing={snapshot}
 											bind:currentTime={videoPosition}
 											bind:paused={videoPaused}
 											bind:playbackRate={videoPlaybackRate}
 											bind:quality={videoQuality}
-											bind:qualities={videoQualities}
-											bind:muted={videoMuted}
+											bind:viewMode
+											bind:timelineCollapsed
+											qualities={videoQualities}
+											muted={videoMuted}
+											playerAvailable={viewMode === "timeline" && !!player}
+											onToggleMute={() => player?.toggleMute()}
+											onFullscreen={() => player?.requestFullscreen()}
 										/>
 									{/if}
-								</div>
-								{#if snapshot}
-									<VideoMenuBar
+								{/if}
+							</div>
+						</Pane>
+
+						<!-- Timeline panel -->
+						{#if isTimelineVisible}
+							<Pane
+								size={collapsedPercent ?? layout.left[1]}
+								minSize={collapsedPercent ?? 10}
+								maxSize={collapsedPercent ?? 100}
+								class="overflow-hidden"
+							>
+								{#if exportQuery.current?.timelineSnapshot}
+									<Timeline
+										bind:this={timeline}
+										snapshot={exportQuery.current!.timelineSnapshot as TimelineSnapshot}
 										{markers}
-										timing={snapshot}
-										bind:currentTime={videoPosition}
+										{seekThumbnails}
+										collapsed={timelineCollapsed}
+										onCollapsedHeight={(height) => (timelineCollapsedHeight = height)}
+										bind:videoPositionSeconds={videoPosition}
 										bind:paused={videoPaused}
 										bind:playbackRate={videoPlaybackRate}
-										bind:quality={videoQuality}
-										bind:viewMode
-										qualities={videoQualities}
-										muted={videoMuted}
-										playerAvailable={viewMode === "timeline" && !!player}
-										onToggleMute={() => player?.toggleMute()}
-										onFullscreen={() => player?.requestFullscreen()}
 									/>
 								{/if}
-							{/if}
-						</div>
-					</Pane>
 
-					<!-- Timeline panel -->
-					{#if isTimelineVisible}
-						<Pane size={layout.left[1]} minSize={10} class="overflow-hidden">
-							{#if exportQuery.current?.timelineSnapshot}
-								<Timeline
-									bind:this={timeline}
-									snapshot={exportQuery.current!.timelineSnapshot as TimelineSnapshot}
-									{markers}
-									{seekThumbnails}
-									bind:videoPositionSeconds={videoPosition}
-									bind:paused={videoPaused}
-									bind:playbackRate={videoPlaybackRate}
-								/>
-							{/if}
-
-							<!-- Timeline content -->
-						</Pane>
-					{/if}
-				</Splitpanes>
+								<!-- Timeline content -->
+							</Pane>
+						{/if}
+					</Splitpanes>
+				</div>
 			</Pane>
 
 			<!-- Marker panel -->

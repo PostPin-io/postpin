@@ -20,6 +20,9 @@
 		paused: boolean;
 		playbackRate: number;
 		seekThumbnails: ThumbnailImage[] | undefined;
+		collapsed?: boolean;
+
+		onCollapsedHeight: (height: number) => void;
 	}
 
 	let {
@@ -29,6 +32,8 @@
 		playbackRate = $bindable(1),
 		markers,
 		seekThumbnails,
+		collapsed = false,
+		onCollapsedHeight,
 	}: Props = $props();
 
 	let hover = $state<{ time: number; x: number; y: number } | null>(null);
@@ -57,16 +62,47 @@
 			: 1,
 	);
 
-	let tracks = $derived([
-		...snapshot.tracks.filter((track) => track.type === "video").reverse(),
-		...snapshot.tracks.filter((track) => track.type === "audio"),
-	]);
+	type Lane = {
+		id: string;
+		name: string;
+		type: string;
+		clips: TimelineSnapshot["tracks"][number]["clips"];
+	};
+
+	let tracks = $derived.by((): Lane[] => {
+		const video = snapshot.tracks.filter((track) => track.type === "video");
+		const audio = snapshot.tracks.filter((track) => track.type === "audio");
+		if (!collapsed) return [...video.reverse(), ...audio];
+		// Higher tracks come later and are drawn on top
+		const merge = (type: string, name: string, list: typeof video): Lane[] =>
+			list.length > 0
+				? [{ id: type, name, type, clips: list.flatMap((track) => track.clips) }]
+				: [];
+		return [...merge("video", "Video", video), ...merge("audio", "Audio", audio)];
+	});
+	const laneHeight = $derived(collapsed ? "h-7" : "h-12");
 
 	let headers = $state<HTMLDivElement>();
 	let lanes = $state<HTMLDivElement>();
 	let content = $state<HTMLDivElement>();
 	let lanesOffsetHeight = $state(0);
 	let lanesClientHeight = $state(0);
+	let toolbarHeight = $state(0);
+	const COLLAPSED_BOTTOM_SPACE = 24;
+
+	// Collapsed layout has one merged lane per track type, regardless of the current state.
+	// Using tracks.length here would count every track while expanded and report a wrong height.
+	const collapsedLaneCount = $derived(
+		new Set(
+			snapshot.tracks.map((track) => track.type).filter((t) => t === "video" || t === "audio"),
+		).size,
+	);
+
+	$effect(() => {
+		// toolbar, ruler (h-12), 28px lanes, plus fixed room for the scrollbar. Not measured, as the
+		// scrollbar appearing would resize the pane and loop.
+		onCollapsedHeight(toolbarHeight + 48 + collapsedLaneCount * 28 + COLLAPSED_BOTTOM_SPACE);
+	});
 
 	const fps = $derived(snapshot.frameRate.fpsNumerator / snapshot.frameRate.fpsDenominator);
 
@@ -288,7 +324,10 @@
 
 <!-- <pre>{JSON.stringify({ markers }, null, 2)}</pre> -->
 <div class="flex h-full flex-col">
-	<div class="flex items-center justify-between gap-2 border-b border-gray-300 p-2">
+	<div
+		bind:offsetHeight={toolbarHeight}
+		class="flex items-center justify-between gap-2 border-b border-gray-300 p-2"
+	>
 		<span class="text-xs text-gray-500">
 			Space play/pause · ←/→ frame · ↑/↓ previous/next cut · +/- speed
 		</span>
@@ -311,7 +350,7 @@
 			<div class="sticky top-0 z-20 h-12 border-b border-gray-300 bg-base-100"></div>
 			{#each tracks as track (track.id)}
 				<div
-					class="flex h-12 items-center truncate border-b border-gray-300 px-2 text-sm"
+					class="flex {laneHeight} items-center truncate border-b border-gray-300 px-2 text-sm"
 					title={track.name}
 				>
 					{track.name}
@@ -366,7 +405,7 @@
 				</div>
 
 				{#each tracks as track (track.id)}
-					<div class="relative h-12 border-b border-gray-300">
+					<div class="relative {laneHeight} border-b border-gray-300">
 						{#each track.clips as clip (clip.id)}
 							<button
 								type="button"
@@ -379,7 +418,7 @@
 								title={clip.name}
 								onclick={() => seek(clip.startFrameIndex)}
 							>
-								{clip.name}
+								{#if !collapsed}{clip.name}{/if}
 							</button>
 						{/each}
 					</div>

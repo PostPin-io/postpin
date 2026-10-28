@@ -8,6 +8,8 @@
 	import ArrowRight from "@lucide/svelte/icons/arrow-right";
 	import LayoutGrid from "@lucide/svelte/icons/layout-grid";
 	import Film from "@lucide/svelte/icons/film";
+	import ChevronsDownUp from "@lucide/svelte/icons/chevrons-down-up";
+	import ChevronsUpDown from "@lucide/svelte/icons/chevrons-up-down";
 	import Timecode from "./Timecode.svelte";
 	import { nextPlaybackRate, seekToMarker } from "./VideoPlayer";
 	import {
@@ -24,6 +26,7 @@
 		playbackRate = $bindable(1),
 		quality = $bindable<number | "auto">("auto"),
 		viewMode = $bindable<"shot-grid" | "timeline">("timeline"),
+		timelineCollapsed = $bindable(false),
 		qualities = [],
 		muted = false,
 		playerAvailable = false,
@@ -37,6 +40,7 @@
 		playbackRate?: number;
 		quality?: number | "auto";
 		viewMode?: "shot-grid" | "timeline";
+		timelineCollapsed?: boolean;
 		qualities?: number[];
 		muted?: boolean;
 		/** Whether a video element is mounted; mute, quality and fullscreen need one */
@@ -127,6 +131,13 @@
 		</button>
 	</div>
 	<div class="flex items-center gap-1 justify-self-end">
+		<button
+			class="btn btn-square btn-ghost btn-xs"
+			title={timelineCollapsed ? "Expand Timeline" : "Collapse Timeline"}
+			onclick={() => (timelineCollapsed = !timelineCollapsed)}
+		>
+			{#if timelineCollapsed}<ChevronsUpDown size={16} />{:else}<ChevronsDownUp size={16} />{/if}
+		</button>
 		{#if playerAvailable}
 			{#if qualities.length > 0}
 				<select class="select w-24 select-xs" bind:value={quality}>
@@ -143,6 +154,7 @@
 				<Maximize size={16} />
 			</button>
 		{/if}
+
 		<button
 			class="btn btn-square btn-ghost btn-xs"
 			title={viewMode === "timeline" ? "Show Shot Grid" : "Show Video"}
