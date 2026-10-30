@@ -91,6 +91,16 @@
 		),
 	);
 
+	let hasActiveFilters = $derived(markerFilter.categoryIds.length > 0 || search.trim() !== "");
+	let visibleMarkerCount = $derived(
+		search.trim() === "" ? filteredMarkers.length : textFilteredMarkers.length,
+	);
+
+	function clearAllFilters() {
+		markerFilter.clear();
+		search = "";
+	}
+
 	// The editor is only shown while exactly one marker is selected
 	let selectedMarkerId = $derived(selectedMarkerIds.length === 1 ? selectedMarkerIds[0] : null);
 	let selectedMarker = $derived(markers.find((marker) => marker.id === selectedMarkerId));
@@ -460,9 +470,22 @@
 							{startFrame}
 						/>
 					{/each}
-					{#if filteredMarkers.length === 0}
-						<p class="p-4">No markers found.</p>
-					{/if}
+				{/if}
+				{#if markers.length === 0}
+					<div class="flex flex-col items-start gap-2 p-4">
+						<p class="text-base-content/70">
+							No markers yet. Press <kbd class="kbd kbd-sm">M</kbd> to create a marker.
+						</p>
+					</div>
+
+					<p class="p-4 text-base-content/70"></p>
+				{:else if visibleMarkerCount === 0 && hasActiveFilters}
+					<div class="flex flex-col items-start gap-2 p-4">
+						<p class="text-base-content/70">No markers match the active filters.</p>
+						<button type="button" class="btn btn-sm" onclick={clearAllFilters}>
+							Clear all filters
+						</button>
+					</div>
 				{/if}
 			</div>
 		</Pane>

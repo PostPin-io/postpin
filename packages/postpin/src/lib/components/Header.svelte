@@ -5,6 +5,7 @@
 	import { goto, refreshAll } from "$app/navigation";
 	import { hasRole, MANAGER_ROLES } from "#lib/roles.ts";
 	import type { Snippet } from "svelte";
+	import Logo from "#lib/components/Logo.svelte";
 	import Share from "@lucide/svelte/icons/share";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
 	let sharingSetupModal: SharingSetupModal | null = null;
@@ -92,6 +93,7 @@
 				>
 			</label>
 			<a href={resolve("/(root)/dashboard")} class="btn btn-ghost text-xl">
+				<Logo class="h-6 w-auto" />
 				{#if activeOrganization}
 					{activeOrganization.name}
 					<span class="font-normal text-base-content/40">|</span>
