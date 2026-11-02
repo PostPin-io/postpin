@@ -12,7 +12,13 @@
 	import ChevronsDownUp from "@lucide/svelte/icons/chevrons-down-up";
 	import ChevronsUpDown from "@lucide/svelte/icons/chevrons-up-down";
 	import Timecode from "./Timecode.svelte";
-	import { nextPlaybackRate, seekToMarker } from "./VideoPlayer";
+	import FoldVertical from "@lucide/svelte/icons/fold-vertical";
+	import {
+		nextPlaybackRate,
+		nextTimelineMode,
+		seekToMarker,
+		type TimelineMode,
+	} from "./VideoPlayer";
 	import {
 		frameAtSeconds,
 		secondsAtFrame,
@@ -28,7 +34,7 @@
 		playbackRate = $bindable(1),
 		quality = $bindable<number | "auto">("auto"),
 		viewMode = $bindable<"shot-grid" | "timeline">("timeline"),
-		timelineCollapsed = $bindable(false),
+		timelineMode = $bindable<TimelineMode>("full"),
 		qualities = [],
 		muted = false,
 		playerAvailable = false,
@@ -45,7 +51,7 @@
 		playbackRate?: number;
 		quality?: number | "auto";
 		viewMode?: "shot-grid" | "timeline";
-		timelineCollapsed?: boolean;
+		timelineMode?: TimelineMode;
 		qualities?: number[];
 		muted?: boolean;
 		/** Whether a video element is mounted; mute, quality and fullscreen need one */
@@ -187,10 +193,16 @@
 			{#if !fullscreen}
 				<button
 					class="btn btn-square btn-ghost btn-xs"
-					title={timelineCollapsed ? "Expand Timeline" : "Collapse Timeline"}
-					onclick={() => (timelineCollapsed = !timelineCollapsed)}
+					title={timelineMode === "full"
+						? "Compact Timeline"
+						: timelineMode === "compact"
+							? "Show Only Scrub Area"
+							: "Expand Timeline"}
+					onclick={() => (timelineMode = nextTimelineMode(timelineMode))}
 				>
-					{#if timelineCollapsed}<ChevronsUpDown size={16} />{:else}<ChevronsDownUp
+					{#if timelineMode === "full"}<ChevronsDownUp
+							size={16}
+						/>{:else if timelineMode === "compact"}<FoldVertical size={16} />{:else}<ChevronsUpDown
 							size={16}
 						/>{/if}
 				</button>

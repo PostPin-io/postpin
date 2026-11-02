@@ -23,6 +23,7 @@
 		secondsAtFrame,
 	} from "../../../../../../../../../../shared/src/logic/timecode";
 	import { getMarkers } from "#lib/components/review/MarkerPanel.remote.ts";
+	import { TIMELINE_MODES, type TimelineMode } from "#lib/components/review/VideoPlayer.ts";
 	import type { ThumbnailImage } from "@videojs/html";
 	import { seekSprites as seekSpritesSchema } from "@postpin-io/shared/types/SeekSprites";
 	import * as v from "valibot";
@@ -89,7 +90,7 @@
 		const sizes = event.detail.map((pane) => pane.size);
 
 		// The collapsed timeline's fixed size must not overwrite the saved layout
-		if (key === "left" && timelineCollapsed) return;
+		if (key === "left" && timelineMode !== "full") return;
 		layout[key] = normalizeSizes(sizes);
 
 		try {
@@ -368,22 +369,25 @@
 	});
 
 	let viewMode: "shot-grid" | "timeline" = $state("timeline");
-	const COLLAPSED_KEY = "postpin:timeline-collapsed";
-	let timelineCollapsed = $state(
-		typeof localStorage !== "undefined" && localStorage.getItem(COLLAPSED_KEY) === "true",
-	);
+	const TIMELINE_MODE_KEY = "postpin:timeline-mode";
+	function loadTimelineMode(): TimelineMode {
+		if (typeof localStorage === "undefined") return "full";
+		const stored = localStorage.getItem(TIMELINE_MODE_KEY);
+		return TIMELINE_MODES.find((mode) => mode === stored) ?? "full";
+	}
+	let timelineMode = $state<TimelineMode>(loadTimelineMode());
 	$effect(() => {
 		try {
-			localStorage.setItem(COLLAPSED_KEY, String(timelineCollapsed));
+			localStorage.setItem(TIMELINE_MODE_KEY, timelineMode);
 		} catch (error) {
-			console.error("Failed to save timeline collapse state:", error);
+			console.error("Failed to save timeline mode:", error);
 		}
 	});
 	let timelineCollapsedHeight = $state(0);
 	let leftPanesHeight = $state(0);
-	// Collapsed timeline gets exactly the space it needs, in percent of the pane column
+	// Compact and scrub-only timelines get exactly the space they need, in percent of the pane column
 	const collapsedPercent = $derived(
-		timelineCollapsed && leftPanesHeight > 0 && timelineCollapsedHeight > 0
+		timelineMode !== "full" && leftPanesHeight > 0 && timelineCollapsedHeight > 0
 			? Math.min((timelineCollapsedHeight / leftPanesHeight) * 100, 85)
 			: undefined,
 	);
@@ -506,7 +510,7 @@
 											bind:playbackRate={videoPlaybackRate}
 											bind:quality={videoQuality}
 											bind:viewMode
-											bind:timelineCollapsed
+											bind:timelineMode
 											qualities={videoQualities}
 											muted={videoMuted}
 											playerAvailable={viewMode === "timeline" && !!player}
@@ -562,7 +566,7 @@
 										snapshot={exportQuery.current!.timelineSnapshot as TimelineSnapshot}
 										{markers}
 										{seekThumbnails}
-										collapsed={timelineCollapsed}
+										mode={timelineMode}
 										onCollapsedHeight={(height) => (timelineCollapsedHeight = height)}
 										bind:videoPositionSeconds={videoPosition}
 										bind:paused={videoPaused}

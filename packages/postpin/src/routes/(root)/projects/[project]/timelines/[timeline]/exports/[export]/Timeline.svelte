@@ -4,7 +4,12 @@
 	import type { Prisma } from "@postpin-io/shared/db";
 	import { onMount } from "svelte";
 	import type { ThumbnailElement, ThumbnailImage } from "@videojs/html";
-	import { PLAYBACK_RATES, seekToMarker } from "#lib/components/review/VideoPlayer.ts";
+	import {
+		PLAYBACK_RATES,
+		seekToMarker,
+		type TimelineMode,
+	} from "#lib/components/review/VideoPlayer.ts";
+	import { getMarkers, updateMarker } from "#lib/components/review/MarkerPanel.remote.ts";
 	import {
 		formatTimecode,
 		frameAtSeconds,
@@ -20,7 +25,7 @@
 		paused: boolean;
 		playbackRate: number;
 		seekThumbnails: ThumbnailImage[] | undefined;
-		collapsed?: boolean;
+		mode?: TimelineMode;
 
 		onCollapsedHeight: (height: number) => void;
 	}
@@ -32,7 +37,7 @@
 		playbackRate = $bindable(1),
 		markers,
 		seekThumbnails,
-		collapsed = false,
+		mode = "full",
 		onCollapsedHeight,
 	}: Props = $props();
 
@@ -69,7 +74,10 @@
 		clips: TimelineSnapshot["tracks"][number]["clips"];
 	};
 
+	const collapsed = $derived(mode !== "full");
+
 	let tracks = $derived.by((): Lane[] => {
+		if (mode === "scrub") return [];
 		const video = snapshot.tracks.filter((track) => track.type === "video");
 		const audio = snapshot.tracks.filter((track) => track.type === "audio");
 		if (!collapsed) return [...video.reverse(), ...audio];
@@ -90,12 +98,14 @@
 	let toolbarHeight = $state(0);
 	const COLLAPSED_BOTTOM_SPACE = 24;
 
-	// Collapsed layout has one merged lane per track type, regardless of the current state.
+	// Compact layout has one merged lane per track type, regardless of the current state.
 	// Using tracks.length here would count every track while expanded and report a wrong height.
 	const collapsedLaneCount = $derived(
-		new Set(
-			snapshot.tracks.map((track) => track.type).filter((t) => t === "video" || t === "audio"),
-		).size,
+		mode === "scrub"
+			? 0
+			: new Set(
+					snapshot.tracks.map((track) => track.type).filter((t) => t === "video" || t === "audio"),
+				).size,
 	);
 
 	$effect(() => {
@@ -175,6 +185,56 @@
 			(_, i) => firstFrame + (first + i) * tickFrames,
 		);
 	});
+
+	let visibleMarkers = $derived(
+		markers.filter((m) => {
+			const x = toX(markerFrame(m));
+			return x >= scrollLeft - 8 && x <= scrollLeft + viewportWidth;
+		}),
+	);
+
+	let markerDrag = $state<{ id: string; frame: number } | null>(null);
+	const markerFrame = (marker: (typeof markers)[number]) =>
+		markerDrag?.id === marker.id ? markerDrag.frame : marker.frame;
+
+	function startMarkerDrag(
+		event: PointerEvent & { currentTarget: HTMLElement },
+		marker: (typeof markers)[number],
+	) {
+		if (event.button !== 0) return;
+		// Keep the ruler from starting a scrub
+		event.stopPropagation();
+		event.currentTarget.setPointerCapture(event.pointerId);
+		markerDrag = { id: marker.id, frame: marker.frame };
+		seek(marker.frame);
+	}
+
+	function moveMarkerDrag(event: PointerEvent) {
+		if (!markerDrag) return;
+		event.stopPropagation();
+		markerDrag.frame = clampFrame(frameAtClientX(event.clientX));
+	}
+
+	async function endMarkerDrag(marker: (typeof markers)[number]) {
+		if (markerDrag?.id !== marker.id) return;
+		const frame = markerDrag.frame;
+		try {
+			if (frame !== marker.frame) {
+				seek(frame);
+				await updateMarker({
+					id: marker.id,
+					exportId: marker.exportId,
+					name: marker.name ?? "",
+					description: marker.description ?? "",
+					categoryId: marker.categoryId,
+					frame,
+				});
+				await getMarkers(marker.exportId).refresh();
+			}
+		} finally {
+			markerDrag = null;
+		}
+	}
 
 	let dragging = $state(false);
 	let wasPlaying = false;
@@ -398,6 +458,22 @@
 						</div>
 					{/each}
 
+					{#each visibleMarkers as marker (marker.id)}
+						<!-- svelte-ignore a11y_no_static_element_interactions -->
+						<div
+							class="absolute bottom-0 z-10 h-3 w-2 -translate-x-1/2 cursor-grab touch-none rounded-xs {markerDrag?.id ===
+							marker.id
+								? 'cursor-grabbing'
+								: ''}"
+							style="left: {toX(markerFrame(marker)) + 1}px; background: {marker.category.color}"
+							title={marker.name}
+							onpointerdown={(event) => startMarkerDrag(event, marker)}
+							onpointermove={moveMarkerDrag}
+							onpointerup={() => endMarkerDrag(marker)}
+							onpointercancel={() => (markerDrag = null)}
+						></div>
+					{/each}
+
 					<div
 						class="pointer-events-none absolute bottom-0 -ml-1.5 border-x-[6px] border-t-8 border-x-transparent border-t-red-500"
 						style="left: {toX(playHeadPosition)}px"
@@ -433,7 +509,7 @@
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
 						class="absolute top-0 h-full cursor-pointer border border-l-2"
-						style="left: {toX(marker.frame)}px; border-color: {marker.category.color}"
+						style="left: {toX(markerFrame(marker))}px; border-color: {marker.category.color}"
 						title={marker.name}
 						onclick={() => seek(marker.frame)}
 					></div>
