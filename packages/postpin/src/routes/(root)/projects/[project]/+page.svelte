@@ -18,8 +18,15 @@
 	import Apeture from "@lucide/svelte/icons/aperture";
 
 	let viewMode: "table" | "card" = $state("card");
-	let sortField: "name" | "created" | "updated" = $state("updated");
+	type SortField = "name" | "created" | "updated";
+	const sortFields: { value: SortField; label: string }[] = [
+		{ value: "name", label: "Name" },
+		{ value: "created", label: "Created" },
+		{ value: "updated", label: "Updated" },
+	];
+	let sortField: SortField = $state("updated");
 	let sortDirection: "asc" | "desc" = $state("desc");
+	let searchQuery = $state("");
 	let loadingStatus = $state(true);
 
 	let delTimelineDialog: DeleteTimelineModal | null = null;
@@ -181,29 +188,27 @@
 
 			<div class="flex flex-wrap items-baseline gap-3">
 				<div class="flex flex-wrap items-center gap-2">
-					{#if viewMode == "card"}
-						<label class="text-sm font-medium" for="timeline-sort">Sort by</label>
-						<select id="timeline-sort" class="select-bordered select w-56" bind:value={sortField}>
-							<option value="name">Name</option>
-							<option value="created">Created</option>
-							<option value="updated">Updated</option>
-						</select>
-
-						<button
-							type="button"
-							aria-label="Toggle sort direction"
-							onclick={() => {
-								sortDirection = sortDirection == "asc" ? "desc" : "asc";
-							}}
-						>
-							{#if sortDirection == "asc"}
-								<ChevronUp />
-							{:else}
-								<ChevronDown />
-							{/if}
-						</button>
-					{/if}
+					<input
+						type="search"
+						placeholder="Search timelines"
+						aria-label="Search timelines"
+						class="input input-sm"
+						bind:value={searchQuery}
+					/>
 				</div>
+				<button
+					type="button"
+					class="flex self-center"
+					onclick={() => {
+						sortDirection = sortDirection == "asc" ? "desc" : "asc";
+					}}
+				>
+					{#if sortDirection == "asc"}
+						<ChevronUp />
+					{:else}
+						<ChevronDown />
+					{/if}
+				</button>
 
 				<div class="join" role="group">
 					<button
@@ -219,19 +224,62 @@
 						onclick={() => (viewMode = "card")}>Cards</button
 					>
 				</div>
+
+				<div
+					class="dropdown dropdown-end"
+					onfocusout={(event) => {
+						// Collapse the submenu once focus leaves the dropdown
+						const next = event.relatedTarget as Node | null;
+						if (next && event.currentTarget.contains(next)) return;
+						event.currentTarget.querySelectorAll("details").forEach((d) => (d.open = false));
+					}}
+				>
+					<div
+						tabindex="0"
+						role="button"
+						class="btn btn-circle btn-ghost"
+						aria-label="Sort options"
+					>
+						<Ellipsis class="h-6 w-6" />
+					</div>
+					<ul
+						tabindex="-1"
+						class="menu dropdown-content z-10 w-52 rounded-box bg-base-100 p-2 shadow-sm"
+					>
+						<li>
+							<details>
+								<summary>Sort by</summary>
+								<ul>
+									{#each sortFields as field (field.value)}
+										<li>
+											<a
+												class={sortField === field.value ? "menu-active" : ""}
+												onclick={() => (sortField = field.value)}>{field.label}</a
+											>
+										</li>
+									{/each}
+								</ul>
+							</details>
+						</li>
+					</ul>
+				</div>
 			</div>
 		</header>
 
-		{@const sortedTimelines = [...timelines].sort((a, b) => {
-			const comparison =
-				sortField === "name"
-					? a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
-					: sortField === "created"
-						? a.createdAt.getTime() - b.createdAt.getTime()
-						: a.updatedAt.getTime() - b.updatedAt.getTime();
+		{@const query = searchQuery.trim().toLowerCase()}
+		{@const emptyMessage = query ? "No timelines match your search." : "No timelines yet."}
+		{@const sortedTimelines = timelines
+			.filter((item) => item.name.toLowerCase().includes(query))
+			.sort((a, b) => {
+				const comparison =
+					sortField === "name"
+						? a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+						: sortField === "created"
+							? a.createdAt.getTime() - b.createdAt.getTime()
+							: a.updatedAt.getTime() - b.updatedAt.getTime();
 
-			return (sortDirection == "asc" ? 1 : -1) * comparison || a.id.localeCompare(b.id);
-		})}
+				return (sortDirection == "asc" ? 1 : -1) * comparison || a.id.localeCompare(b.id);
+			})}
 
 		{#if viewMode === "table"}
 			<div class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 shadow">
@@ -311,7 +359,7 @@
 							</tr>
 						{:else}
 							<tr>
-								<td colspan="5" class="py-8 text-center text-base-content/70">No timelines yet.</td>
+								<td colspan="5" class="py-8 text-center text-base-content/70">{emptyMessage}</td>
 							</tr>
 						{/each}
 					</tbody>
@@ -368,7 +416,7 @@
 						</div>
 					</article>
 				{:else}
-					<p class="text-base-content/70">No timelines yet.</p>
+					<p class="text-base-content/70">{emptyMessage}</p>
 				{/each}
 			</div>
 		{/if}
