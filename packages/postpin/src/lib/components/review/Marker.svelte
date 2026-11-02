@@ -85,6 +85,11 @@
 		}
 	}
 
+	// Shift/cmd-clicks select markers, not text
+	function handleMousedown(e: MouseEvent) {
+		if (e.shiftKey || e.metaKey) e.preventDefault();
+	}
+
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.target === e.currentTarget && e.key === "Enter") {
 			e.preventDefault();
@@ -122,6 +127,7 @@
 	tabindex="0"
 	aria-pressed={active}
 	onclick={handleClick}
+	onmousedown={handleMousedown}
 	onkeydown={handleKeydown}
 >
 	<details

@@ -17,7 +17,10 @@ export const getMarkers = query(v.string(), async (exportId: string) => {
 		include: {
 			author: true,
 			category: true,
-			responses: { select: { content: true } },
+			responses: {
+				select: { content: true, authorId: true, createdAt: true },
+				orderBy: { createdAt: "asc" },
+			},
 		},
 	});
 
@@ -76,6 +79,15 @@ export const createMarkers = command(
 				description: v.string(),
 				frame: v.pipe(v.number(), v.integer(), v.minValue(0)),
 				categoryId: v.string(),
+				responses: v.optional(
+					v.array(
+						v.object({
+							content: v.string(),
+							authorId: v.string(),
+							createdAt: v.string(),
+						}),
+					),
+				),
 			}),
 		),
 	}),
@@ -83,18 +95,31 @@ export const createMarkers = command(
 		const event = getRequestEvent();
 		const authorId = event.locals.user!.id;
 
-		const result = await prisma.marker.createMany({
-			data: data.markers.map((marker) => ({
-				name: marker.name,
-				description: marker.description,
-				frame: marker.frame,
-				categoryId: marker.categoryId,
-				exportId: data.exportId,
-				authorId,
-			})),
-		});
+		// createMany cannot create nested responses, so create each marker individually
+		const created = await prisma.$transaction(
+			data.markers.map((marker) =>
+				prisma.marker.create({
+					data: {
+						name: marker.name,
+						description: marker.description,
+						frame: marker.frame,
+						categoryId: marker.categoryId,
+						exportId: data.exportId,
+						authorId,
+						responses: {
+							create: (marker.responses ?? []).map((response) => ({
+								content: response.content,
+								authorId: response.authorId,
+								createdAt: new Date(response.createdAt),
+							})),
+						},
+					},
+					select: { id: true },
+				}),
+			),
+		);
 		await getMarkers(data.exportId).refresh();
-		return result;
+		return { count: created.length };
 	},
 );
 

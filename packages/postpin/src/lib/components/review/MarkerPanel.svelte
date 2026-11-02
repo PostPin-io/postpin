@@ -91,6 +91,9 @@
 		),
 	);
 
+	// Markers currently rendered in the list, in display order
+	let visibleMarkers = $derived(search.trim() === "" ? filteredMarkers : textFilteredMarkers);
+
 	let hasActiveFilters = $derived(markerFilter.categoryIds.length > 0 || search.trim() !== "");
 	let visibleMarkerCount = $derived(
 		search.trim() === "" ? filteredMarkers.length : textFilteredMarkers.length,
@@ -136,11 +139,6 @@
 			markersComponents.forEach((marker) => marker?.open());
 		}
 	}
-
-	// Automatically select the marker at the playhead when it changes
-	// $effect(() => {
-	// 	if (markerAtPlayhead) selectedMarkerId = markerAtPlayhead.id;
-	// });
 
 	$effect(() => {
 		localStorage.setItem("DefaultCategory", defaultCategory);
@@ -211,10 +209,10 @@
 	function selectAllKeypress(event: KeyboardEvent) {
 		if (!event.metaKey || event.altKey || event.shiftKey) return;
 		if (event.key !== "a" && event.key !== "A") return;
-		if (isTypingTarget(event) || filteredMarkers.length === 0) return;
+		if (isTypingTarget(event) || visibleMarkers.length === 0) return;
 
 		event.preventDefault();
-		selectedMarkerIds = filteredMarkers.map((marker) => marker.id);
+		selectedMarkerIds = visibleMarkers.map((marker) => marker.id);
 	}
 
 	function escapeKeypress(event: KeyboardEvent) {
@@ -223,17 +221,20 @@
 		selectedMarkerIds = [];
 	}
 
-	function copyKeypress(event: KeyboardEvent) {
+	function copyOrCutKeypress(event: KeyboardEvent) {
 		if (!event.metaKey || event.altKey || event.shiftKey) return;
-		if (event.key !== "c" && event.key !== "C") return;
+		const key = event.key.toLowerCase();
+		if (key !== "c" && key !== "x") return;
 		if (selectedMarkerIds.length === 0 || isTypingTarget(event)) return;
-		// Keep the native copy when the user selected text
-		if (!window.getSelection()?.isCollapsed) return;
+		// Keep the native copy when the user selected text. A multi-selection of markers always wins,
+		// because shift-clicking a range also extends the browser's text selection.
+		if (selectedMarkerIds.length <= 1 && !window.getSelection()?.isCollapsed) return;
 
 		const selected = markers.filter((marker) => selectedMarkerIds.includes(marker.id));
 		if (selected.length === 0) return;
 		event.preventDefault();
 		copyMarkers(selected);
+		if (key === "x") void deleteSelectedMarkers();
 	}
 
 	let pasting = false;
@@ -252,6 +253,7 @@
 					// The copied category may belong to another project
 					categoryId: categoryIds.has(item.categoryId) ? item.categoryId : fallbackCategoryId,
 					frame: Math.max(0, currentFrame + item.offset),
+					responses: item.responses,
 				})),
 			});
 		} finally {
@@ -296,7 +298,7 @@
 	let anchorMarkerId: string | null = null;
 
 	function selectRange(id: string) {
-		const ids = filteredMarkers.map((marker) => marker.id);
+		const ids = visibleMarkers.map((marker) => marker.id);
 		const from = anchorMarkerId ? ids.indexOf(anchorMarkerId) : -1;
 		const to = ids.indexOf(id);
 		if (from === -1 || to === -1) {
@@ -518,7 +520,7 @@
 	on:keydown={mKeypress}
 	on:keydown={deleteKeypress}
 	on:keydown={escapeKeypress}
-	on:keydown={copyKeypress}
+	on:keydown={copyOrCutKeypress}
 	on:keydown={pasteKeypress}
 	on:keydown={selectAllKeypress}
 />

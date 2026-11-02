@@ -290,6 +290,11 @@
 			case "End":
 				timeline?.seekToEnd();
 				break;
+			case "f":
+			case "F":
+				if (event.metaKey || event.repeat) return;
+				player?.toggleFullscreen();
+				break;
 			case "+":
 			case "-":
 				if (event.metaKey) return;
@@ -383,6 +388,7 @@
 			: undefined,
 	);
 	let player = $state<VideoPlayer>();
+	let videoFullscreen = $state(false);
 	let videoQualities = $state<number[]>([]);
 	let videoMuted = $state(false);
 </script>
@@ -490,6 +496,25 @@
 								{#if !media}
 									<p>Nothing uploaded yet.</p>
 								{:else}
+									{#snippet menuBar()}
+										<VideoMenuBar
+											{markers}
+											timing={snapshot!}
+											durationFrames={snapshot!.durationFrameCount}
+											bind:currentTime={videoPosition}
+											bind:paused={videoPaused}
+											bind:playbackRate={videoPlaybackRate}
+											bind:quality={videoQuality}
+											bind:viewMode
+											bind:timelineCollapsed
+											qualities={videoQualities}
+											muted={videoMuted}
+											playerAvailable={viewMode === "timeline" && !!player}
+											fullscreen={videoFullscreen}
+											onToggleMute={() => player?.toggleMute()}
+											onFullscreen={() => player?.toggleFullscreen()}
+										/>
+									{/snippet}
 									<div class="min-h-0 flex-1 overflow-hidden">
 										{#if viewMode === "shot-grid" && snapshot}
 											<ShotGrid
@@ -511,25 +536,13 @@
 												bind:quality={videoQuality}
 												bind:qualities={videoQualities}
 												bind:muted={videoMuted}
+												bind:fullscreen={videoFullscreen}
+												fullscreenControls={menuBar}
 											/>
 										{/if}
 									</div>
 									{#if snapshot}
-										<VideoMenuBar
-											{markers}
-											timing={snapshot}
-											bind:currentTime={videoPosition}
-											bind:paused={videoPaused}
-											bind:playbackRate={videoPlaybackRate}
-											bind:quality={videoQuality}
-											bind:viewMode
-											bind:timelineCollapsed
-											qualities={videoQualities}
-											muted={videoMuted}
-											playerAvailable={viewMode === "timeline" && !!player}
-											onToggleMute={() => player?.toggleMute()}
-											onFullscreen={() => player?.requestFullscreen()}
-										/>
+										{@render menuBar()}
 									{/if}
 								{/if}
 							</div>

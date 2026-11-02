@@ -10,7 +10,7 @@
 </script>
 
 <script lang="ts">
-	import { untrack } from "svelte";
+	import { untrack, type Snippet } from "svelte";
 	import type { HlsJsVideoElement } from "@videojs/html/media/hlsjs-video";
 	import type { FrameTiming } from "@postpin-io/shared/logic/timecode";
 
@@ -25,6 +25,8 @@
 		qualities = $bindable<number[]>([]),
 
 		muted = $bindable(false),
+		fullscreen = $bindable(false),
+		fullscreenControls,
 	}: {
 		source: VideoSource;
 		poster?: string;
@@ -37,8 +39,12 @@
 		/** Rendition heights available once the playlist has loaded */
 		qualities?: number[];
 		muted?: boolean;
+		fullscreen?: boolean;
+		/** Control bar shown over the video while in fullscreen, where the page's own bar is out of view */
+		fullscreenControls?: Snippet;
 	} = $props();
 
+	let container = $state<HTMLElement>();
 	let element = $state<HTMLElement>();
 	/** The element once <hlsjs-video> is defined and set up */
 	let media = $state<HlsJsVideoElement>();
@@ -211,9 +217,38 @@
 		if (media) media.muted = !media.muted;
 	}
 
-	export function requestFullscreen() {
-		void media?.requestFullscreen();
+	// The container goes fullscreen rather than the video, so the control bar comes along
+	export function toggleFullscreen() {
+		if (document.fullscreenElement) void document.exitFullscreen();
+		else void container?.requestFullscreen();
 	}
+
+	let controlsAwake = $state(false);
+	let controlsTimer: ReturnType<typeof setTimeout> | undefined;
+	const showControls = $derived(fullscreen && (controlsAwake || paused));
+
+	function wakeControls() {
+		if (!fullscreen) return;
+		controlsAwake = true;
+		clearTimeout(controlsTimer);
+		controlsTimer = setTimeout(() => (controlsAwake = false), 2500);
+	}
+
+	$effect(() => {
+		const el = container;
+		if (!el) return;
+		const sync = () => {
+			fullscreen = document.fullscreenElement === el;
+			if (fullscreen) wakeControls();
+		};
+		el.addEventListener("fullscreenchange", sync);
+		return () => {
+			el.removeEventListener("fullscreenchange", sync);
+			fullscreen = false;
+		};
+	});
+
+	$effect(() => () => clearTimeout(controlsTimer));
 
 	function onVideoClick() {
 		togglePlayback();
@@ -259,7 +294,15 @@
 	$effect(() => () => clearTimeout(indicatorTimer));
 </script>
 
-<div class="group relative flex h-full w-full flex-col">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+	bind:this={container}
+	class="group relative flex h-full w-full flex-col"
+	class:bg-black={fullscreen}
+	class:cursor-none={fullscreen && !showControls}
+	onpointermove={wakeControls}
+	onfocusin={wakeControls}
+>
 	<div class="relative min-h-0 flex-1">
 		<hlsjs-video
 			bind:this={element}
@@ -282,6 +325,16 @@
 			{/key}
 		{/if}
 	</div>
+
+	{#if fullscreen && fullscreenControls}
+		<div
+			class="absolute inset-x-0 bottom-0 bg-base-100/90 backdrop-blur transition-opacity duration-200"
+			class:opacity-0={!showControls}
+			class:pointer-events-none={!showControls}
+		>
+			{@render fullscreenControls()}
+		</div>
+	{/if}
 </div>
 
 <style>
