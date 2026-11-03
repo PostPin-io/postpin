@@ -166,6 +166,10 @@ const models: TsoaRoute.Models = {
 		type: {
 			dataType: "nestedObjectLiteral",
 			nestedProperties: {
+				id: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				},
 				nleId: {
 					dataType: "union",
 					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],

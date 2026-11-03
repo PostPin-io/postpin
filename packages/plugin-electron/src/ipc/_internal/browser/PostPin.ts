@@ -33,7 +33,7 @@ import {
 	$eipc_validator$_TimelineInfo,
 } from "../common-runtime/PostPin.js";
 import * as $eipc$ from "../browser-runtime.js";
-const $$ipcPrefix$$ = "$eipc_message$_5e1498d5549571bd8335f9d6f28848f0_$_PostPin_$_";
+const $$ipcPrefix$$ = "$eipc_message$_6d7454b4bb74e6d3c81e7e30015d5036_$_PostPin_$_";
 // Interfaces are declared as data and wired up by ../browser-runtime.ts:
 //   methods: [name, [[argName, validator], ...], resultValidator?]  ([Sync] methods append null|validator, 'sync')
 //   stores:  [name, stateValidator]
@@ -93,7 +93,11 @@ export const NleAPI = /*#__PURE__*/ $eipc$.defineInterface<
 		["getProjectId", [], $eipc$.string],
 		["getTimelineInfo", [], $eipc$.nullable($eipc_validator$_TimelineInfo)],
 		["getMarkers", [], $eipc$.arrayOf($eipc_validator$_NleMarker)],
-		["setMarkers", [["markers", $eipc$.arrayOf($eipc_validator$_NleMarker)]], $eipc$.boolean],
+		[
+			"setMarkers",
+			[["markers", $eipc$.arrayOf($eipc_validator$_NleMarker)]],
+			$eipc$.arrayOf($eipc$.string),
+		],
 		["clearMarkers", [], $eipc$.boolean],
 		["getRenderPresets", [], $eipc$.arrayOf($eipc$.string)],
 		["renderPreview", [], $eipc$.string],

@@ -21,6 +21,7 @@ structure Capabilities {
 }
 
 structure NleMarker {
+  nleId?: string
   title: string
   description: string
   frame: number
@@ -104,7 +105,7 @@ interface NleAPI {
   getProjectId() -> string
   getTimelineInfo() -> TimelineInfo?
   getMarkers() -> NleMarker[]
-  setMarkers(markers: NleMarker[]) -> boolean
+  setMarkers(markers: NleMarker[]) -> string[]
   clearMarkers() -> boolean
   getRenderPresets() -> string[]
   renderPreview() -> string

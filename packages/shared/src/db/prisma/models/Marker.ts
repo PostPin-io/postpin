@@ -278,7 +278,7 @@ export type MarkerOrderByWithRelationInput = {
 export type MarkerWhereUniqueInput = Prisma.AtLeast<
 	{
 		id?: string;
-		nleId?: string;
+		exportId_nleId?: Prisma.MarkerExportIdNleIdCompoundUniqueInput;
 		AND?: Prisma.MarkerWhereInput | Prisma.MarkerWhereInput[];
 		OR?: Prisma.MarkerWhereInput[];
 		NOT?: Prisma.MarkerWhereInput | Prisma.MarkerWhereInput[];
@@ -290,12 +290,13 @@ export type MarkerWhereUniqueInput = Prisma.AtLeast<
 		exportId?: Prisma.StringFilter<"Marker"> | string;
 		categoryId?: Prisma.StringFilter<"Marker"> | string;
 		authorId?: Prisma.StringFilter<"Marker"> | string;
+		nleId?: Prisma.StringNullableFilter<"Marker"> | string | null;
 		responses?: Prisma.ResponseListRelationFilter;
 		export?: Prisma.XOR<Prisma.ExportScalarRelationFilter, Prisma.ExportWhereInput>;
 		category?: Prisma.XOR<Prisma.CategoryScalarRelationFilter, Prisma.CategoryWhereInput>;
 		author?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
 	},
-	"id" | "nleId"
+	"id" | "exportId_nleId"
 >;
 
 export type MarkerOrderByWithAggregationInput = {
@@ -432,6 +433,11 @@ export type MarkerListRelationFilter = {
 
 export type MarkerOrderByRelationAggregateInput = {
 	_count?: Prisma.SortOrder;
+};
+
+export type MarkerExportIdNleIdCompoundUniqueInput = {
+	exportId: string;
+	nleId: string;
 };
 
 export type MarkerCountOrderByAggregateInput = {

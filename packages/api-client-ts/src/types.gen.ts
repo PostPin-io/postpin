@@ -72,6 +72,13 @@ export type MarkerWithResponses = {
 };
 
 export type UploadMarker = {
+	/**
+	 * PostPin id, for markers that were pulled from PostPin into the NLE. They are updated too.
+	 */
+	id?: string | null;
+	/**
+	 * id of the marker in the NLE, unique per export. Markers with a known nleId are updated.
+	 */
 	nleId?: string | null;
 	categoryId: string;
 	frame: number;

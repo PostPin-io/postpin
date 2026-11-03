@@ -65,14 +65,40 @@ export class MarkerController extends Controller {
 		const authorId = await prisma.user
 			.findFirstOrThrow({ select: { id: true } })
 			.then((user) => user.id);
-		await prisma.marker.createMany({
-			data: markers.map((marker) => ({
-				...marker,
-				exportId,
-				authorId,
-				categoryId: marker.categoryId,
-				nleId: marker.nleId ?? undefined,
-			})),
+
+		// Updates the markers the export already has instead of adding them again. A marker matches by
+		// id when it came from PostPin (pulled into the NLE before), otherwise by its NLE id.
+		await prisma.$transaction(async (tx) => {
+			for (const { id, nleId, ...fields } of markers) {
+				const existing =
+					(id
+						? await tx.marker.findFirst({ where: { id, exportId }, select: { id: true } })
+						: null) ??
+					(nleId
+						? await tx.marker.findUnique({
+								where: { exportId_nleId: { exportId, nleId } },
+								select: { id: true },
+							})
+						: null);
+
+				if (existing) {
+					// A pulled marker takes over the NLE id, which may sit on a copy pushed before the pull
+					if (nleId) {
+						await tx.marker.updateMany({
+							where: { exportId, nleId, id: { not: existing.id } },
+							data: { nleId: null },
+						});
+					}
+					await tx.marker.update({
+						where: { id: existing.id },
+						data: { ...fields, ...(nleId ? { nleId } : {}) },
+					});
+				} else {
+					await tx.marker.create({
+						data: { ...fields, nleId: nleId ?? null, exportId, authorId },
+					});
+				}
+			}
 		});
 	}
 }
@@ -82,5 +108,12 @@ type UploadMarker = {
 	description: string | null;
 	frame: number;
 	categoryId: string;
+	/**
+	 * id of the marker in the NLE, unique per export. Markers with a known nleId are updated.
+	 */
 	nleId?: string | null;
+	/**
+	 * PostPin id, for markers that were pulled from PostPin into the NLE. They are updated too.
+	 */
+	id?: string | null;
 };

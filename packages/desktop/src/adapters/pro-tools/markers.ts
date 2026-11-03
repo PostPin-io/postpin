@@ -25,12 +25,15 @@ export async function listMarkerLocations() {
 	);
 }
 
-// TODO: Pro Tools has no custom data field. Instead of emulating it, the plan is to store
-// `${originId}:${number}` as the PostPin marker's nleId on the server, see the sync discussion.
-export async function getMarkers(timing: SessionTiming): Promise<NleMarker[]> {
+// Pro Tools has no custom data field. Markers are recognized by their id instead,
+// "<session origin id>:<memory location number>", which PostPin stores as the marker's nleId.
+export const markerId = (originId: string, number: number) => `${originId}:${number}`;
+
+export async function getMarkers(timing: SessionTiming, originId: string): Promise<NleMarker[]> {
 	const locations = await listMarkerLocations();
 	return Promise.all(
 		locations.map(async (location) => ({
+			nleId: markerId(originId, location.number),
 			title: location.name,
 			description: location.comments,
 			frame: await samplesToFrame(location.startTime, timing),
@@ -40,18 +43,24 @@ export async function getMarkers(timing: SessionTiming): Promise<NleMarker[]> {
 	);
 }
 
-// Creates the markers on the main ruler and returns their memory location numbers
-export async function setMarkers(timing: SessionTiming, markers: NleMarker[]): Promise<number[]> {
+// Writes the markers to the main ruler and returns their memory location numbers. Markers whose
+// nleId is still in the session are edited in place, the others are created.
+export async function setMarkers(
+	timing: SessionTiming,
+	originId: string,
+	markers: NleMarker[],
+): Promise<number[]> {
+	const existing = new Set(
+		(await listMarkerLocations()).map((location) => markerId(originId, location.number)),
+	);
 	// Numbers are shared by all memory locations, not just markers
-	let number = Math.max(0, ...(await listMemoryLocations()).map((location) => location.number));
+	let next = Math.max(0, ...(await listMemoryLocations()).map((location) => location.number));
 
-	// One at a time, since each marker takes the next number
+	// One at a time, since each new marker takes the next number
 	const numbers: number[] = [];
 	for (const marker of markers) {
 		const samples = await frameToSamples(marker.frame, timing);
-		number += 1;
-		await send("CreateMemoryLocation", {
-			number,
+		const fields = {
 			name: marker.title,
 			comments: marker.description,
 			startTime: samples,
@@ -60,10 +69,23 @@ export async function setMarkers(timing: SessionTiming, markers: NleMarker[]): P
 			reference: MemoryLocationReference.MLReference_Absolute,
 			location: MarkerLocation.MarkerLocation_MainRuler,
 			colorIndex: colorIndexOf(marker.color),
-		});
-		numbers.push(number);
+		};
+		const number = marker.nleId && existing.has(marker.nleId) ? numberOf(marker.nleId) : null;
+		if (number !== null) {
+			await send("EditMemoryLocation", { number, ...fields });
+			numbers.push(number);
+		} else {
+			next += 1;
+			await send("CreateMemoryLocation", { number: next, ...fields });
+			numbers.push(next);
+		}
 	}
 	return numbers;
+}
+
+// The memory location number in a marker id
+function numberOf(nleId: string) {
+	return Number(nleId.slice(nleId.lastIndexOf(":") + 1));
 }
 
 // Deletes the markers only, unlike ClearAllMemoryLocations, which also takes the user's selections

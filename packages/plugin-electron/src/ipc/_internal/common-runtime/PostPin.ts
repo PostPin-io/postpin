@@ -47,6 +47,11 @@ export function $eipc_validator$_Capabilities(value: any): boolean {
 export function $eipc_validator$_NleMarker(value: any): boolean {
 	if (!value || typeof value !== "object") return false;
 
+	// NleMarker.nleId
+	if (typeof value.nleId !== "undefined") {
+		if (!(typeof value.nleId === "string")) return false;
+	}
+
 	// NleMarker.title
 	if (!(typeof value.title === "string")) return false;
 

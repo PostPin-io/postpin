@@ -31,6 +31,12 @@ export interface Capabilities {
 }
 
 export interface NleMarker {
+	/**
+	 * stable id of the marker in the NLE, unique within the timeline. PostPin stores it as the
+	 * marker's nleId to recognize markers it already has. For setMarkers: the marker to update,
+	 * null to add a new one.
+	 */
+	nleId: string | null;
 	title: string;
 	description: string;
 	/**
@@ -93,7 +99,12 @@ export interface NleBridge {
 	getProjectId(): Promise<string>;
 	getTimelineInfo(): Promise<TimelineInfo>;
 	getMarkers(): Promise<NleMarker[]>;
-	setMarkers(markers: NleMarker[]): Promise<void>;
+	/**
+	 * writes the markers and returns their ids, in the same order. A marker whose nleId still exists
+	 * in the timeline is updated (and moved to its frame), the others are added.
+	 * Throws when some markers couldn't be written, after writing the rest.
+	 */
+	setMarkers(markers: NleMarker[]): Promise<string[]>;
 	clearMarkers(): Promise<void>;
 	getRenderPresets(): Promise<string[]>;
 	renderPreview(onProgress: (progress: RenderProgress) => void): Promise<string>;

@@ -90,9 +90,7 @@ export function connectNleBridge(): NleBridge {
 		getProjectId: () => api.getProjectId(),
 		getTimelineInfo: () => api.getTimelineInfo(),
 		getMarkers: async () => (await api.getMarkers()).map(fromWireMarker),
-		setMarkers: async (markers) => {
-			await api.setMarkers(markers.map(toWireMarker));
-		},
+		setMarkers: (markers) => api.setMarkers(markers.map(toWireMarker)),
 		clearMarkers: async () => {
 			await api.clearMarkers();
 		},

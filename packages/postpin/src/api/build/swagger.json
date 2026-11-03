@@ -240,9 +240,15 @@
 			},
 			"UploadMarker": {
 				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true,
+						"description": "PostPin id, for markers that were pulled from PostPin into the NLE. They are updated too."
+					},
 					"nleId": {
 						"type": "string",
-						"nullable": true
+						"nullable": true,
+						"description": "id of the marker in the NLE, unique per export. Markers with a known nleId are updated."
 					},
 					"categoryId": {
 						"type": "string"

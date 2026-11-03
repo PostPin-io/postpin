@@ -20,6 +20,7 @@ export interface Capabilities {
 	customMarkerData: boolean;
 }
 export interface NleMarker {
+	nleId?: string;
 	title: string;
 	description: string;
 	frame: number;
@@ -101,7 +102,7 @@ export interface INleAPIImpl {
 	getProjectId(): Promise<string> | string;
 	getTimelineInfo(): Promise<TimelineInfo | null> | TimelineInfo | null;
 	getMarkers(): Promise<NleMarker[]> | NleMarker[];
-	setMarkers(markers: NleMarker[]): Promise<boolean> | boolean;
+	setMarkers(markers: NleMarker[]): Promise<string[]> | string[];
 	clearMarkers(): Promise<boolean> | boolean;
 	getRenderPresets(): Promise<string[]> | string[];
 	renderPreview(): Promise<string> | string;
@@ -112,7 +113,7 @@ export interface INleAPIRenderer {
 	getProjectId(): Promise<string>;
 	getTimelineInfo(): Promise<TimelineInfo | null>;
 	getMarkers(): Promise<NleMarker[]>;
-	setMarkers(markers: NleMarker[]): Promise<boolean>;
+	setMarkers(markers: NleMarker[]): Promise<string[]>;
 	clearMarkers(): Promise<boolean>;
 	getRenderPresets(): Promise<string[]>;
 	renderPreview(): Promise<string>;

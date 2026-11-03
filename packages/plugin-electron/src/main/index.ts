@@ -117,10 +117,7 @@ export function exposeNleBridge(win: BrowserWindow, bridge: NleBridge) {
 		getProjectId: () => bridge.getProjectId(),
 		getTimelineInfo: () => bridge.getTimelineInfo(),
 		getMarkers: async () => (await bridge.getMarkers()).map(toWireMarker),
-		setMarkers: async (markers) => {
-			await bridge.setMarkers(markers.map(fromWireMarker));
-			return true;
-		},
+		setMarkers: (markers) => bridge.setMarkers(markers.map(fromWireMarker)),
 		clearMarkers: async () => {
 			await bridge.clearMarkers();
 			return true;

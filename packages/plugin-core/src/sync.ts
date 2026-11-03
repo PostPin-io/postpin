@@ -3,18 +3,14 @@ import {
 	uploadMarkers,
 	getCategories,
 	createCategory,
+	type UploadMarker,
 } from "@postpin-io/api-client-ts";
 import type { Client } from "@postpin-io/api-client-ts/client";
 
-import type { NleBridge, NleMarker } from "./bridge";
+import type { ColorPalette, NleBridge, NleMarker } from "./bridge";
 import { parseCategoryTag, withCategoryTag } from "./categoryTag";
 import { closestColor, colorToHex, DEFAULT_MARKER_HEX } from "./colors";
-
-// Stored in the NLE marker's custom data, to recognize markers that came from PostPin
-interface CustomData {
-	__postpin?: boolean;
-	id?: string;
-}
+import { parsePostPinData, stringifyPostPinData } from "./customData";
 
 export interface SyncContext {
 	nle: NleBridge;
@@ -24,8 +20,9 @@ export interface SyncContext {
 	exportId: string;
 }
 
-// Uploads the NLE's markers to the export. Markers that came from PostPin keep their id,
-// markers without a "#Category" tag land in a category named after their color.
+// Uploads the NLE's markers to the export. The server updates markers it already has, by their NLE id
+// or, for markers pulled from PostPin, by their PostPin id. Markers without a "#Category" tag land in
+// a category named after their color.
 export async function syncMarkersUp({ nle, client, projectId, timelineId, exportId }: SyncContext) {
 	const [markers, { hostName, palette }] = await Promise.all([
 		nle.getMarkers(),
@@ -38,18 +35,10 @@ export async function syncMarkersUp({ nle, client, projectId, timelineId, export
 		throwOnError: true,
 	});
 
-	const mappedMarkers = [];
+	const mappedMarkers: UploadMarker[] = [];
 	for (const m of markers) {
-		let customData: CustomData = {};
-		try {
-			customData = JSON.parse(m.customData || "{}");
-		} catch (e) {
-			console.error("Error parsing custom data:", e);
-		}
 		const parsed = parseCategoryTag(m.description);
-		const colorName =
-			palette === "rgb" ? m.color : (palette.find((c) => c.id === m.color)?.name ?? m.color);
-		const categoryName = parsed.categoryName ?? `${hostName} ${colorName}`;
+		const categoryName = parsed.categoryName ?? colorCategoryName(hostName, m.color, palette);
 		let category = categories.find((c) => c.name === categoryName);
 		if (!category) {
 			({ data: category } = await createCategory({
@@ -65,7 +54,8 @@ export async function syncMarkersUp({ nle, client, projectId, timelineId, export
 			description: parsed.description,
 			frame: m.frame,
 			categoryId: category.id,
-			id: customData.__postpin ? customData.id : undefined,
+			nleId: m.nleId,
+			id: postpinIdOf(m),
 		});
 	}
 
@@ -77,7 +67,8 @@ export async function syncMarkersUp({ nle, client, projectId, timelineId, export
 	});
 }
 
-// Writes the export's markers into the NLE, with their category as "#Category" tag and nearest color
+// Writes the export's markers into the NLE, with their category as "#Category" tag and nearest color.
+// Categories named after the color (e.g. "Resolve Blue") need no tag, the color says it already.
 export async function syncMarkersDown({
 	nle,
 	client,
@@ -85,7 +76,7 @@ export async function syncMarkersDown({
 	timelineId,
 	exportId,
 }: SyncContext) {
-	const [{ data: markers }, { data: categories }, { palette }] = await Promise.all([
+	const [{ data: markers }, { data: categories }, { hostName, palette }] = await Promise.all([
 		getMarkers({ client, path: { projectId, timelineId, exportId }, throwOnError: true }),
 		getCategories({ client, path: { projectId }, throwOnError: true }),
 		nle.getCapabilities(),
@@ -94,13 +85,49 @@ export async function syncMarkersDown({
 
 	const mappedMarkers = markers.map((m): NleMarker => {
 		const category = categoriesById.get(m.categoryId);
+		const color = closestColor(category?.color ?? DEFAULT_MARKER_HEX, palette);
+		const needsTag = category && category.name !== colorCategoryName(hostName, color, palette);
 		return {
+			// updates the NLE marker this one was pushed from or pulled into before
+			nleId: m.nleId,
 			title: m.name,
-			description: category ? withCategoryTag(category.name, m.description) : (m.description ?? ""),
+			description: needsTag ? withCategoryTag(category.name, m.description) : (m.description ?? ""),
 			frame: m.frame,
-			color: closestColor(category?.color ?? DEFAULT_MARKER_HEX, palette),
-			customData: JSON.stringify({ __postpin: true, id: m.id } satisfies CustomData),
+			color,
+			customData: stringifyPostPinData({ id: m.id }),
 		};
 	});
-	await nle.setMarkers(mappedMarkers);
+	const nleIds = await nle.setMarkers(mappedMarkers);
+
+	// Tell PostPin which NLE marker each new marker became, so the next push updates them instead of
+	// adding them again. Matters most for hosts without custom data, like Pro Tools.
+	const linked = markers
+		.map((m, i) => ({ m, nleId: nleIds[i] }))
+		.filter(({ m, nleId }) => nleId && nleId !== m.nleId);
+	if (linked.length === 0) return;
+	await uploadMarkers({
+		client,
+		body: linked.map(({ m, nleId }) => ({
+			id: m.id,
+			nleId,
+			name: m.name,
+			description: m.description,
+			frame: m.frame,
+			categoryId: m.categoryId,
+		})),
+		path: { projectId, timelineId, exportId },
+		throwOnError: true,
+	});
+}
+
+// The PostPin id a marker pulled from PostPin keeps in its custom data
+function postpinIdOf(marker: NleMarker) {
+	return parsePostPinData(marker.customData)?.id;
+}
+
+// The category a marker without "#Category" tag lands in: the host and color, e.g. "Resolve Blue"
+function colorCategoryName(hostName: string, color: string, palette: ColorPalette) {
+	const colorName =
+		palette === "rgb" ? color : (palette.find((c) => c.id === color)?.name ?? color);
+	return `${hostName} ${colorName}`;
 }

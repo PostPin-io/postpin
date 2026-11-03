@@ -22,11 +22,16 @@ export function createProToolsAdapter(): NleBridge {
 			return {
 				id: sessionIds.originId,
 				name: "ToDo",
+				projectId: sessionIds.originId,
+				projectName: "ToDo",
 			};
 		},
-		getMarkers: async () => markers.getMarkers(await getSessionTiming()),
+		getMarkers: async () =>
+			markers.getMarkers(await getSessionTiming(), (await getSessionIds()).originId),
 		setMarkers: async (list) => {
-			await markers.setMarkers(await getSessionTiming(), list);
+			const { originId } = await getSessionIds();
+			const numbers = await markers.setMarkers(await getSessionTiming(), originId, list);
+			return numbers.map((number) => markers.markerId(originId, number));
 		},
 		clearMarkers: () => markers.clearMarkers(),
 		getRenderPresets: async () => [],

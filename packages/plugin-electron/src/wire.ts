@@ -22,10 +22,15 @@ export function fromWireCapabilities({
 	return { ...capabilities, palette: anyColor ? "rgb" : palette };
 }
 
-export function toWireMarker({ customData, ...marker }: NleMarker): WireMarker {
-	return customData === null ? marker : { ...marker, customData };
+// eipc has optional fields instead of null
+export function toWireMarker({ nleId, customData, ...marker }: NleMarker): WireMarker {
+	return {
+		...marker,
+		...(nleId === null ? {} : { nleId }),
+		...(customData === null ? {} : { customData }),
+	};
 }
 
 export function fromWireMarker(marker: WireMarker): NleMarker {
-	return { ...marker, customData: marker.customData ?? null };
+	return { ...marker, nleId: marker.nleId ?? null, customData: marker.customData ?? null };
 }

@@ -32,7 +32,7 @@ import {
 	$eipc_validator$_LoginCode,
 	$eipc_validator$_TimelineInfo,
 } from "../common-runtime/PostPin.js";
-const $$ipcPrefix$$ = "$eipc_message$_5e1498d5549571bd8335f9d6f28848f0_$_PostPin_$_";
+const $$ipcPrefix$$ = "$eipc_message$_6d7454b4bb74e6d3c81e7e30015d5036_$_PostPin_$_";
 import { webFrame } from "electron/renderer";
 function $eipc_event_validator$_App() {
 	if (

@@ -17,8 +17,11 @@ model Marker {
   categoryId String
   author     User     @relation(fields: [authorId], references: [id])
   authorId   String
-  nleId      String?  @unique
+  // id of the marker in the NLE, e.g. "<session origin id>:<memory location number>" in Pro Tools.
+  // Unique per export, since every export of a timeline gets the same NLE markers.
+  nleId      String?
 
+  @@unique([exportId, nleId])
   @@index([exportId])
   @@index([categoryId])
   @@map("marker")
