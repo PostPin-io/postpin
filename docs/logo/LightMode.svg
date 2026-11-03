@@ -5,9 +5,6 @@
         <g id="LightMode" transform="matrix(1.43836,0,0,1.43836,-438.360409,-454.782524)">
             <path d="M1000,749L1000,1509" style="fill:none;stroke:rgb(45,45,50);stroke-width:104.29px;"/>
         </g>
-        <g id="DarkMode" transform="matrix(1.43836,0,0,1.43836,-438.360409,-454.782524)">
-            <path d="M1000,749L1000,1509" style="fill:none;stroke:rgb(246,245,242);stroke-width:104.29px;"/>
-        </g>
         <g transform="matrix(1.43836,0,0,1.43836,-419.661724,-454.782524)">
             <path d="M787,1509L787,1250" style="fill:none;stroke:rgb(49,184,106);stroke-width:104.29px;"/>
         </g>

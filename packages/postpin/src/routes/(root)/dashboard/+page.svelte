@@ -8,6 +8,7 @@
 	import RenameProjectModal from "#lib/components/RenameProjectModal.svelte";
 	import NewOrgModal from "../../../lib/components/NewOrgModal.svelte";
 	import DeleteProjectModal from "#lib/components/DeleteProjectModal.svelte";
+	import LoadingAnimation from "#lib/components/LoadingAnimation.svelte";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
@@ -173,7 +174,7 @@
 			<div
 				class="flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-base-300 bg-base-100 px-8 py-10 text-center shadow-lg"
 			>
-				<span class="loading loading-lg loading-spinner text-primary" aria-hidden="true"></span>
+				<LoadingAnimation class="size-24" />
 				<div>
 					<p class="text-lg font-semibold">Loading your projects</p>
 					<p class="mt-1 text-sm text-base-content/70">

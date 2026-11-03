@@ -11,6 +11,7 @@
 	} from "./export.remote";
 
 	import Header from "#lib/components/Header.svelte";
+	import LoadingAnimation from "#lib/components/LoadingAnimation.svelte";
 	import MarkerPanel from "#lib/components/review/MarkerPanel.svelte";
 	import { markerFilter } from "#lib/components/review/markerFilter.svelte.ts";
 	import VideoMenuBar from "#lib/components/review/VideoMenuBar.svelte";
@@ -410,7 +411,7 @@
 			<div
 				class="flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-base-300 bg-base-100 px-8 py-10 text-center shadow-lg"
 			>
-				<span class="loading loading-lg loading-spinner text-primary" aria-hidden="true"></span>
+				<LoadingAnimation class="size-24" />
 
 				<div>
 					<p class="text-lg font-semibold">Loading export</p>
