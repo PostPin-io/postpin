@@ -17,16 +17,29 @@ if (!(await fs.stat(protoPath).catch(() => null))) {
 await fs.rm(distFolder, { recursive: true, force: true });
 await fs.mkdir(distFolder, { recursive: true });
 
-try {
-	execSync(
-		`./node_modules/.bin/grpc_tools_node_protoc \
+const protocArgs = `\
 		--plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto \
 		--ts_proto_out=${distFolder} \
 		--ts_proto_opt=outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false,snakeToCamel=keys,protoJsonFormat=false \
 		--proto_path=${sdkFolder} \
-		${protoPath}`,
-	);
+		${protoPath}`;
+
+function runProtoc(/** @type {string} */ binary) {
+	execSync(`${binary} ${protocArgs}`, { stdio: ["ignore", "pipe", "pipe"] });
+}
+
+try {
+	try {
+		runProtoc("./node_modules/.bin/grpc_tools_node_protoc");
+	} catch (e) {
+		// grpc-tools only ships an x86_64 protoc, which can't run on Apple Silicon without Rosetta
+		if (process.platform !== "darwin" || process.arch !== "arm64") throw e;
+		console.log(
+			"Bundled protoc failed to run, falling back to system protoc (brew install protobuf)",
+		);
+		runProtoc("protoc");
+	}
 } catch (e) {
-	console.log(e.stderr.toString());
+	console.log(e.stderr?.toString() ?? e);
 	process.exit(1);
 }
