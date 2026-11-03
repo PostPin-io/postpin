@@ -10,8 +10,12 @@ declare const DEFAULT_SERVER_URL: string;
 
 const CLIENT_ID = "io.postpin.desktop";
 
+const ICON_PATH = path.join(__dirname, "icon.png");
+
 function openWindow() {
 	const win = createWindow({
+		title: "PostPin Desktop",
+		iconPath: ICON_PATH,
 		preloadPath: path.join(__dirname, "preload.cjs"),
 		devServerUrl: DEV_SERVER_URL,
 		url: path.join(__dirname, "ui/index.html"),
@@ -22,6 +26,7 @@ function openWindow() {
 }
 
 app.whenReady().then(() => {
+	if (process.platform === "darwin" && !app.isPackaged) app.dock?.setIcon(ICON_PATH);
 	openWindow();
 });
 

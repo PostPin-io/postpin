@@ -1,4 +1,10 @@
 <script lang="ts">
+	import {
+		getExports,
+		type GetExportsResponse,
+		type ProjectWithTimelines,
+		type Timeline,
+	} from "@postpin-io/api-client-ts";
 	import { createClient } from "@postpin-io/api-client-ts/client";
 	import type { Snippet } from "svelte";
 	import type { RenderProgress, Settings, UploadProgress } from "../bridge";
@@ -7,11 +13,16 @@
 	import { renderAndUpload as runRenderAndUpload } from "../renderAndUpload";
 	import { syncMarkersDown, syncMarkersUp } from "../sync";
 	import { getBridges } from "./context";
-	import ExportPicker from "./ExportPicker.svelte";
-	import MarkerActions from "./MarkerActions.svelte";
+	import Destination from "./Destination.svelte";
+	import FlowArrow from "./FlowArrow.svelte";
+	import HostNode from "./HostNode.svelte";
 	import ProgressBars from "./ProgressBars.svelte";
 	import RenderToDisk from "./RenderToDisk.svelte";
-	import TimelinePicker from "./TimelinePicker.svelte";
+	import SettingsIcon from "@lucide/svelte/icons/settings";
+	import Globe from "@lucide/svelte/icons/globe";
+	import Link from "@lucide/svelte/icons/link";
+	import LogOut from "@lucide/svelte/icons/log-out";
+	import PostPinLogo from "./PostPinLogo.svelte";
 
 	interface Props {
 		header?: Snippet;
@@ -21,24 +32,90 @@
 
 	const { nle, host } = getBridges();
 
+	type TimelineExport = GetExportsResponse["exports"][number];
+	interface Location {
+		project: ProjectWithTimelines;
+		timeline: Timeline;
+	}
+
 	const client = createClient({ baseUrl: `${await host.getServerUrl()}/api` });
-	const [capabilities, projectsWithTimelines, lastSettings, nleProjectId, nleTimelineId] =
-		await Promise.all([
-			nle.getCapabilities(),
-			loadProjectsWithTimelines(client),
-			host.getSettings(),
-			nle.getProjectId(),
-			nle.getTimelineId(),
-		]);
+	const [capabilities, projectsWithTimelines, lastSettings, nleTimeline] = await Promise.all([
+		nle.getCapabilities(),
+		loadProjectsWithTimelines(client),
+		host.getSettings(),
+		nle.getTimelineInfo(),
+	]);
+
+	// The PostPin timeline linked to the timeline open in the NLE
+	function findLinked(): Location | null {
+		if (!nleTimeline) return null;
+		for (const project of projectsWithTimelines) {
+			const timeline = project.timelines.find((t: Timeline) => t.nleTimelineId === nleTimeline.id);
+			if (timeline) return { project, timeline };
+		}
+		return null;
+	}
+
+	// Newest first
+	async function loadExports({ project, timeline }: Location) {
+		const { data } = await getExports({
+			client,
+			path: { projectId: project.id, timelineId: timeline.id },
+			throwOnError: true,
+		});
+		return data.exports.toSorted((a, b) => b.createdAt.localeCompare(a.createdAt));
+	}
+
+	const linked = findLinked();
 
 	let settings = $state<Settings>(lastSettings);
-	let timelineId = $state<string | null>(null);
-	let exportId = $state<string | null>(null);
-	// The select only yields a timeline id, so look up the project that owns it.
-	const projectId = $derived(
-		projectsWithTimelines.find((project) => project.timelines.some((t) => t.id === timelineId))
-			?.id ?? null,
+	let showDiskSettings = $state(false);
+	// Renders go to a timeline, marker actions work on one export of a timeline.
+	// Both start at the linked timeline and its latest export.
+	let uploadTarget = $state<Location | null>(linked);
+	let markerTarget = $state<(Location & { export: TimelineExport | null }) | null>(
+		linked ? { ...linked, export: (await loadExports(linked))[0] ?? null } : null,
 	);
+
+	// Exports of every timeline for the export picker, newest first. Loads in the background so the
+	// screen doesn't wait for one request per timeline.
+	let exportsByTimeline = $state<Record<string, TimelineExport[]>>({});
+	async function refreshExports(location: Location) {
+		const exports = await loadExports(location);
+		exportsByTimeline[location.timeline.id] = exports;
+		return exports;
+	}
+	Promise.all(
+		projectsWithTimelines.flatMap((project) =>
+			project.timelines.map((timeline) => refreshExports({ project, timeline }).catch(() => [])),
+		),
+	);
+	const projectsWithExports = $derived(
+		projectsWithTimelines.map((project) => ({
+			...project,
+			timelines: project.timelines.map((timeline) => ({
+				...timeline,
+				exports: exportsByTimeline[timeline.id] ?? [],
+			})),
+		})),
+	);
+
+	function findLocation(projectId: string, timelineId: string): Location | null {
+		const project = projectsWithTimelines.find((p) => p.id === projectId);
+		const timeline = project?.timelines.find((t: Timeline) => t.id === timelineId);
+		return project && timeline ? { project, timeline } : null;
+	}
+
+	function selectUploadTarget(projectId: string, timelineId: string) {
+		uploadTarget = findLocation(projectId, timelineId) ?? uploadTarget;
+	}
+
+	async function selectMarkerTarget(projectId: string, timelineId: string, exportId?: string) {
+		const location = findLocation(projectId, timelineId);
+		if (!location) return;
+		const exports = exportsByTimeline[timelineId] ?? (await refreshExports(location));
+		markerTarget = { ...location, export: exports.find((e) => e.id === exportId) ?? null };
+	}
 
 	let log: string[] = $state([]);
 	let isBusy = $state(false);
@@ -59,9 +136,20 @@
 		}
 	}
 
+	// Dock / taskbar progress for the whole run: rendering fills the first half, uploading the second.
+	// Only sends whole-percent changes, progress events can come in much faster.
+	let lastDockPercent: number | null = null;
+	function setDockProgress(fraction: number | null) {
+		const percent = fraction === null ? null : Math.round(Math.min(Math.max(fraction, 0), 1) * 100);
+		if (percent === lastDockPercent) return;
+		lastDockPercent = percent;
+		host.setProgress(percent === null ? null : percent / 100);
+	}
+
 	function renderAndUpload() {
-		if (!projectId || !timelineId) return;
-		const ids = { projectId, timelineId };
+		if (!uploadTarget) return;
+		const target = uploadTarget;
+		const ids = { projectId: target.project.id, timelineId: target.timeline.id };
 
 		renderProgress = null;
 		uploadProgress = null;
@@ -75,9 +163,19 @@
 				client,
 				...ids,
 				onStep: (message) => log.push(message),
-				onRenderProgress: (progress) => (renderProgress = progress),
-				onUploadProgress: (progress) => (uploadProgress = progress),
-			});
+				onRenderProgress: (progress) => {
+					renderProgress = progress;
+					setDockProgress((progress.percent / 100) * 0.5);
+				},
+				onUploadProgress: (progress) => {
+					uploadProgress = progress;
+					setDockProgress(0.5 + (progress.uploadedBytes / progress.totalBytes) * 0.5);
+				},
+			}).finally(() => setDockProgress(null));
+
+			// Marker actions continue on the new export
+			const exports = await refreshExports(target);
+			markerTarget = { ...target, export: exports.find((e) => e.id === exportId) ?? null };
 
 			log.push("Processing started, opening export in browser...");
 			await host.openInBrowser(
@@ -88,8 +186,14 @@
 	}
 
 	function syncContext() {
-		if (!projectId || !timelineId || !exportId) return null;
-		return { nle, client, projectId, timelineId, exportId };
+		if (!markerTarget?.export) return null;
+		return {
+			nle,
+			client,
+			projectId: markerTarget.project.id,
+			timelineId: markerTarget.timeline.id,
+			exportId: markerTarget.export.id,
+		};
 	}
 
 	function syncUp() {
@@ -105,51 +209,195 @@
 	function deleteMarkers() {
 		return run(() => nle.clearMarkers());
 	}
+
+	const canRender = $derived(!!uploadTarget && !isBusy);
+	const canSync = $derived(!!markerTarget?.export && !isBusy);
 </script>
 
-<main class="flex flex-col gap-4 p-4">
-	<h1 class="text-2xl font-bold">PostPin Integration</h1>
-
-	{@render header?.()}
-
-	<TimelinePicker projects={projectsWithTimelines} {nleProjectId} {nleTimelineId} bind:timelineId />
-
-	{#if projectId && timelineId}
-		<ExportPicker {client} {projectId} {timelineId} bind:exportId />
-	{/if}
-
-	{#if capabilities.renderToDisk}
-		<RenderToDisk {capabilities} bind:settings />
-	{/if}
-
-	<button
-		onclick={renderAndUpload}
-		disabled={timelineId === null || isBusy}
-		class="btn btn-primary"
+<!-- Fills the window: the header stays put, only the content below it scrolls -->
+<main class="@container flex h-screen flex-col">
+	<header
+		class="flex shrink-0 items-center border-t border-base-content/20 px-4 py-2 text-sm select-none [app-region:drag] ms-16"
 	>
-		Render & Upload
-	</button>
+		<PostPinLogo class="h-5 w-auto me-3" />
+		<span class="text-base-content/60 text-xl"> PostPin </span>
+		<span class="flex-1"></span>
+		<!-- Buttons in a drag region need no-drag, otherwise the window swallows their clicks -->
+		<button
+			type="button"
+			class="btn btn-link btn-sm [app-region:no-drag]"
+			onclick={() => host.openInBrowser("/")}
+		>
+			<Globe size={14} />
+		</button>
+		<button
+			type="button"
+			class="btn btn-link btn-sm [app-region:no-drag]"
+			onclick={() => host.logout()}
+		>
+			<LogOut size={14} />
+		</button>
+	</header>
 
-	{#if timelineId && exportId}
-		<MarkerActions
-			disabled={isBusy}
-			onSyncUp={syncUp}
-			onSyncDown={syncDown}
-			onDelete={deleteMarkers}
-		/>
-	{/if}
+	<div class="min-h-0 flex-1 overflow-y-auto">
+		<div class="grid grid-cols-1 gap-4 p-4 @2xl:grid-cols-[1fr_1.15fr_1fr] @2xl:gap-x-0">
+			<div class="@2xl:col-start-1 @2xl:row-span-2 @2xl:row-start-1 @2xl:grid">
+				<HostNode
+					hostName={capabilities.hostName}
+					thumbnailDataUrl={nleTimeline?.thumbnailDataUrl}
+					timelineName={nleTimeline?.name ?? null}
+					projectName={nleTimeline?.projectName ?? null}
+					disabled={isBusy}
+					onClearMarkers={deleteMarkers}
+					{header}
+				/>
+			</div>
 
-	{#if isBusy}
-		<ProgressBars {renderProgress} {uploadProgress} />
-	{/if}
+			{#if isBusy}
+				<div
+					class="flex flex-col justify-center gap-3 @2xl:col-start-2 @2xl:row-span-2 @2xl:row-start-1 @2xl:px-4"
+				>
+					<ProgressBars {renderProgress} {uploadProgress} />
+					{#if log.length}
+						<p class="text-center text-sm text-base-content/60">{log.at(-1)}</p>
+					{/if}
+				</div>
+			{:else}
+				<div class="flex items-center @2xl:col-start-2 @2xl:row-start-1">
+					<FlowArrow direction="right" disabled={!canRender}>
+						<div class="join">
+							<button
+								type="button"
+								class="btn join-item h-auto flex-col gap-0 py-2 btn-primary"
+								disabled={!canRender}
+								onclick={renderAndUpload}
+							>
+								Render & Upload →
+								<span class="text-xs font-normal opacity-75">
+									{uploadTarget
+										? `new export in ${uploadTarget.timeline.name}`
+										: "choose a location first"}
+								</span>
+							</button>
+							{#if capabilities.renderToDisk}
+								<button
+									type="button"
+									class={[
+										"btn join-item h-auto btn-primary border-left-2 border-base-content/20 border-0 flex-col gap-0 py-2",
+										showDiskSettings && "btn-active",
+									]}
+									aria-label="Render to disk settings"
+									onclick={() => (showDiskSettings = !showDiskSettings)}
+								>
+									<SettingsIcon />
+								</button>
+							{/if}
+						</div>
+					</FlowArrow>
+				</div>
+			{/if}
 
-	<pre>{log.join("\n")}</pre>
+			<div class="@2xl:col-start-3 @2xl:row-start-1 @2xl:grid">
+				<Destination
+					title="Upload to"
+					path={uploadTarget?.project.name}
+					name={uploadTarget?.timeline.name}
+					mode="timeline"
+					projects={projectsWithTimelines}
+					selectedProjectId={uploadTarget?.project.id}
+					selectedTimelineId={uploadTarget?.timeline.id}
+					onSelect={selectUploadTarget}
+					emptyText="This timeline isn't linked to a PostPin timeline yet."
+					highlightChoose={!uploadTarget}
+				>
+					{#if uploadTarget && uploadTarget.timeline.id === linked?.timeline.id}
+						<span class="badge badge-outline"><Link size={14} /> linked</span>
+						<button
+							type="button"
+							class="btn btn-link btn-sm"
+							onclick={() =>
+								host.openInBrowser(
+									`/projects/${uploadTarget?.project.id}/timelines/${uploadTarget?.timeline.id}/exports`,
+								)}
+						>
+							<Globe size={14} />
+						</button>
+					{/if}
+				</Destination>
+			</div>
 
-	{#if error}
-		<div role="alert" class="alert alert-error">
-			<span>{error}</span>
+			{#if !isBusy}
+				<div class="flex items-center @2xl:col-start-2 @2xl:row-start-2">
+					<FlowArrow direction="both" disabled={!canSync}>
+						<div class="flex min-w-48 flex-col gap-2 rounded-box border-2 border-base-content p-3">
+							<h3
+								class="truncate text-center text-xs tracking-widest text-base-content/60 uppercase"
+							>
+								Markers{markerTarget?.export ? ` · ${markerTarget.export.name}` : ""}
+							</h3>
+							<button type="button" class="btn" disabled={!canSync} onclick={syncUp}>
+								Push markers →
+							</button>
+							<button type="button" class="btn" disabled={!canSync} onclick={syncDown}>
+								← Pull comments
+							</button>
+						</div>
+					</FlowArrow>
+				</div>
+			{/if}
+
+			<div class="@2xl:col-start-3 @2xl:row-start-2 @2xl:grid">
+				<Destination
+					title="Markers with"
+					path={markerTarget
+						? `${markerTarget.project.name} › ${markerTarget.timeline.name}`
+						: undefined}
+					name={markerTarget?.export?.name}
+					mode="export"
+					projects={projectsWithExports}
+					selectedProjectId={markerTarget?.project.id}
+					selectedTimelineId={markerTarget?.timeline.id}
+					selectedExportId={markerTarget?.export?.id}
+					onSelect={selectMarkerTarget}
+					emptyText={markerTarget
+						? "No exports in this timeline yet. Render one first."
+						: "No export selected."}
+				>
+					{#if markerTarget?.export}
+						<span class="text-sm text-base-content/60">
+							{new Date(markerTarget.export.createdAt).toLocaleString()}
+						</span>
+						<button
+							type="button"
+							class="btn btn-link btn-sm"
+							onclick={() =>
+								host.openInBrowser(
+									`/projects/${markerTarget!.project.id}/timelines/${markerTarget!.timeline.id}/exports/${markerTarget!.export!.id}`,
+								)}
+						>
+							<Globe size={14} />
+						</button>
+					{/if}
+				</Destination>
+			</div>
 		</div>
-	{/if}
 
-	<button class="btn btn-link" onclick={() => host.logout()}>Logout</button>
+		{#if showDiskSettings && capabilities.renderToDisk && !isBusy}
+			<div
+				class="mx-4 mb-4 flex flex-col gap-2 rounded-box border-2 border-dashed border-base-content/30 p-4"
+			>
+				<RenderToDisk {capabilities} bind:settings />
+			</div>
+		{/if}
+
+		{#if !isBusy && log.length}
+			<div class="mx-4 mb-4 rounded-box border-2 border-base-content p-3 text-sm">{log.at(-1)}</div>
+		{/if}
+
+		{#if error}
+			<div role="alert" class="mx-4 mb-4 alert alert-error">
+				<span>{error}</span>
+			</div>
+		{/if}
+	</div>
 </main>

@@ -19,6 +19,7 @@ if (install) {
 await fs.rm("dist", { recursive: true, force: true });
 await fs.mkdir("dist");
 await fs.cp("manifest.xml", "dist/manifest.xml");
+await fs.cp("node_modules/@postpin-io/plugin-electron/assets/icon.png", "dist/icon.png");
 await fs.writeFile(
 	"dist/package.json",
 	JSON.stringify({ name: "postpin-resolve", version: "1.0.0", main: "main.js" }, null, 2),

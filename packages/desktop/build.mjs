@@ -6,6 +6,7 @@ const watch = process.argv.includes("--watch");
 
 await fs.rm("dist", { recursive: true, force: true });
 await fs.mkdir("dist");
+await fs.cp("node_modules/@postpin-io/plugin-electron/assets/icon.png", "dist/icon.png");
 
 const logRebuilds = (name) => ({
 	name: "log-rebuilds",

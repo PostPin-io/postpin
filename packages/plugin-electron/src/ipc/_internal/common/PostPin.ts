@@ -70,6 +70,7 @@ export interface ICommonAPIImpl {
 	): Promise<UploadedPart[]> | UploadedPart[];
 	openInBrowser(path: string): Promise<boolean> | boolean;
 	pickDirectory(): Promise<string> | string;
+	setProgress(fraction: number): Promise<boolean> | boolean;
 }
 export interface ICommonAPIRenderer {
 	getServerUrl(): Promise<string>;
@@ -83,14 +84,22 @@ export interface ICommonAPIRenderer {
 	uploadFile(path: string, partSize: number, parts: UploadPartUrl[]): Promise<UploadedPart[]>;
 	openInBrowser(path: string): Promise<boolean>;
 	pickDirectory(): Promise<string>;
+	setProgress(fraction: number): Promise<boolean>;
 	onLoginCode(fn: (code: LoginCode) => void): () => void;
 	onSessionChanged(fn: (session: unknown) => void): () => void;
 	onUploadProgress(fn: (progress: UploadProgress) => void): () => void;
 }
+export interface TimelineInfo {
+	name: string;
+	id: string;
+	projectId: string;
+	projectName: string;
+	thumbnailDataUrl?: string;
+}
 export interface INleAPIImpl {
 	getCapabilities(): Promise<Capabilities> | Capabilities;
 	getProjectId(): Promise<string> | string;
-	getTimelineId(): Promise<string> | string;
+	getTimelineInfo(): Promise<TimelineInfo | null> | TimelineInfo | null;
 	getMarkers(): Promise<NleMarker[]> | NleMarker[];
 	setMarkers(markers: NleMarker[]): Promise<boolean> | boolean;
 	clearMarkers(): Promise<boolean> | boolean;
@@ -101,7 +110,7 @@ export interface INleAPIImpl {
 export interface INleAPIRenderer {
 	getCapabilities(): Promise<Capabilities>;
 	getProjectId(): Promise<string>;
-	getTimelineId(): Promise<string>;
+	getTimelineInfo(): Promise<TimelineInfo | null>;
 	getMarkers(): Promise<NleMarker[]>;
 	setMarkers(markers: NleMarker[]): Promise<boolean>;
 	clearMarkers(): Promise<boolean>;

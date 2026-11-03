@@ -17,7 +17,13 @@ export function createProToolsAdapter(): NleBridge {
 		}),
 		// A session is both project and timeline; origin_id survives Save As
 		getProjectId: async () => (await getSessionIds()).originId,
-		getTimelineId: async () => (await getSessionIds()).originId,
+		getTimelineInfo: async () => {
+			const sessionIds = await getSessionIds();
+			return {
+				id: sessionIds.originId,
+				name: "ToDo",
+			};
+		},
 		getMarkers: async () => markers.getMarkers(await getSessionTiming()),
 		setMarkers: async (list) => {
 			await markers.setMarkers(await getSessionTiming(), list);

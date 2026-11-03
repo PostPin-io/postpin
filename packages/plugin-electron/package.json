@@ -8,7 +8,8 @@
 	"exports": {
 		"./main": "./src/main/index.ts",
 		"./preload": "./src/preload.ts",
-		"./renderer": "./src/renderer.ts"
+		"./renderer": "./src/renderer.ts",
+		"./assets/*": "./assets/*"
 	},
 	"scripts": {
 		"generate:ipc": "generate-ipc src/schema src/ipc && prettier --write src/ipc",

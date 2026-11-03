@@ -12,4 +12,5 @@ export {
 	$eipc_validator$_Settings,
 	$eipc_validator$_LoginConfig,
 	$eipc_validator$_LoginCode,
+	$eipc_validator$_TimelineInfo,
 } from "../_internal/common-runtime/PostPin.js";

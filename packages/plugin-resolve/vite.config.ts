@@ -9,7 +9,10 @@ export default defineConfig({
 	plugins: [
 		tailwindcss(),
 		// root is src/ui, so point at the package-root config (svelte-check reads it from there too)
-		svelte({ configFile: fileURLToPath(new URL("svelte.config.js", import.meta.url)) }),
+		svelte({
+			configFile: fileURLToPath(new URL("svelte.config.js", import.meta.url)),
+			inspector: true,
+		}),
 	],
 	// The scan doesn't crawl linked workspace packages, so their CommonJS deps would be found late,
 	// re-run the optimizer and reload the page

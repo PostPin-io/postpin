@@ -84,6 +84,16 @@ interface CommonAPI {
   uploadProgress(progress: UploadProgress)
   openInBrowser(path: string) -> boolean
   pickDirectory() -> string
+  // progress bar on the dock / taskbar icon, 0 to 1, negative removes it
+  setProgress(fraction: number) -> boolean
+}
+
+structure TimelineInfo {
+  name: string
+  id: string
+  projectId: string
+  projectName: string
+  thumbnailDataUrl?: string
 }
 
 [RendererAPI]
@@ -92,7 +102,7 @@ interface CommonAPI {
 interface NleAPI {
   getCapabilities() -> Capabilities
   getProjectId() -> string
-  getTimelineId() -> string
+  getTimelineInfo() -> TimelineInfo?
   getMarkers() -> NleMarker[]
   setMarkers(markers: NleMarker[]) -> boolean
   clearMarkers() -> boolean

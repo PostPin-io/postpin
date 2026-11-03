@@ -77,6 +77,9 @@ export function connectHostBridge(): HostBridge {
 			await api.openInBrowser(path);
 		},
 		pickDirectory: () => api.pickDirectory(),
+		setProgress: async (fraction) => {
+			await api.setProgress(fraction ?? -1);
+		},
 	});
 }
 
@@ -85,7 +88,7 @@ export function connectNleBridge(): NleBridge {
 	return withCleanErrors<NleBridge>({
 		getCapabilities: async () => fromWireCapabilities(await api.getCapabilities()),
 		getProjectId: () => api.getProjectId(),
-		getTimelineId: () => api.getTimelineId(),
+		getTimelineInfo: () => api.getTimelineInfo(),
 		getMarkers: async () => (await api.getMarkers()).map(fromWireMarker),
 		setMarkers: async (markers) => {
 			await api.setMarkers(markers.map(toWireMarker));

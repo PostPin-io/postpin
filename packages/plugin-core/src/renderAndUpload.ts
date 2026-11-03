@@ -37,10 +37,14 @@ export async function renderAndUpload({
 	onRenderProgress = () => {},
 	onUploadProgress = () => {},
 }: RenderAndUploadOptions) {
-	const [nleProjectId, nleTimelineId] = await Promise.all([
+	const [nleProjectId, nleTimelineInfo] = await Promise.all([
 		nle.getProjectId(),
-		nle.getTimelineId(),
+		nle.getTimelineInfo(),
 	]);
+
+	if (!nleTimelineInfo) {
+		throw new Error("No timeline found");
+	}
 
 	onStep("Rendering preview...");
 	const renderedPath = await nle.renderPreview(onRenderProgress);
@@ -50,7 +54,7 @@ export async function renderAndUpload({
 	const { data: createdExport } = await createExport({
 		client,
 		path: { projectId, timelineId },
-		body: { nleProjectId, nleTimelineId },
+		body: { nleProjectId, nleTimelineId: nleTimelineInfo.id },
 		throwOnError: true,
 	});
 	const exportId = createdExport.id;

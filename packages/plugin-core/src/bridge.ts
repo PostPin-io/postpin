@@ -79,11 +79,19 @@ export interface LoginCode {
 	verificationUri: string;
 }
 
+export interface TimelineInfo {
+	name: string;
+	id: string;
+	projectId: string;
+	projectName: string;
+	thumbnailDataUrl?: string;
+}
+
 // Communication to the editor plugin
 export interface NleBridge {
 	getCapabilities(): Promise<Capabilities>;
 	getProjectId(): Promise<string>;
-	getTimelineId(): Promise<string>;
+	getTimelineInfo(): Promise<TimelineInfo>;
 	getMarkers(): Promise<NleMarker[]>;
 	setMarkers(markers: NleMarker[]): Promise<void>;
 	clearMarkers(): Promise<void>;
@@ -117,4 +125,8 @@ export interface HostBridge {
 	): Promise<UploadedPart[]>;
 	openInBrowser(path: string): Promise<void>;
 	pickDirectory(): Promise<string>;
+	/**
+	 * progress bar on the app's dock / taskbar icon, 0 to 1, null removes it
+	 */
+	setProgress(fraction: number | null): Promise<void>;
 }

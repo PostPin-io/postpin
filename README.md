@@ -10,6 +10,7 @@
 
 - Node.js
 - pnpm
+- protobuf (`brew install protobuf` on macOS)
 
 ### Setup
 

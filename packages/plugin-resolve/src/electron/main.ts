@@ -384,7 +384,20 @@ const resolveBridge: NleBridge = {
 
 		return await project.GetUniqueId();
 	},
-	getTimelineId: async () => await (await getCurrentTimeline()).GetUniqueId(),
+	getTimelineInfo: async () => {
+		const timeline = await getCurrentTimeline();
+		if (!timeline) throw new Error("No timeline open in Resolve");
+		const project = await getCurrentProject();
+		if (!project) throw new Error("No project open in Resolve");
+		const frame = await timeline.ExportFrame(0, {});
+		return {
+			id: await timeline.GetUniqueId(),
+			name: await timeline.GetName(),
+			projectId: await project.GetUniqueId(),
+			projectName: await project.GetName(),
+			thumbnailDataUrl: frame ? `data:image/png;base64,${frame.data}` : undefined,
+		};
+	},
 	// Resolve marker frames are relative to the timeline start, bridge frames are absolute
 	getMarkers: async () => {
 		const timeline = await getCurrentTimeline();
@@ -403,11 +416,13 @@ const resolveBridge: NleBridge = {
 		const timeline = await getCurrentTimeline();
 		const startFrame = await timeline.GetStartFrame();
 
+		let i = 0;
 		for (const marker of markers) {
+			i++;
 			await timeline.AddMarker(
 				marker.frame - startFrame,
 				marker.color as MarkerColor,
-				marker.title,
+				marker.title || `M${i}`,
 				marker.description,
 				1,
 				marker.customData ?? undefined,
@@ -428,8 +443,12 @@ const resolveBridge: NleBridge = {
 	buildTimelineSnapshot,
 };
 
+const ICON_PATH = path.join(__dirname, "icon.png");
+
 function openWindow() {
 	const win = createWindow({
+		title: "PostPin for DaVinci Resolve",
+		iconPath: ICON_PATH,
 		preloadPath: path.join(__dirname, "preload.js"),
 		devServerUrl: DEV_SERVER_URL,
 		url: path.join(__dirname, "ui/index.html"),
@@ -445,6 +464,9 @@ function openWindow() {
 }
 
 app.whenReady().then(() => {
+	// Resolve runs the plugin in its own Electron process, which shows up in the dock with
+	// Electron's icon. Only this process is affected, Resolve keeps its own icon.
+	if (process.platform === "darwin") app.dock?.setIcon(ICON_PATH);
 	openWindow();
 });
 

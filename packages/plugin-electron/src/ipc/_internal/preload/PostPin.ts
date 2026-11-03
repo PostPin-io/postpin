@@ -15,6 +15,7 @@ import {
 	LoginCode,
 	ICommonAPIImpl,
 	ICommonAPIRenderer,
+	TimelineInfo,
 	INleAPIImpl,
 	INleAPIRenderer,
 } from "../common/PostPin.js";
@@ -29,8 +30,9 @@ import {
 	$eipc_validator$_Settings,
 	$eipc_validator$_LoginConfig,
 	$eipc_validator$_LoginCode,
+	$eipc_validator$_TimelineInfo,
 } from "../common-runtime/PostPin.js";
-const $$ipcPrefix$$ = "$eipc_message$_bcb95dc01602d580c779b4c488f4ed0a_$_PostPin_$_";
+const $$ipcPrefix$$ = "$eipc_message$_5e1498d5549571bd8335f9d6f28848f0_$_PostPin_$_";
 import { webFrame } from "electron/renderer";
 function $eipc_event_validator$_App() {
 	if (
@@ -99,6 +101,9 @@ export const CommonAPI: Partial<ICommonAPIRenderer> = {
 	pickDirectory() {
 		return ipcRenderer.invoke($$ipcPrefix$$ + "CommonAPI_$_pickDirectory");
 	},
+	setProgress(fraction: number) {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "CommonAPI_$_setProgress", fraction);
+	},
 };
 const $eipc_impl$__init_CommonAPI = (localBridged: Record<string, any>) => {
 	if (!$eipc_event_validator$_App()) return;
@@ -112,8 +117,8 @@ export const NleAPI: Partial<INleAPIRenderer> = {
 	getProjectId() {
 		return ipcRenderer.invoke($$ipcPrefix$$ + "NleAPI_$_getProjectId");
 	},
-	getTimelineId() {
-		return ipcRenderer.invoke($$ipcPrefix$$ + "NleAPI_$_getTimelineId");
+	getTimelineInfo() {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "NleAPI_$_getTimelineInfo");
 	},
 	getMarkers() {
 		return ipcRenderer.invoke($$ipcPrefix$$ + "NleAPI_$_getMarkers");

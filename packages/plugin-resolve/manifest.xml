@@ -2,7 +2,7 @@
 <BlackmagicDesign>
     <Plugin>
         <Id>io.postpin.plugin.resolve</Id>
-        <Name>PostPin Plugin</Name>
+        <Name>PostPin</Name>
         <Version>1.0</Version>
         <Description>Sync Markers with PostPin</Description>
         <FilePath>main.js</FilePath>

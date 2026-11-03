@@ -135,3 +135,24 @@ export function $eipc_validator$_LoginCode(value: any): boolean {
 	if (!(typeof value.verificationUri === "string")) return false;
 	return true;
 }
+export function $eipc_validator$_TimelineInfo(value: any): boolean {
+	if (!value || typeof value !== "object") return false;
+
+	// TimelineInfo.name
+	if (!(typeof value.name === "string")) return false;
+
+	// TimelineInfo.id
+	if (!(typeof value.id === "string")) return false;
+
+	// TimelineInfo.projectId
+	if (!(typeof value.projectId === "string")) return false;
+
+	// TimelineInfo.projectName
+	if (!(typeof value.projectName === "string")) return false;
+
+	// TimelineInfo.thumbnailDataUrl
+	if (typeof value.thumbnailDataUrl !== "undefined") {
+		if (!(typeof value.thumbnailDataUrl === "string")) return false;
+	}
+	return true;
+}
