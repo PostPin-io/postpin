@@ -10,7 +10,8 @@
 		"format": "prettier --write . '!packages/**' && pnpm -r run format",
 		"lint": "prettier --check . '!packages/**' && pnpm -r run lint",
 		"charts": "d2 docs/architecture/architecture.d2 docs/architecture/architecture.svg",
-		"charts:watch": "nodemon --watch docs/architecture -e d2 --exec \"pnpm charts\""
+		"charts:watch": "nodemon --watch docs/architecture -e d2 --exec \"pnpm charts\"",
+		"setup": "pnpm install && pnpm -r run setup"
 	},
 	"devDependencies": {
 		"@mdi/svg": "^7.4.47",
