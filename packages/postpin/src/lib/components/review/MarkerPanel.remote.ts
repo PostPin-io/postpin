@@ -2,6 +2,7 @@ import { prisma } from "#lib/server/database.ts";
 import { getRequestEvent, command, query } from "$app/server";
 import { page } from "$app/state";
 import { Prisma } from "@postpin-io/shared/db";
+
 import * as v from "valibot";
 
 export const getMarkers = query(v.string(), async (exportId: string) => {
@@ -11,6 +12,26 @@ export const getMarkers = query(v.string(), async (exportId: string) => {
 	const markers = await prisma.marker.findMany({
 		where: {
 			exportId: exportId,
+		},
+		orderBy: { frame: "desc" },
+		include: {
+			author: true,
+			category: true,
+			responses: {
+				select: { content: true, authorId: true, createdAt: true },
+				orderBy: { createdAt: "asc" },
+			},
+		},
+	});
+
+	return markers;
+});
+export const getMarkersbyCategory = query(v.string(), async (categoryId: string) => {
+	const event = getRequestEvent();
+
+	const markers = await prisma.marker.findMany({
+		where: {
+			categoryId: categoryId,
 		},
 		orderBy: { frame: "desc" },
 		include: {
@@ -46,6 +67,59 @@ export const createMarker = command(
 		});
 		await getMarkers(data.exportId).refresh();
 		return marker;
+	},
+);
+
+export const createMarkers = command(
+	v.object({
+		exportId: v.string(),
+		markers: v.array(
+			v.object({
+				name: v.string(),
+				description: v.string(),
+				frame: v.pipe(v.number(), v.integer(), v.minValue(0)),
+				categoryId: v.string(),
+				responses: v.optional(
+					v.array(
+						v.object({
+							content: v.string(),
+							authorId: v.string(),
+							createdAt: v.string(),
+						}),
+					),
+				),
+			}),
+		),
+	}),
+	async (data) => {
+		const event = getRequestEvent();
+		const authorId = event.locals.user!.id;
+
+		// createMany cannot create nested responses, so create each marker individually
+		const created = await prisma.$transaction(
+			data.markers.map((marker) =>
+				prisma.marker.create({
+					data: {
+						name: marker.name,
+						description: marker.description,
+						frame: marker.frame,
+						categoryId: marker.categoryId,
+						exportId: data.exportId,
+						authorId,
+						responses: {
+							create: (marker.responses ?? []).map((response) => ({
+								content: response.content,
+								authorId: response.authorId,
+								createdAt: new Date(response.createdAt),
+							})),
+						},
+					},
+					select: { id: true },
+				}),
+			),
+		);
+		await getMarkers(data.exportId).refresh();
+		return { count: created.length };
 	},
 );
 
@@ -93,6 +167,28 @@ export const deleteMarker = command(v.string(), async (id) => {
 	return marker;
 });
 
+export const deleteMarkers = command(
+	v.object({ exportId: v.string(), ids: v.array(v.string()) }),
+	async (data) => {
+		const markers = await prisma.marker.findMany({
+			where: { id: { in: data.ids }, exportId: data.exportId },
+			select: { id: true, categoryId: true },
+		});
+
+		const result = await prisma.marker.deleteMany({
+			where: { id: { in: markers.map((marker) => marker.id) } },
+		});
+
+		const categoryIds = new Set(markers.map((marker) => marker.categoryId));
+		await Promise.all([
+			getMarkers(data.exportId).refresh(),
+			...[...categoryIds].map((categoryId) => isCategoryUsed(categoryId).refresh()),
+		]);
+
+		return result;
+	},
+);
+
 export const changeDescription = command(
 	v.object({
 		id: v.string(),
@@ -111,6 +207,38 @@ export const changeDescription = command(
 		});
 
 		return marker;
+	},
+);
+
+export const getResponses = query(v.string(), async (markerId: string) => {
+	return prisma.response.findMany({
+		where: { markerId },
+		orderBy: { createdAt: "asc" },
+		include: { author: true },
+	});
+});
+
+export const createResponse = command(
+	v.object({
+		markerId: v.string(),
+		content: v.pipe(v.string(), v.trim(), v.minLength(1)),
+	}),
+	async (data) => {
+		const event = getRequestEvent();
+		const authorId = event.locals.user!.id;
+
+		const response = await prisma.response.create({
+			data: { markerId: data.markerId, content: data.content, authorId },
+		});
+		const marker = await prisma.marker.findUniqueOrThrow({
+			where: { id: data.markerId },
+			select: { exportId: true },
+		});
+		await Promise.all([
+			getResponses(data.markerId).refresh(),
+			getMarkers(marker.exportId).refresh(),
+		]);
+		return response;
 	},
 );
 

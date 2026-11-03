@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { resolve } from "$app/paths";
+	import { page } from "$app/state";
 	import { authClient } from "#lib/auth-client.ts";
 	import { goto, refreshAll } from "$app/navigation";
 	import { hasRole, MANAGER_ROLES } from "#lib/roles.ts";
 	import type { Snippet } from "svelte";
-
+	import Logo from "#lib/components/Logo.svelte";
+	import Share from "@lucide/svelte/icons/share";
+	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
+	let sharingSetupModal: SharingSetupModal | null = null;
 	const session = authClient.useSession();
 	const organizations = authClient.useListOrganizations();
 	const activeMember = authClient.useActiveMember();
@@ -89,6 +93,7 @@
 				>
 			</label>
 			<a href={resolve("/(root)/dashboard")} class="btn btn-ghost text-xl">
+				<Logo class="h-6 w-auto" />
 				{#if activeOrganization}
 					{activeOrganization.name}
 					<span class="font-normal text-base-content/40">|</span>
@@ -103,19 +108,33 @@
 					>Settings</a
 				>
 			{/if}
-		</div>
-		<div class="navbar-center hidden lg:flex">
 			<ul class="menu menu-horizontal px-1">
-				<li>
-					<a href={resolve("/auth/login")}>Login</a>
-				</li>
+				{#if page.params.project && page.params.timeline}
+					<li>
+						<a
+							href={resolve("/(root)/projects/[project]/timelines/[timeline]/exports", {
+								project: page.params.project,
+								timeline: page.params.timeline,
+							})}
+							class="btn btn-ghost btn-sm">Exports</a
+						>
+					</li>
+				{/if}
 			</ul>
 		</div>
+		<div class="navbar-center hidden lg:flex"></div>
 		{#if children}
 			<div class="navbar-center hidden lg:flex">{@render children()}</div>
 		{/if}
 		<div class="navbar-end">
-			<input type="text" placeholder="Search" class="input w-64 lg:w-auto" />
+			<button
+				class="btn btn-square btn-ghost"
+				aria-label="Share"
+				onclick={() => sharingSetupModal?.open()}
+			>
+				<Share class="h-5 w-5" />
+			</button>
+
 			<div class="dropdown dropdown-end ml-2">
 				<div tabindex="0" role="button" class="btn btn-ghost">
 					{$session.data?.user.name ?? "Account"}
@@ -159,3 +178,5 @@
 		</ul>
 	</div>
 </header>
+
+<SharingSetupModal bind:this={sharingSetupModal} />

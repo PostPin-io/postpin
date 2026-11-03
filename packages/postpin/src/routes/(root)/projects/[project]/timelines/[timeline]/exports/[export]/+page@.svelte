@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from "svelte";
+	import { isInsideOverlay, isPlainKey, isTypingTarget } from "#lib/keyboard.ts";
 	import { page } from "$app/state";
 	import {
 		getExport,
@@ -11,6 +12,8 @@
 
 	import Header from "#lib/components/Header.svelte";
 	import MarkerPanel from "#lib/components/review/MarkerPanel.svelte";
+	import { markerFilter } from "#lib/components/review/markerFilter.svelte.ts";
+	import VideoMenuBar from "#lib/components/review/VideoMenuBar.svelte";
 	import VideoPlayer, { HLS, type VideoSource } from "#lib/components/review/VideoPlayer.svelte";
 	import { Pane, Splitpanes } from "svelte-splitpanes";
 	import Timeline from "./Timeline.svelte";
@@ -20,6 +23,7 @@
 		secondsAtFrame,
 	} from "../../../../../../../../../../shared/src/logic/timecode";
 	import { getMarkers } from "#lib/components/review/MarkerPanel.remote.ts";
+	import { TIMELINE_MODES, type TimelineMode } from "#lib/components/review/VideoPlayer.ts";
 	import type { ThumbnailImage } from "@videojs/html";
 	import { seekSprites as seekSpritesSchema } from "@postpin-io/shared/types/SeekSprites";
 	import * as v from "valibot";
@@ -85,6 +89,8 @@
 	function saveLayout(key: keyof PaneLayout, event: CustomEvent<{ size: number }[]>) {
 		const sizes = event.detail.map((pane) => pane.size);
 
+		// The collapsed timeline's fixed size must not overwrite the saved layout
+		if (key === "left" && timelineMode !== "full") return;
 		layout[key] = normalizeSizes(sizes);
 
 		try {
@@ -137,7 +143,8 @@
 	let isLayoutReady = $state(false);
 
 	let isLoading = $derived(!exp || !isMounted || !isLayoutReady);
-
+	let allMarkers = $derived(await getMarkers(page.params.export ?? ""));
+	let markers = $derived(markerFilter.apply(allMarkers));
 	let originalUrl = $state<string | undefined>(undefined);
 	let thumbnailUrl = $state<string | undefined>(undefined);
 
@@ -248,6 +255,58 @@
 	let videoPaused = $state(true);
 	let videoPlaybackRate = $state(1);
 
+	let timeline = $state<Timeline>();
+
+	// Single global keyboard handler. Shortcuts work wherever focus is, except while typing or
+	// inside modals. Components with their own shortcuts (MarkerPanel) skip the same targets.
+	function onGlobalKeyDown(event: KeyboardEvent) {
+		if (event.defaultPrevented || !isPlainKey(event, { allowMeta: true })) return;
+		if (isTypingTarget(event) || isInsideOverlay(event)) return;
+
+		const step = (direction: -1 | 1) => timeline?.stepFrames(direction, event.shiftKey);
+		switch (event.key) {
+			case " ":
+				// preventDefault also stops the native click on a focused button
+				if (event.repeat || event.metaKey) return;
+				videoPaused = !videoPaused;
+				if (videoPaused) videoPlaybackRate = 1;
+				break;
+			case "ArrowLeft":
+				if (event.metaKey) step(-1);
+				else timeline?.seekToAdjacentMarker(-1);
+				break;
+			case "ArrowRight":
+				if (event.metaKey) step(1);
+				else timeline?.seekToAdjacentMarker(1);
+				break;
+			case "ArrowUp":
+				timeline?.seekToCut(-1);
+				break;
+			case "ArrowDown":
+				timeline?.seekToCut(1);
+				break;
+			case "Home":
+				timeline?.seekToStart();
+				break;
+			case "End":
+				timeline?.seekToEnd();
+				break;
+			case "f":
+			case "F":
+				if (event.metaKey || event.repeat) return;
+				player?.toggleFullscreen();
+				break;
+			case "+":
+			case "-":
+				if (event.metaKey) return;
+				timeline?.changePlaybackRate(event.key === "+" ? 1 : -1);
+				break;
+			default:
+				return;
+		}
+		event.preventDefault();
+	}
+
 	const snapshot = $derived(exportQuery.current?.timelineSnapshot as TimelineSnapshot | undefined);
 	// Absolute timeline frame, like marker frames
 	const currentFrame = $derived(snapshot ? frameAtSeconds(videoPosition, snapshot) : 0);
@@ -310,7 +369,35 @@
 	});
 
 	let viewMode: "shot-grid" | "timeline" = $state("timeline");
+	const TIMELINE_MODE_KEY = "postpin:timeline-mode";
+	function loadTimelineMode(): TimelineMode {
+		if (typeof localStorage === "undefined") return "full";
+		const stored = localStorage.getItem(TIMELINE_MODE_KEY);
+		return TIMELINE_MODES.find((mode) => mode === stored) ?? "full";
+	}
+	let timelineMode = $state<TimelineMode>(loadTimelineMode());
+	$effect(() => {
+		try {
+			localStorage.setItem(TIMELINE_MODE_KEY, timelineMode);
+		} catch (error) {
+			console.error("Failed to save timeline mode:", error);
+		}
+	});
+	let timelineCollapsedHeight = $state(0);
+	let leftPanesHeight = $state(0);
+	// Compact and scrub-only timelines get exactly the space they need, in percent of the pane column
+	const collapsedPercent = $derived(
+		timelineMode !== "full" && leftPanesHeight > 0 && timelineCollapsedHeight > 0
+			? Math.min((timelineCollapsedHeight / leftPanesHeight) * 100, 85)
+			: undefined,
+	);
+	let player = $state<VideoPlayer>();
+	let videoFullscreen = $state(false);
+	let videoQualities = $state<number[]>([]);
+	let videoMuted = $state(false);
 </script>
+
+<svelte:window onkeydown={onGlobalKeyDown} />
 
 {#if isLoading}
 	<div class="flex h-full min-h-0 flex-col overflow-hidden">
@@ -388,9 +475,6 @@
 					</ul>
 				</details>
 			{/if}
-
-			<button class="btn" onclick={() => (viewMode = "timeline")}>Timeline</button>
-			<button class="btn" onclick={() => (viewMode = "shot-grid")}>Shot Grid</button>
 		</Header>
 
 		<Splitpanes
@@ -400,66 +484,106 @@
 		>
 			<!-- Main content -->
 			<Pane size={layout.main[0]} minSize={isMarkerVisible ? 25 : 100} class="overflow-auto">
-				<Splitpanes
-					theme="daisy-theme"
-					horizontal
-					on:resized={(event) => saveLayout("left", event)}
-				>
-					<!-- Video and jobs -->
-					<Pane size={layout.left[0]} minSize={isTimelineVisible ? 15 : 100} class="overflow-auto">
-						<div class="flex h-full min-h-0 flex-col">
-							{#if !media}
-								<p>Nothing uploaded yet.</p>
-							{:else if viewMode === "shot-grid" && snapshot}
-								<ShotGrid
-									{snapshot}
-									mediaId={media.id}
-									thumbnailsReady={!!media.shotThumbnails}
-									{currentFrame}
-									onSeek={seekToFrame}
-								/>
-							{:else}
-								<!-- Video -->
-								{#if media.status !== "PENDING" && videoSource && snapshot}
-									<div class="min-h-0 flex-1 overflow-hidden">
-										<VideoPlayer
-											source={videoSource}
-											poster={thumbnailUrl}
-											timing={snapshot}
+				<div class="h-full" bind:clientHeight={leftPanesHeight}>
+					<Splitpanes
+						theme="daisy-theme"
+						horizontal
+						on:resized={(event) => saveLayout("left", event)}
+					>
+						<!-- Video and jobs -->
+						<Pane
+							size={collapsedPercent !== undefined ? 100 - collapsedPercent : layout.left[0]}
+							minSize={isTimelineVisible ? 15 : 100}
+							class="overflow-auto"
+						>
+							<div class="flex h-full min-h-0 flex-col">
+								{#if !media}
+									<p>Nothing uploaded yet.</p>
+								{:else}
+									{#snippet menuBar()}
+										<VideoMenuBar
+											{markers}
+											timing={snapshot!}
+											durationFrames={snapshot!.durationFrameCount}
 											bind:currentTime={videoPosition}
 											bind:paused={videoPaused}
 											bind:playbackRate={videoPlaybackRate}
 											bind:quality={videoQuality}
+											bind:viewMode
+											bind:timelineMode
+											qualities={videoQualities}
+											muted={videoMuted}
+											playerAvailable={viewMode === "timeline" && !!player}
+											fullscreen={videoFullscreen}
+											onToggleMute={() => player?.toggleMute()}
+											onFullscreen={() => player?.toggleFullscreen()}
 										/>
+									{/snippet}
+									<div class="min-h-0 flex-1 overflow-hidden">
+										{#if viewMode === "shot-grid" && snapshot}
+											<ShotGrid
+												{snapshot}
+												mediaId={media.id}
+												thumbnailsReady={!!media.shotThumbnails}
+												{currentFrame}
+												onSeek={seekToFrame}
+											/>
+										{:else if media.status !== "PENDING" && videoSource && snapshot}
+											<VideoPlayer
+												bind:this={player}
+												source={videoSource}
+												poster={thumbnailUrl}
+												timing={snapshot}
+												bind:currentTime={videoPosition}
+												bind:paused={videoPaused}
+												bind:playbackRate={videoPlaybackRate}
+												bind:quality={videoQuality}
+												bind:qualities={videoQualities}
+												bind:muted={videoMuted}
+												bind:fullscreen={videoFullscreen}
+												fullscreenControls={menuBar}
+											/>
+										{/if}
 									</div>
+									{#if snapshot}
+										{@render menuBar()}
+									{/if}
 								{/if}
-							{/if}
-						</div>
-					</Pane>
-
-					<!-- Timeline panel -->
-					{#if isTimelineVisible}
-						<Pane size={layout.left[1]} minSize={10} class="overflow-hidden">
-							{#if exportQuery.current?.timelineSnapshot}
-								<Timeline
-									snapshot={exportQuery.current!.timelineSnapshot as TimelineSnapshot}
-									markers={await getMarkers(page.params.export ?? "")}
-									{seekThumbnails}
-									bind:videoPositionSeconds={videoPosition}
-									bind:paused={videoPaused}
-									bind:playbackRate={videoPlaybackRate}
-								/>
-							{/if}
-
-							<!-- Timeline content -->
+							</div>
 						</Pane>
-					{/if}
-				</Splitpanes>
+
+						<!-- Timeline panel -->
+						{#if isTimelineVisible}
+							<Pane
+								size={collapsedPercent ?? layout.left[1]}
+								minSize={collapsedPercent ?? 10}
+								maxSize={collapsedPercent ?? 100}
+								class="overflow-hidden"
+							>
+								{#if exportQuery.current?.timelineSnapshot}
+									<Timeline
+										bind:this={timeline}
+										snapshot={exportQuery.current!.timelineSnapshot as TimelineSnapshot}
+										{markers}
+										{seekThumbnails}
+										mode={timelineMode}
+										onCollapsedHeight={(height) => (timelineCollapsedHeight = height)}
+										bind:videoPositionSeconds={videoPosition}
+										bind:paused={videoPaused}
+										bind:playbackRate={videoPlaybackRate}
+									/>
+								{/if}
+
+								<!-- Timeline content -->
+							</Pane>
+						{/if}
+					</Splitpanes>
+				</div>
 			</Pane>
 
 			<!-- Marker panel -->
 			{#if isMarkerVisible}
-				<Pane size={layout.main[1]} minSize={20} maxSize={50} class="overflow-auto">
+				<Pane size={layout.main[1]} minSize={20} maxSize={50} class="flex flex-col overflow-hidden">
 					{#if true}
 						{@const barcode = await getMovieBarcode({
 							mediaId: media?.id ?? "",

@@ -1,10 +1,12 @@
 <script lang="ts">
 	import EditCategoriesModal from "./EditCategoriesModal.svelte";
+	import CategorySelector from "../CategorySelector.svelte";
 
 	import type { Prisma } from "@postpin-io/shared/db";
 	import { updateMarker, deleteMarker, getCategories, createCategory } from "./MarkerPanel.remote";
 	import { page } from "$app/state";
 	import ClipboardList from "@lucide/svelte/icons/clipboard-list";
+	import Trash from "@lucide/svelte/icons/trash";
 	import { onDestroy, onMount } from "svelte";
 	import X from "@lucide/svelte/icons/x";
 	import CircleArrowLeft from "@lucide/svelte/icons/circle-arrow-left";
@@ -32,6 +34,7 @@
 
 	let selectedCategoryId = $state<string>(marker.categoryId);
 	let saving = $state(false);
+	let fieldFocused = $state(false);
 
 	let projectId = $derived(page.params.project ?? "");
 	let categories = $derived(await getCategories(projectId));
@@ -116,6 +119,13 @@
 		if (timer) void persist();
 	});
 
+	async function finish(event: KeyboardEvent) {
+		if (event.key !== "Enter" || !(event.metaKey || event.ctrlKey)) return;
+		event.preventDefault();
+		await persist();
+		onclose?.();
+	}
+
 	export function focusTitleInputField() {
 		titleInputField?.focus();
 	}
@@ -127,51 +137,55 @@
 </script>
 
 <section class="card mx-1 h-full border border-base-300 bg-base-200 shadow-sm">
-	<div class="card-body h-full gap-3 p-4">
+	<div class="card-body h-full min-h-0 w-full gap-3 p-4">
 		<div class="flex items-center justify-between gap-3">
-			<h2 class="card-title text-base">Edit marker</h2>
+			<div class="flex-screen flex gap-2">
+				<h2 class="card-title text-base">Edit marker</h2>
 
-			<select
-				class="select min-w-0 flex-1"
-				aria-label="Category"
-				value={categoryId}
-				onchange={(e) => {
-					selectedCategoryId = e.currentTarget.value;
-					localStorage.setItem("DefaultCategory", selectedCategoryId);
-					void persist();
-				}}
-			>
-				{#each categories as category (category.id)}
-					<option value={category.id}>{category.name}</option>
-				{/each}
-			</select>
+				<CategorySelector
+					value={categoryId}
+					onselect={(id) => {
+						selectedCategoryId = id;
+						localStorage.setItem("DefaultCategory", id);
+						void persist();
+					}}
+				/>
 
-			<button
-				type="button"
-				class="btn btn-square btn-outline"
-				title="New category"
-				aria-label="New category"
-				onclick={openEditCategoriesModal}
-			>
-				<ClipboardList size={20} />
-			</button>
+				<button
+					type="button"
+					class="btn btn-square"
+					title="New category"
+					aria-label="New category"
+					onclick={openEditCategoriesModal}
+				>
+					<ClipboardList size={20} />
+				</button>
 
-			<span class="badge badge-outline tabular-nums" title="Marker frame">
-				Frame {marker.frame - startFrame}
-			</span>
-
-			<button
-				type="button"
-				class="btn btn-square btn-ghost"
-				title="Close"
-				aria-label="Close marker editor"
-				onclick={() => onclose?.()}
-			>
-				<X />
-			</button>
+				<!-- <span class="badge badge-outline tabular-nums" title="Marker frame">
+					Frame {marker.frame - startFrame}
+					</span> -->
+			</div>
+			<div class="flex flex-wrap gap-2">
+				<button
+					type="button"
+					class="btn btn-square btn-ghost"
+					title="Close"
+					aria-label="Close marker editor"
+					onclick={() => onclose?.()}
+				>
+					<X />
+				</button>
+				<button type="button" class="btn btn-outline btn-error" disabled={saving} onclick={remove}>
+					<Trash size={20} />
+				</button>
+			</div>
 		</div>
-
-		<form class="flex h-full flex-col gap-2" onsubmit={(e) => e.preventDefault()}>
+		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+		<form
+			class="flex min-h-0 flex-1 flex-col gap-2"
+			onkeydown={finish}
+			onsubmit={(e) => e.preventDefault()}
+		>
 			<div class="flex items-center gap-2">
 				<input
 					bind:this={titleInputField}
@@ -180,6 +194,8 @@
 					placeholder="Title"
 					aria-label="Marker title"
 					bind:value={name}
+					onfocus={() => (fieldFocused = true)}
+					onblur={() => (fieldFocused = false)}
 					oninput={() => schedule()}
 				/>
 				<button
@@ -194,21 +210,23 @@
 					<CircleArrowLeft />
 				</button>
 			</div>
+
 			<textarea
-				class="textarea h-full w-full resize-none"
+				class="textarea min-h-0 w-full flex-1 resize-none"
 				rows="2"
 				placeholder="Description"
 				aria-label="Marker description"
 				bind:value={description}
+				onfocus={() => (fieldFocused = true)}
+				onblur={() => (fieldFocused = false)}
 				oninput={() => schedule()}></textarea>
-
-			<div class="flex items-center justify-between gap-2">
+			<div class="flex shrink-0 items-center justify-between gap-2">
 				<span class="flex items-center gap-2 text-xs text-base-content/60" aria-live="polite">
 					{#if saving}<span class="loading loading-xs loading-spinner"></span>Saving…{/if}
 				</span>
-				<button type="button" class="btn btn-outline btn-error" disabled={saving} onclick={remove}>
-					Delete
-				</button>
+				{#if fieldFocused}
+					<span class="text-xs text-base-content/60">⌘/Ctrl + Enter to close</span>
+				{/if}
 			</div>
 		</form>
 	</div>

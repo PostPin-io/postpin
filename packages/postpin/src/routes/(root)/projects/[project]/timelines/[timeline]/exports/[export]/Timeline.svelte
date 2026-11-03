@@ -5,6 +5,12 @@
 	import { onMount } from "svelte";
 	import type { ThumbnailElement, ThumbnailImage } from "@videojs/html";
 	import {
+		PLAYBACK_RATES,
+		seekToMarker,
+		type TimelineMode,
+	} from "#lib/components/review/VideoPlayer.ts";
+	import { getMarkers, updateMarker } from "#lib/components/review/MarkerPanel.remote.ts";
+	import {
 		formatTimecode,
 		frameAtSeconds,
 		secondsAtFrame,
@@ -19,6 +25,9 @@
 		paused: boolean;
 		playbackRate: number;
 		seekThumbnails: ThumbnailImage[] | undefined;
+		mode?: TimelineMode;
+
+		onCollapsedHeight: (height: number) => void;
 	}
 
 	let {
@@ -28,13 +37,13 @@
 		playbackRate = $bindable(1),
 		markers,
 		seekThumbnails,
+		mode = "full",
+		onCollapsedHeight,
 	}: Props = $props();
 
 	let hover = $state<{ time: number; x: number; y: number } | null>(null);
 	let preview = $state<ThumbnailElement>();
 	let thumbnailReady = $state(false);
-
-	const PLAYBACK_RATES = [0.25, 0.5, 1, 1.5, 2, 4];
 
 	// Most zoomed in: this many pixels per frame
 	const MAX_PIXELS_PER_FRAME = 20;
@@ -58,16 +67,52 @@
 			: 1,
 	);
 
-	let tracks = $derived([
-		...snapshot.tracks.filter((track) => track.type === "video").reverse(),
-		...snapshot.tracks.filter((track) => track.type === "audio"),
-	]);
+	type Lane = {
+		id: string;
+		name: string;
+		type: string;
+		clips: TimelineSnapshot["tracks"][number]["clips"];
+	};
+
+	const collapsed = $derived(mode !== "full");
+
+	let tracks = $derived.by((): Lane[] => {
+		if (mode === "scrub") return [];
+		const video = snapshot.tracks.filter((track) => track.type === "video");
+		const audio = snapshot.tracks.filter((track) => track.type === "audio");
+		if (!collapsed) return [...video.reverse(), ...audio];
+		// Higher tracks come later and are drawn on top
+		const merge = (type: string, name: string, list: typeof video): Lane[] =>
+			list.length > 0
+				? [{ id: type, name, type, clips: list.flatMap((track) => track.clips) }]
+				: [];
+		return [...merge("video", "Video", video), ...merge("audio", "Audio", audio)];
+	});
+	const laneHeight = $derived(collapsed ? "h-7" : "h-12");
 
 	let headers = $state<HTMLDivElement>();
 	let lanes = $state<HTMLDivElement>();
 	let content = $state<HTMLDivElement>();
 	let lanesOffsetHeight = $state(0);
 	let lanesClientHeight = $state(0);
+	let toolbarHeight = $state(0);
+	const COLLAPSED_BOTTOM_SPACE = 24;
+
+	// Compact layout has one merged lane per track type, regardless of the current state.
+	// Using tracks.length here would count every track while expanded and report a wrong height.
+	const collapsedLaneCount = $derived(
+		mode === "scrub"
+			? 0
+			: new Set(
+					snapshot.tracks.map((track) => track.type).filter((t) => t === "video" || t === "audio"),
+				).size,
+	);
+
+	$effect(() => {
+		// toolbar, ruler (h-12), 28px lanes, plus fixed room for the scrollbar. Not measured, as the
+		// scrollbar appearing would resize the pane and loop.
+		onCollapsedHeight(toolbarHeight + 48 + collapsedLaneCount * 28 + COLLAPSED_BOTTOM_SPACE);
+	});
 
 	const fps = $derived(snapshot.frameRate.fpsNumerator / snapshot.frameRate.fpsDenominator);
 
@@ -109,6 +154,11 @@
 		if (cut !== undefined) seek(cut);
 	}
 
+	function seekToAdjacentMarker(direction: -1 | 1) {
+		const frame = seekToMarker(direction, { markers, playHeadPosition });
+		if (frame !== undefined) seek(frame);
+	}
+
 	function changePlaybackRate(direction: -1 | 1) {
 		const index = PLAYBACK_RATES.findIndex((rate) => rate >= playbackRate);
 		const current = index === -1 ? PLAYBACK_RATES.length - 1 : index;
@@ -135,6 +185,56 @@
 			(_, i) => firstFrame + (first + i) * tickFrames,
 		);
 	});
+
+	let visibleMarkers = $derived(
+		markers.filter((m) => {
+			const x = toX(markerFrame(m));
+			return x >= scrollLeft - 8 && x <= scrollLeft + viewportWidth;
+		}),
+	);
+
+	let markerDrag = $state<{ id: string; frame: number } | null>(null);
+	const markerFrame = (marker: (typeof markers)[number]) =>
+		markerDrag?.id === marker.id ? markerDrag.frame : marker.frame;
+
+	function startMarkerDrag(
+		event: PointerEvent & { currentTarget: HTMLElement },
+		marker: (typeof markers)[number],
+	) {
+		if (event.button !== 0) return;
+		// Keep the ruler from starting a scrub
+		event.stopPropagation();
+		event.currentTarget.setPointerCapture(event.pointerId);
+		markerDrag = { id: marker.id, frame: marker.frame };
+		seek(marker.frame);
+	}
+
+	function moveMarkerDrag(event: PointerEvent) {
+		if (!markerDrag) return;
+		event.stopPropagation();
+		markerDrag.frame = clampFrame(frameAtClientX(event.clientX));
+	}
+
+	async function endMarkerDrag(marker: (typeof markers)[number]) {
+		if (markerDrag?.id !== marker.id) return;
+		const frame = markerDrag.frame;
+		try {
+			if (frame !== marker.frame) {
+				seek(frame);
+				await updateMarker({
+					id: marker.id,
+					exportId: marker.exportId,
+					name: marker.name ?? "",
+					description: marker.description ?? "",
+					categoryId: marker.categoryId,
+					frame,
+				});
+				await getMarkers(marker.exportId).refresh();
+			}
+		} finally {
+			markerDrag = null;
+		}
+	}
 
 	let dragging = $state(false);
 	let wasPlaying = false;
@@ -247,41 +347,16 @@
 		autoScrollId = requestAnimationFrame(autoScroll);
 	}
 
-	function onKeyDown(event: KeyboardEvent) {
-		if (event.target instanceof HTMLInputElement) return;
-		const step = event.shiftKey ? Math.round(fps) : 1;
-		switch (event.key) {
-			case "ArrowLeft":
-				seek(playHeadPosition - step);
-				break;
-			case "ArrowRight":
-				seek(playHeadPosition + step);
-				break;
-			case "ArrowUp":
-				seekToCut(-1);
-				break;
-			case "ArrowDown":
-				seekToCut(1);
-				break;
-			case "+":
-				changePlaybackRate(1);
-				break;
-			case "-":
-				changePlaybackRate(-1);
-				break;
-			case "Home":
-				seek(firstFrame);
-				break;
-			case "End":
-				seek(lastFrame);
-				break;
-			case " ":
-				paused = !paused;
-				break;
-			default:
-				return;
-		}
-		event.preventDefault();
+	// Keyboard actions, triggered by the page's global key handler
+	export function stepFrames(direction: -1 | 1, bySecond: boolean) {
+		seek(playHeadPosition + direction * (bySecond ? Math.round(fps) : 1));
+	}
+	export { seekToAdjacentMarker, seekToCut, changePlaybackRate };
+	export function seekToStart() {
+		seek(firstFrame);
+	}
+	export function seekToEnd() {
+		seek(lastFrame);
 	}
 
 	onMount(async () => {
@@ -308,10 +383,11 @@
 </script>
 
 <!-- <pre>{JSON.stringify({ markers }, null, 2)}</pre> -->
-<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="flex h-full flex-col outline-none" tabindex="0" onkeydown={onKeyDown}>
-	<div class="flex items-center justify-between gap-2 border-b border-gray-300 p-2">
+<div class="flex h-full flex-col">
+	<div
+		bind:offsetHeight={toolbarHeight}
+		class="flex items-center justify-between gap-2 border-b border-gray-300 p-2"
+	>
 		<span class="text-xs text-gray-500">
 			Space play/pause · ←/→ frame · ↑/↓ previous/next cut · +/- speed
 		</span>
@@ -334,7 +410,7 @@
 			<div class="sticky top-0 z-20 h-12 border-b border-gray-300 bg-base-100"></div>
 			{#each tracks as track (track.id)}
 				<div
-					class="flex h-12 items-center truncate border-b border-gray-300 px-2 text-sm"
+					class="flex {laneHeight} items-center truncate border-b border-gray-300 px-2 text-sm"
 					title={track.name}
 				>
 					{track.name}
@@ -382,6 +458,22 @@
 						</div>
 					{/each}
 
+					{#each visibleMarkers as marker (marker.id)}
+						<!-- svelte-ignore a11y_no_static_element_interactions -->
+						<div
+							class="absolute bottom-0 z-10 h-3 w-2 -translate-x-1/2 cursor-grab touch-none rounded-xs {markerDrag?.id ===
+							marker.id
+								? 'cursor-grabbing'
+								: ''}"
+							style="left: {toX(markerFrame(marker)) + 1}px; background: {marker.category.color}"
+							title={marker.name}
+							onpointerdown={(event) => startMarkerDrag(event, marker)}
+							onpointermove={moveMarkerDrag}
+							onpointerup={() => endMarkerDrag(marker)}
+							onpointercancel={() => (markerDrag = null)}
+						></div>
+					{/each}
+
 					<div
 						class="pointer-events-none absolute bottom-0 -ml-1.5 border-x-[6px] border-t-8 border-x-transparent border-t-red-500"
 						style="left: {toX(playHeadPosition)}px"
@@ -389,7 +481,7 @@
 				</div>
 
 				{#each tracks as track (track.id)}
-					<div class="relative h-12 border-b border-gray-300">
+					<div class="relative {laneHeight} border-b border-gray-300">
 						{#each track.clips as clip (clip.id)}
 							<button
 								type="button"
@@ -402,7 +494,7 @@
 								title={clip.name}
 								onclick={() => seek(clip.startFrameIndex)}
 							>
-								{clip.name}
+								{#if !collapsed}{clip.name}{/if}
 							</button>
 						{/each}
 					</div>
@@ -417,7 +509,7 @@
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
 						class="absolute top-0 h-full cursor-pointer border border-l-2"
-						style="left: {toX(marker.frame)}px; border-color: {marker.category.color}"
+						style="left: {toX(markerFrame(marker))}px; border-color: {marker.category.color}"
 						title={marker.name}
 						onclick={() => seek(marker.frame)}
 					></div>
@@ -426,10 +518,13 @@
 		</div>
 	</div>
 	{#if thumbnailReady && hover}
-		<media-thumbnail
-			bind:this={preview}
-			class="pointer-events-none fixed z-50 rounded-sm shadow-lg"
+		<!-- The element sets its own inline width/height to clip the sprite sheet to one tile. Moving it
+		with a reactive style attribute would overwrite those, so only this wrapper is positioned. -->
+		<div
+			class="pointer-events-none fixed z-50"
 			style="left: {hover.x - 80}px; top: {hover.y - 98}px"
-		></media-thumbnail>
+		>
+			<media-thumbnail bind:this={preview} class="rounded-sm shadow-lg"></media-thumbnail>
+		</div>
 	{/if}
 </div>

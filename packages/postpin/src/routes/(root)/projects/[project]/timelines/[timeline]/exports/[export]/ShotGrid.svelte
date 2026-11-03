@@ -22,7 +22,7 @@
 	const maxCols = $derived(Math.floor(window.innerWidth / 100));
 </script>
 
-<div class="flex min-h-0 flex-1 flex-col">
+<div class="flex h-full min-h-0 flex-col">
 	<div class="flex items-center justify-end gap-2 border-b border-gray-300 p-2">
 		<input type="range" bind:value={cols} min="1" max={maxCols} class="range w-32 range-primary" />
 	</div>

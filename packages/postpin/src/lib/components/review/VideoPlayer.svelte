@@ -10,17 +10,9 @@
 </script>
 
 <script lang="ts">
-	import { untrack } from "svelte";
+	import { untrack, type Snippet } from "svelte";
 	import type { HlsJsVideoElement } from "@videojs/html/media/hlsjs-video";
-	import Maximize from "@lucide/svelte/icons/maximize";
-	import Volume2 from "@lucide/svelte/icons/volume-2";
-	import VolumeX from "@lucide/svelte/icons/volume-x";
-	import Timecode from "./Timecode.svelte";
-	import {
-		frameAtSeconds,
-		secondsAtFrame,
-		type FrameTiming,
-	} from "@postpin-io/shared/logic/timecode";
+	import type { FrameTiming } from "@postpin-io/shared/logic/timecode";
 
 	let {
 		source,
@@ -30,6 +22,11 @@
 		paused = $bindable(true),
 		playbackRate = $bindable(1),
 		quality = $bindable<number | "auto">("auto"),
+		qualities = $bindable<number[]>([]),
+
+		muted = $bindable(false),
+		fullscreen = $bindable(false),
+		fullscreenControls,
 	}: {
 		source: VideoSource;
 		poster?: string;
@@ -39,22 +36,28 @@
 		playbackRate?: number;
 		/** Rendition height to lock to, or "auto" */
 		quality?: number | "auto";
+		/** Rendition heights available once the playlist has loaded */
+		qualities?: number[];
+		muted?: boolean;
+		fullscreen?: boolean;
+		/** Control bar shown over the video while in fullscreen, where the page's own bar is out of view */
+		fullscreenControls?: Snippet;
 	} = $props();
 
+	let container = $state<HTMLElement>();
 	let element = $state<HTMLElement>();
 	/** The element once <hlsjs-video> is defined and set up */
 	let media = $state<HlsJsVideoElement>();
-	let qualities = $state<number[]>([]);
-	let muted = $state(false);
 
 	const fps = $derived(timing.frameRate.fpsNumerator / timing.frameRate.fpsDenominator);
-	// Absolute timeline frame, like marker frames
-	const frame = $derived(frameAtSeconds(currentTime, timing));
 
 	// A seek in flight owns currentTime until it lands; timeupdates from the old position would undo it
 	let seeking = false;
 	let seekTarget = 0;
 	let seekId = 0;
+
+	// Playing before the source has loaded fails and would flip paused back to true
+	let ready = $state(false);
 
 	let reloads = $state(0);
 	let recentReloads: number[] = [];
@@ -152,6 +155,7 @@
 			video.addEventListener("ratechange", () => (playbackRate = video.playbackRate));
 			video.addEventListener("volumechange", () => (muted = video.muted));
 			video.addEventListener("loadedmetadata", () => {
+				ready = true;
 				updateQualities();
 				video.videoRenditions?.addEventListener("addrendition", updateQualities);
 			});
@@ -164,6 +168,7 @@
 			cancelAnimationFrame(frame);
 			el?.pause();
 			media = undefined;
+			ready = false;
 		};
 	});
 
@@ -197,13 +202,65 @@
 
 	$effect(() => {
 		const el = media;
-		if (!el) return;
+		if (!el || !ready) return;
 		if (paused && !el.paused) el.pause();
 		else if (!paused && el.paused) el.play().catch(() => (paused = true));
 	});
 
+	// Pausing on purpose resets the speed; temporary pauses such as scrubbing keep it
+	function togglePlayback() {
+		paused = !paused;
+		if (paused) playbackRate = 1;
+	}
+
+	export function toggleMute() {
+		if (media) media.muted = !media.muted;
+	}
+
+	// The container goes fullscreen rather than the video, so the control bar comes along
+	export function toggleFullscreen() {
+		if (document.fullscreenElement) void document.exitFullscreen();
+		else void container?.requestFullscreen();
+	}
+
+	let controlsAwake = $state(false);
+	let controlsTimer: ReturnType<typeof setTimeout> | undefined;
+	const showControls = $derived(fullscreen && (controlsAwake || paused));
+
+	function wakeControls() {
+		if (!fullscreen) return;
+		controlsAwake = true;
+		clearTimeout(controlsTimer);
+		controlsTimer = setTimeout(() => (controlsAwake = false), 2500);
+	}
+
+	$effect(() => {
+		const el = container;
+		if (!el) return;
+		const sync = () => {
+			fullscreen = document.fullscreenElement === el;
+			if (fullscreen) wakeControls();
+		};
+		el.addEventListener("fullscreenchange", sync);
+		return () => {
+			el.removeEventListener("fullscreenchange", sync);
+			fullscreen = false;
+		};
+	});
+
+	$effect(() => () => clearTimeout(controlsTimer));
+
+	function onVideoClick() {
+		togglePlayback();
+		flashIndicator(paused ? "pause" : "play");
+	}
+
 	$effect(() => {
 		if (media && media.playbackRate !== playbackRate) media.playbackRate = playbackRate;
+	});
+
+	$effect(() => {
+		if (media && media.muted !== muted) media.muted = muted;
 	});
 
 	$effect(() => {
@@ -223,60 +280,90 @@
 		}
 		if (renditions.selectedIndex !== index) renditions.selectedIndex = index;
 	});
+
+	let indicator = $state<{ id: number; kind: "play" | "pause" }>();
+	let indicatorId = 0;
+	let indicatorTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function flashIndicator(kind: "play" | "pause") {
+		clearTimeout(indicatorTimer);
+		indicator = { id: ++indicatorId, kind };
+		indicatorTimer = setTimeout(() => (indicator = undefined), 1000);
+	}
+
+	$effect(() => () => clearTimeout(indicatorTimer));
 </script>
 
-<div class="group relative flex h-full w-full flex-col">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+	bind:this={container}
+	class="group relative flex h-full w-full flex-col"
+	class:bg-black={fullscreen}
+	class:cursor-none={fullscreen && !showControls}
+	onpointermove={wakeControls}
+	onfocusin={wakeControls}
+>
 	<div class="relative min-h-0 flex-1">
-		<hlsjs-video bind:this={element} playsinline class="absolute inset-0 block"></hlsjs-video>
+		<hlsjs-video
+			bind:this={element}
+			playsinline
+			class="absolute inset-0 block"
+			onclick={onVideoClick}
+		></hlsjs-video>
+
+		{#if indicator}
+			{#key indicator.id}
+				<div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+					<div class="indicator rounded-full bg-black/60 p-5 text-white">
+						{#if indicator.kind === "play"}
+							<Play size={32} class="fill-current" />
+						{:else}
+							<Pause size={32} class="fill-current" />
+						{/if}
+					</div>
+				</div>
+			{/key}
+		{/if}
 	</div>
 
-	<div class="grid w-full shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-1 border-t-1 p-1">
-		<div class="flex items-center gap-2 justify-self-start">
-			<Timecode
-				bind:frame={() => frame, (f) => (currentTime = secondsAtFrame(f, timing))}
-				frameRate={timing.frameRate}
-				startFrame={timing.startFrameIndex}
-				editable={true}
-			/>
-			<span class="font-mono">|</span>
-			<span class="font-mono"> {playbackRate}×</span>
-		</div>
-
-		<button
-			class="btn btn-square btn-ghost btn-xs"
-			aria-label={paused ? "Play" : "Pause"}
-			onclick={() => (paused = !paused)}
+	{#if fullscreen && fullscreenControls}
+		<div
+			class="absolute inset-x-0 bottom-0 bg-base-100/90 backdrop-blur transition-opacity duration-200"
+			class:opacity-0={!showControls}
+			class:pointer-events-none={!showControls}
 		>
-			{#if paused}
-				<Play size={16} />
-			{:else}
-				<Pause size={16} />
-			{/if}
-		</button>
-
-		<div class="flex items-center gap-1 justify-self-end">
-			{#if qualities.length > 0}
-				<select class="select w-24 select-xs" bind:value={quality} aria-label="Quality">
-					<option value="auto">Auto</option>
-					{#each qualities as height (height)}
-						<option value={height}>{height}p</option>
-					{/each}
-				</select>
-			{/if}
-			<button
-				class="btn btn-square btn-ghost btn-xs"
-				aria-label={muted ? "Unmute" : "Mute"}
-				onclick={() => media && (media.muted = !media.muted)}
-			>
-				{#if muted}<VolumeX size={16} />{:else}<Volume2 size={16} />{/if}
-			</button>
-			<button
-				class="btn btn-square btn-ghost btn-xs"
-				aria-label="Fullscreen"
-				onclick={() => void media?.requestFullscreen()}
-			>
-				<Maximize size={16} />
-			</button>
+			{@render fullscreenControls()}
 		</div>
-	</div>
+	{/if}
 </div>
+
+<style>
+	.indicator {
+		animation: indicator-flash 800ms ease-out forwards;
+	}
+
+	@keyframes indicator-flash {
+		from {
+			opacity: 0.9;
+			transform: scale(0.8);
+		}
+		to {
+			opacity: 0;
+			transform: scale(1.2);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.indicator {
+			animation-name: indicator-fade;
+		}
+		@keyframes indicator-fade {
+			from {
+				opacity: 0.9;
+			}
+			to {
+				opacity: 0;
+			}
+		}
+	}
+</style>
