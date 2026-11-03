@@ -123,6 +123,24 @@ export type MarkerColor =
 
 export type MarkType = "video" | "audio" | "all";
 
+export type NodeColor =
+	| "Orange"
+	| "Apricot"
+	| "Yellow"
+	| "Lime"
+	| "Olive"
+	| "Green"
+	| "Teal"
+	| "Navy"
+	| "Blue"
+	| "Purple"
+	| "Violet"
+	| "Pink"
+	| "Tan"
+	| "Beige"
+	| "Brown"
+	| "Chocolate";
+
 export type TrackType = "video" | "audio" | "subtitle";
 
 // ---------------------------------------------------------------------------
@@ -136,6 +154,21 @@ export type CloudSettingKey = number & { readonly __constant: "CloudSettingKey" 
 
 /** One of the resolve.* constants: CLOUD_SYNC_NONE, CLOUD_SYNC_PROXY_ONLY, CLOUD_SYNC_PROXY_AND_ORIG */
 export type CloudSyncMode = number & { readonly __constant: "CloudSyncMode" };
+
+/** One of the resolve.* constants: PHOTO_FORMAT_JPEG, PHOTO_FORMAT_PNG, PHOTO_FORMAT_HEIC, PHOTO_FORMAT_TIFF */
+export type PhotoExportFormat = number & { readonly __constant: "PhotoExportFormat" };
+
+/** One of the resolve.* constants: PHOTO_AUTO_QUALITY_LEAST, PHOTO_AUTO_QUALITY_LOW, PHOTO_AUTO_QUALITY_MEDIUM, PHOTO_AUTO_QUALITY_HIGH, PHOTO_AUTO_QUALITY_BEST */
+export type PhotoAutoQuality = number & { readonly __constant: "PhotoAutoQuality" };
+
+/** One of the resolve.* constants: PHOTO_TIFF_COMPRESSION_NONE, PHOTO_TIFF_COMPRESSION_LZW, PHOTO_TIFF_COMPRESSION_ZIP */
+export type PhotoTiffCompressionType = number & { readonly __constant: "PhotoTiffCompressionType" };
+
+/** One of the resolve.* constants: PHOTO_SCALE_ORIGINAL, PHOTO_SCALE_DIMENSIONS, PHOTO_SCALE_SHORT_SIDE, PHOTO_SCALE_LONG_SIDE, PHOTO_SCALE_PERCENT, PHOTO_SCALE_MEGAPIXELS */
+export type PhotoScaleMode = number & { readonly __constant: "PhotoScaleMode" };
+
+/** One of the resolve.* constants: PHOTO_RESOLUTION_UNIT_PPI, PHOTO_RESOLUTION_UNIT_PPCM */
+export type PhotoResolutionUnit = number & { readonly __constant: "PhotoResolutionUnit" };
 
 /** One of the resolve.* constants: AUDIO_SYNC_MODE, AUDIO_SYNC_CHANNEL_NUMBER, AUDIO_SYNC_RETAIN_EMBEDDED_AUDIO, AUDIO_SYNC_RETAIN_VIDEO_METADATA */
 export type AudioSyncSettingKey = number & { readonly __constant: "AudioSyncSettingKey" };
@@ -181,10 +214,10 @@ export type TimelineExportType = number & { readonly __constant: "TimelineExport
 /** One of the resolve.* constants: EXPORT_NONE, EXPORT_AAF_NEW, EXPORT_AAF_EXISTING, EXPORT_CDL, EXPORT_SDL, EXPORT_MISSING_CLIPS */
 export type TimelineExportSubtype = number & { readonly __constant: "TimelineExportSubtype" };
 
-/** One of the resolve.* constants: SUBTITLE_LANGUAGE, SUBTITLE_CAPTION_PRESET, SUBTITLE_CHARS_PER_LINE, SUBTITLE_LINE_BREAK, SUBTITLE_GAP */
+/** One of the resolve.* constants: SUBTITLE_LANGUAGE, SUBTITLE_CAPTION_PRESET, SUBTITLE_CHARS_PER_LINE, SUBTITLE_LINE_BREAK, SUBTITLE_GAP, SUBTITLE_EXTENDED_LANGUAGE_SUPPORT */
 export type SubtitleSettingKey = number & { readonly __constant: "SubtitleSettingKey" };
 
-/** One of the resolve.* constants: AUTO_CAPTION_AUTO, AUTO_CAPTION_MANDARIN_SIMPLIFIED, AUTO_CAPTION_DUTCH, AUTO_CAPTION_ENGLISH, AUTO_CAPTION_FINNISH, AUTO_CAPTION_FRENCH, AUTO_CAPTION_GERMAN, AUTO_CAPTION_HINDI, AUTO_CAPTION_INDONESIAN, AUTO_CAPTION_ITALIAN, AUTO_CAPTION_JAPANESE, AUTO_CAPTION_KOREAN, AUTO_CAPTION_MALAY, AUTO_CAPTION_NORWEGIAN, AUTO_CAPTION_POLISH, AUTO_CAPTION_PORTUGUESE, AUTO_CAPTION_ROMANIAN, AUTO_CAPTION_RUSSIAN, AUTO_CAPTION_SPANISH, AUTO_CAPTION_SWEDISH, AUTO_CAPTION_TURKISH, AUTO_CAPTION_VIETNAMESE, AUTO_CAPTION_TAMIL, AUTO_CAPTION_THAI, AUTO_CAPTION_DANISH, AUTO_CAPTION_MANDARIN_TRADITIONAL */
+/** One of the resolve.* constants: AUTO_CAPTION_AUTO, AUTO_CAPTION_MANDARIN_SIMPLIFIED, AUTO_CAPTION_DUTCH, AUTO_CAPTION_ENGLISH, AUTO_CAPTION_FINNISH, AUTO_CAPTION_FRENCH, AUTO_CAPTION_GERMAN, AUTO_CAPTION_HINDI, AUTO_CAPTION_INDONESIAN, AUTO_CAPTION_ITALIAN, AUTO_CAPTION_JAPANESE, AUTO_CAPTION_KOREAN, AUTO_CAPTION_MALAY, AUTO_CAPTION_NORWEGIAN, AUTO_CAPTION_POLISH, AUTO_CAPTION_PORTUGUESE, AUTO_CAPTION_ROMANIAN, AUTO_CAPTION_RUSSIAN, AUTO_CAPTION_SPANISH, AUTO_CAPTION_SWEDISH, AUTO_CAPTION_TURKISH, AUTO_CAPTION_VIETNAMESE, AUTO_CAPTION_TAMIL, AUTO_CAPTION_THAI, AUTO_CAPTION_DANISH, AUTO_CAPTION_MANDARIN_TRADITIONAL, AUTO_CAPTION_AFRIKAANS, AUTO_CAPTION_ARABIC, AUTO_CAPTION_ARMENIAN, AUTO_CAPTION_AZERBAIJANI, AUTO_CAPTION_BELARUSIAN, AUTO_CAPTION_BOSNIAN, AUTO_CAPTION_BULGARIAN, AUTO_CAPTION_CANTONESE, AUTO_CAPTION_CATALAN, AUTO_CAPTION_CROATIAN, AUTO_CAPTION_CZECH, AUTO_CAPTION_ESTONIAN, AUTO_CAPTION_GALICIAN, AUTO_CAPTION_GREEK, AUTO_CAPTION_HEBREW, AUTO_CAPTION_HUNGARIAN, AUTO_CAPTION_ICELANDIC, AUTO_CAPTION_KANNADA, AUTO_CAPTION_KAZAKH, AUTO_CAPTION_LATVIAN, AUTO_CAPTION_LITHUANIAN, AUTO_CAPTION_MACEDONIAN, AUTO_CAPTION_MAORI, AUTO_CAPTION_MARATHI, AUTO_CAPTION_MYANMAR, AUTO_CAPTION_NEPALI, AUTO_CAPTION_PERSIAN, AUTO_CAPTION_SERBIAN, AUTO_CAPTION_SLOVAK, AUTO_CAPTION_SLOVENIAN, AUTO_CAPTION_SWAHILI, AUTO_CAPTION_TAGALOG, AUTO_CAPTION_UKRAINIAN, AUTO_CAPTION_URDU, AUTO_CAPTION_WELSH */
 export type AutoCaptionLanguage = number & { readonly __constant: "AutoCaptionLanguage" };
 
 /** One of the resolve.* constants: AUTO_CAPTION_SUBTITLE_DEFAULT, AUTO_CAPTION_TELETEXT, AUTO_CAPTION_NETFLIX */
@@ -201,6 +234,9 @@ export type DynamicZoomEase = number & { readonly __constant: "DynamicZoomEase" 
 
 /** One of the resolve.* constants: COMPOSITE_NORMAL, COMPOSITE_ADD, COMPOSITE_SUBTRACT, COMPOSITE_DIFF, COMPOSITE_MULTIPLY, COMPOSITE_SCREEN, COMPOSITE_OVERLAY, COMPOSITE_HARDLIGHT, COMPOSITE_SOFTLIGHT, COMPOSITE_DARKEN, COMPOSITE_LIGHTEN, COMPOSITE_COLOR_DODGE, COMPOSITE_COLOR_BURN, COMPOSITE_EXCLUSION, COMPOSITE_HUE, COMPOSITE_SATURATE, COMPOSITE_COLORIZE, COMPOSITE_LUMA_MASK, COMPOSITE_DIVIDE, COMPOSITE_LINEAR_DODGE, COMPOSITE_LINEAR_BURN, COMPOSITE_LINEAR_LIGHT, COMPOSITE_VIVID_LIGHT, COMPOSITE_PIN_LIGHT, COMPOSITE_HARD_MIX, COMPOSITE_LIGHTER_COLOR, COMPOSITE_DARKER_COLOR, COMPOSITE_FOREGROUND, COMPOSITE_ALPHA, COMPOSITE_INVERTED_ALPHA, COMPOSITE_LUM, COMPOSITE_INVERTED_LUM */
 export type CompositeMode = number & { readonly __constant: "CompositeMode" };
+
+/** One of the resolve.* constants: KEYFRAME_TIMING_MAINTAIN, KEYFRAME_TIMING_STRETCH_TO_FIT */
+export type KeyframeTiming = number & { readonly __constant: "KeyframeTiming" };
 
 /** One of the resolve.* constants: RETIME_USE_PROJECT, RETIME_NEAREST, RETIME_FRAME_BLEND, RETIME_OPTICAL_FLOW */
 export type RetimeProcess = number & { readonly __constant: "RetimeProcess" };
@@ -240,6 +276,15 @@ export type SmartSwitchAnalysisMode = number & { readonly __constant: "SmartSwit
 /** One of the resolve.* constants: CLONE_CHECKSUM_TYPE_NONE, CLONE_CHECKSUM_TYPE_FILESIZE, CLONE_CHECKSUM_TYPE_CRC32, CLONE_CHECKSUM_TYPE_MD5, CLONE_CHECKSUM_TYPE_SHA256, CLONE_CHECKSUM_TYPE_SHA512, CLONE_CHECKSUM_TYPE_XXH_64 */
 export type CloneChecksumType = number & { readonly __constant: "CloneChecksumType" };
 
+/** One of the resolve.* constants: PHOTO_ORIENTATION_0_DEG, PHOTO_ORIENTATION_90_DEG_RIGHT, PHOTO_ORIENTATION_180_DEG, PHOTO_ORIENTATION_90_DEG_LEFT */
+export type PhotoImageOrientation = number & { readonly __constant: "PhotoImageOrientation" };
+
+/** One of the resolve.* constants: PHOTO_CROP_RATIO_AS_SHOT, PHOTO_CROP_RATIO_CUSTOM, PHOTO_CROP_RATIO_16X9, PHOTO_CROP_RATIO_1X1, PHOTO_CROP_RATIO_4X5, PHOTO_CROP_RATIO_2X3, PHOTO_CROP_RATIO_4X3 */
+export type PhotoCropRatio = number & { readonly __constant: "PhotoCropRatio" };
+
+/** One of the resolve.* constants: PHOTO_LOOK_DEFAULT, PHOTO_LOOK_BW, PHOTO_LOOK_BRIGHT, PHOTO_LOOK_COOL, PHOTO_LOOK_DRAMATIC, PHOTO_LOOK_GOLD, PHOTO_LOOK_NATURAL, PHOTO_LOOK_RICH_CONTRAST, PHOTO_LOOK_ROSE, PHOTO_LOOK_VIBRANT, PHOTO_LOOK_WARM */
+export type PhotoLookType = number & { readonly __constant: "PhotoLookType" };
+
 // ---------------------------------------------------------------------------
 // Dicts
 
@@ -264,6 +309,7 @@ export interface AAFImportOptions {
 	sourceClipsFolders: Folder[];
 }
 
+/** Clip source and target mapping used by MediaPool.AppendToTimeline. Also see the similar CreateTimelineClipInfo. */
 export interface AppendClipInfo {
 	/** MediaPoolItem object to append */
 	mediaPoolItem: MediaPoolItem;
@@ -277,6 +323,13 @@ export interface AppendClipInfo {
 	trackIndex: number;
 	/** Record frame position (optional) */
 	recordFrame: number;
+}
+
+export interface AudioLevelsInfo {
+	/** True peak in dBFS, e.g. -4.5 (-100.0 if no level was measured) */
+	TruePeak: number;
+	/** Integrated loudness in LUFS, e.g. -18.4 (-100.0 if no level was measured) */
+	Integrated: number;
 }
 
 export interface AudioSyncSettings {
@@ -298,7 +351,7 @@ export interface AutoAlignOptions {
 }
 
 export interface AutoCaptionSettings {
-	/** Default: resolve.AUTO_CAPTION_AUTO */
+	/** Default: resolve.AUTO_CAPTION_AUTO. Extended languages (e.g. Arabic, Czech) require extendedLanguageSupport */
 	language: AutoCaptionLanguage;
 	/** Default: resolve.AUTO_CAPTION_SUBTITLE_DEFAULT */
 	captionPreset: AutoCaptionPreset;
@@ -308,6 +361,8 @@ export interface AutoCaptionSettings {
 	lineBreak: AutoCaptionLineBreak;
 	/** Gap between subtitles in frames, 0 to 10 (default: 0) */
 	gap: number;
+	/** Enable Extended Language Support, which allows more languages (default: False). Fails if the extended language models are not installed */
+	extendedLanguageSupport: boolean;
 }
 
 export interface CDL {
@@ -466,6 +521,84 @@ export interface CompoundClipOptions {
 	name: string;
 }
 
+export interface CopyAttributesOptions {
+	/** Default: resolve.KEYFRAME_TIMING_MAINTAIN */
+	keyframeTiming: KeyframeTiming;
+	/** Copy all clip attributes (clipColor, flags, markers) */
+	allClipAttributes: boolean;
+	/** Copy clip color */
+	clipColor: boolean;
+	/** Copy flags */
+	flags: boolean;
+	/** Copy markers */
+	markers: boolean;
+	/** Copy all video attributes (compositionMode, opacity, position, rotationAngle, anchorPoint, pitch, yaw, allZoomAttributes, allCropAttributes, allFlipAttributes, retimeProcess, motionEstimation, videoPlugins, colorCorrection, fusionEffects) */
+	allVideoAttributes: boolean;
+	/** Copy composition mode */
+	compositionMode: boolean;
+	/** Copy opacity */
+	opacity: boolean;
+	/** Copy position */
+	position: boolean;
+	/** Copy rotation angle */
+	rotationAngle: boolean;
+	/** Copy anchor point */
+	anchorPoint: boolean;
+	/** Copy pitch */
+	pitch: boolean;
+	/** Copy yaw */
+	yaw: boolean;
+	/** Copy all zoom attributes (scaleX, scaleY) */
+	allZoomAttributes: boolean;
+	/** Copy scale X */
+	scaleX: boolean;
+	/** Copy scale Y */
+	scaleY: boolean;
+	/** Copy all crop attributes (cropLeft, cropRight, cropTop, cropBottom, cropSoftness, retainImagePosition) */
+	allCropAttributes: boolean;
+	/** Copy left crop */
+	cropLeft: boolean;
+	/** Copy right crop */
+	cropRight: boolean;
+	/** Copy top crop */
+	cropTop: boolean;
+	/** Copy bottom crop */
+	cropBottom: boolean;
+	/** Copy crop softness */
+	cropSoftness: boolean;
+	/** Retain image position when copying crop */
+	retainImagePosition: boolean;
+	/** Copy all flip attributes (flipV, flipH) */
+	allFlipAttributes: boolean;
+	/** Copy vertical flip */
+	flipV: boolean;
+	/** Copy horizontal flip */
+	flipH: boolean;
+	/** Copy retime process */
+	retimeProcess: boolean;
+	/** Copy motion estimation */
+	motionEstimation: boolean;
+	/** Copy video plugins/filters */
+	videoPlugins: boolean;
+	/** Copy color correction/grade */
+	colorCorrection: boolean;
+	/** Copy Fusion effects */
+	fusionEffects: boolean;
+	/** Copy all Audio Attributes (audioVolume, audioPlugins, audioEqualizer) */
+	allAudioAttributes: boolean;
+	/** Copy audio volume */
+	audioVolume: boolean;
+	/** Copy audio plugins/filters */
+	audioPlugins: boolean;
+	/** Copy audio equalizer */
+	audioEqualizer: boolean;
+	/** Copy retime/speed timemap */
+	retimeEffect: boolean;
+	/** Ripple sequence after pasting the timemap. Requires retimeEffect */
+	rippleSequence: boolean;
+}
+
+/** Clip source mapping used by MediaPool.CreateTimelineFromClips. Also see the similar AppendClipInfo. */
 export interface CreateTimelineClipInfo {
 	/** MediaPoolItem object to append */
 	mediaPoolItem: MediaPoolItem;
@@ -505,6 +638,15 @@ export interface DeblurOptions {
 	RenderAtSourceRes: boolean;
 	/** Use more GPU memory for processing (default: False) */
 	UseMoreGpuMemory: boolean;
+}
+
+export interface EffectInfo {
+	/** 'fusion', 'ofx' or 'audio' */
+	category: string;
+	/** Unique identifier of the effect */
+	id: string;
+	/** Display name of the effect */
+	name: string;
 }
 
 export interface EncryptDCTLOptions {
@@ -628,6 +770,19 @@ export interface NormalizeAudioOptions {
 	setLevelMode: NormalizeAudioSetLevelMode;
 }
 
+export interface RemoveSilenceOptions {
+	/** Silence threshold in dB (default: -25.0, range: -100.0 to 10.0) */
+	threshold: number;
+	/** Pre-head padding in frames (default: 0) */
+	preHead: number;
+	/** Post-tail padding in frames (default: 0) */
+	postTail: number;
+	/** Minimum silence duration in frames to strip (default: timeline's FPS) */
+	minimumToStrip: number;
+	/** Add cross-fades at edit points (default: False) */
+	crossFadeAudio: boolean;
+}
+
 export interface OutputBlanking {
 	/** Top blanking in pixels */
 	Top: number;
@@ -637,6 +792,121 @@ export interface OutputBlanking {
 	Left: number;
 	/** Right blanking in pixels */
 	Right: number;
+}
+
+export interface PhotoQuickExportRenderSettings {
+	/** Output directory path (required) */
+	TargetDir: string;
+	/** Output filename, supports tags (required) */
+	CustomName: string;
+	/** Bit depth: 8 or 16 for PNG and TIFF, 8 or 10 for HEIC (HEIC on macOS only, default: 8) */
+	BitDepth: number | null;
+	/** Image quality in percent, 1 to 100 (JPEG and HEIC only, default: 80) */
+	ManualQualityPercent: number | null;
+	/** TIFF compression type, e.g. resolve.PHOTO_TIFF_COMPRESSION_LZW (TIFF only, default: resolve.PHOTO_TIFF_COMPRESSION_NONE) */
+	TiffCompressionType: PhotoTiffCompressionType | null;
+	/** Compression level, 0 to 9 (PNG, and TIFF when TiffCompressionType is ZIP, default: 0) */
+	CompressionLevel: number | null;
+	/** Scale in percent: 100 (original), 75, 50 or 25 (JPEG, PNG and HEIC only, default: 100) */
+	ScalePercent: number | null;
+	/** Resolution in pixels per inch (ppi), 40 to 1200 (default: 72) */
+	Resolution: number | null;
+	/** Embed metadata in the exported image (default: True) */
+	IncludeMetadata: boolean | null;
+}
+
+export interface PhotoRenderSettings {
+	/** Output directory path */
+	TargetDir: string;
+	/** Output filename prefix, supports tags */
+	CustomName: string;
+	/** Use the photo album name as the filename prefix instead of CustomName */
+	UsePhotoAlbumName: boolean;
+	/** Output filename suffix, supports tags */
+	CustomSuffix: string;
+	/** Number of digits in the filename frame number, 1 to 10 */
+	FilenameDigits: number;
+	/** Image format, e.g. resolve.PHOTO_FORMAT_JPEG */
+	Format: PhotoExportFormat;
+	/** Bit depth: 8 or 16 for PNG and TIFF, 8 or 10 for HEIC (HEIC on macOS only) */
+	BitDepth: number;
+	/** Enable alpha channel export (PNG and TIFF only) */
+	ExportAlpha: boolean;
+	/** Use automatic quality at the given level, e.g. resolve.PHOTO_AUTO_QUALITY_BEST (JPEG only, cannot be combined with ManualQualityPercent) */
+	AutoQualityLevel: PhotoAutoQuality;
+	/** Use manual quality at the given percent: JPEG 1 to 100, HEIC 0 to 100 (JPEG and HEIC only, cannot be combined with AutoQualityLevel) */
+	ManualQualityPercent: number;
+	/** TIFF compression type, e.g. resolve.PHOTO_TIFF_COMPRESSION_LZW (TIFF only) */
+	TiffCompressionType: PhotoTiffCompressionType;
+	/** Compression level, 0 to 9 (PNG, and TIFF when TiffCompressionType is ZIP) */
+	CompressionLevel: number;
+	/** Scaling mode, e.g. resolve.PHOTO_SCALE_PERCENT. Changing it requires the value field of the new mode */
+	ScaleMode: PhotoScaleMode;
+	/** Output width in pixels (requires ScaleMode resolve.PHOTO_SCALE_DIMENSIONS) */
+	ScaleWidth: number;
+	/** Output height in pixels (requires ScaleMode resolve.PHOTO_SCALE_DIMENSIONS) */
+	ScaleHeight: number;
+	/** Short side length in pixels (requires ScaleMode resolve.PHOTO_SCALE_SHORT_SIDE) */
+	ScaleShortSide: number;
+	/** Long side length in pixels (requires ScaleMode resolve.PHOTO_SCALE_LONG_SIDE) */
+	ScaleLongSide: number;
+	/** Scale in percent, 25 to 100 (requires ScaleMode resolve.PHOTO_SCALE_PERCENT) */
+	ScalePercent: number;
+	/** Output size in megapixels, one decimal place, e.g. 12.5 (requires ScaleMode resolve.PHOTO_SCALE_MEGAPIXELS) */
+	ScaleMegapixels: number;
+	/** Allow scaling above the original size (not used with resolve.PHOTO_SCALE_ORIGINAL or resolve.PHOTO_SCALE_PERCENT) */
+	AllowEnlarge: boolean;
+	/** Resolution value in the unit given by ResolutionUnit, 40 to 3000 */
+	Resolution: number;
+	/** Resolution unit, e.g. resolve.PHOTO_RESOLUTION_UNIT_PPI */
+	ResolutionUnit: PhotoResolutionUnit;
+	/** Embed metadata in the exported image */
+	IncludeMetadata: boolean;
+}
+
+export interface PhotoAlbumItemProperties {
+	/** Enable/disable Source Transform filter section */
+	SourceTransformEnabled: boolean;
+	/** Horizontal position in pixels, -4.0*width to 4.0*width */
+	Pan: number;
+	/** Vertical position in pixels, -4.0*height to 4.0*height */
+	Tilt: number;
+	/** Horizontal zoom factor, 0.01 to 100.0 (1.0 = no zoom) */
+	ZoomX: number;
+	/** Vertical zoom factor, 0.01 to 100.0 (1.0 = no zoom) */
+	ZoomY: number;
+	/** Link ZoomX and ZoomY so both change together */
+	ZoomGang: boolean;
+	/** Rotation in degrees, -360.0 to 360.0 */
+	RotationAngle: number;
+	/** 3D rotation around the horizontal axis, -1.5 to 1.5 */
+	Pitch: number;
+	/** 3D rotation around the vertical axis, -1.5 to 1.5 */
+	Yaw: number;
+	/** Flip image horizontally */
+	FlipX: boolean;
+	/** Flip image vertically */
+	FlipY: boolean;
+	/** Image orientation, e.g. resolve.PHOTO_ORIENTATION_90_DEG_RIGHT */
+	ImageOrientation: PhotoImageOrientation;
+	/** Enable/disable Source Cropping filter section */
+	SourceCroppingEnabled: boolean;
+	/** Pixels cropped from the left edge, 0.0 to width */
+	CropLeft: number;
+	/** Pixels cropped from the right edge, 0.0 to width */
+	CropRight: number;
+	/** Pixels cropped from the top edge, 0.0 to height */
+	CropTop: number;
+	/** Pixels cropped from the bottom edge, 0.0 to height */
+	CropBottom: number;
+	/** Crop aspect ratio preset, e.g. resolve.PHOTO_CROP_RATIO_16X9 */
+	CropRatio: PhotoCropRatio;
+	/** Locks the crop aspect ratio */
+	CropLockAspectRatio: boolean;
+	/** Enable/disable Source Looks filter section */
+	SourceLooksEnabled: boolean;
+	/** Look preset, e.g. resolve.PHOTO_LOOK_WARM */
+	SourceLookType: PhotoLookType;
 }
 
 export interface ProjectAttributes {
@@ -957,8 +1227,10 @@ export interface ProjectSettings {
 	superScaleSharpnessStrength: string;
 	/** Read-only. Noise reduction strength, e.g. '0.5' */
 	superScaleNoiseReductionStrength: string;
-	/** Language code, e.g. 'en' */
+	/** Language code, e.g. 'en'. Must be a language of the model selected by transcriptionExtendedLanguageSupport */
 	transcriptionLanguage: string;
+	/** '0' or '1'. Changing it resets transcriptionLanguage to 'auto', as in the UI. Setting '1' fails if the extended language models are not installed */
+	transcriptionExtendedLanguageSupport: string;
 	/** '0' or '1' */
 	speakerDetection: string;
 	/** Number of node stack layers, e.g. '1' */
@@ -1002,65 +1274,111 @@ export interface QuickExportRenderStatus {
 	Error: string;
 }
 
+export interface ExportFrameOptions {
+	/** 'file' or 'encodedString' (default: 'encodedString') */
+	outputType: string | null;
+	/** 'jpg' or 'png', used when outputType is 'encodedString' (default: 'jpg') */
+	encodedImageFormat: string | null;
+	/** Output file path, format inferred from extension (required when outputType is 'file') */
+	filePath: string | null;
+	/** Caps the longer edge in pixels, scaling the other edge proportionally (default: 0, no scaling) */
+	maxDimension: number | null;
+}
+
+export interface ExportFrameResult {
+	/** True if the frame was exported successfully */
+	success: boolean;
+	/** Error message (set on failure) */
+	error: string | null;
+	/** Base64-encoded image bytes (set when outputType is 'encodedString' and success is True) */
+	data: string | null;
+}
+
 export interface RenderJobInfo {
 	/** Unique job identifier */
 	JobId: string;
 	/** Job display name */
 	RenderJobName: string;
 	/** Source timeline name */
-	TimelineName: string;
+	TimelineName: string | null;
 	/** Output directory path */
 	TargetDir: string;
 	/** Video export enabled */
-	IsExportVideo: boolean;
+	IsExportVideo: boolean | null;
 	/** Audio export enabled */
-	IsExportAudio: boolean;
+	IsExportAudio: boolean | null;
 	/** Output width in pixels */
-	FormatWidth: number;
+	FormatWidth: number | null;
 	/** Output height in pixels */
-	FormatHeight: number;
+	FormatHeight: number | null;
 	/** Frame rate, e.g. '23.976' */
-	FrameRate: string;
+	FrameRate: string | null;
 	/** Pixel aspect ratio */
-	PixelAspectRatio: number;
+	PixelAspectRatio: number | null;
 	/** Mark in frame */
-	MarkIn: number;
+	MarkIn: number | null;
 	/** Mark out frame */
-	MarkOut: number;
+	MarkOut: number | null;
 	/** Audio bit depth, e.g. 16, 24 */
-	AudioBitDepth: number;
+	AudioBitDepth: number | null;
 	/** Audio sample rate, e.g. 48000 */
-	AudioSampleRate: number;
+	AudioSampleRate: number | null;
 	/** Alpha channel export enabled */
 	ExportAlpha: boolean;
 	/** 0 = Premultiplied, 1 = Straight (set when ExportAlpha is True) */
-	AlphaMode: number;
+	AlphaMode: number | null;
 	/** Output file name(s) */
 	OutputFilename: string;
 	/** 'Single clip' or 'Individual clips' */
-	RenderMode: string;
+	RenderMode: string | null;
 	/** Render preset name */
 	PresetName: string;
 	/** Video format name, e.g. 'QuickTime' */
-	VideoFormat: string;
+	VideoFormat: string | null;
 	/** Video codec name */
-	VideoCodec: string;
+	VideoCodec: string | null;
 	/** Audio codec name */
-	AudioCodec: string;
+	AudioCodec: string | null;
 	/** Encoding profile, e.g. 'Main10' */
-	EncodingProfile: string;
+	EncodingProfile: string | null;
 	/** Multi-pass encoding enabled */
-	MultiPassEncode: boolean;
+	MultiPassEncode: boolean | null;
 	/** Network optimization enabled */
-	NetworkOptimization: boolean;
-	/** Upload status (if applicable) */
-	UploadStatus: string;
+	NetworkOptimization: boolean | null;
+	/** Upload status, if applicable */
+	UploadStatus: string | null;
 	/** Clip start frame number */
-	ClipStartFrame: number;
+	ClipStartFrame: number | null;
 	/** Timeline start timecode, e.g. '01:00:00:00' */
-	TimelineStartTimecode: string;
-	/** Replace existing files in place */
-	ReplaceExistingFilesInPlace: boolean;
+	TimelineStartTimecode: string | null;
+	/** Replace existing files when rendering */
+	ReplaceExistingFilesInPlace: boolean | null;
+	/** Source photo album name */
+	PhotoAlbumName: string | null;
+	/** Number of photos */
+	PhotoCount: number | null;
+	/** Photo image format name, e.g. 'JPEG' */
+	PhotoFormat: string | null;
+	/** Photo scaling mode */
+	PhotoScaleMode: PhotoScaleMode | null;
+	/** Photo width in pixels when PhotoScaleMode is PHOTO_SCALE_DIMENSIONS */
+	PhotoScaleWidth: number | null;
+	/** Photo height in pixels when PhotoScaleMode is PHOTO_SCALE_DIMENSIONS */
+	PhotoScaleHeight: number | null;
+	/** Photo short side in pixels when PhotoScaleMode is PHOTO_SCALE_SHORT_SIDE */
+	PhotoScaleShortSide: number | null;
+	/** Photo long side in pixels when PhotoScaleMode is PHOTO_SCALE_LONG_SIDE */
+	PhotoScaleLongSide: number | null;
+	/** Photo scale in percent when PhotoScaleMode is PHOTO_SCALE_PERCENT */
+	PhotoScalePercent: number | null;
+	/** Photo size in megapixels when PhotoScaleMode is PHOTO_SCALE_MEGAPIXELS */
+	PhotoScaleMegapixels: number | null;
+	/** Photo scaling above original allowed */
+	PhotoAllowEnlarge: boolean | null;
+	/** Photo resolution value */
+	PhotoResolution: number | null;
+	/** Photo resolution unit */
+	PhotoResolutionUnit: PhotoResolutionUnit | null;
 }
 
 export interface RenderJobStatus {
@@ -1319,6 +1637,23 @@ export interface TimelineItemProperties {
 	AudioDialogueLevelerBackgroundReduction: boolean;
 	/** 0.0 to 6.0 (dB) [Active Timeline Only] */
 	AudioDialogueLevelerOutputGain: number;
+	/** Transition type name, e.g. 'Cross Dissolve' [Read Only] */
+	TransitionType: string;
+	/** 'simple', 'fusion', 'ofx' or 'audio' [Read Only] */
+	TransitionCategory: string;
+	/** Transition duration in frames */
+	TransitionDuration: number;
+	/** 'left', 'center' or 'right' */
+	TransitionAlignment: string;
+}
+
+export interface TimelineItemPosition {
+	/** Type: 'video', 'audio', or 'subtitle' (returned by GetPosition; ignored by SetPosition and MoveItems) */
+	trackType: string;
+	/** 1-based; omit to retain current track */
+	trackIndex: number;
+	/** Frame number; omit to retain current frame */
+	startFrame: number;
 }
 
 export interface TimelineSettings {
@@ -1601,6 +1936,26 @@ export interface Resolve {
 	readonly CLOUD_SYNC_NONE: CloudSyncMode;
 	readonly CLOUD_SYNC_PROXY_ONLY: CloudSyncMode;
 	readonly CLOUD_SYNC_PROXY_AND_ORIG: CloudSyncMode;
+	readonly PHOTO_FORMAT_JPEG: PhotoExportFormat;
+	readonly PHOTO_FORMAT_PNG: PhotoExportFormat;
+	readonly PHOTO_FORMAT_HEIC: PhotoExportFormat;
+	readonly PHOTO_FORMAT_TIFF: PhotoExportFormat;
+	readonly PHOTO_AUTO_QUALITY_LEAST: PhotoAutoQuality;
+	readonly PHOTO_AUTO_QUALITY_LOW: PhotoAutoQuality;
+	readonly PHOTO_AUTO_QUALITY_MEDIUM: PhotoAutoQuality;
+	readonly PHOTO_AUTO_QUALITY_HIGH: PhotoAutoQuality;
+	readonly PHOTO_AUTO_QUALITY_BEST: PhotoAutoQuality;
+	readonly PHOTO_TIFF_COMPRESSION_NONE: PhotoTiffCompressionType;
+	readonly PHOTO_TIFF_COMPRESSION_LZW: PhotoTiffCompressionType;
+	readonly PHOTO_TIFF_COMPRESSION_ZIP: PhotoTiffCompressionType;
+	readonly PHOTO_SCALE_ORIGINAL: PhotoScaleMode;
+	readonly PHOTO_SCALE_DIMENSIONS: PhotoScaleMode;
+	readonly PHOTO_SCALE_SHORT_SIDE: PhotoScaleMode;
+	readonly PHOTO_SCALE_LONG_SIDE: PhotoScaleMode;
+	readonly PHOTO_SCALE_PERCENT: PhotoScaleMode;
+	readonly PHOTO_SCALE_MEGAPIXELS: PhotoScaleMode;
+	readonly PHOTO_RESOLUTION_UNIT_PPI: PhotoResolutionUnit;
+	readonly PHOTO_RESOLUTION_UNIT_PPCM: PhotoResolutionUnit;
 	readonly AUDIO_SYNC_MODE: AudioSyncSettingKey;
 	readonly AUDIO_SYNC_CHANNEL_NUMBER: AudioSyncSettingKey;
 	readonly AUDIO_SYNC_RETAIN_EMBEDDED_AUDIO: AudioSyncSettingKey;
@@ -1695,6 +2050,7 @@ export interface Resolve {
 	readonly SUBTITLE_CHARS_PER_LINE: SubtitleSettingKey;
 	readonly SUBTITLE_LINE_BREAK: SubtitleSettingKey;
 	readonly SUBTITLE_GAP: SubtitleSettingKey;
+	readonly SUBTITLE_EXTENDED_LANGUAGE_SUPPORT: SubtitleSettingKey;
 	readonly AUTO_CAPTION_AUTO: AutoCaptionLanguage;
 	readonly AUTO_CAPTION_MANDARIN_SIMPLIFIED: AutoCaptionLanguage;
 	readonly AUTO_CAPTION_DUTCH: AutoCaptionLanguage;
@@ -1721,6 +2077,41 @@ export interface Resolve {
 	readonly AUTO_CAPTION_THAI: AutoCaptionLanguage;
 	readonly AUTO_CAPTION_DANISH: AutoCaptionLanguage;
 	readonly AUTO_CAPTION_MANDARIN_TRADITIONAL: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_AFRIKAANS: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_ARABIC: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_ARMENIAN: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_AZERBAIJANI: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_BELARUSIAN: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_BOSNIAN: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_BULGARIAN: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_CANTONESE: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_CATALAN: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_CROATIAN: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_CZECH: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_ESTONIAN: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_GALICIAN: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_GREEK: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_HEBREW: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_HUNGARIAN: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_ICELANDIC: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_KANNADA: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_KAZAKH: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_LATVIAN: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_LITHUANIAN: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_MACEDONIAN: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_MAORI: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_MARATHI: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_MYANMAR: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_NEPALI: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_PERSIAN: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_SERBIAN: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_SLOVAK: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_SLOVENIAN: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_SWAHILI: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_TAGALOG: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_UKRAINIAN: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_URDU: AutoCaptionLanguage;
+	readonly AUTO_CAPTION_WELSH: AutoCaptionLanguage;
 	readonly AUTO_CAPTION_SUBTITLE_DEFAULT: AutoCaptionPreset;
 	readonly AUTO_CAPTION_TELETEXT: AutoCaptionPreset;
 	readonly AUTO_CAPTION_NETFLIX: AutoCaptionPreset;
@@ -1763,6 +2154,8 @@ export interface Resolve {
 	readonly COMPOSITE_INVERTED_ALPHA: CompositeMode;
 	readonly COMPOSITE_LUM: CompositeMode;
 	readonly COMPOSITE_INVERTED_LUM: CompositeMode;
+	readonly KEYFRAME_TIMING_MAINTAIN: KeyframeTiming;
+	readonly KEYFRAME_TIMING_STRETCH_TO_FIT: KeyframeTiming;
 	readonly RETIME_USE_PROJECT: RetimeProcess;
 	readonly RETIME_NEAREST: RetimeProcess;
 	readonly RETIME_FRAME_BLEND: RetimeProcess;
@@ -1824,6 +2217,28 @@ export interface Resolve {
 	readonly CLONE_CHECKSUM_TYPE_SHA256: CloneChecksumType;
 	readonly CLONE_CHECKSUM_TYPE_SHA512: CloneChecksumType;
 	readonly CLONE_CHECKSUM_TYPE_XXH_64: CloneChecksumType;
+	readonly PHOTO_ORIENTATION_0_DEG: PhotoImageOrientation;
+	readonly PHOTO_ORIENTATION_90_DEG_RIGHT: PhotoImageOrientation;
+	readonly PHOTO_ORIENTATION_180_DEG: PhotoImageOrientation;
+	readonly PHOTO_ORIENTATION_90_DEG_LEFT: PhotoImageOrientation;
+	readonly PHOTO_CROP_RATIO_AS_SHOT: PhotoCropRatio;
+	readonly PHOTO_CROP_RATIO_CUSTOM: PhotoCropRatio;
+	readonly PHOTO_CROP_RATIO_16X9: PhotoCropRatio;
+	readonly PHOTO_CROP_RATIO_1X1: PhotoCropRatio;
+	readonly PHOTO_CROP_RATIO_4X5: PhotoCropRatio;
+	readonly PHOTO_CROP_RATIO_2X3: PhotoCropRatio;
+	readonly PHOTO_CROP_RATIO_4X3: PhotoCropRatio;
+	readonly PHOTO_LOOK_DEFAULT: PhotoLookType;
+	readonly PHOTO_LOOK_BW: PhotoLookType;
+	readonly PHOTO_LOOK_BRIGHT: PhotoLookType;
+	readonly PHOTO_LOOK_COOL: PhotoLookType;
+	readonly PHOTO_LOOK_DRAMATIC: PhotoLookType;
+	readonly PHOTO_LOOK_GOLD: PhotoLookType;
+	readonly PHOTO_LOOK_NATURAL: PhotoLookType;
+	readonly PHOTO_LOOK_RICH_CONTRAST: PhotoLookType;
+	readonly PHOTO_LOOK_ROSE: PhotoLookType;
+	readonly PHOTO_LOOK_VIBRANT: PhotoLookType;
+	readonly PHOTO_LOOK_WARM: PhotoLookType;
 	/** Returns the project manager object for currently open database */
 	GetProjectManager(): Maybe<ProjectManager>;
 	/** Returns the media storage object to query and act on media locations */
@@ -1852,6 +2267,8 @@ export interface Resolve {
 	IsStudio(): P<boolean>;
 	/** Returns a list of available UI layout preset names */
 	GetLayoutPresetList(): P<string[]>;
+	/** Returns all available effects that can be applied to a timeline item. Optional argument mediaType: "video" (default), "photo" or "audio" restricts the list to effects applicable to that media type. */
+	GetEffectsList(mediaType?: string): P<EffectInfo[]>;
 	/** Loads UI layout from saved preset */
 	LoadLayoutPreset(presetName: string): P<boolean>;
 	/** Overwrites preset named 'presetName' with current UI layout */
@@ -1890,8 +2307,8 @@ export interface Resolve {
 	ImportKeyboardPreset(filePath: string, presetName?: string): P<boolean>;
 	/** Exports the named keyboard preset to the specified file path */
 	ExportKeyboardPreset(presetName: string, exportPath: string): P<boolean>;
-	/** Returns the currently set keyframe mode, one of the resolve.KEYFRAME_MODE_* constants. Color Page only. */
-	GetKeyframeMode(): P<number>;
+	/** Returns the currently set keyframe mode, one of the resolve.KEYFRAME_MODE_* constants. */
+	GetKeyframeMode(): P<KeyframeMode>;
 	/** Set keyframe mode */
 	SetKeyframeMode(keyframeMode: KeyframeMode): P<boolean>;
 	/** Returns a list of Fairlight presets by name */
@@ -1996,6 +2413,14 @@ export interface Project {
 	GetTimelineCount(): P<number>;
 	/** Returns timeline at the given index, 1 <= idx <= project.GetTimelineCount() */
 	GetTimelineByIndex(idx: number): Maybe<Timeline>;
+	/** Returns the number of photo albums in the project */
+	GetPhotoAlbumCount(): P<number>;
+	/** Returns photo album at the given index, 1 <= idx <= project.GetPhotoAlbumCount() */
+	GetPhotoAlbumByIndex(idx: number): Maybe<PhotoAlbum>;
+	/** Returns the currently loaded photo album */
+	GetCurrentPhotoAlbum(): Maybe<PhotoAlbum>;
+	/** Sets given photo album as current photo album for the project */
+	SetCurrentPhotoAlbum(photoAlbum: PhotoAlbum): P<boolean>;
 	/** Returns the Gallery object */
 	GetGallery(): Maybe<Gallery>;
 	/** Returns project name */
@@ -2061,6 +2486,15 @@ export interface Project {
 	): P<QuickExportRenderStatus>;
 	/** Returns progress information for active RenderWithQuickExport operation */
 	GetRenderWithQuickExportStatus(): P<QuickExportRenderStatus>;
+	/** Returns a list of quick export render presets for photo albums */
+	GetPhotoQuickExportRenderPresets(): P<string[]>;
+	/** Sets given settings for rendering the current photo album, settings not given keep their current value */
+	SetPhotoRenderSettings(settings: Partial<PhotoRenderSettings>): P<boolean>;
+	/** Renders current photo album with quick export preset */
+	RenderPhotosWithQuickExport(
+		quickExportPresetName: string,
+		presetInfo: Partial<PhotoQuickExportRenderSettings>,
+	): P<QuickExportRenderStatus>;
 	/** Returns a dict (format -> file extension) of available render formats */
 	GetRenderFormats(): P<Record<string, string>>;
 	/** Returns a dict (format -> file extension) of available audio render formats */
@@ -2101,8 +2535,8 @@ export interface Project {
 	ApplyFairlightPresetToCurrentTimeline(presetName: string): P<boolean>;
 	/** Resets intellisearch analysis for the project */
 	ResetIntellisearchAnalysis(): P<boolean>;
-	/** Generates speech for given speechSettings dict */
-	GenerateSpeech(speechSettings: Partial<SpeechSettings>): Maybe<MediaPoolItem>;
+	/** Generates speech for given speechSettings dict. Requires the 'AI Speech Generator' Extra to be installed; without it the call fails instead of returning a MediaPoolItem. Generates into the current project and timeline as of the call, not into the project this was called on. timecode sets where the audio lands and is only used when speechSettings has 'AddToTimeline' set. See README.md section 'Studio and AI Scripting APIs'. */
+	GenerateSpeech(speechSettings: Partial<SpeechSettings>, timecode?: string): Maybe<MediaPoolItem>;
 	/** Returns a dict with job status and completion percentage of the active TranscribeAudio operation */
 	GetTranscribeAudioStatus(): P<TranscribeAudioStatus>;
 	/** Returns a dict with job status and completion percentage of the active AnalyzeForSlate operation */
@@ -2147,7 +2581,7 @@ export interface Project {
 
 /** The media pool of a project: its folders, its clips and the timelines created from them. */
 export interface MediaPool {
-	/** Adds new subfolder under specified Folder object with the given name */
+	/** Adds new subfolder under specified Folder object with the given name. A name already used by another subfolder is accepted and adds a second subfolder with that name, so check GetSubFolderList() first when the call is meant to be idempotent */
 	AddSubFolder(folder: Folder, name: string): Maybe<Folder>;
 	/** Returns currently selected Folder */
 	GetCurrentFolder(): Maybe<Folder>;
@@ -2164,12 +2598,20 @@ export interface MediaPool {
 	): Maybe<Timeline>;
 	/** Appends specified MediaPoolItem objects in the current timeline. Returns the list of appended timelineItems */
 	AppendToTimeline(clipInfos: Partial<AppendClipInfo>[]): P<TimelineItem[]>;
-	/** Adds new timeline with given name */
-	CreateEmptyTimeline(name: string): Maybe<Timeline>;
+	/** Adds new timeline with given name. Returns None if the timeline could not be created, which includes the name being empty, already used by another timeline, or containing characters that are not valid in a timeline name. Delete or rename the existing timeline before reusing its name */
+	CreateEmptyTimeline(name: string, timecode?: string): Maybe<Timeline>;
 	/** Creates timeline based on parameters within given file (AAF/EDL/XML/FCPXML/DRT/ADL/OTIO) and optional importOptions dict */
 	ImportTimelineFromFile(filePath: string, importOptions?: Partial<ImportOptions>): Maybe<Timeline>;
 	/** Deletes specified timelines in the media pool */
 	DeleteTimelines(timelines: Timeline[]): P<boolean>;
+	/** Adds new photo album with given name */
+	CreateEmptyPhotoAlbum(name: string): Maybe<PhotoAlbum>;
+	/** Creates new photo album with specified name, and adds the specified still image MediaPoolItem objects */
+	CreatePhotoAlbumFromPhotos(name: string, photos: MediaPoolItem[]): Maybe<PhotoAlbum>;
+	/** Deletes specified photo albums in the media pool */
+	DeletePhotoAlbums(photoAlbums: PhotoAlbum[]): P<boolean>;
+	/** Adds specified still image MediaPoolItem objects to the current photo album. Returns the list of added photoAlbumItems */
+	AddToPhotoAlbum(photos: MediaPoolItem[]): P<PhotoAlbumItem[]>;
 	/** Exports metadata of specified clips to 'fileName' in CSV format. If no clips are specified, all clips from media pool will be used */
 	ExportMetadata(fileName: string, clips?: MediaPoolItem[]): P<boolean>;
 	/** Deletes specified clips or timeline mattes in the media pool */
@@ -2235,6 +2677,10 @@ export interface MediaPoolItem {
 	SetName(name: string): P<boolean>;
 	/** Returns the timeline object if the mpItem is a timeline clip */
 	GetTimeline(): Maybe<Timeline>;
+	/** Returns the photo album object if the mpItem is a photo album clip */
+	GetPhotoAlbum(): Maybe<PhotoAlbum>;
+	/** Returns the Folder object containing this media pool item. */
+	GetParentFolder(): Maybe<Folder>;
 	/** All set metadata properties. */
 	GetMetadata(): P<Record<string, string>>;
 	/** @deprecated Use GetMetadata() and index into the result. */
@@ -2258,6 +2704,11 @@ export interface MediaPoolItem {
 	): P<boolean>;
 	/** Delete all markers of the specified color. 'All' as argument deletes all color markers. */
 	DeleteMarkersByColor(color: MarkerColor | "All"): P<boolean>;
+	/** Exports the frame at frameOffset (0-based offset from the item start) as a still image per exportFrameOptions. */
+	ExportFrame(
+		frameOffset: number,
+		exportFrameOptions?: Partial<ExportFrameOptions>,
+	): P<ExportFrameResult>;
 	/** Delete marker at frame number from the media pool item. */
 	DeleteMarkerAtFrame(frameNum: number): P<boolean>;
 	/** Delete first matching marker with specified customData. */
@@ -2334,10 +2785,12 @@ export interface MediaPoolItem {
 	RemoveMotionBlur(deblurOption: Partial<DeblurOptions>): Maybe<MediaPoolItem>;
 	/** Perform Intellisearch analysis on the MediaPoolItem. */
 	AnalyzeForIntellisearch(identifyFaces: boolean, isBetterMode: boolean): P<boolean>;
-	/** Perform Slate analysis on the MediaPoolItem. */
+	/** Perform Slate analysis on the MediaPoolItem, adding a 'Detected Slate' duration marker in markerColor over the frames of each slate found. The text written on the slate is not read: use GetMarkers() to locate the slate, the marker carries no transcription of its contents. See README.md section 'Analyze Slate Settings'. */
 	AnalyzeForSlate(markerColor: SlateMarkerColor): P<boolean>;
 	/** Returns transcription data for the media pool item if available. */
 	GetTranscription(useNestedClipTranscription?: boolean): P<Transcription>;
+	/** Replaces the transcription of the MediaPoolItem. Timelines are transcribed as a nested clip. See README.md section 'Setting a Transcription'. */
+	SetTranscription(transcription: Partial<Transcription>): P<boolean>;
 	/** @deprecated Use GetFlagList(). */
 	GetFlags(): P<Record<number, string>>;
 	/** @deprecated Use SetMetadata({ [metadataType]: metadataValue }). */
@@ -2352,6 +2805,10 @@ export interface Timeline {
 	GetName(): P<string>;
 	/** Sets the timeline name if timelineName (string) is unique. */
 	SetName(timelineName: string): P<boolean>;
+	/** Returns True if the timeline is enabled. */
+	GetIsEnabled(): P<boolean>;
+	/** Enables/disables the timeline and returns True if successful. */
+	SetIsEnabled(enabled: boolean): P<boolean>;
 	/** Returns the frame number at the start of timeline. */
 	GetStartFrame(): P<number>;
 	/** Returns the frame number at the end of timeline. */
@@ -2393,6 +2850,11 @@ export interface Timeline {
 	GetMarkerCustomData(frameId: number): P<string>;
 	/** Returns a dict with data containing raw thumbnail image data for current media in the Color Page. */
 	GetCurrentClipThumbnailImage(): P<ThumbnailData>;
+	/** Exports the frame at frameOffset (0-based offset from the timeline start) as a still image per exportFrameOptions. */
+	ExportFrame(
+		frameOffset: number,
+		exportFrameOptions?: Partial<ExportFrameOptions>,
+	): P<ExportFrameResult>;
 	/** Adds track of TrackType. Optional argument subTrackType. */
 	AddTrack(trackType: TrackType, subTrackType?: AudioSubTrackType): P<boolean>;
 	/** Deletes track of trackType and given trackIndex. 1 <= trackIndex <= GetTrackCount(trackType). */
@@ -2409,8 +2871,17 @@ export interface Timeline {
 	GetIsTrackLocked(trackType: TrackType, trackIndex: number): P<boolean>;
 	/** Deletes specified TimelineItems from the timeline, performing ripple delete if second argument is True. */
 	DeleteClips(timelineItems: TimelineItem[], rippleDelete?: boolean): P<boolean>;
+	/** Deletes all gaps between clips on the timeline, rippling content to close the gaps. */
+	DeleteGaps(): P<boolean>;
 	/** Links or unlinks the specified TimelineItems depending on second argument. */
 	SetClipsLinked(timelineItems: TimelineItem[], linked: boolean): P<boolean>;
+	/** Moves the leftmost TimelineItem (lowest track on ties) to the given position and the other items relative to it. Fails if any item cannot reach its destination. If subframePrecision is True, fractional startFrame values are allowed for audio clips when the 'Align audio edits to frame boundaries' preference is off. Otherwise, the position is aligned to whole frames. */
+	MoveItems(
+		timelineItems: TimelineItem[],
+		position: Partial<TimelineItemPosition>,
+		moveLinkedItems?: boolean,
+		subframePrecision?: boolean,
+	): P<boolean>;
 	/** Normalizes the audio level of specified TimelineItems using the given normalizeAudioOptions. */
 	NormalizeAudioLevel(
 		timelineItems: TimelineItem[],
@@ -2550,6 +3021,18 @@ export interface TimelineItem {
 	GetLeftOffset(subframePrecision?: boolean): P<number>;
 	/** Returns the maximum extension by frame for clip from right side. Returns fractional frames if subframe_precision is True */
 	GetRightOffset(subframePrecision?: boolean): P<number>;
+	/** Sets the clip's left (start) edit point to have the given offset (in frames) available. If subframePrecision is True, fractional offsets are allowed for audio clips when the 'Align audio edits to frame boundaries' preference is off. Otherwise, the offset is aligned to whole frames. If updateLinkedItems is True, linked items are also adjusted. */
+	SetLeftOffset(
+		offset: number,
+		subframePrecision?: boolean,
+		updateLinkedItems?: boolean,
+	): P<boolean>;
+	/** Sets the clip's right (end) edit point to have the given offset (in frames) available. If subframePrecision is True, fractional offsets are allowed for audio clips when the 'Align audio edits to frame boundaries' preference is off. Otherwise, the offset is aligned to whole frames. If updateLinkedItems is True, linked items are also adjusted. */
+	SetRightOffset(
+		offset: number,
+		subframePrecision?: boolean,
+		updateLinkedItems?: boolean,
+	): P<boolean>;
 	/** Returns number of Fusion compositions associated with the timeline item */
 	GetFusionCompCount(): P<number>;
 	/** Returns a list of Fusion composition names associated with the timeline item */
@@ -2560,6 +3043,12 @@ export interface TimelineItem {
 	GetFusionCompByName(compName: string): Maybe<FusionComp>;
 	/** Adds a new Fusion composition associated with the timeline item */
 	AddFusionComp(): Maybe<FusionComp>;
+	/** Applies the effect with the provided category ('fusion', 'ofx' or 'audio') and id (see Resolve.GetEffectsList) to this timeline item */
+	AddEffect(category: string, id: string): Maybe<Effect>;
+	/** Returns the effects of the given category ('fusion', 'ofx' or 'audio') applied to this timeline item */
+	GetEffects(category: string): P<Effect[]>;
+	/** Removes the given effects from this timeline item */
+	DeleteEffects(effects: Effect[]): P<boolean>;
 	/** Returns the media pool item corresponding to the timeline item if one exists */
 	GetMediaPoolItem(): Maybe<MediaPoolItem>;
 	/** Creates a new marker at given frameId position and with given marker information. 'customData' is optional and helps to attach user specific data to the marker */
@@ -2577,6 +3066,11 @@ export interface TimelineItem {
 	DeleteMarkerAtFrame(frameNum: number): P<boolean>;
 	/** Deletes first matching marker with specified customData */
 	DeleteMarkerByCustomData(customData: string): P<boolean>;
+	/** Exports the frame at frameOffset (0-based offset from the item start) as a still image per exportFrameOptions. */
+	ExportFrame(
+		frameOffset: number,
+		exportFrameOptions?: Partial<ExportFrameOptions>,
+	): P<ExportFrameResult>;
 	/** Returns a dict (frameId -> {information}) of all markers and dicts with their information */
 	GetMarkers(): P<Record<number, MarkerInfo>>;
 	/** Returns marker {information} for the first matching marker with specified customData */
@@ -2639,6 +3133,8 @@ export interface TimelineItem {
 	GetSelectedTakeIndex(): P<number>;
 	/** Returns the number of takes in take selector, or 0 if the clip is not a take selector */
 	GetTakesCount(): P<number>;
+	/** Analyzes audio loudness levels for this timeline item. 'standard' is a mode name from timeline.GetNormalizeAudioModes(), excluding the peak-only 'Sample Peak Program' and 'True Peak' modes. */
+	AnalyzeAudioLevels(standard: string): P<AudioLevelsInfo>;
 	/** Returns a dict with take info for specified index */
 	GetTakeByIndex(idx: number): P<TakeInfo | null>;
 	/** Deletes a take by index, 1 <= idx <= number of takes */
@@ -2649,6 +3145,8 @@ export interface TimelineItem {
 	FinalizeTake(): P<boolean>;
 	/** Copies the current node stack layer grade to the same layer for each item in tgtTimelineItems. */
 	CopyGrades(tgtTimelineItems: TimelineItem[]): P<boolean>;
+	/** Pastes the selected attributes from this item onto each item in targetItems. Equivalent to the Edit page's "Paste Attributes". */
+	CopyAttributes(targetItems: TimelineItem[], options: Partial<CopyAttributesOptions>): P<boolean>;
 	/** Gets clip enabled status */
 	GetClipEnabled(): P<boolean>;
 	/** Sets clip enabled based on argument */
@@ -2667,7 +3165,7 @@ export interface TimelineItem {
 	RegenerateMagicMask(): P<boolean>;
 	/** Performs stabilization on the clip */
 	Stabilize(): P<boolean>;
-	/** Performs Smart Reframe. */
+	/** Performs Smart Reframe, tracking the subject and repositioning it within the item's existing frame. It does not itself crop or rescale, so the frame must already be filled for the reposition to have anything to work with: when reframing to another aspect ratio, set the timeline's resolution and its 'timelineInputResMismatchBehavior' to 'scaleToCrop' first, then call this. */
 	SmartReframe(): P<boolean>;
 	/** Returns the clip's node graph object at layerIdx (int, optional). Returns the first layer if layerIdx is skipped. 1 <= layerIdx <= project.GetSetting('nodeStackLayers') */
 	GetNodeGraph(layerIdx?: number): Maybe<Graph>;
@@ -2683,6 +3181,14 @@ export interface TimelineItem {
 	GetLinkedItems(): P<TimelineItem[]>;
 	/** Returns a list of two values that correspond to the TimelineItem's trackType (string) and trackIndex (int) respectively */
 	GetTrackTypeAndIndex(): P<(string | number)[]>;
+	/** Returns the TimelineItem's current absolute position. Returns a fractional frame if subframePrecision is True */
+	GetPosition(subframePrecision?: boolean): P<TimelineItemPosition>;
+	/** Updates the TimelineItem's position on the timeline. If subframePrecision is True, fractional startFrame values are allowed for audio clips when the 'Align audio edits to frame boundaries' preference is off. Otherwise, the position is aligned to whole frames. */
+	SetPosition(
+		position: Partial<TimelineItemPosition>,
+		moveLinkedItems?: boolean,
+		subframePrecision?: boolean,
+	): P<boolean>;
 	/** Returns a string with TimelineItem's audio mapping information */
 	GetSourceAudioChannelMapping(): P<string>;
 	/** Sets source audio channel mapping from a JSON string. */
@@ -2717,6 +3223,8 @@ export interface TimelineItem {
 	GetFades(): P<FadeInfo>;
 	/** Sets the fade durations (in frames) for the item's video or audio fader from a dict {FadeIn, FadeOut} */
 	SetFades(fades: Partial<FadeInfo>): P<boolean>;
+	/** Ripple deletes silent portions from this audio TimelineItem. */
+	RippleDeleteSilence(removeSilenceOptions?: Partial<RemoveSilenceOptions>): P<boolean>;
 	/** @deprecated Use GetProperties() and index into the result. */
 	GetProperty(): P<TimelineItemProperties>;
 	/** @deprecated Use GetProperties() and index into the result. */
@@ -2752,16 +3260,36 @@ export interface ColorGroup {
 	SetName(groupName: string): P<boolean>;
 	/** Returns a list of TimelineItems in the ColorGroup for the given Timeline */
 	GetClipsInTimeline(timeline?: Timeline): P<TimelineItem[]>;
+	/** Returns a list of PhotoAlbumItems in the ColorGroup for the given PhotoAlbum. Uses the current photo album if photoAlbum is omitted */
+	GetPhotosInPhotoAlbum(photoAlbum?: PhotoAlbum): P<PhotoAlbumItem[]>;
 	/** Returns the ColorGroup Pre-clip graph */
 	GetPreClipNodeGraph(): Maybe<Graph>;
 	/** Returns the ColorGroup Post-clip graph */
 	GetPostClipNodeGraph(): Maybe<Graph>;
 }
 
+/** A Fusion, OFX or Audio effect applied to a TimelineItem or PhotoAlbumItem. */
+export interface Effect {
+	/** Returns information about the effect */
+	GetInfo(): P<EffectInfo | null>;
+	/** Returns whether the effect is enabled */
+	GetIsEnabled(): P<boolean>;
+	/** Sets whether the effect is enabled */
+	SetIsEnabled(enabled: boolean): P<boolean>;
+	/** Returns the Fusion composition object for this effect, or None if it's not a Fusion effect */
+	GetFusionComp(): Maybe<FusionComp>;
+	/** Returns the effect's 1-based index among its siblings' effects of the same category, or None if it's no longer applied */
+	GetIndex(): P<number | null>;
+	/** Moves the effect to the given 1-based index among its sibling effects */
+	SetIndex(index: number): P<boolean>;
+}
+
 /** A media pool folder: its clips, its subfolders and their analysis. */
 export interface Folder {
 	/** Returns the media folder name */
 	GetName(): P<string>;
+	/** Returns the Folder object containing this folder, or None for the root folder. */
+	GetParentFolder(): Maybe<Folder>;
 	/** Returns a list of subfolders in the folder */
 	GetSubFolderList(): P<Folder[]>;
 	/** Returns a list of clips (items) within the folder */
@@ -2784,7 +3312,7 @@ export interface Folder {
 	RemoveMotionBlur(deblurOption?: Partial<DeblurOptions>): P<MediaPoolItem[][]>;
 	/** Perform Intellisearch analysis to all the MediaPoolItems in the folder. */
 	AnalyzeForIntellisearch(identifyFaces: boolean, isBetterMode: boolean): P<boolean>;
-	/** Perform Slate analysis with current settings and use the stated markerColor to all the MediaPoolItems in the folder. */
+	/** Perform Slate analysis with current settings and use the stated markerColor to all the MediaPoolItems in the folder. Adds a 'Detected Slate' duration marker over the frames of each slate found; the text written on the slate is not read. */
 	AnalyzeForSlate(markerColor: SlateMarkerColor): P<boolean>;
 	/** @deprecated Use GetClipList(). */
 	GetClips(): P<Record<number, MediaPoolItem>>;
@@ -2852,17 +3380,25 @@ export interface Graph {
 	GetNodeCacheMode(nodeIndex: number): P<number>;
 	/** Returns the label of the node at nodeIndex */
 	GetNodeLabel(nodeIndex: number): P<string>;
+	/** Sets the label of the node at nodeIndex, 1 <= nodeIndex <= GetNumNodes() */
+	SetNodeLabel(nodeIndex: number, label: string): P<boolean>;
+	/** Returns the color of the node at nodeIndex as a string, or an empty string if no color is set */
+	GetNodeColor(nodeIndex: number): P<NodeColor | "">;
+	/** Sets the color of the node at nodeIndex based on the colorName (string). An empty string clears the color. 1 <= nodeIndex <= GetNumNodes() */
+	SetNodeColor(nodeIndex: number, colorName: NodeColor | ""): P<boolean>;
 	/** Returns toolsList of the tools used in the node indicated by given nodeIndex */
 	GetToolsInNode(nodeIndex: number): P<string[]>;
 	/** Sets the node at the given nodeIndex to isEnabled, 1 <= nodeIndex <= GetNumNodes() */
 	SetNodeEnabled(nodeIndex: number, isEnabled: boolean): P<boolean>;
 	/** Applies ARRI CDL and LUT. */
 	ApplyArriCdlLut(): P<boolean>;
-	/**
-	 * Loads a still from given file path and applies grade to graph with gradeMode (0=No keyframes, 1=Source Timecode aligned, 2=Start Frames aligned). "
-	 * "If applyToAllLayers is True, the grade is applied to all node-stack layers instead of just the active layer.
-	 */
-	ApplyGradeFromDRX(path: string, gradeMode: number, applyToAllLayers?: boolean): P<boolean>;
+	/** Loads a still from given file path and applies grade to graph with gradeMode (0=No keyframes, 1=Source Timecode aligned, 2=Start Frames aligned). If applyToAllLayers is True, the grade is applied to all node-stack layers instead of just the active layer. keyframeMode selects what is applied, one of the resolve.KEYFRAME_MODE_* constants (default KEYFRAME_MODE_ALL). */
+	ApplyGradeFromDRX(
+		path: string,
+		gradeMode: number,
+		applyToAllLayers?: boolean,
+		keyframeMode?: unknown,
+	): P<boolean>;
 	/** Resets all grades in the graph */
 	ResetAllGrades(): P<boolean>;
 }
@@ -2911,6 +3447,128 @@ export interface MediaStorage {
 	AddItemListToMediaPool(items: string[]): P<MediaPoolItem[]>;
 }
 
+/** A photo album: photo items and markers. */
+export interface PhotoAlbum {
+	/** Returns the photo album name. */
+	GetName(): P<string>;
+	/** Sets the photo album name if photoAlbumName (string) is unique. */
+	SetName(photoAlbumName: string): P<boolean>;
+	/** Returns a unique ID for the photo album */
+	GetUniqueId(): P<string>;
+	/** Returns a list of photo album items in the photo album. */
+	GetPhotoList(): P<PhotoAlbumItem[]>;
+	/** Returns the current photo album item. */
+	GetCurrentItem(): Maybe<PhotoAlbumItem>;
+	/** Deletes specified PhotoAlbumItems from the photo album. */
+	DeletePhotos(photoAlbumItems: PhotoAlbumItem[]): P<boolean>;
+	/** Returns the photo album's node graph object. */
+	GetNodeGraph(): Maybe<Graph>;
+	/** Returns the media pool item corresponding to the photo album */
+	GetMediaPoolItem(): Maybe<MediaPoolItem>;
+	/** Grabs still from the current photo. Returns a GalleryStill object. */
+	GrabStill(): Maybe<GalleryStill>;
+	/** Grabs stills from all photos in the photo album. */
+	GrabAllStills(): P<GalleryStill[]>;
+}
+
+/** A photo item in a photo album with color grades, flags, and Fusion compositions. See README.md section 'Looking up Photo Album Item properties'. */
+export interface PhotoAlbumItem {
+	/** Returns the item name */
+	GetName(): P<string>;
+	/** Sets the photo's name to name. */
+	SetName(name: string): P<boolean>;
+	/** Returns a unique ID for the photo album item */
+	GetUniqueId(): P<string>;
+	/** Returns number of Fusion compositions associated with the photo album item */
+	GetFusionCompCount(): P<number>;
+	/** Returns a list of Fusion composition names associated with the photo album item */
+	GetFusionCompNameList(): P<string[]>;
+	/** Returns the Fusion composition object based on given index. 1 <= compIndex <= photoAlbumItem.GetFusionCompCount() */
+	GetFusionCompByIndex(compIndex: number): Maybe<FusionComp>;
+	/** Returns the Fusion composition object based on given name */
+	GetFusionCompByName(compName: string): Maybe<FusionComp>;
+	/** Adds a new Fusion composition associated with the photo album item */
+	AddFusionComp(): Maybe<FusionComp>;
+	/** Deletes the named Fusion composition */
+	DeleteFusionCompByName(compName: string): P<boolean>;
+	/** Loads the named Fusion composition as the active composition */
+	LoadFusionCompByName(compName: string): Maybe<FusionComp>;
+	/** Renames the Fusion composition identified by oldName */
+	RenameFusionCompByName(oldName: string, newName: string): P<boolean>;
+	/** Imports a Fusion composition from given file path by creating and adding a new composition for the item */
+	ImportFusionComp(path: string): Maybe<FusionComp>;
+	/** Exports the Fusion composition based on given index to the path provided */
+	ExportFusionComp(path: string, compIndex: number): P<boolean>;
+	/** Returns the media pool item corresponding to the photo album item if one exists */
+	GetMediaPoolItem(): Maybe<MediaPoolItem>;
+	/** Adds a flag with given color (string) */
+	AddFlag(color: FlagColor): P<boolean>;
+	/** Returns a list of flag colors assigned to the item */
+	GetFlagList(): P<string[]>;
+	/** Clears flags of the specified color. An 'All' argument is supported to clear all flags */
+	ClearFlags(color: FlagColor | "All"): P<boolean>;
+	/** Returns the item color as a string */
+	GetClipColor(): P<ClipColor | "">;
+	/** Sets the item color based on the colorName (string) */
+	SetClipColor(colorName: ClipColor): P<boolean>;
+	/** Clears the item color */
+	ClearClipColor(): P<boolean>;
+	/** Copies the current node stack layer grade to the same layer for each item in tgtPhotoAlbumItems. */
+	CopyGrades(tgtPhotoAlbumItems: PhotoAlbumItem[]): P<boolean>;
+	/** Returns the current version of the photo. The returned value will have the keys versionName and versionType (always 1 - remote, as photo albums only support remote versions) */
+	GetCurrentVersion(): P<VersionInfo>;
+	/** Renames the color version identified by oldName. Photo albums only support remote versions */
+	RenameVersionByName(oldName: string, newName: string): P<boolean>;
+	/** Deletes a color version by name. Photo albums only support remote versions */
+	DeleteVersionByName(versionName: string): P<boolean>;
+	/** Loads a named color version as the active version. Photo albums only support remote versions */
+	LoadVersionByName(versionName: string): P<boolean>;
+	/** Adds a new color version for a photo. Photo albums only support remote versions */
+	AddVersion(versionName: string): P<boolean>;
+	/** Returns a list of all color versions. Photo albums only support remote versions */
+	GetVersionNameList(): P<string[]>;
+	/** Sets CDL values on the node. Keys of map are: 'NodeIndex', 'Slope', 'Offset', 'Power', 'Saturation' */
+	SetCDL(CDL: Partial<CDL>): P<boolean>;
+	/** Returns the photo's node graph object at layerIdx (int, optional). Returns the first layer if layerIdx is skipped. 1 <= layerIdx <= project.GetSetting('nodeStackLayers') */
+	GetNodeGraph(layerIdx?: number): Maybe<Graph>;
+	/** Resets node color for all nodes in the active version of the photo. */
+	ResetAllNodeColors(): P<boolean>;
+	/** Exports a LUT of the size given by 'exportType', saving it in the provided 'path' */
+	ExportLUT(exportType: ExportLutType, path: string): P<boolean>;
+	/** Returns the photo's color group if one exists */
+	GetColorGroup(): Maybe<ColorGroup>;
+	/** Assigns the photo to the given ColorGroup. ColorGroup must be an existing group in the current project */
+	AssignToColorGroup(colorGroup: ColorGroup): P<boolean>;
+	/** Removes the photo from its ColorGroup */
+	RemoveFromColorGroup(): P<boolean>;
+	/** Loads user defined data burn in preset for photo when supplied presetName (string). */
+	LoadBurnInPreset(presetName: string): P<boolean>;
+	/** Returns the photo rating in stars (0-5) */
+	GetRatings(): P<number>;
+	/** Sets the photo rating to stars (int, 0-5) */
+	SetRatings(stars: number): P<boolean>;
+	/** Applies the effect with the provided category and id (see Resolve.GetEffectsList) to this photo album item */
+	AddEffect(category: string, id: string): Maybe<Effect>;
+	/** Returns the effects of the given category ('fusion' or 'ofx') applied to this photo album item */
+	GetEffects(category: string): P<Effect[]>;
+	/** Removes the given effects from this photo album item */
+	DeleteEffects(effects: Effect[]): P<boolean>;
+	/** Exports the photo as a still image per exportFrameOptions. */
+	ExportFrame(exportFrameOptions?: Partial<ExportFrameOptions>): P<ExportFrameResult>;
+	/** Returns a dict with all supported photo properties (source transform, cropping and looks). See README.md section 'Looking up Photo Album Item properties'. */
+	GetProperties(): P<PhotoAlbumItemProperties>;
+	/** Sets the photo properties (source transform, cropping and looks) with the specified dict of property keys and values. See README.md section 'Looking up Photo Album Item properties'. */
+	SetProperties(properties: Partial<PhotoAlbumItemProperties>): P<boolean>;
+}
+
 export type Fusion = Record<string, any>;
 
 export type FusionComp = Record<string, any>;
+
+export interface STYPE_BOOL {
+	readonly __brand?: "STYPE_BOOL";
+}
+
+export interface STYPE_STR {
+	readonly __brand?: "STYPE_STR";
+}
