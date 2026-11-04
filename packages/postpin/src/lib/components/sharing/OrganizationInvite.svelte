@@ -1,18 +1,13 @@
 <script lang="ts">
 	import { page } from "$app/state";
 	import { authClient } from "#lib/auth-client.ts";
-	import {
-		hasRole,
-		MANAGER_ROLES,
-		ORG_ROLES,
-		type InviteLinkRole,
-		type OrgRole,
-	} from "#lib/roles.ts";
+	import { INVITE_ROLES, roleAllows, type InviteRole } from "#lib/roles.ts";
 	import {
 		getInviteLinks,
 		resetInviteLink,
 		setInviteLinkEnabled,
 	} from "../../../routes/(root)/organizations/[organization]/members/members.remote";
+	import type { Role } from "@postpin-io/shared/db/enums";
 
 	interface Props {
 		organizationId: string;
@@ -22,13 +17,15 @@
 
 	const activeMember = authClient.useActiveMember();
 	const canManage = $derived(
-		$activeMember.data ? hasRole($activeMember.data.role, MANAGER_ROLES) : false,
+		$activeMember.data
+			? roleAllows($activeMember.data.role, "organization", "updateSettings")
+			: false,
 	);
 	const inviteLinks = $derived(canManage ? await getInviteLinks(organizationId) : []);
 
 	let inviting = $state(false);
 	let inviteEmail = $state("");
-	let inviteRole: OrgRole = $state("member");
+	let inviteRole: Role = $state("member");
 	let inviteSent = $state(false);
 
 	async function inviteMember() {
@@ -52,7 +49,7 @@
 	let copiedLinkRole = $state<string | null>(null);
 	const linkUrl = (token: string) => `${page.url.origin}/auth/join/${token}`;
 
-	async function toggleLink(role: InviteLinkRole, enabled: boolean) {
+	async function toggleLink(role: InviteRole, enabled: boolean) {
 		updatingLinkRole = role;
 		try {
 			await setInviteLinkEnabled({ organizationId, role, enabled });
@@ -62,7 +59,7 @@
 		updatingLinkRole = null;
 	}
 
-	async function resetLink(role: InviteLinkRole) {
+	async function resetLink(role: InviteRole) {
 		if (!confirm("Reset this link? The current link will stop working immediately.")) return;
 		updatingLinkRole = role;
 		try {
@@ -92,7 +89,7 @@
 		oninput={() => (inviteSent = false)}
 	/>
 	<select class="select w-auto capitalize" bind:value={inviteRole} disabled={inviting}>
-		{#each ORG_ROLES as role (role)}
+		{#each INVITE_ROLES as role (role)}
 			<option value={role}>{role}</option>
 		{/each}
 	</select>

@@ -2,7 +2,7 @@ import { prisma } from "#lib/server/database.ts";
 import { error } from "@sveltejs/kit";
 import { getRequestEvent, query } from "$app/server";
 import * as v from "valibot";
-import { hasRole, MANAGER_ROLES } from "#lib/roles.ts";
+import { roleAllows } from "#lib/roles.ts";
 
 export const getOrganizationSettings = query(v.string(), async (slug) => {
 	const { user } = getRequestEvent().locals;
@@ -21,10 +21,11 @@ export const getOrganizationSettings = query(v.string(), async (slug) => {
 
 	const role = organization?.members[0]?.role;
 	if (!organization || !role) error(404, "Organization not found");
-	if (!hasRole(role, MANAGER_ROLES)) {
+	if (!roleAllows(role, "organization", "updateSettings")) {
 		error(403, "Only owners and admins can change organization settings");
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const { members: _, ...rest } = organization;
 	return rest;
 });

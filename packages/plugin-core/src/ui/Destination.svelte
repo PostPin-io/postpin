@@ -83,7 +83,7 @@
 			class={["btn btn-sm self-start", highlightChoose && "btn-primary"]}
 			onclick={() => modal?.open()}
 		>
-			Choose location…
+			Choose export
 		</button>
 		{#if browserUrl}
 			<button

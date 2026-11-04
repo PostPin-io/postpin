@@ -4,19 +4,18 @@ import { prisma } from "./database"; // your prisma client instance
 import { sendEmail } from "./email";
 import { organization } from "better-auth/plugins";
 import { BETTER_AUTH_URL } from "$app/env/private";
-import { ac, roles } from "#lib/roles.ts";
 import { bearer, deviceAuthorization } from "better-auth/plugins";
 import { DEVICE_CLIENTS } from "#lib/device-clients.ts";
 import { createAuthMiddleware, getIP } from "better-auth/api";
+import { Role } from "@postpin-io/shared/db";
+import { ac, betterAuthRoles } from "#lib/better-auth-roles.ts";
 
 export const auth = betterAuth({
 	database: prismaAdapter(prisma, {
-		provider: "postgresql", // or "mysql", "sqlite", ...etc
+		provider: "postgresql",
 	}),
 	plugins: [
 		organization({
-			ac,
-			roles,
 			async sendInvitationEmail(data) {
 				const inviteLink = `${BETTER_AUTH_URL}/auth/invite/${data.id}`;
 				await sendEmail(
@@ -25,6 +24,9 @@ export const auth = betterAuth({
 					`You have been invited to join the organization ${data.organization.name} by ${data.inviter.user.name}. Use this link to accept the invitation: ${inviteLink}`,
 				);
 			},
+			creatorRole: Role.OWNER,
+			ac,
+			roles: betterAuthRoles,
 		}),
 		deviceAuthorization({
 			verificationUri: `${BETTER_AUTH_URL}/auth/device`,

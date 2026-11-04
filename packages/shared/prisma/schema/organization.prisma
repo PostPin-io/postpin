@@ -23,12 +23,21 @@ model Member {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   userId         String
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role           String       @default("member")
+  role           Role
   createdAt      DateTime
+
+  memberGrants MemberGrant[]
 
   @@index([organizationId])
   @@index([userId])
   @@map("member")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+  REVIEWER
 }
 
 model Invitation {
@@ -36,15 +45,21 @@ model Invitation {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   email          String
-  role           String?
+  role           Role
   status         String       @default("pending")
   expiresAt      DateTime
   createdAt      DateTime     @default(now())
-  inviterId      String
-  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+  inviter        User?        @relation(fields: [inviterId], references: [id], onDelete: SetNull)
+  inviterId      String?
+  project        Project?     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId      String?
+  timeline       Timeline?    @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+  timelineId     String?
 
   @@index([organizationId])
   @@index([email])
+  @@index([projectId])
+  @@index([timelineId])
   @@map("invitation")
 }
 
@@ -52,13 +67,42 @@ model InviteLink {
   id             String       @id @default(cuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  role           String
+  role           Role
   token          String       @unique
   enabled        Boolean      @default(true)
-  createdById    String
+  createdBy      User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById    String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+  project        Project?     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId      String?
+  timeline       Timeline?    @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+  timelineId     String?
 
-  @@unique([organizationId, role])
+  @@unique([organizationId, role, projectId, timelineId])
   @@map("invite_link")
+}
+
+model MemberGrant {
+  id String @id @default(cuid())
+
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String
+
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String?
+
+  timeline   Timeline? @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+  timelineId String?
+
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([memberId, projectId])
+  @@unique([memberId, timelineId])
+  @@index([projectId])
+  @@index([timelineId])
+  @@map("member_grant")
 }

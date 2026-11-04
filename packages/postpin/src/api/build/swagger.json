@@ -97,7 +97,8 @@
 						"type": "string"
 					},
 					"authorId": {
-						"type": "string"
+						"type": "string",
+						"nullable": true
 					},
 					"updatedAt": {
 						"type": "string",
@@ -129,7 +130,8 @@
 						"nullable": true
 					},
 					"authorId": {
-						"type": "string"
+						"type": "string",
+						"nullable": true
 					},
 					"categoryId": {
 						"type": "string"
@@ -185,7 +187,8 @@
 						"nullable": true
 					},
 					"authorId": {
-						"type": "string"
+						"type": "string",
+						"nullable": true
 					},
 					"categoryId": {
 						"type": "string"
@@ -498,6 +501,10 @@
 			},
 			"DefaultSelection__36_CategoryPayload_": {
 				"properties": {
+					"createdById": {
+						"type": "string",
+						"nullable": true
+					},
 					"projectId": {
 						"type": "string"
 					},
@@ -519,7 +526,7 @@
 						"type": "string"
 					}
 				},
-				"required": ["projectId", "color", "updatedAt", "createdAt", "id", "name"],
+				"required": ["createdById", "projectId", "color", "updatedAt", "createdAt", "id", "name"],
 				"type": "object"
 			},
 			"CategoryModel": {

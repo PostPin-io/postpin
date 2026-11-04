@@ -1,47 +1,69 @@
 model Project {
-  id             String       @id @default(cuid())
+  id             String        @id @default(cuid())
   name           String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  creator        User         @relation(fields: [creatorId], references: [id], onDelete: Restrict)
-  creatorId      String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  creator        User?         @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  creatorId      String?
   timelines      Timeline[]
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
   categories     Category[]
-  nleProjectId   String?      @unique
+  nleProjectId   String?       @unique
+  memberGrants   MemberGrant[]
+
+  inviteLinks InviteLink[]
+  invitations Invitation[]
 
   @@index([creatorId])
   @@map("project")
 }
 
 model Timeline {
-  id            String   @id @default(cuid())
+  id            String        @id @default(cuid())
   name          String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  project       Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId     String
   exports       Export[]
-  nleTimelineId String?  @unique
+  nleTimelineId String?       @unique
+  memberGrants  MemberGrant[]
+  invitations   Invitation[]
+  inviteLinks   InviteLink[]
 
   @@index([projectId])
   @@map("timeline")
 }
 
 model Export {
-  id                   String   @id @default(cuid())
+  id                   String      @id @default(cuid())
   name                 String
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  timeline             Timeline @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  timeline             Timeline    @relation(fields: [timelineId], references: [id], onDelete: Cascade)
   timelineId           String
-  media                Media?   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  mediaId              String?  @unique
+  media                Media?      @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId              String?     @unique
   timelineSnapshot     Json?
   timelineSnapshotHash String?
   markers              Marker[]
+  shareLinks           ShareLink[]
 
   @@index([timelineId])
   @@map("export")
+}
+
+model ShareLink {
+  id                 String   @id @default(cuid())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  export             Export   @relation(fields: [exportId], references: [id], onDelete: Cascade)
+  exportId           String
+  creator            User?    @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  creatorId          String?
+  markerPanelVisible Boolean
+
+  @@index([exportId])
+  @@map("share_link")
 }

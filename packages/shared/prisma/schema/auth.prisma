@@ -16,6 +16,10 @@ model User {
   lastActiveOrganization   Organization? @relation("LastActiveOrganization", fields: [lastActiveOrganizationId], references: [id], onDelete: SetNull)
   markers                  Marker[]
   responses                Response[]
+  createdGrants            MemberGrant[]
+  createdShareLinks        ShareLink[]
+  createdCategories        Category[]
+  inviteLinks              InviteLink[]
 
   @@unique([email])
   @@map("user")

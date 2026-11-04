@@ -79,7 +79,11 @@ const models: TsoaRoute.Models = {
 			nestedProperties: {
 				content: { dataType: "string", required: true },
 				markerId: { dataType: "string", required: true },
-				authorId: { dataType: "string", required: true },
+				authorId: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
 				updatedAt: { dataType: "datetime", required: true },
 				createdAt: { dataType: "datetime", required: true },
 				id: { dataType: "string", required: true },
@@ -108,7 +112,11 @@ const models: TsoaRoute.Models = {
 					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
 					required: true,
 				},
-				authorId: { dataType: "string", required: true },
+				authorId: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
 				categoryId: { dataType: "string", required: true },
 				exportId: { dataType: "string", required: true },
 				updatedAt: { dataType: "datetime", required: true },
@@ -139,7 +147,11 @@ const models: TsoaRoute.Models = {
 				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
 				required: true,
 			},
-			authorId: { dataType: "string", required: true },
+			authorId: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
 			categoryId: { dataType: "string", required: true },
 			exportId: { dataType: "string", required: true },
 			updatedAt: { dataType: "datetime", required: true },
@@ -350,6 +362,11 @@ const models: TsoaRoute.Models = {
 		type: {
 			dataType: "nestedObjectLiteral",
 			nestedProperties: {
+				createdById: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
 				projectId: { dataType: "string", required: true },
 				color: { dataType: "string", required: true },
 				updatedAt: { dataType: "datetime", required: true },

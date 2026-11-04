@@ -13,10 +13,10 @@ model Marker {
 
   export     Export   @relation(fields: [exportId], references: [id], onDelete: Cascade)
   exportId   String
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: NoAction)
   categoryId String
-  author     User     @relation(fields: [authorId], references: [id])
-  authorId   String
+  author     User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorId   String?
   // id of the marker in the NLE, e.g. "<session origin id>:<memory location number>" in Pro Tools.
   // Unique per export, since every export of a timeline gets the same NLE markers.
   nleId      String?
@@ -41,6 +41,9 @@ model Category {
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId String
 
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById String?
+
   @@unique([projectId, name])
   @@map("category")
 }
@@ -49,10 +52,10 @@ model Response {
   marker   Marker @relation(fields: [markerId], references: [id], onDelete: Cascade)
   markerId String
 
-  id       String @id @default(cuid())
+  id       String  @id @default(cuid())
   content  String
-  author   User   @relation(fields: [authorId], references: [id])
-  authorId String
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

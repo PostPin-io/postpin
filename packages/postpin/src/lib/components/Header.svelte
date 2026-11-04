@@ -3,7 +3,7 @@
 	import { page } from "$app/state";
 	import { authClient } from "#lib/auth-client.ts";
 	import { goto, refreshAll } from "$app/navigation";
-	import { hasRole, MANAGER_ROLES } from "#lib/roles.ts";
+	import { hasRoleOrHigher, MANAGER_ROLES } from "#lib/roles.ts";
 	import type { Snippet } from "svelte";
 	import Logo from "#lib/components/Logo.svelte";
 	import Share from "@lucide/svelte/icons/share";
@@ -18,7 +18,7 @@
 		$organizations.data?.find((org) => org.id === activeOrganizationId),
 	);
 	let canManageThisOrg = $derived(
-		$activeMember.data ? hasRole($activeMember.data.role, MANAGER_ROLES) : false,
+		$activeMember.data ? hasRoleOrHigher($activeMember.data.role, MANAGER_ROLES) : false,
 	);
 
 	async function switchOrganization(organizationId: string) {

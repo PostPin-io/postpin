@@ -11,6 +11,7 @@
 		"./queue/*": "./src/queue/*.ts",
 		"./storage": "./src/storage/index.ts",
 		"./db": "./src/db/index.ts",
+		"./db/enums": "./src/db/prisma/enums.ts",
 		"./types/*": "./src/types/*.ts",
 		"./logic/*": "./src/logic/*.ts"
 	},

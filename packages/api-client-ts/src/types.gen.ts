@@ -32,7 +32,7 @@ export type ProjectWithTimelines = {
 export type DefaultSelection36ResponsePayload = {
 	content: string;
 	markerId: string;
-	authorId: string;
+	authorId: string | null;
 	updatedAt: string;
 	createdAt: string;
 	id: string;
@@ -44,7 +44,7 @@ export type MarkerResponse = ResponseModel;
 
 export type DefaultSelection36MarkerPayload = {
 	nleId: string | null;
-	authorId: string;
+	authorId: string | null;
 	categoryId: string;
 	exportId: string;
 	updatedAt: string;
@@ -59,7 +59,7 @@ export type MarkerModel = DefaultSelection36MarkerPayload;
 
 export type MarkerWithResponses = {
 	nleId: string | null;
-	authorId: string;
+	authorId: string | null;
 	categoryId: string;
 	exportId: string;
 	updatedAt: string;
@@ -182,6 +182,7 @@ export type TimelineSnapshot = {
 };
 
 export type DefaultSelection36CategoryPayload = {
+	createdById: string | null;
 	projectId: string;
 	color: string;
 	updatedAt: string;
