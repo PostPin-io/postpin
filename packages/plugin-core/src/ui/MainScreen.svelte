@@ -219,8 +219,16 @@
 	<header
 		class="flex shrink-0 items-center border-t border-base-content/20 px-4 py-2 text-sm select-none [app-region:drag] ms-16"
 	>
-		<PostPinLogo class="h-5 w-auto me-3" />
-		<span class="text-base-content/60 text-xl"> PostPin </span>
+		<button
+			type="button"
+			class="cursor-pointer
+			 items-center flex [app-region:no-drag] text-white"
+			onclick={() => host.openInBrowser("/")}
+		>
+			<PostPinLogo class="h-5 w-auto me-3" />
+			<span class="text-base-content/60 text-xl no-underline"> PostPin </span>
+		</button>
+
 		<span class="flex-1"></span>
 		<!-- Buttons in a drag region need no-drag, otherwise the window swallows their clicks -->
 		<button
