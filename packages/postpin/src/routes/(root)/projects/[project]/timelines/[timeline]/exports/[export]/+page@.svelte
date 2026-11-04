@@ -143,7 +143,9 @@
 	let isMounted = $state(false);
 	let isLayoutReady = $state(false);
 
-	let isLoading = $derived(!exp || !isMounted || !isLayoutReady);
+	// A boolean, so the refetches while processing don't count as a change and reset the layout
+	const hasExport = $derived(!!exp);
+	let isLoading = $derived(!hasExport || !isMounted || !isLayoutReady);
 	let allMarkers = $derived(await getMarkers(page.params.export ?? ""));
 	let markers = $derived(markerFilter.apply(allMarkers));
 	let originalUrl = $state<string | undefined>(undefined);
@@ -207,9 +209,11 @@
 
 		const interval = setInterval(async () => {
 			try {
-				const current = processingJobsQuery?.current;
-				if (current?.some((job) => job.state === "active" || job.state === "waiting")) {
-					await processingJobsQuery?.refresh();
+				// The export carries the media status and proxies the player depends on, so it has to be refetched
+				// until processing is done; the job list only drives the progress display
+				const status = exportQuery.current?.media?.status;
+				if (status === "PENDING" || status === "PROCESSING") {
+					await Promise.all([exportQuery.refresh(), processingJobsQuery?.refresh()]);
 				}
 			} catch (error) {
 				console.error("Failed to refresh export:", error);
@@ -223,7 +227,7 @@
 
 	// Mount Splitpanes first, then allow the page to become visible.
 	$effect(() => {
-		if (!exp || !isMounted) {
+		if (!hasExport || !isMounted) {
 			isLayoutReady = false;
 			return;
 		}
@@ -530,20 +534,31 @@
 												onSeek={seekToFrame}
 											/>
 										{:else if media.status !== "PENDING" && videoSource && snapshot}
-											<VideoPlayer
-												bind:this={player}
-												source={videoSource}
-												poster={thumbnailUrl}
-												timing={snapshot}
-												bind:currentTime={videoPosition}
-												bind:paused={videoPaused}
-												bind:playbackRate={videoPlaybackRate}
-												bind:quality={videoQuality}
-												bind:qualities={videoQualities}
-												bind:muted={videoMuted}
-												bind:fullscreen={videoFullscreen}
-												fullscreenControls={menuBar}
-											/>
+											<!-- A fresh player when the source switches between the original and HLS -->
+											{#key videoSource.type}
+												<VideoPlayer
+													bind:this={player}
+													source={videoSource}
+													poster={thumbnailUrl}
+													timing={snapshot}
+													bind:currentTime={videoPosition}
+													bind:paused={videoPaused}
+													bind:playbackRate={videoPlaybackRate}
+													bind:quality={videoQuality}
+													bind:qualities={videoQualities}
+													bind:muted={videoMuted}
+													bind:fullscreen={videoFullscreen}
+													fullscreenControls={menuBar}
+												/>
+											{/key}
+										{:else if viewMode !== "shot-grid" && media.status !== "FAILED"}
+											<div
+												class="flex h-full items-center justify-center"
+												role="status"
+												aria-live="polite"
+											>
+												<LoadingAnimation class="size-24" />
+											</div>
 										{/if}
 									</div>
 									{#if snapshot}

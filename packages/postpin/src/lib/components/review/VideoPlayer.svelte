@@ -11,6 +11,7 @@
 
 <script lang="ts">
 	import { untrack, type Snippet } from "svelte";
+	import LoadingAnimation from "#lib/components/LoadingAnimation.svelte";
 	import type { HlsJsVideoElement } from "@videojs/html/media/hlsjs-video";
 	import type { FrameTiming } from "@postpin-io/shared/logic/timecode";
 
@@ -310,6 +311,16 @@
 			class="absolute inset-0 block"
 			onclick={onVideoClick}
 		></hlsjs-video>
+
+		{#if !ready}
+			<div
+				class="pointer-events-none absolute inset-0 flex items-center justify-center bg-base-100/50"
+				role="status"
+				aria-live="polite"
+			>
+				<LoadingAnimation class="size-24" />
+			</div>
+		{/if}
 
 		{#if indicator}
 			{#key indicator.id}
