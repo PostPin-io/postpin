@@ -118,21 +118,36 @@
 	}
 
 	let log: string[] = $state([]);
-	let isBusy = $state(false);
+	let isBusy: "syncingMarkersUp" | "syncingMarkersDown" | "deletingMarkers" | "rendering" | null =
+		$state(null);
 	let renderProgress = $state<RenderProgress | null>(null);
 	let uploadProgress = $state<UploadProgress | null>(null);
 	let error = $state<string | null>(null);
 
 	// Runs a button action, showing its error and blocking the other buttons meanwhile
-	async function run(action: () => Promise<void>) {
-		isBusy = true;
+	async function runLong(action: () => Promise<void>) {
+		isBusy = "rendering";
 		error = null;
 		try {
 			await action();
 		} catch (err) {
 			error = errorMessage(err);
 		} finally {
-			isBusy = false;
+			isBusy = null;
+		}
+	}
+	async function runShort(type: typeof isBusy, action: () => Promise<void>) {
+		isBusy = type;
+		error = null;
+		log = [];
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+		try {
+			await action();
+			log = ["Done"];
+		} catch (err) {
+			error = errorMessage(err);
+		} finally {
+			isBusy = null;
 		}
 	}
 
@@ -154,7 +169,7 @@
 		renderProgress = null;
 		uploadProgress = null;
 		log = [];
-		return run(async () => {
+		return runLong(async () => {
 			await host.saveSettings($state.snapshot(settings));
 
 			const { exportId } = await runRenderAndUpload({
@@ -181,7 +196,7 @@
 			await host.openInBrowser(
 				`/projects/${ids.projectId}/timelines/${ids.timelineId}/exports/${exportId}`,
 			);
-			log.push(`Done ✅ `);
+			log.push(`Done`);
 		});
 	}
 
@@ -198,16 +213,16 @@
 
 	function syncUp() {
 		const context = syncContext();
-		if (context) return run(() => syncMarkersUp(context));
+		if (context) return runShort("syncingMarkersUp", () => syncMarkersUp(context));
 	}
 
 	function syncDown() {
 		const context = syncContext();
-		if (context) return run(() => syncMarkersDown(context));
+		if (context) return runShort("syncingMarkersDown", () => syncMarkersDown(context));
 	}
 
 	function deleteMarkers() {
-		return run(() => nle.clearMarkers());
+		return runShort("deletingMarkers", () => nle.clearMarkers());
 	}
 
 	const canRender = $derived(!!uploadTarget && !isBusy);
@@ -247,13 +262,13 @@
 					thumbnailDataUrl={nleTimeline?.thumbnailDataUrl}
 					timelineName={nleTimeline?.name ?? null}
 					projectName={nleTimeline?.projectName ?? null}
-					disabled={isBusy}
+					disabled={isBusy !== null}
 					onClearMarkers={deleteMarkers}
 					{header}
 				/>
 			</div>
 
-			{#if isBusy}
+			{#if isBusy == "rendering"}
 				<div
 					class="flex flex-col justify-center gap-3 @2xl:col-start-2 @2xl:row-span-2 @2xl:row-start-1 @2xl:px-4"
 				>
@@ -309,37 +324,36 @@
 					onSelect={selectUploadTarget}
 					emptyText="This timeline isn't linked to a PostPin timeline yet."
 					highlightChoose={!uploadTarget}
-				>
-					{#if uploadTarget && uploadTarget.timeline.id === linked?.timeline.id}
-						<span class="badge badge-outline"><Link size={14} /> linked</span>
-						<button
-							type="button"
-							class="btn btn-link btn-sm"
-							onclick={() =>
-								host.openInBrowser(
-									`/projects/${uploadTarget?.project.id}/timelines/${uploadTarget?.timeline.id}/exports`,
-								)}
-						>
-							<Globe size={14} />
-						</button>
-					{/if}
-				</Destination>
+					browserUrl={uploadTarget
+						? `/projects/${uploadTarget.project.id}/timelines/${uploadTarget.timeline.id}/exports`
+						: undefined}
+				></Destination>
 			</div>
 
-			{#if !isBusy}
+			{#if isBusy !== "rendering"}
 				<div class="flex items-center @2xl:col-start-2 @2xl:row-start-2">
 					<FlowArrow direction="both" disabled={!canSync}>
-						<div class="flex min-w-48 flex-col gap-2 rounded-box border-2 border-base-content p-3">
+						<div
+							class="flex min-w-48 flex-col gap-2 rounded-box border-2 border-base-content/50 p-3"
+						>
 							<h3
 								class="truncate text-center text-xs tracking-widest text-base-content/60 uppercase"
 							>
 								Markers{markerTarget?.export ? ` · ${markerTarget.export.name}` : ""}
 							</h3>
 							<button type="button" class="btn" disabled={!canSync} onclick={syncUp}>
-								Push markers →
+								{#if isBusy == "syncingMarkersUp"}
+									<span class="loading loading-spinner loading-sm ms-2"></span>
+								{:else}
+									Push markers →
+								{/if}
 							</button>
 							<button type="button" class="btn" disabled={!canSync} onclick={syncDown}>
-								← Pull comments
+								{#if isBusy == "syncingMarkersDown"}
+									<span class="loading loading-spinner loading-sm ms-2"></span>
+								{:else}
+									← Pull comments
+								{/if}
 							</button>
 						</div>
 					</FlowArrow>
@@ -359,6 +373,9 @@
 					selectedTimelineId={markerTarget?.timeline.id}
 					selectedExportId={markerTarget?.export?.id}
 					onSelect={selectMarkerTarget}
+					browserUrl={markerTarget?.export
+						? `/projects/${markerTarget.project.id}/timelines/${markerTarget.timeline.id}/exports/${markerTarget.export.id}`
+						: undefined}
 					emptyText={markerTarget
 						? "No exports in this timeline yet. Render one first."
 						: "No export selected."}
@@ -367,16 +384,6 @@
 						<span class="text-sm text-base-content/60">
 							{new Date(markerTarget.export.createdAt).toLocaleString()}
 						</span>
-						<button
-							type="button"
-							class="btn btn-link btn-sm"
-							onclick={() =>
-								host.openInBrowser(
-									`/projects/${markerTarget!.project.id}/timelines/${markerTarget!.timeline.id}/exports/${markerTarget!.export!.id}`,
-								)}
-						>
-							<Globe size={14} />
-						</button>
 					{/if}
 				</Destination>
 			</div>
@@ -391,7 +398,9 @@
 		{/if}
 
 		{#if !isBusy && log.length}
-			<div class="mx-4 mb-4 rounded-box border-2 border-base-content p-3 text-sm">{log.at(-1)}</div>
+			<div class="mx-4 mb-4 rounded-box border-2 border-base-content/50 p-3 text-sm">
+				{log.at(-1)}
+			</div>
 		{/if}
 
 		{#if error}

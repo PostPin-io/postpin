@@ -1,8 +1,9 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
 	import PostPinLogo from "./PostPinLogo.svelte";
-	import { getBridges } from "./context";
 	import DestinationSelectionModal from "./DestinationSelectionModal.svelte";
+	import Globe from "@lucide/svelte/icons/globe";
+	import { getBridges } from "./context";
 
 	interface Props {
 		mode: "timeline" | "export";
@@ -13,6 +14,7 @@
 		// shown instead of path and name when nothing is selected
 		emptyText: string;
 		highlightChoose?: boolean;
+		browserUrl?: string;
 		children?: Snippet;
 		projects: {
 			id: string;
@@ -47,12 +49,15 @@
 		selectedTimelineId,
 		selectedExportId,
 		onSelect,
+		browserUrl,
 	}: Props = $props();
 
 	let modal: DestinationSelectionModal | null = null;
+
+	const { host } = getBridges();
 </script>
 
-<section class="flex min-w-0 flex-col gap-2 rounded-box border-2 border-base-content p-4">
+<section class="flex min-w-0 flex-col gap-2 rounded-box border-2 border-base-content/50 p-4">
 	<div class="flex items-center gap-2">
 		<PostPinLogo class="h-5 w-auto" />
 		<h2 class="text-xs tracking-widest text-base-content/60 uppercase">{title}</h2>
@@ -72,13 +77,24 @@
 		</div>
 	{/if}
 
-	<button
-		type="button"
-		class={["btn btn-sm self-start", highlightChoose && "btn-primary"]}
-		onclick={() => modal?.open()}
-	>
-		Choose location…
-	</button>
+	<div class="flex flex-wrap items-center gap-2 text-sm text-base-content/60">
+		<button
+			type="button"
+			class={["btn btn-sm self-start", highlightChoose && "btn-primary"]}
+			onclick={() => modal?.open()}
+		>
+			Choose location…
+		</button>
+		{#if browserUrl}
+			<button
+				class="btn btn-link btn-xs"
+				onclick={() => host.openInBrowser(browserUrl)}
+				aria-label="Open in browser"
+			>
+				<Globe size={14} />
+			</button>
+		{/if}
+	</div>
 </section>
 
 <DestinationSelectionModal
