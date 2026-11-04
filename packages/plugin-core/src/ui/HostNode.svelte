@@ -29,7 +29,7 @@
 	const displayName = $derived(hostInfo(hostName).displayName);
 </script>
 
-<section class="relative flex flex-col gap-3 rounded-box border-2 border-base-content p-4">
+<section class="relative flex flex-col gap-3 rounded-box border-2 border-base-content/50 p-4">
 	<div class="dropdown dropdown-end absolute top-2 right-2">
 		<button type="button" class="btn btn-ghost btn-xs" aria-label="More actions">⋯</button>
 		<ul class="dropdown-content menu z-10 w-60 rounded-box bg-base-200 p-2 shadow">
@@ -56,6 +56,14 @@
 			<img src={thumbnailDataUrl} alt="Host thumbnail" class="h-full w-auto" />
 		</div>
 	{/if}
+	<div class="min-w-0">
+		<div class="text-sm text-base-content/60">Current timeline</div>
+		{#if timelineName}
+			<div class="text-lg font-bold break-words">{timelineName}</div>
+		{:else}
+			<div class="text-base-content/60">No timeline open</div>
+		{/if}
+	</div>
 
 	<div class="min-w-0">
 		<div class="text-sm text-base-content/60">Current project</div>
@@ -63,14 +71,6 @@
 			<div class="text-lg font-bold break-words">{projectName}</div>
 		{:else}
 			<div class="text-base-content/60">No project open</div>
-		{/if}
-	</div>
-	<div class="min-w-0">
-		<div class="text-sm text-base-content/60">Current timeline</div>
-		{#if timelineName}
-			<div class="text-lg font-bold break-words">{timelineName}</div>
-		{:else}
-			<div class="text-base-content/60">No timeline open</div>
 		{/if}
 	</div>
 </section>
