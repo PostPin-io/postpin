@@ -1,6 +1,8 @@
 import { prisma } from "#lib/server/database.ts";
 import { deleteMediaFiles } from "#lib/server/media.ts";
-import { getRequestEvent, command } from "$app/server";
+import { error } from "@sveltejs/kit";
+import { authorize } from "#lib/server/org-access.ts";
+import { command } from "$app/server";
 import * as v from "valibot";
 
 export const createTimeline = command(
@@ -9,18 +11,11 @@ export const createTimeline = command(
 		projectId: v.string(),
 	}),
 	async (data) => {
-		const event = getRequestEvent();
-		const currentOrganizationId = event.locals.session?.activeOrganizationId;
-		if (!currentOrganizationId) throw new Error("No active organization");
+		await authorize("timeline", "create", { type: "project", id: data.projectId });
 		await prisma.timeline.create({
 			data: {
 				name: data.name,
-				project: {
-					connect: {
-						id: data.projectId,
-						organizationId: currentOrganizationId,
-					},
-				},
+				project: { connect: { id: data.projectId } },
 			},
 		});
 	},
@@ -32,9 +27,8 @@ export const deleteTimeline = command(
 		projectId: v.string(),
 	}),
 	async (data) => {
-		const event = getRequestEvent();
-		const currentOrganizationId = event.locals.session?.activeOrganizationId;
-		if (!currentOrganizationId) throw new Error("No active organization");
+		const { target } = await authorize("timeline", "delete", { type: "timeline", id: data.id });
+		if (target.projectId !== data.projectId) error(404, "Not found");
 
 		const media = await prisma.media.findMany({
 			where: {
@@ -45,20 +39,7 @@ export const deleteTimeline = command(
 		});
 		await Promise.all(media.map((m) => deleteMediaFiles(m.id)));
 
-		await prisma.project.delete({
-			where: {
-				id: data.id,
-				organizationId: currentOrganizationId,
-			},
-		});
-
-		await prisma.timeline.delete({
-			where: {
-				id: data.id,
-				projectId: data.projectId,
-				project: { organizationId: currentOrganizationId },
-			},
-		});
+		await prisma.timeline.delete({ where: { id: data.id, projectId: data.projectId } });
 	},
 );
 export const renameTimeline = command(
@@ -68,15 +49,10 @@ export const renameTimeline = command(
 		name: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(100)),
 	}),
 	async (data) => {
-		const event = getRequestEvent();
-		const currentOrganizationId = event.locals.session!.activeOrganizationId!;
+		await authorize("timeline", "rename", { type: "timeline", id: data.id });
 
 		await prisma.timeline.update({
-			where: {
-				id: data.id,
-				projectId: data.projectId,
-				project: { organizationId: currentOrganizationId },
-			},
+			where: { id: data.id, projectId: data.projectId },
 			data: { name: data.name },
 		});
 	},

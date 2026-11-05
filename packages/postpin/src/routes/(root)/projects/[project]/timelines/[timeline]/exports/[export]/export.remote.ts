@@ -4,18 +4,12 @@ import { query } from "$app/server";
 import { s3Client } from "#lib/server/storage.ts";
 import { prisma } from "#lib/server/database.ts";
 import { getMediaJobs } from "#lib/server/media.ts";
-import { authorize } from "#lib/server/org-access.ts";
+import { authorize, requireMediaAccess } from "#lib/server/org-access.ts";
 import * as v from "valibot";
 import { getPresignedUrl } from "@postpin-io/shared/storage";
 import { seekSprites, type SeekSprites } from "@postpin-io/shared/types/SeekSprites";
 import type { ShotThumbnails } from "@postpin-io/shared/types/ShotThumbnails";
 import type { MovieBarcode } from "@postpin-io/shared/types/MovieBarcode";
-
-async function authorizeMediaRead(mediaId: string) {
-	const exp = await prisma.export.findFirst({ where: { mediaId }, select: { id: true } });
-	if (!exp) error(404, "Not found");
-	await authorize("export", "read", { type: "export", id: exp.id });
-}
 
 export const getExport = query(
 	v.object({ projectId: v.string(), timelineId: v.string(), exportId: v.string() }),
@@ -50,7 +44,7 @@ export const getExport = query(
 );
 
 export const getProcessingJobs = query(v.object({ mediaId: v.string() }), async ({ mediaId }) => {
-	await authorizeMediaRead(mediaId);
+	await requireMediaAccess(mediaId);
 	return await getMediaJobs(mediaId);
 });
 
@@ -61,7 +55,7 @@ export const getUrl = query(
 		proxyId: v.optional(v.string()),
 	}),
 	async (object) => {
-		await authorizeMediaRead(object.mediaId);
+		await requireMediaAccess(object.mediaId);
 		return await getPresignedUrl(s3Client, env, object);
 	},
 );
@@ -71,7 +65,7 @@ export const getSeekSprites = query(
 		mediaId: v.string(),
 	}),
 	async (object) => {
-		await authorizeMediaRead(object.mediaId);
+		await requireMediaAccess(object.mediaId);
 		const media = await prisma.media.findUnique({
 			where: { id: object.mediaId },
 			select: { seekSprites: true },
@@ -94,7 +88,7 @@ export const getShotThumbnails = query(
 		mediaId: v.string(),
 	}),
 	async (object) => {
-		await authorizeMediaRead(object.mediaId);
+		await requireMediaAccess(object.mediaId);
 		const media = await prisma.media.findUnique({
 			where: { id: object.mediaId },
 			select: { shotThumbnails: true },
@@ -123,7 +117,7 @@ export const getMovieBarcode = query(
 		mediaId: v.string(),
 	}),
 	async (object) => {
-		await authorizeMediaRead(object.mediaId);
+		await requireMediaAccess(object.mediaId);
 		const media = await prisma.media.findUniqueOrThrow({
 			where: { id: object.mediaId },
 			select: { movieBarcode: true },

@@ -1,6 +1,7 @@
 import { prisma } from "#lib/server/database.ts";
 import { deleteMediaFiles } from "#lib/server/media.ts";
-import { getRequestEvent, command } from "$app/server";
+import { authorize } from "#lib/server/org-access.ts";
+import { command } from "$app/server";
 import * as v from "valibot";
 
 export const renameExport = command(
@@ -9,16 +10,10 @@ export const renameExport = command(
 		name: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(100)),
 	}),
 	async (data) => {
-		const event = getRequestEvent();
-		const currentOrganizationId = event.locals.session!.activeOrganizationId!;
+		await authorize("export", "rename", { type: "export", id: data.id });
 
 		await prisma.export.update({
-			where: {
-				id: data.id,
-				timeline: {
-					project: { organizationId: currentOrganizationId },
-				},
-			},
+			where: { id: data.id },
 			data: {
 				name: data.name,
 			},
@@ -27,15 +22,10 @@ export const renameExport = command(
 );
 
 export const deleteExport = command(v.object({ id: v.string() }), async (data) => {
-	const event = getRequestEvent();
-	const currentOrganizationId = event.locals.session?.activeOrganizationId;
-	if (!currentOrganizationId) throw new Error("No active organization");
+	await authorize("export", "delete", { type: "export", id: data.id });
 
-	const exp = await prisma.export.findFirstOrThrow({
-		where: {
-			id: data.id,
-			timeline: { project: { organizationId: currentOrganizationId } },
-		},
+	const exp = await prisma.export.findUniqueOrThrow({
+		where: { id: data.id },
 		select: { mediaId: true },
 	});
 

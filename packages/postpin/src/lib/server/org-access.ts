@@ -2,6 +2,7 @@ import { error } from "@sveltejs/kit";
 import { getRequestEvent } from "$app/server";
 import { prisma } from "#lib/server/database.ts";
 import { ACTIONS, can, hasRoleOrHigher, isOrgWide, type Action, type Area } from "#lib/roles.ts";
+import type { Member, Prisma } from "@postpin-io/shared/db";
 import type { Role } from "@postpin-io/shared/db/enums";
 
 /**
@@ -204,7 +205,51 @@ async function hasGrant(memberId: string, target: ResolvedTarget, loose: boolean
 	return count > 0;
 }
 
+// ─── Accessible resources (list queries) ────────────────────────────────────
+// Same grant rules as `hasGrant`, as a Prisma `where` for list queries:
+// org-wide roles see everything in the org; everyone else only what lies at or
+// below one of their grants. A project also counts as accessible when only one
+// of its timelines is granted (the `loose` case in `hasGrant`).
+
+type AccessMember = Pick<Member, "id" | "organizationId" | "role">;
+
+export function accessibleProjects(member: AccessMember): Prisma.ProjectWhereInput {
+	const inOrg = { organizationId: member.organizationId };
+	if (isOrgWide(member.role)) return inOrg;
+	return {
+		...inOrg,
+		OR: [
+			{ memberGrants: { some: { memberId: member.id } } },
+			{ timelines: { some: { memberGrants: { some: { memberId: member.id } } } } },
+		],
+	};
+}
+
+export function accessibleTimelines(member: AccessMember): Prisma.TimelineWhereInput {
+	const inOrg = { project: { organizationId: member.organizationId } };
+	if (isOrgWide(member.role)) return inOrg;
+	return {
+		...inOrg,
+		OR: [
+			{ memberGrants: { some: { memberId: member.id } } },
+			{ project: { memberGrants: { some: { memberId: member.id } } } },
+		],
+	};
+}
+
+export function accessibleExports(member: AccessMember): Prisma.ExportWhereInput {
+	return { timeline: accessibleTimelines(member) };
+}
+
 // ─── Members ────────────────────────────────────────────────────────────────
+
+/** Membership of the signed-in user in their active organization, null if there is none. */
+export async function getActiveMember() {
+	const { user, session } = getRequestEvent().locals;
+	const organizationId = session?.activeOrganizationId;
+	if (!user || !organizationId) return null;
+	return await prisma.member.findFirst({ where: { organizationId, userId: user.id } });
+}
 
 function requireUser() {
 	const { user } = getRequestEvent().locals;
@@ -269,4 +314,11 @@ function canSee(role: Role, target: Target, ctx: { isOwn: boolean; hasGrant: boo
 	// Areas without a read action (organization, grant): being a member is enough
 	if (!actions.includes("read")) return true;
 	return can(role, target.type, "read" as Action<typeof target.type>, ctx);
+}
+
+/** Gate for anything addressed by `mediaId`: requires read access to the export the media belongs to. */
+export async function requireMediaAccess(mediaId: string) {
+	const exp = await prisma.export.findFirst({ where: { mediaId }, select: { id: true } });
+	if (!exp) error(404, "Not found");
+	return await authorize("export", "read", { type: "export", id: exp.id });
 }

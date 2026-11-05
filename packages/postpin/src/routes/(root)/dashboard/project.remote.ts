@@ -1,17 +1,19 @@
 import { prisma } from "#lib/server/database.ts";
-import { getRequestEvent, query } from "$app/server";
+import {
+	accessibleProjects,
+	accessibleTimelines,
+	getActiveMember,
+} from "#lib/server/org-access.ts";
+import { query } from "$app/server";
 
 export const getProjects = query(async () => {
-	const { user, session } = getRequestEvent().locals;
-	const organizationId = session?.activeOrganizationId;
-	if (!user || !organizationId) return [];
+	const member = await getActiveMember();
+	if (!member) return [];
 	const projects = await prisma.project.findMany({
-		where: {
-			organizationId,
-			organization: { members: { some: { userId: user.id } } },
-		},
+		where: accessibleProjects(member),
 		include: {
 			timelines: {
+				where: accessibleTimelines(member),
 				include: {
 					exports: {
 						include: {

@@ -67,6 +67,7 @@ const admin = extend(member, {
 	shareLink: { update: all, delete: all },
 	grant: { delete: all },
 	member: { updateRole: all, remove: all },
+	organization: { updateSettings: all },
 });
 
 const owner = extend(admin, {
