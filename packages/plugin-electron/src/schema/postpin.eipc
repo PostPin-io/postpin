@@ -71,6 +71,7 @@ interface CommonAPI {
   getServerUrl() -> string
   getDefaultServerUrl() -> string
   getSession() -> unknown
+  getToken() -> string?
   login(config: LoginConfig) -> boolean
   logout() -> boolean
   [Event]

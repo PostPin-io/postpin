@@ -73,7 +73,7 @@ export type {
 	MarkerWithResponses,
 	MediaItem,
 	MultipartUploadPartUrl,
-	Project,
+	ProjectWithOrg,
 	ProjectWithTimelines,
 	RecordStringUnknown,
 	ResponseModel,

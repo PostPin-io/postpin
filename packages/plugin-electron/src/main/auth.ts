@@ -85,12 +85,18 @@ export function createAuth({ clientId, defaultServerUrl }: AuthOptions) {
 		store.delete("token");
 	}
 
+	async function getToken() {
+		const token = store.get("token");
+		return token ?? null;
+	}
+
 	return {
 		getDefaultServerUrl: () => defaultServerUrl,
 		getServerUrl,
 		setServerUrl,
 		login,
 		getSession,
+		getToken,
 		logout,
 	};
 }

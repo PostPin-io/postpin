@@ -10,7 +10,7 @@ export const ACTIONS = {
 	marker: ["read", "create", "update", "delete", "respond"],
 	category: ["read", "create", "update", "delete"],
 	/** E-mail invitation to the org, a project or a timeline */
-	invitation: ["read", "create", "delete"],
+	invitation: ["read", "create", "update", "delete"],
 	/** Shareable invite link to the org, a project or a timeline */
 	inviteLink: ["read", "create", "delete"],
 	/** Visitor link, exports only. Visitor rights live on the link, not here. */
@@ -55,14 +55,14 @@ const member = extend(reviewer, {
 	export: { upload: all, rename: all, delete: all },
 	marker: { update: all, delete: all },
 	category: { update: all, delete: all },
-	invitation: { read: all, create: all, delete: own },
+	invitation: { read: all, create: all, delete: own, update: own },
 	inviteLink: { read: all, create: all, delete: own },
 	shareLink: { read: all, create: all, update: own, delete: own },
 	grant: { create: all, delete: own },
 });
 
 const admin = extend(member, {
-	invitation: { delete: all },
+	invitation: { delete: all, update: all },
 	inviteLink: { delete: all },
 	shareLink: { update: all, delete: all },
 	grant: { delete: all },

@@ -33,7 +33,7 @@ import {
 	$eipc_validator$_TimelineInfo,
 } from "../common-runtime/PostPin.js";
 import * as $eipc$ from "../browser-runtime.js";
-const $$ipcPrefix$$ = "$eipc_message$_6d7454b4bb74e6d3c81e7e30015d5036_$_PostPin_$_";
+const $$ipcPrefix$$ = "$eipc_message$_601f24a5ef2d943ede763307ffc97034_$_PostPin_$_";
 // Interfaces are declared as data and wired up by ../browser-runtime.ts:
 //   methods: [name, [[argName, validator], ...], resultValidator?]  ([Sync] methods append null|validator, 'sync')
 //   stores:  [name, stateValidator]
@@ -56,6 +56,7 @@ export const CommonAPI = /*#__PURE__*/ $eipc$.defineInterface<
 		["getServerUrl", [], $eipc$.string],
 		["getDefaultServerUrl", [], $eipc$.string],
 		["getSession", [], $eipc$.unknown],
+		["getToken", [], $eipc$.nullable($eipc$.string)],
 		["login", [["config", $eipc_validator$_LoginConfig]], $eipc$.boolean],
 		["logout", [], $eipc$.boolean],
 		["getSettings", [], $eipc_validator$_Settings],

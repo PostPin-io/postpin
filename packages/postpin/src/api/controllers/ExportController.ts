@@ -10,14 +10,16 @@ import {
 	type UploadedPart,
 } from "@postpin-io/shared/storage";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
-import { Body, Controller, Get, Path, Post, Response, Route } from "tsoa";
+import { Body, Controller, Get, Path, Post, Response, Route, Security } from "tsoa";
 import { HttpError } from "../HttpError.ts";
 import type { Prisma } from "@postpin-io/shared/db";
+import { apiAuthorize } from "../access.ts";
 
 interface InitUploadResponse extends MultipartUpload {
 	mediaId: string;
 }
 
+@Security("session")
 @Route("v1/projects/{projectId}/timelines/{timelineId}/exports")
 export class ExportController extends Controller {
 	@Get("")
@@ -25,6 +27,8 @@ export class ExportController extends Controller {
 		@Path() projectId: string,
 		@Path() timelineId: string,
 	): Promise<{ exports: { id: string; createdAt: Date; name: string }[] }> {
+		await apiAuthorize("timeline", "read", { type: "timeline", id: timelineId });
+
 		const timeline = await prisma.timeline.findFirst({
 			where: { id: timelineId, projectId },
 			select: {
@@ -47,6 +51,7 @@ export class ExportController extends Controller {
 		@Path() timelineId: string,
 		@Body() body: { nleTimelineId: string | null; nleProjectId: string | null },
 	): Promise<{ id: string }> {
+		const { member } = await apiAuthorize("export", "upload", { type: "timeline", id: timelineId });
 		const timeline = await prisma.timeline.findFirst({
 			where: { id: timelineId, projectId },
 			include: { project: { select: { nleProjectId: true } } },
@@ -59,7 +64,11 @@ export class ExportController extends Controller {
 			if (body.nleTimelineId !== timeline.nleTimelineId) {
 				if (body.nleTimelineId) {
 					await tx.timeline.updateMany({
-						where: { id: { not: timelineId }, nleTimelineId: body.nleTimelineId },
+						where: {
+							id: { not: timelineId },
+							nleTimelineId: body.nleTimelineId,
+							project: { organizationId: member.organizationId },
+						},
 						data: { nleTimelineId: null },
 					});
 				}
@@ -73,7 +82,11 @@ export class ExportController extends Controller {
 			if (body.nleProjectId !== timeline.project.nleProjectId) {
 				if (body.nleProjectId) {
 					await tx.project.updateMany({
-						where: { id: { not: projectId }, nleProjectId: body.nleProjectId },
+						where: {
+							id: { not: projectId },
+							nleProjectId: body.nleProjectId,
+							organizationId: member.organizationId,
+						},
 						data: { nleProjectId: null },
 					});
 				}
@@ -113,6 +126,7 @@ export class ExportController extends Controller {
 		if (!Number.isInteger(body.fileSize) || body.fileSize <= 0) {
 			throw new HttpError(400, "fileSize must be a positive integer");
 		}
+		await apiAuthorize("export", "upload", { type: "export", id: exportId });
 
 		const exp = await prisma.export.findFirst({
 			where: { id: exportId, timelineId, timeline: { projectId } },
@@ -155,6 +169,7 @@ export class ExportController extends Controller {
 		@Path() exportId: string,
 		@Body() body: { uploadId: string; parts: UploadedPart[]; timelineSnapshot: TimelineSnapshot },
 	): Promise<void> {
+		await apiAuthorize("export", "upload", { type: "export", id: exportId });
 		const media = await this.getPendingMedia(projectId, timelineId, exportId);
 
 		const uploaded = await completeMultipartUpload(
@@ -188,6 +203,7 @@ export class ExportController extends Controller {
 		@Path() exportId: string,
 		@Body() body: { uploadId: string },
 	): Promise<void> {
+		await apiAuthorize("export", "upload", { type: "export", id: exportId });
 		const media = await this.getPendingMedia(projectId, timelineId, exportId);
 		await abortMultipartUpload(
 			s3Client,

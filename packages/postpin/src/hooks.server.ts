@@ -30,7 +30,7 @@ const sessionHandler: Handle = async ({ event, resolve }) => {
 		await syncActiveOrganization(event.locals.session, event.locals.user);
 	}
 
-	const publicPaths = ["/", /\/auth\/.*/];
+	const publicPaths = ["/", /\/auth\/.*/, /^\/api\//];
 
 	const isPublicPath = publicPaths.some((path) => {
 		if (typeof path === "string") {
@@ -99,4 +99,4 @@ async function syncActiveOrganization(
 	}
 }
 
-export const handle = sequence(authHandler, apiHandler, sessionHandler);
+export const handle = sequence(authHandler, sessionHandler, apiHandler);

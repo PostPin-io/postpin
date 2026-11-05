@@ -1,7 +1,9 @@
 {
 	"entryFile": "src/api/dummy.ts",
 	"noImplicitAdditionalProperties": "throw-on-extras",
-	"controllerPathGlobs": ["src/api/**/*Controller.ts"],
+	"controllerPathGlobs": [
+		"src/api/**/*Controller.ts"
+	],
 	"compilerOptions": {
 		"module": 99,
 		"moduleResolution": 100,
@@ -12,10 +14,17 @@
 	"spec": {
 		"outputDirectory": "src/api/build",
 		"specVersion": 3,
-		"basePath": "/api"
+		"basePath": "/api",
+		"securityDefinitions": {
+			"session": {
+				"type": "http",
+				"scheme": "bearer"
+			}
+		}
 	},
 	"routes": {
 		"routesDir": "src/api/build",
-		"middleware": "hapi"
+		"middleware": "hapi",
+		"authenticationModule": "src/api/authentication.ts"
 	}
 }

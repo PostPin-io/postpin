@@ -12,7 +12,10 @@
 </script>
 
 {#snippet head(rotate: boolean)}
-	<svg viewBox="0 0 10 12" class={["hidden size-3 shrink-0 fill-current @2xl:block", rotate && "rotate-180"]}>
+	<svg
+		viewBox="0 0 10 12"
+		class={["hidden size-3 shrink-0 fill-current @2xl:block", rotate && "rotate-180"]}
+	>
 		<path d="M0 0L10 6L0 12z" />
 	</svg>
 {/snippet}

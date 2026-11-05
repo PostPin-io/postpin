@@ -20,6 +20,14 @@ server.ext("onPreResponse", (request, h) => {
 			`[api] ${request.method.toUpperCase()} ${request.path} -> ${response.output.statusCode}`,
 			response,
 		);
+		// Don't leak internals (e.g. "ReferenceError: … is not defined") to clients
+		if (response.output.statusCode >= 500) {
+			response.output.payload = {
+				statusCode: response.output.statusCode,
+				error: "Internal Server Error",
+				message: "Internal server error",
+			};
+		}
 	}
 	return h.continue;
 });

@@ -37,9 +37,7 @@
 		></progress>
 		<span class="text-sm whitespace-nowrap tabular-nums">
 			{Math.floor((uploadProgress.uploadedBytes / uploadProgress.totalBytes) * 100)}% ·
-			{formatMegabytes(uploadProgress.uploadedBytes)} / {formatMegabytes(
-				uploadProgress.totalBytes,
-			)}
+			{formatMegabytes(uploadProgress.uploadedBytes)} / {formatMegabytes(uploadProgress.totalBytes)}
 		</span>
 	</div>
 {/if}

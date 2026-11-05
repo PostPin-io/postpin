@@ -3,4 +3,6 @@
 node_modules
 .svelte-check
 dev-data
-packages/api-client-ts/.src-tmp
+packages/api-client-ts/.src-tmp*
+packages/api-client-ts/.build.lock
+openapi-ts-error-*.log

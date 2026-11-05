@@ -107,6 +107,7 @@ export function exposeHostBridge(win: BrowserWindow, options: AuthOptions) {
 			win.setProgressBar(fraction);
 			return true;
 		},
+		getToken: async () => auth.getToken(),
 	});
 }
 

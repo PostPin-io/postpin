@@ -1,12 +1,15 @@
 import { prisma } from "#lib/server/database.ts";
-import { Body, Controller, Get, Path, Put, Response, Route } from "tsoa";
+import { Body, Controller, Get, Path, Put, Response, Route, Security } from "tsoa";
 import { HttpError } from "../HttpError.ts";
 import { Prisma, type Category } from "@postpin-io/shared/db";
+import { apiAuthorize } from "../access.ts";
 
+@Security("session")
 @Route("v1/projects/{projectId}/categories")
 export class CategoryController extends Controller {
 	@Get("")
 	public async getCategories(@Path() projectId: string): Promise<Category[]> {
+		await apiAuthorize("category", "read", { type: "project", id: projectId });
 		return prisma.category.findMany({
 			where: {
 				projectId,
@@ -21,12 +24,7 @@ export class CategoryController extends Controller {
 		@Path() projectId: string,
 		@Body() body: CategoryCreateParams,
 	): Promise<Category> {
-		const project = await prisma.project.findUnique({
-			where: { id: projectId },
-		});
-		if (project === null) {
-			throw new HttpError(404, "Project not found");
-		}
+		const { user } = await apiAuthorize("category", "create", { type: "project", id: projectId });
 
 		const colorRegex = /^#[0-9A-F]{6}$/i;
 
@@ -40,6 +38,7 @@ export class CategoryController extends Controller {
 					projectId,
 					name: body.name,
 					color: body.color.toUpperCase(),
+					createdById: user.id,
 				},
 			});
 		} catch (err) {

@@ -38,7 +38,20 @@
 		timeline: Timeline;
 	}
 
-	const client = createClient({ baseUrl: `${await host.getServerUrl()}/api` });
+	const client = createClient({
+		baseUrl: `${await host.getServerUrl()}/api`,
+		auth: async () => (await host.getToken()) ?? undefined,
+	});
+	// Token expired or session revoked: log out, App then shows the login screen.
+	// Several requests can fail at once, so log out only once.
+	let loggingOut = false;
+	client.interceptors.response.use(async (response) => {
+		if (response.status === 401 && !loggingOut) {
+			loggingOut = true;
+			await host.logout();
+		}
+		return response;
+	});
 	const [capabilities, projectsWithTimelines, lastSettings, nleTimeline] = await Promise.all([
 		nle.getCapabilities(),
 		loadProjectsWithTimelines(client),

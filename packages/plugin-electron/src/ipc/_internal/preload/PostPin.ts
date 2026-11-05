@@ -32,7 +32,7 @@ import {
 	$eipc_validator$_LoginCode,
 	$eipc_validator$_TimelineInfo,
 } from "../common-runtime/PostPin.js";
-const $$ipcPrefix$$ = "$eipc_message$_6d7454b4bb74e6d3c81e7e30015d5036_$_PostPin_$_";
+const $$ipcPrefix$$ = "$eipc_message$_601f24a5ef2d943ede763307ffc97034_$_PostPin_$_";
 import { webFrame } from "electron/renderer";
 function $eipc_event_validator$_App() {
 	if (
@@ -52,6 +52,9 @@ export const CommonAPI: Partial<ICommonAPIRenderer> = {
 	},
 	getSession() {
 		return ipcRenderer.invoke($$ipcPrefix$$ + "CommonAPI_$_getSession");
+	},
+	getToken() {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "CommonAPI_$_getToken");
 	},
 	login(config: LoginConfig) {
 		return ipcRenderer.invoke($$ipcPrefix$$ + "CommonAPI_$_login", config);

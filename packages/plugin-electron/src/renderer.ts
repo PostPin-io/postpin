@@ -80,6 +80,7 @@ export function connectHostBridge(): HostBridge {
 		setProgress: async (fraction) => {
 			await api.setProgress(fraction ?? -1);
 		},
+		getToken: () => api.getToken(),
 	});
 }
 

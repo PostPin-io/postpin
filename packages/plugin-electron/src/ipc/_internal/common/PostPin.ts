@@ -59,6 +59,7 @@ export interface ICommonAPIImpl {
 	getServerUrl(): Promise<string> | string;
 	getDefaultServerUrl(): Promise<string> | string;
 	getSession(): Promise<unknown> | unknown;
+	getToken(): Promise<string | null> | string | null;
 	login(config: LoginConfig): Promise<boolean> | boolean;
 	logout(): Promise<boolean> | boolean;
 	getSettings(): Promise<Settings> | Settings;
@@ -77,6 +78,7 @@ export interface ICommonAPIRenderer {
 	getServerUrl(): Promise<string>;
 	getDefaultServerUrl(): Promise<string>;
 	getSession(): Promise<unknown>;
+	getToken(): Promise<string | null>;
 	login(config: LoginConfig): Promise<boolean>;
 	logout(): Promise<boolean>;
 	getSettings(): Promise<Settings>;

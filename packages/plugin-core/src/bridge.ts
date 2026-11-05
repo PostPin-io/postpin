@@ -140,4 +140,6 @@ export interface HostBridge {
 	 * progress bar on the app's dock / taskbar icon, 0 to 1, null removes it
 	 */
 	setProgress(fraction: number | null): Promise<void>;
+	/** Session token for the api, null if not signed in */
+	getToken(): Promise<string | null>;
 }

@@ -4,12 +4,16 @@ export type ClientOptions = {
 	baseUrl: `${string}://${string}/api` | (string & {});
 };
 
-export type Project = {
+export type ProjectWithOrg = {
 	id: string;
 	name: string;
 	createdAt: string;
 	updatedAt: string;
 	nleProjectId: string | null;
+	organization: {
+		name: string;
+		id: string;
+	};
 };
 
 export type Timeline = {
@@ -241,7 +245,7 @@ export type GetProjectsResponses = {
 	/**
 	 * Ok
 	 */
-	200: Array<Project>;
+	200: Array<ProjectWithOrg>;
 };
 
 export type GetProjectsResponse = GetProjectsResponses[keyof GetProjectsResponses];

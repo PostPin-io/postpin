@@ -76,6 +76,7 @@ export const getProjects = <ThrowOnError extends boolean = false>(
 	options?: Options<GetProjectsData, ThrowOnError>,
 ): RequestResult<GetProjectsResponses, unknown, ThrowOnError> =>
 	(options?.client ?? client).get<GetProjectsResponses, unknown, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
 		url: "/v1/projects",
 		...options,
 	});
@@ -84,6 +85,7 @@ export const getProject = <ThrowOnError extends boolean = false>(
 	options: Options<GetProjectData, ThrowOnError>,
 ): RequestResult<GetProjectResponses, GetProjectErrors, ThrowOnError> =>
 	(options.client ?? client).get<GetProjectResponses, GetProjectErrors, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
 		url: "/v1/projects/{projectId}",
 		...options,
 	});
@@ -92,6 +94,7 @@ export const getMarkers = <ThrowOnError extends boolean = false>(
 	options: Options<GetMarkersData, ThrowOnError>,
 ): RequestResult<GetMarkersResponses, unknown, ThrowOnError> =>
 	(options.client ?? client).get<GetMarkersResponses, unknown, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
 		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers",
 		...options,
 	});
@@ -100,6 +103,7 @@ export const uploadMarkers = <ThrowOnError extends boolean = false>(
 	options: Options<UploadMarkersData, ThrowOnError>,
 ): RequestResult<UploadMarkersResponses, UploadMarkersErrors, ThrowOnError> =>
 	(options.client ?? client).put<UploadMarkersResponses, UploadMarkersErrors, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
 		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers",
 		...options,
 		headers: {
@@ -112,6 +116,7 @@ export const getExports = <ThrowOnError extends boolean = false>(
 	options: Options<GetExportsData, ThrowOnError>,
 ): RequestResult<GetExportsResponses, unknown, ThrowOnError> =>
 	(options.client ?? client).get<GetExportsResponses, unknown, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
 		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports",
 		...options,
 	});
@@ -120,6 +125,7 @@ export const createExport = <ThrowOnError extends boolean = false>(
 	options: Options<CreateExportData, ThrowOnError>,
 ): RequestResult<CreateExportResponses, CreateExportErrors, ThrowOnError> =>
 	(options.client ?? client).post<CreateExportResponses, CreateExportErrors, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
 		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports",
 		...options,
 		headers: {
@@ -136,6 +142,7 @@ export const initUpload = <ThrowOnError extends boolean = false>(
 	options: Options<InitUploadData, ThrowOnError>,
 ): RequestResult<InitUploadResponses, InitUploadErrors, ThrowOnError> =>
 	(options.client ?? client).post<InitUploadResponses, InitUploadErrors, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
 		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/init-upload",
 		...options,
 		headers: {
@@ -152,6 +159,7 @@ export const completeUpload = <ThrowOnError extends boolean = false>(
 	options: Options<CompleteUploadData, ThrowOnError>,
 ): RequestResult<CompleteUploadResponses, CompleteUploadErrors, ThrowOnError> =>
 	(options.client ?? client).post<CompleteUploadResponses, CompleteUploadErrors, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
 		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/complete-upload",
 		...options,
 		headers: {
@@ -167,6 +175,7 @@ export const abortUpload = <ThrowOnError extends boolean = false>(
 	options: Options<AbortUploadData, ThrowOnError>,
 ): RequestResult<AbortUploadResponses, AbortUploadErrors, ThrowOnError> =>
 	(options.client ?? client).post<AbortUploadResponses, AbortUploadErrors, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
 		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/abort-upload",
 		...options,
 		headers: {
@@ -179,6 +188,7 @@ export const getCategories = <ThrowOnError extends boolean = false>(
 	options: Options<GetCategoriesData, ThrowOnError>,
 ): RequestResult<GetCategoriesResponses, unknown, ThrowOnError> =>
 	(options.client ?? client).get<GetCategoriesResponses, unknown, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
 		url: "/v1/projects/{projectId}/categories",
 		...options,
 	});
@@ -187,6 +197,7 @@ export const createCategory = <ThrowOnError extends boolean = false>(
 	options: Options<CreateCategoryData, ThrowOnError>,
 ): RequestResult<CreateCategoryResponses, CreateCategoryErrors, ThrowOnError> =>
 	(options.client ?? client).put<CreateCategoryResponses, CreateCategoryErrors, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
 		url: "/v1/projects/{projectId}/categories",
 		...options,
 		headers: {

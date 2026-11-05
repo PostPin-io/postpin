@@ -7,7 +7,7 @@
 		"requestBodies": {},
 		"responses": {},
 		"schemas": {
-			"Project": {
+			"ProjectWithOrg": {
 				"properties": {
 					"id": {
 						"type": "string"
@@ -26,9 +26,21 @@
 					"nleProjectId": {
 						"type": "string",
 						"nullable": true
+					},
+					"organization": {
+						"properties": {
+							"name": {
+								"type": "string"
+							},
+							"id": {
+								"type": "string"
+							}
+						},
+						"required": ["name", "id"],
+						"type": "object"
 					}
 				},
-				"required": ["id", "name", "createdAt", "updatedAt", "nleProjectId"],
+				"required": ["id", "name", "createdAt", "updatedAt", "nleProjectId", "organization"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -550,7 +562,12 @@
 				"type": "object"
 			}
 		},
-		"securitySchemes": {}
+		"securitySchemes": {
+			"session": {
+				"type": "http",
+				"scheme": "bearer"
+			}
+		}
 	},
 	"info": {
 		"title": "@postpin-io/postpin",
@@ -604,7 +621,7 @@
 							"application/json": {
 								"schema": {
 									"items": {
-										"$ref": "#/components/schemas/Project"
+										"$ref": "#/components/schemas/ProjectWithOrg"
 									},
 									"type": "array"
 								}
@@ -612,7 +629,11 @@
 						}
 					}
 				},
-				"security": [],
+				"security": [
+					{
+						"session": []
+					}
+				],
 				"parameters": []
 			}
 		},
@@ -634,7 +655,11 @@
 						"description": "Project not found"
 					}
 				},
-				"security": [],
+				"security": [
+					{
+						"session": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "path",
@@ -665,7 +690,11 @@
 						}
 					}
 				},
-				"security": [],
+				"security": [
+					{
+						"session": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "path",
@@ -703,7 +732,11 @@
 						"description": "Export not found"
 					}
 				},
-				"security": [],
+				"security": [
+					{
+						"session": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "path",
@@ -782,7 +815,11 @@
 						}
 					}
 				},
-				"security": [],
+				"security": [
+					{
+						"session": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "path",
@@ -825,7 +862,11 @@
 						"description": "Export not found"
 					}
 				},
-				"security": [],
+				"security": [
+					{
+						"session": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "path",
@@ -892,7 +933,11 @@
 					}
 				},
 				"description": "Starts a multipart upload of the export's original file. PUT each part's bytes to its URL,\nkeep the ETag response headers and pass them to complete-upload.",
-				"security": [],
+				"security": [
+					{
+						"session": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "path",
@@ -953,7 +998,11 @@
 					}
 				},
 				"description": "Call after all parts were PUT: assembles the original in storage, stores the timeline\nsnapshot and queues transcoding, probing and thumbnailing.",
-				"security": [],
+				"security": [
+					{
+						"session": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "path",
@@ -1022,7 +1071,11 @@
 					}
 				},
 				"description": "Discards an unfinished multipart upload, so its parts don't linger in storage.",
-				"security": [],
+				"security": [
+					{
+						"session": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "path",
@@ -1085,7 +1138,11 @@
 						}
 					}
 				},
-				"security": [],
+				"security": [
+					{
+						"session": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "path",
@@ -1117,7 +1174,11 @@
 						"description": "Category name already exists"
 					}
 				},
-				"security": [],
+				"security": [
+					{
+						"session": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "path",

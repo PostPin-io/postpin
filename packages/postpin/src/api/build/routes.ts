@@ -13,13 +13,15 @@ import { MarkerController } from "./../controllers/MarkerController";
 import { ExportController } from "./../controllers/ExportController";
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { CategoryController } from "./../controllers/CategoryController";
+import { hapiAuthentication } from "./../authentication";
+// @ts-ignore - no great way to install types from subpackage
 import { boomify, isBoom, type Payload } from "@hapi/boom";
 import type { Request, ResponseToolkit, RouteOptionsPreAllOptions } from "@hapi/hapi";
 
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
 const models: TsoaRoute.Models = {
-	Project: {
+	ProjectWithOrg: {
 		dataType: "refObject",
 		properties: {
 			id: { dataType: "string", required: true },
@@ -29,6 +31,14 @@ const models: TsoaRoute.Models = {
 			nleProjectId: {
 				dataType: "union",
 				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			organization: {
+				dataType: "nestedObjectLiteral",
+				nestedProperties: {
+					name: { dataType: "string", required: true },
+					id: { dataType: "string", required: true },
+				},
 				required: true,
 			},
 		},
@@ -510,12 +520,17 @@ export function RegisterRoutes(server: any) {
 		},
 	});
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-	const argsProjectController_getProjects: Record<string, TsoaRoute.ParameterSchema> = {};
+	const argsProjectController_getProjects: Record<string, TsoaRoute.ParameterSchema> = {
+		request: { in: "request", name: "request", required: true, dataType: "object" },
+	};
 	server.route({
 		method: "get",
 		path: "/v1/projects",
 		options: {
 			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(ProjectController),
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(ProjectController.prototype.getProjects),
 			],
@@ -566,6 +581,9 @@ export function RegisterRoutes(server: any) {
 		path: "/v1/projects/{projectId}",
 		options: {
 			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(ProjectController),
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(ProjectController.prototype.getProject),
 			],
@@ -618,6 +636,9 @@ export function RegisterRoutes(server: any) {
 		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers",
 		options: {
 			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerController),
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerController.prototype.getMarkers),
 			],
@@ -677,6 +698,9 @@ export function RegisterRoutes(server: any) {
 		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers",
 		options: {
 			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerController),
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerController.prototype.uploadMarkers),
 			],
@@ -728,6 +752,9 @@ export function RegisterRoutes(server: any) {
 		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports",
 		options: {
 			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController),
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController.prototype.getExports),
 			],
@@ -797,6 +824,9 @@ export function RegisterRoutes(server: any) {
 		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports",
 		options: {
 			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController),
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController.prototype.createExport),
 			],
@@ -856,6 +886,9 @@ export function RegisterRoutes(server: any) {
 		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/init-upload",
 		options: {
 			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController),
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController.prototype.initUpload),
 			],
@@ -923,6 +956,9 @@ export function RegisterRoutes(server: any) {
 		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/complete-upload",
 		options: {
 			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController),
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController.prototype.completeUpload),
 			],
@@ -982,6 +1018,9 @@ export function RegisterRoutes(server: any) {
 		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/abort-upload",
 		options: {
 			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController),
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController.prototype.abortUpload),
 			],
@@ -1032,6 +1071,9 @@ export function RegisterRoutes(server: any) {
 		path: "/v1/projects/{projectId}/categories",
 		options: {
 			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(CategoryController),
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(CategoryController.prototype.getCategories),
 			],
@@ -1083,6 +1125,9 @@ export function RegisterRoutes(server: any) {
 		path: "/v1/projects/{projectId}/categories",
 		options: {
 			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(CategoryController),
 				...fetchMiddlewares<RouteOptionsPreAllOptions>(CategoryController.prototype.createCategory),
 			],
@@ -1125,6 +1170,76 @@ export function RegisterRoutes(server: any) {
 		},
 	});
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+	function authenticateMiddleware(security: TsoaRoute.Security[] = []) {
+		return async function runAuthenticationMiddleware(request: any, h: any) {
+			// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+			// keep track of failed auth attempts so we can hand back the most
+			// recent one.  This behavior was previously existing so preserving it
+			// here
+			const failedAttempts: any[] = [];
+			const pushAndRethrow = (error: any) => {
+				failedAttempts.push(error);
+				throw error;
+			};
+
+			const secMethodOrPromises: Promise<any>[] = [];
+			for (const secMethod of security) {
+				if (Object.keys(secMethod).length > 1) {
+					const secMethodAndPromises: Promise<any>[] = [];
+
+					for (const name in secMethod) {
+						secMethodAndPromises.push(
+							hapiAuthentication(request, name, secMethod[name]).catch(pushAndRethrow),
+						);
+					}
+
+					// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+					secMethodOrPromises.push(
+						Promise.all(secMethodAndPromises).then((users) => {
+							return users[0];
+						}),
+					);
+				} else {
+					for (const name in secMethod) {
+						secMethodOrPromises.push(
+							hapiAuthentication(request, name, secMethod[name]).catch(pushAndRethrow),
+						);
+					}
+				}
+			}
+
+			// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+			try {
+				request["user"] = await Promise.any(secMethodOrPromises);
+				return request["user"];
+			} catch (err) {
+				// Show most recent error as response
+				const error = failedAttempts.pop();
+				if (isBoom(error)) {
+					throw error;
+				}
+
+				const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+					statusCode: error.status || 500,
+				});
+				boomErr.output.statusCode = error.status || 401;
+				boomErr.output.payload = {
+					name: error.name,
+					message: error.message,
+				} as unknown as Payload;
+
+				throw boomErr;
+			}
+
+			// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+		};
+	}
 
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 }

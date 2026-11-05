@@ -289,9 +289,12 @@ export async function authorize<A extends Area>(area: A, action: Action<A>, targ
 
 	const member = await requireMember(resolved.organizationId, user.id);
 
-	// Navigating into a project you only have a timeline grant for must work
+	// Navigating into a project you only have a timeline grant for must work.
+	// Same for creating a category: its parent is the project, but categories
+	// must be usable with a timeline grant (see anyGrantInProject).
 	const loose =
-		resolved.anyGrantInProject === true || (target.type === "project" && action === "read");
+		resolved.anyGrantInProject === true ||
+		(target.type === "project" && (action === "read" || area === "category"));
 
 	const ctx = {
 		isOwn: resolved.ownerId !== null && resolved.ownerId === user.id,
@@ -307,6 +310,37 @@ export async function authorize<A extends Area>(area: A, action: Action<A>, targ
 	}
 
 	return { user, member, target: resolved };
+}
+const MAX_BULK_IDS = 500;
+
+export async function authorizeMarkers(
+	action: "update" | "delete",
+	exportId: string,
+	ids: string[],
+) {
+	const unique = [...new Set(ids)];
+	if (unique.length === 0) error(400, "No markers given");
+	if (unique.length > MAX_BULK_IDS) error(400, "Too many markers, 500 is the limit");
+
+	const { user, member, target } = await authorize("export", "read", {
+		type: "export",
+		id: exportId,
+	});
+
+	const markers = await prisma.marker.findMany({
+		where: { id: { in: unique }, exportId },
+		select: { id: true, authorId: true, categoryId: true },
+	});
+
+	if (markers.length !== unique.length) error(404, "Not found");
+
+	const allowedForAll = can(member.role, "marker", action, { hasGrant: true, isOwn: false });
+	if (!allowedForAll) {
+		const allOwn = markers.every((m) => m.authorId !== null && m.authorId === user.id);
+		if (!allOwn) error(403, "Not allowed");
+	}
+
+	return { user, member, target, markers };
 }
 
 function canSee(role: Role, target: Target, ctx: { isOwn: boolean; hasGrant: boolean }) {

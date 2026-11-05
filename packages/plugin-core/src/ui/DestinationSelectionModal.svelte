@@ -7,6 +7,7 @@
 		projects: {
 			id: string;
 			name: string;
+			organization?: { id: string; name: string };
 			timelines: {
 				id: string;
 				name: string;
@@ -37,6 +38,18 @@
 	const exportItem = $derived(timeline?.exports?.find((e) => e.id === exportId));
 	const canSelect = $derived(mode === "timeline" ? !!timeline : !!exportItem);
 
+	// Only worth showing when the user is in more than one organization
+	const showOrganizations = $derived(
+		new Set(projects.map((p) => p.organization?.id).filter(Boolean)).size > 1,
+	);
+	const projectItems = $derived(
+		projects.map((p) => ({
+			id: p.id,
+			name: p.name,
+			hint: showOrganizations ? p.organization?.name : undefined,
+		})),
+	);
+
 	// Opens on the current destination
 	export function open() {
 		projectId = selectedProjectId ?? null;
@@ -66,7 +79,14 @@
 	}
 </script>
 
-{#snippet column(title: string, items: { id: string; name: string }[], activeId: string | null, onPick: (id: string) => void, emptyText: string, drillsDown: boolean)}
+{#snippet column(
+	title: string,
+	items: { id: string; name: string; hint?: string }[],
+	activeId: string | null,
+	onPick: (id: string) => void,
+	emptyText: string,
+	drillsDown: boolean,
+)}
 	<div class="flex min-w-0 flex-col">
 		<h4 class="px-2 pb-1 text-xs tracking-widest text-base-content/60 uppercase">{title}</h4>
 		<ul class="menu h-72 w-full flex-nowrap overflow-y-auto rounded-box bg-base-200 p-1">
@@ -78,7 +98,12 @@
 						onclick={() => onPick(item.id)}
 						ondblclick={() => !drillsDown && confirm()}
 					>
-						<span class="truncate">{item.name}</span>
+						<span class="flex min-w-0 flex-col items-start">
+							<span class="max-w-full truncate">{item.name}</span>
+							{#if item.hint}
+								<span class="max-w-full truncate text-xs text-base-content/60">{item.hint}</span>
+							{/if}
+						</span>
 						{#if drillsDown}<span aria-hidden="true">›</span>{/if}
 					</button>
 				</li>
@@ -99,7 +124,7 @@
 		</div>
 
 		<div class={["grid gap-3 pt-4", mode === "export" ? "sm:grid-cols-3" : "sm:grid-cols-2"]}>
-			{@render column("Projects", projects, projectId, pickProject, "No projects", true)}
+			{@render column("Projects", projectItems, projectId, pickProject, "No projects", true)}
 			{@render column(
 				"Timelines",
 				project?.timelines ?? [],

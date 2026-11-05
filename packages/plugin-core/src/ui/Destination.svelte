@@ -19,6 +19,7 @@
 		projects: {
 			id: string;
 			name: string;
+			organization?: { id: string; name: string };
 			timelines: {
 				id: string;
 				name: string;
