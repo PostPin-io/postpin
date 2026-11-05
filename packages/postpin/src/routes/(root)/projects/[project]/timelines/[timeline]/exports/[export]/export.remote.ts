@@ -1,31 +1,33 @@
 import * as env from "$app/env/private";
 import { error } from "@sveltejs/kit";
-import { getRequestEvent, query } from "$app/server";
+import { query } from "$app/server";
 import { s3Client } from "#lib/server/storage.ts";
 import { prisma } from "#lib/server/database.ts";
 import { getMediaJobs } from "#lib/server/media.ts";
-import { requireMediaAccess } from "#lib/server/org-access.ts";
+import { authorize } from "#lib/server/org-access.ts";
 import * as v from "valibot";
 import { getPresignedUrl } from "@postpin-io/shared/storage";
 import { seekSprites, type SeekSprites } from "@postpin-io/shared/types/SeekSprites";
 import type { ShotThumbnails } from "@postpin-io/shared/types/ShotThumbnails";
 import type { MovieBarcode } from "@postpin-io/shared/types/MovieBarcode";
 
+async function authorizeMediaRead(mediaId: string) {
+	const exp = await prisma.export.findFirst({ where: { mediaId }, select: { id: true } });
+	if (!exp) error(404, "Not found");
+	await authorize("export", "read", { type: "export", id: exp.id });
+}
+
 export const getExport = query(
 	v.object({ projectId: v.string(), timelineId: v.string(), exportId: v.string() }),
 	async ({ projectId, timelineId, exportId }) => {
-		const { user } = getRequestEvent().locals;
-		if (!user) error(401, "Not signed in");
+		const { target } = await authorize("export", "read", { type: "export", id: exportId });
 
-		const exp = await prisma.export.findFirst({
-			where: {
-				id: exportId,
-				timelineId,
-				timeline: {
-					projectId,
-					project: { organization: { members: { some: { userId: user.id } } } },
-				},
-			},
+		if (target.projectId !== projectId || target.timelineId !== timelineId) {
+			error(404, "Not found");
+		}
+
+		const exp = await prisma.export.findUnique({
+			where: { id: exportId },
 			include: {
 				media: {
 					include: {
@@ -36,7 +38,7 @@ export const getExport = query(
 				},
 			},
 		});
-		if (!exp) error(404, "Export not found");
+		if (!exp) error(404, "Not found");
 
 		const media = exp.media && {
 			...exp.media,
@@ -48,7 +50,7 @@ export const getExport = query(
 );
 
 export const getProcessingJobs = query(v.object({ mediaId: v.string() }), async ({ mediaId }) => {
-	await requireMediaAccess(mediaId);
+	await authorizeMediaRead(mediaId);
 	return await getMediaJobs(mediaId);
 });
 
@@ -59,7 +61,7 @@ export const getUrl = query(
 		proxyId: v.optional(v.string()),
 	}),
 	async (object) => {
-		await requireMediaAccess(object.mediaId);
+		await authorizeMediaRead(object.mediaId);
 		return await getPresignedUrl(s3Client, env, object);
 	},
 );
@@ -69,7 +71,7 @@ export const getSeekSprites = query(
 		mediaId: v.string(),
 	}),
 	async (object) => {
-		await requireMediaAccess(object.mediaId);
+		await authorizeMediaRead(object.mediaId);
 		const media = await prisma.media.findUnique({
 			where: { id: object.mediaId },
 			select: { seekSprites: true },
@@ -92,7 +94,7 @@ export const getShotThumbnails = query(
 		mediaId: v.string(),
 	}),
 	async (object) => {
-		await requireMediaAccess(object.mediaId);
+		await authorizeMediaRead(object.mediaId);
 		const media = await prisma.media.findUnique({
 			where: { id: object.mediaId },
 			select: { shotThumbnails: true },
@@ -121,11 +123,11 @@ export const getMovieBarcode = query(
 		mediaId: v.string(),
 	}),
 	async (object) => {
-		await requireMediaAccess(object.mediaId);
+		await authorizeMediaRead(object.mediaId);
 		const media = await prisma.media.findUniqueOrThrow({
 			where: { id: object.mediaId },
 			select: { movieBarcode: true },
 		});
-		return media?.movieBarcode as MovieBarcode | null;
+		return media.movieBarcode as MovieBarcode | null;
 	},
 );
