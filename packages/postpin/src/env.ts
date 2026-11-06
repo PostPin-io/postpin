@@ -17,6 +17,17 @@ export const variables = defineEnvVars({
 	SMTP_USER: { schema: v.optional(v.string()) },
 	SMTP_PASSWORD: { schema: v.optional(v.string()) },
 	SMTP_MAIL_FROM: { schema: v.optional(v.string()) },
+	ADMIN_EMAILS: {
+		schema: v.pipe(
+			v.optional(v.string(), ""),
+			v.transform((s) =>
+				s
+					.split(",")
+					.map((e) => e.trim().toLowerCase())
+					.filter(Boolean),
+			),
+		),
+	},
 	...databaseEnvVars,
 	...s3EnvVars,
 	...redisEnvVars,

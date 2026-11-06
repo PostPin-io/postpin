@@ -107,6 +107,9 @@
 						>
 					</li>
 				{/if}
+				{#if page.data.isSystemAdmin}
+					<li><a href={resolve("/(root)/admin")}>System</a></li>
+				{/if}
 			</ul>
 		</div>
 		<div class="navbar-center hidden lg:flex"></div>

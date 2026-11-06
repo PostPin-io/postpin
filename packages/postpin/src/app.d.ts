@@ -11,7 +11,9 @@ declare global {
 				| null;
 			session: (typeof import("#lib/server/auth.ts").auth.$Infer.Session)["session"] | null;
 		}
-		// interface PageData {}
+		interface PageData {
+			isSystemAdmin?: boolean;
+		}
 		// interface PageState {}
 		// interface Platform {}
 	}
