@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { Prisma } from "@postpin-io/shared/db";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 	import MessageSquareReply from "@lucide/svelte/icons/message-square-reply";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
@@ -21,6 +20,8 @@
 		marker: ReviewMarker;
 		frameRate: FrameRate;
 		startFrame: number;
+		/** Timeline length in frames */
+		frameCount: number;
 	}
 
 	let {
@@ -29,6 +30,7 @@
 		onselect,
 		frameRate,
 		startFrame,
+		frameCount,
 		onchoose,
 		ontoggle,
 		onrange,
@@ -229,6 +231,7 @@
 							bind:frame={() => marker.frame, (f) => onreposition?.(f)}
 							{frameRate}
 							{startFrame}
+							{frameCount}
 							editable={true}
 						/>
 					</span>

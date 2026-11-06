@@ -7,6 +7,12 @@
 	import ResponseMarker from "./ResponseMarker.svelte";
 	import CategoryBadge from "./CategoryBadge.svelte";
 	import { markerFilter } from "./markerFilter.svelte.ts";
+	import {
+		filterMarkers,
+		selectRange as selectRangeOf,
+		sortMarkers as sortMarkersBy,
+		type SortField,
+	} from "./markerList.ts";
 	import Ellipsis from "@lucide/svelte/icons/ellipsis";
 	import { Pane, Splitpanes } from "svelte-splitpanes";
 
@@ -33,8 +39,10 @@
 		onseek: (frame: number) => void;
 		startFrame: number;
 		frameRate: FrameRate;
+		/** Timeline length in frames */
+		frameCount: number;
 	}
-	let { currentFrame, onseek, frameRate, startFrame }: Props = $props();
+	let { currentFrame, onseek, frameRate, startFrame, frameCount }: Props = $props();
 	let updateMarkerComponent: UpdateMarker | null = null;
 	const currentExportId = $derived(page.params.export ?? "");
 	const projectId = $derived(page.params.project ?? "");
@@ -51,7 +59,6 @@
 	let filteredCategories = $derived(
 		categories.filter((c) => c.name.toLowerCase().includes(categorySearch.trim().toLowerCase())),
 	);
-	type SortField = "updatedAt" | "createdAt" | "user" | "timecode";
 	const sortFields: { value: SortField; label: string }[] = [
 		{ value: "updatedAt", label: "Updated at" },
 		{ value: "createdAt", label: "Created at" },
@@ -62,48 +69,22 @@
 	let sortDirection: "asc" | "desc" = $state("desc");
 	let sortField: SortField = $state("updatedAt");
 
-	function sortMarkers<T extends (typeof markers)[number]>(list: T[]): T[] {
-		const dir = sortDirection === "asc" ? 1 : -1;
-		const compare = (a: T, b: T) => {
-			switch (sortField) {
-				case "updatedAt":
-					return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
-				case "createdAt":
-					return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-				case "user":
-					return (a.author?.name ?? "").localeCompare(b.author?.name ?? "");
-				case "timecode":
-					return a.frame - b.frame;
-			}
-		};
-		return [...list].sort((a, b) => dir * compare(a, b));
-	}
+	const sortMarkers = <T extends (typeof markers)[number]>(list: T[]) =>
+		sortMarkersBy(list, sortField, sortDirection);
 	const deletable = $derived(
 		markers.filter((m) => selectedMarkerIds.includes(m.id)).every((m) => m.canDelete),
 	);
 
-	let filteredMarkers = $derived(sortMarkers(markerFilter.apply(markers)));
 	let selectedMarkerIds = $state<string[]>([]);
 
 	let search = $state("");
-	let textFilteredMarkers = $derived(
-		sortMarkers(
-			markers.filter((c) => {
-				const query = search.trim().toLowerCase();
-				return [c.name, c.description ?? "", ...c.responses.map((r) => r.content)].some((text) =>
-					text.toLowerCase().includes(query),
-				);
-			}),
-		),
-	);
 
-	// Markers currently rendered in the list, in display order
-	let visibleMarkers = $derived(search.trim() === "" ? filteredMarkers : textFilteredMarkers);
+	// Markers currently rendered in the list, in display order: category filter AND search
+	let visibleMarkers = $derived(
+		sortMarkers(filterMarkers(markers, markerFilter.categoryIds, search)),
+	);
 
 	let hasActiveFilters = $derived(markerFilter.categoryIds.length > 0 || search.trim() !== "");
-	let visibleMarkerCount = $derived(
-		search.trim() === "" ? filteredMarkers.length : textFilteredMarkers.length,
-	);
 
 	function clearAllFilters() {
 		markerFilter.clear();
@@ -310,15 +291,13 @@
 	let anchorMarkerId: string | null = null;
 
 	function selectRange(id: string) {
-		const ids = visibleMarkers.map((marker) => marker.id);
-		const from = anchorMarkerId ? ids.indexOf(anchorMarkerId) : -1;
-		const to = ids.indexOf(id);
-		if (from === -1 || to === -1) {
-			selectedMarkerIds = [id];
-			anchorMarkerId = id;
-			return;
-		}
-		selectedMarkerIds = ids.slice(Math.min(from, to), Math.max(from, to) + 1);
+		const range = selectRangeOf(
+			visibleMarkers.map((marker) => marker.id),
+			anchorMarkerId,
+			id,
+		);
+		selectedMarkerIds = range.selected;
+		anchorMarkerId = range.anchor;
 	}
 
 	async function repositionMarker(marker: (typeof markers)[number], frame: number) {
@@ -445,45 +424,26 @@
 	<Splitpanes theme="daisy-theme" horizontal class="min-h-0 flex-1">
 		<Pane class="overflow-auto">
 			<div class="flex h-full min-h-0 flex-1 flex-col gap-4 overflow-y-auto *:shrink-0">
-				{#if search.trim() == ""}
-					{#each filteredMarkers as marker, index (marker.id)}
-						<Marker
-							{marker}
-							active={selectedMarkerIds.includes(marker.id)}
-							bind:this={markersComponents[index]}
-							onchoose={() => {
-								selectedMarkerIds = [marker.id];
-								anchorMarkerId = marker.id;
-							}}
-							onrange={() => selectRange(marker.id)}
-							ontoggle={() => toggleMarkerSelection(marker.id)}
-							onselect={onseek}
-							onreposition={(frame) => repositionMarker(marker, frame)}
-							onrespond={() => respondTo(marker.id)}
-							{frameRate}
-							{startFrame}
-						/>
-					{/each}
-				{:else}
-					{#each textFilteredMarkers as marker, index (marker.id)}
-						<Marker
-							{marker}
-							active={selectedMarkerIds.includes(marker.id)}
-							bind:this={markersComponents[index]}
-							onchoose={() => {
-								selectedMarkerIds = [marker.id];
-								anchorMarkerId = marker.id;
-							}}
-							onrange={() => selectRange(marker.id)}
-							ontoggle={() => toggleMarkerSelection(marker.id)}
-							onselect={onseek}
-							onreposition={(frame) => repositionMarker(marker, frame)}
-							onrespond={() => respondTo(marker.id)}
-							{frameRate}
-							{startFrame}
-						/>
-					{/each}
-				{/if}
+				{#each visibleMarkers as marker, index (marker.id)}
+					<Marker
+						{marker}
+						active={selectedMarkerIds.includes(marker.id)}
+						bind:this={markersComponents[index]}
+						onchoose={() => {
+							selectedMarkerIds = [marker.id];
+							anchorMarkerId = marker.id;
+						}}
+						onrange={() => selectRange(marker.id)}
+						ontoggle={() => toggleMarkerSelection(marker.id)}
+						onselect={onseek}
+						onreposition={(frame) => repositionMarker(marker, frame)}
+						onrespond={() => respondTo(marker.id)}
+						{frameRate}
+						{startFrame}
+						{frameCount}
+					/>
+				{/each}
+
 				{#if markers.length === 0}
 					<div class="flex flex-col items-start gap-2 p-4">
 						<p class="text-base-content/70">
@@ -492,7 +452,7 @@
 					</div>
 
 					<p class="p-4 text-base-content/70"></p>
-				{:else if visibleMarkerCount === 0 && hasActiveFilters}
+				{:else if visibleMarkers.length === 0 && hasActiveFilters}
 					<div class="flex flex-col items-start gap-2 p-4">
 						<p class="text-base-content/70">No markers match the active filters.</p>
 						<button type="button" class="btn btn-sm" onclick={clearAllFilters}>

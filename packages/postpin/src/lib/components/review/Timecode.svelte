@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { formatTimecode, parseTimecode } from "@postpin-io/shared/logic/timecode";
+	import { clampToTimeline, frameFromInput } from "./timecodeInput.ts";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 
 	interface Props {
@@ -8,10 +9,13 @@
 		frameRate: FrameRate;
 		/** Timeline start, for the frame index shown next to the timecode */
 		startFrame: number;
+		/** Timeline length in frames; typed values are capped to the timeline */
+		frameCount: number;
 		editable?: boolean;
 	}
 
-	let { frame = $bindable(), frameRate, startFrame, editable }: Props = $props();
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	let { frame = $bindable(), frameRate, startFrame, frameCount, editable }: Props = $props();
 
 	let editingField: "editing_TC" | "editingFrame" | null = $state(null);
 
@@ -39,7 +43,8 @@
 
 	function setTimecodeValue(input: string) {
 		try {
-			frame = parseTimecode(input, frameRate) ?? frame;
+			const parsed = parseTimecode(input, frameRate);
+			if (parsed != null) frame = clampToTimeline(parsed, startFrame, frameCount);
 			editingField = null;
 			inputField_TC?.blur();
 		} catch {
@@ -51,7 +56,7 @@
 
 	function setFrameValue(input: string) {
 		try {
-			frame = parseInt(input) + startFrame;
+			frame = clampToTimeline(frameFromInput(input, startFrame), startFrame, frameCount);
 			frameDraft = null;
 			editingField = null;
 			inputField_Frame?.blur();

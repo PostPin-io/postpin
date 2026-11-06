@@ -613,6 +613,7 @@
 						onseek={seekToFrame}
 						startFrame={snapshot!.startFrameIndex}
 						frameRate={snapshot!.frameRate}
+						frameCount={snapshot!.durationFrameCount}
 					/>
 				</Pane>
 			{/if}

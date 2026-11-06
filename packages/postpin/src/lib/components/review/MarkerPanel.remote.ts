@@ -8,6 +8,7 @@ import {
 	authorize,
 	authorizeMarkers,
 } from "#lib/server/org-access.ts";
+
 import { can } from "#lib/roles.ts";
 
 import * as v from "valibot";
@@ -24,6 +25,25 @@ async function assertCategoriesInProject(categoryIds: string[], projectId: strin
 	const count = await prisma.category.count({ where: { id: { in: unique }, projectId } });
 	if (count !== unique.length) error(404, "Not found");
 }
+
+/**
+ * Markers must sit on the export's timeline: startFrameIndex … startFrameIndex + durationFrameCount - 1.
+ * Exports without a snapshot (yet) have no known range and are not checked.
+ */
+async function assertFramesInTimeline(exportId: string, frames: number[]) {
+	const exp = await prisma.export.findUnique({
+		where: { id: exportId },
+		select: { timelineSnapshot: true },
+	});
+	const range = v.safeParse(timelineRange, exp?.timelineSnapshot);
+	if (!range.success) return;
+	const first = range.output.startFrameIndex;
+	const last = first + Math.max(range.output.durationFrameCount, 1) - 1;
+	if (frames.some((f) => f < first || f > last)) {
+		error(400, `Frame outside the timeline (${first}–${last})`);
+	}
+}
+const timelineRange = v.object({ startFrameIndex: v.number(), durationFrameCount: v.number() });
 /**
  * Same project → keep the category.
  * Other project → category with the same name there, else the fallback.
@@ -141,6 +161,10 @@ export const pasteMarkers = command(
 
 		// 5. Anlegen (+ bei "cut" Quelle löschen) in EINER Transaktion
 		const minFrame = Math.min(...source.map((m) => m.frame));
+		await assertFramesInTimeline(
+			data.targetExportId,
+			source.map((m) => data.anchorFrame + (m.frame - minFrame)),
+		);
 		await prisma.$transaction(async (tx) => {
 			for (const m of source) {
 				await tx.marker.create({
@@ -196,6 +220,7 @@ export const createMarker = command(
 			id: data.exportId,
 		});
 		await assertCategoriesInProject([data.categoryId], target.projectId);
+		await assertFramesInTimeline(data.exportId, [data.frame]);
 
 		const marker = await prisma.marker.create({
 			data: {
@@ -223,6 +248,11 @@ export const updateMarker = command(
 	async (data) => {
 		const { target } = await authorize("marker", "update", { type: "marker", id: data.id });
 		await assertCategoriesInProject([data.categoryId], target.projectId);
+		const { exportId } = await prisma.marker.findUniqueOrThrow({
+			where: { id: data.id },
+			select: { exportId: true },
+		});
+		await assertFramesInTimeline(exportId, [data.frame]);
 
 		const marker = await prisma.marker.update({
 			where: { id: data.id },
@@ -411,23 +441,18 @@ export const createCategory = command(
 			id: data.projectId,
 		});
 
-		try {
-			const category = await prisma.category.create({
+		const category = await prisma.category
+			.create({
 				data: {
 					name: data.name,
 					color: data.color,
 					projectId: data.projectId,
 					createdById: user.id,
 				},
-			});
-			await getCategories(data.projectId).refresh();
-			return category;
-		} catch (e) {
-			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-				error(409, `Category "${data.name}" already exists`);
-			}
-			throw e;
-		}
+			})
+			.catch(conflictOnDuplicate(data.name));
+		await getCategories(data.projectId).refresh();
+		return category;
 	},
 );
 
@@ -560,12 +585,12 @@ export const renameCategory = command(
 	}),
 	async (data) => {
 		await authorize("category", "update", { type: "category", id: data.id });
-
-		const category = await prisma.category.update({
-			where: { id: data.id },
-			data: { name: data.name },
-		});
-
+		const category = await prisma.category
+			.update({
+				where: { id: data.id },
+				data: { name: data.name },
+			})
+			.catch(conflictOnDuplicate(data.name));
 		await Promise.all([
 			getCategories(category.projectId).refresh(),
 			...(data.exportId ? [getMarkers(data.exportId).refresh()] : []),
@@ -573,3 +598,12 @@ export const renameCategory = command(
 		return category;
 	},
 );
+
+function conflictOnDuplicate(name: string) {
+	return (e: unknown): never => {
+		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+			error(409, `Category "${name}" already exists`);
+		}
+		throw e;
+	};
+}

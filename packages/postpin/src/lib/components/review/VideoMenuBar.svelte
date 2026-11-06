@@ -139,6 +139,7 @@
 				bind:frame={() => frame, (f) => (currentTime = secondsAtFrame(f, timing))}
 				frameRate={timing.frameRate}
 				startFrame={timing.startFrameIndex}
+				frameCount={durationFrames}
 				editable={true}
 			/>
 			<span class="font-mono">|</span>

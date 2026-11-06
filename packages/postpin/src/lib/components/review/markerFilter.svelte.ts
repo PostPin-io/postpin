@@ -2,7 +2,12 @@ const STORAGE_KEY = "CategoryFilter";
 
 function load(): string[] {
 	if (typeof localStorage === "undefined") return [];
-	const raw = localStorage.getItem(STORAGE_KEY);
+	let raw: string | null;
+	try {
+		raw = localStorage.getItem(STORAGE_KEY);
+	} catch {
+		return []; // storage blocked
+	}
 	if (!raw) return [];
 	try {
 		const parsed: unknown = JSON.parse(raw);
@@ -39,7 +44,11 @@ class MarkerFilter {
 	}
 
 	private save() {
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(this.categoryIds));
+		try {
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(this.categoryIds));
+		} catch {
+			// private window / storage blocked: filtering just doesn't persist
+		}
 	}
 }
 
