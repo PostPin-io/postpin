@@ -194,39 +194,28 @@
 							)}
 						</td>
 						<td>
-							{#if member.canViewGrants}
-								<button
-									class="btn btn-ghost btn-xs"
-									onclick={() => grantsModal?.open(member.id, member.user.name)}
-								>
-									Access
-								</button>
-								<!-- svelte-ignore node_invalid_placement_ssr -->
-								<td>
-									<div class="flex justify-end gap-1">
-										{#if member.canViewGrants}
-											<button
-												class="btn btn-ghost btn-xs"
-												onclick={() => grantsModal?.open(member.id, member.user.name)}
-											>
-												Access
-											</button>
+							<div class="flex justify-end gap-1">
+								{#if member.canViewGrants}
+									<button
+										class="btn btn-ghost btn-xs"
+										onclick={() => grantsModal?.open(member.id, member.user.name)}
+									>
+										Access
+									</button>
+								{/if}
+								{#if member.canRemove}
+									<button
+										class="btn btn-ghost text-error btn-xs"
+										onclick={() => remove(member)}
+										disabled={removingMemberId !== null}
+									>
+										Remove
+										{#if removingMemberId === member.id}
+											<span class="loading loading-xs loading-spinner"></span>
 										{/if}
-										{#if member.canRemove}
-											<button
-												class="btn btn-ghost text-error btn-xs"
-												onclick={() => remove(member)}
-												disabled={removingMemberId !== null}
-											>
-												Remove
-												{#if removingMemberId === member.id}
-													<span class="loading loading-xs loading-spinner"></span>
-												{/if}
-											</button>
-										{/if}
-									</div>
-								</td>
-							{/if}
+									</button>
+								{/if}
+							</div>
 						</td>
 					</tr>
 				{/each}
