@@ -1,6 +1,7 @@
 import { can, isOrgWide, MANAGER_ROLES } from "#lib/roles.ts";
 import { prisma } from "#lib/server/database.ts";
 import { createGrant } from "#lib/server/grants.ts";
+import { revokeInvitesOutsideGrants } from "#lib/server/invite-links.ts";
 import {
 	accessibleProjects,
 	accessibleTimelines,
@@ -55,7 +56,14 @@ export const addGrant = command(
 );
 export const removeGrant = command(v.string(), async (grantId) => {
 	await authorize("grant", "delete", { type: "grant", id: grantId });
-	await prisma.memberGrant.delete({ where: { id: grantId } });
+	await prisma.$transaction(async (tx) => {
+		const { member } = await tx.memberGrant.delete({
+			where: { id: grantId },
+			select: { member: true },
+		});
+		// Links and invitations they handed out for what they no longer see stop working
+		await revokeInvitesOutsideGrants(tx, member);
+	});
 });
 
 const memberSelect = {

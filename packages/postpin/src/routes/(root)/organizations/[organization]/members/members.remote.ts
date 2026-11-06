@@ -3,19 +3,26 @@ import {
 	canChangeRole,
 	canInviteAs,
 	INVITE_ROLES,
+	canRemoveMember,
 	isOrgWide,
 	MANAGER_ROLES,
 	ORG_ROLES,
 	roleAllows,
 } from "#lib/roles.ts";
+
 import { prisma } from "#lib/server/database.ts";
 import { INVITATION_TTL_MS, sendInvitationEmail } from "#lib/server/invitations.ts";
 import { authorize, requireOrgRole } from "#lib/server/org-access.ts";
 import { command, query } from "$app/server";
-import { Role } from "@postpin-io/shared/db";
+import { Prisma, Role } from "@postpin-io/shared/db";
 import { error } from "@sveltejs/kit";
-import { randomBytes } from "node:crypto";
 import * as v from "valibot";
+import { InviteTarget, targetColumns } from "#lib/invite-target.ts";
+import {
+	newInviteToken,
+	revokeInvitesOf,
+	revokeInvitesOutsideGrants,
+} from "#lib/server/invite-links.ts";
 
 export const getOrg = query(v.string(), async (slug) => {
 	const org = await prisma.organization.findUnique({ where: { slug } });
@@ -90,12 +97,15 @@ export const getOrg = query(v.string(), async (slug) => {
 		/** The e-mail form creates org-level invitations, which need an org-wide role */
 		canInviteToOrg: can(me.role, "invitation", "create"),
 		inviteRoles: INVITE_ROLES.filter((r) => canInviteAs(me.role, r)),
+
 		members: members.map((m) => ({
 			...m,
-			/** Roles `me` may set on this member, including the current one if allowed at all */
 			assignableRoles: ORG_ROLES.filter((r) => canChangeRole(me.role, m.role, r, ownerCount)),
 			canViewGrants: !isOrgWide(m.role),
+			/** Same rule as removeMember; yourself → "leave organization" instead */
+			canRemove: m.id !== me.id && canRemoveMember(me.role, m.role, ownerCount),
 		})),
+
 		invitations: invitations.map(({ timeline, ...i }) => {
 			const ctx = { isOwn: i.inviterId === me.userId, hasGrant: hasGrantOn({ ...i, timeline }) };
 			return {
@@ -145,56 +155,82 @@ export const cancelInvitation = command(v.string(), async (invitationId) => {
 });
 
 const linkRole = v.picklist(INVITE_ROLES);
-const newToken = () => randomBytes(24).toString("base64url");
+/** Disabling / resetting a link = deleting it in matrix terms: Member only own, Admin+ all */
+function assertMayManageLink(role: Role, isOwn: boolean) {
+	if (!can(role, "inviteLink", "delete", { isOwn, hasGrant: true })) {
+		error(403, "Only the person who created this link or an admin can change it");
+	}
+}
 
-export const getInviteLinks = query(v.string(), async (organizationId) => {
-	await authorize("inviteLink", "read", { type: "organization", id: organizationId });
+export const getInviteLinks = query(InviteTarget, async (target) => {
+	const { user, member, target: resolved } = await authorize("inviteLink", "read", target);
 	const links = await prisma.inviteLink.findMany({
-		where: { organizationId, projectId: null, timelineId: null },
+		where: { organizationId: resolved.organizationId, ...targetColumns(target) },
 	});
-	return linkRole.options.map((role) => {
+	// Member sees only roles they may hand out (Member/Reviewer), Admin+ all invite roles
+	return INVITE_ROLES.filter((r) => canInviteAs(member.role, r)).map((role) => {
 		const link = links.find((l) => l.role === role);
-		return { role, token: link?.token ?? null, enabled: link?.enabled ?? false };
+		return {
+			role,
+			token: link?.token ?? null,
+			enabled: link?.enabled ?? false,
+			/** No link yet → anyone allowed to create one; existing → creator or Admin+ */
+			canManage:
+				!link ||
+				can(member.role, "inviteLink", "delete", {
+					isOwn: link.createdById === user.id,
+					hasGrant: true,
+				}),
+		};
 	});
 });
 
 export const setInviteLinkEnabled = command(
-	v.object({ organizationId: v.string(), role: linkRole, enabled: v.boolean() }),
-	async ({ organizationId, role, enabled }) => {
-		const { user, member } = await authorize("inviteLink", "create", {
-			type: "organization",
-			id: organizationId,
-		});
+	v.object({ target: InviteTarget, role: linkRole, enabled: v.boolean() }),
+	async ({ target, role, enabled }) => {
+		const { user, member, target: resolved } = await authorize("inviteLink", "create", target);
 		if (!canInviteAs(member.role, role)) error(403, "You cannot create links for a higher role");
-		// Org-level links have null project/timeline, which a compound unique cannot match
-		const existing = await prisma.inviteLink.findFirst({
-			where: { organizationId, role, projectId: null, timelineId: null },
-		});
+
+		const where = { organizationId: resolved.organizationId, role, ...targetColumns(target) };
+		const existing = await prisma.inviteLink.findFirst({ where });
+
 		if (existing) {
+			assertMayManageLink(member.role, existing.createdById === user.id);
 			await prisma.inviteLink.update({ where: { id: existing.id }, data: { enabled } });
-		} else {
-			await prisma.inviteLink.create({
-				data: { organizationId, role, enabled, token: newToken(), createdById: user.id },
-			});
+		} else if (enabled) {
+			try {
+				await prisma.inviteLink.create({
+					data: { ...where, enabled, token: newInviteToken(), createdById: user.id },
+				});
+			} catch (e) {
+				// two people enabling the same link at once → unique index wins
+				if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+					error(409, "This link was just created by someone else, please reload");
+				}
+				throw e;
+			}
 		}
-		await getInviteLinks(organizationId).refresh();
+		await getInviteLinks(target).refresh();
 	},
 );
 
 export const resetInviteLink = command(
-	v.object({ organizationId: v.string(), role: linkRole }),
-	async ({ organizationId, role }) => {
-		const { member } = await authorize("inviteLink", "create", {
-			type: "organization",
-			id: organizationId,
-		});
+	v.object({ target: InviteTarget, role: linkRole }),
+	async ({ target, role }) => {
+		const { user, member, target: resolved } = await authorize("inviteLink", "create", target);
 		if (!canInviteAs(member.role, role)) error(403, "You cannot reset links for a higher role");
-		const { count } = await prisma.inviteLink.updateMany({
-			where: { organizationId, role, projectId: null, timelineId: null },
-			data: { token: newToken() },
+
+		const existing = await prisma.inviteLink.findFirst({
+			where: { organizationId: resolved.organizationId, role, ...targetColumns(target) },
 		});
-		if (count === 0) error(404, "Invite link not found");
-		await getInviteLinks(organizationId).refresh();
+		if (!existing) error(404, "Invite link not found");
+		assertMayManageLink(member.role, existing.createdById === user.id);
+
+		await prisma.inviteLink.update({
+			where: { id: existing.id },
+			data: { token: newInviteToken() },
+		});
+		await getInviteLinks(target).refresh();
 	},
 );
 
@@ -215,16 +251,55 @@ export const changeMemberRole = command(
 				});
 				if (!canChangeRole(me.role, target.role, role, ownerCount)) error(403, "Not allowed");
 				await tx.member.update({ where: { id: memberId }, data: { role } });
+				await revokeInvitesOf(tx, target, role);
+				// Admin → Member/Reviewer: from now on only their grants count, not the whole org
+				await revokeInvitesOutsideGrants(tx, { ...target, role });
 			},
 			{ isolationLevel: "Serializable" },
 		);
 	},
 );
-const InviteTarget = v.variant("type", [
-	v.object({ type: v.literal("organization"), id: v.string() }),
-	v.object({ type: v.literal("project"), id: v.string() }),
-	v.object({ type: v.literal("timeline"), id: v.string() }),
-]);
+
+export const removeMember = command(v.string(), async (memberId) => {
+	const { member: me } = await authorize("member", "remove", { type: "member", id: memberId });
+
+	if (memberId === me.id) error(400, "Use 'leave organization' to remove yourself");
+
+	try {
+		await prisma.$transaction(
+			async (tx) => {
+				const target = await tx.member.findUniqueOrThrow({ where: { id: memberId } });
+				const ownerCount = await tx.member.count({
+					where: { organizationId: target.organizationId, role: Role.OWNER },
+				});
+				if (!canRemoveMember(me.role, target.role, ownerCount)) error(403, "Not allowed");
+
+				await tx.member.delete({ where: { id: memberId } });
+				await revokeInvitesOf(tx, target, null);
+				await tx.session.updateMany({
+					where: { userId: target.userId, activeOrganizationId: target.organizationId },
+					data: { activeOrganizationId: null },
+				});
+				await tx.user.updateMany({
+					where: { id: target.userId, lastActiveOrganizationId: target.organizationId },
+					data: { lastActiveOrganizationId: null },
+				});
+			},
+			{ isolationLevel: "Serializable" },
+		);
+	} catch (e) {
+		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2034") {
+			error(409, "The member list changed at the same time, please try again");
+		}
+		throw e;
+	}
+
+	const org = await prisma.organization.findUniqueOrThrow({
+		where: { id: me.organizationId },
+		select: { slug: true },
+	});
+	await getOrg(org.slug).refresh();
+});
 
 export const inviteMember = command(
 	v.object({
@@ -253,6 +328,9 @@ export const inviteMember = command(
 
 		// same target again = refresh the pending invite instead of a duplicate
 		const existing = await prisma.invitation.findFirst({ where });
+		if (existing) {
+			await authorize("invitation", "update", { type: "invitation", id: existing.id });
+		}
 		const invitation = existing
 			? await prisma.invitation.update({
 					where: { id: existing.id },
@@ -289,4 +367,22 @@ export const resendInvitation = command(v.string(), async (invitationId) => {
 	});
 	await sendInvitationEmail(invitation, invitation.organization.name, user.name);
 	await getOrg(invitation.organization.slug).refresh();
+});
+
+export const getTargetInvitations = query(InviteTarget, async (target) => {
+	const { user, member, target: resolved } = await authorize("invitation", "read", target);
+	const invitations = await prisma.invitation.findMany({
+		where: { organizationId: resolved.organizationId, status: "pending", ...targetColumns(target) },
+		orderBy: { createdAt: "desc" },
+		select: { id: true, email: true, role: true, createdAt: true, inviterId: true },
+	});
+	return invitations.map(({ inviterId, ...i }) => {
+		// hasGrant: true, authorize() above already proved access to this target
+		const ctx = { isOwn: inviterId === user.id, hasGrant: true };
+		return {
+			...i,
+			canDelete: can(member.role, "invitation", "delete", ctx),
+			canResend: can(member.role, "invitation", "update", ctx) && canInviteAs(member.role, i.role),
+		};
+	});
 });

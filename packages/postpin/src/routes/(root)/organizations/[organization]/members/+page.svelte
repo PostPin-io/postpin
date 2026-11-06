@@ -6,10 +6,12 @@
 		getInviteLinks,
 		getOrg,
 		inviteMember as inviteMemberCommand,
+		removeMember,
 		resendInvitation,
 		resetInviteLink,
 		setInviteLinkEnabled,
 	} from "./members.remote";
+
 	import { page } from "$app/state";
 	import { ROLE_LABELS, type InviteRole } from "#lib/roles.ts";
 
@@ -18,6 +20,7 @@
 	let grantsModal: MemberGrantsModal | null = null;
 
 	const org = $derived(await getOrg(page.params.organization!));
+	const orgTarget = $derived({ type: "organization" as const, id: org.id }); // bzw. organizationId
 
 	let changingRoleOf = $state<string | null>(null);
 	async function changeRole(memberId: string, newRole: Role) {
@@ -36,6 +39,21 @@
 		}
 		await getOrg(page.params.organization!).refresh();
 		changingRoleOf = null;
+	}
+	let removingMemberId = $state<string | null>(null);
+
+	async function remove(member: (typeof org.members)[number]) {
+		if (
+			!confirm(`Remove ${member.user.name} from ${org.name}? They lose access to everything in it.`)
+		)
+			return;
+		removingMemberId = member.id;
+		try {
+			await removeMember(member.id);
+		} catch (e) {
+			alert(`Could not remove member: ${(e as Error).message}`);
+		}
+		removingMemberId = null;
 	}
 
 	let inviting = $state(false);
@@ -92,7 +110,7 @@
 		cancelingInviteId = null;
 	}
 
-	const inviteLinks = $derived(org.canManageInviteLinks ? await getInviteLinks(org.id) : []);
+	const inviteLinks = $derived(org.canManageInviteLinks ? await getInviteLinks(orgTarget) : []);
 	let updatingLinkRole = $state<string | null>(null);
 	let copiedLinkRole = $state<string | null>(null);
 
@@ -101,7 +119,7 @@
 	async function toggleLink(role: InviteRole, enabled: boolean) {
 		updatingLinkRole = role;
 		try {
-			await setInviteLinkEnabled({ organizationId: org.id, role, enabled });
+			await setInviteLinkEnabled({ target: orgTarget, role, enabled });
 		} catch (e) {
 			alert(`Could not update invite link: ${(e as Error).message}`);
 		}
@@ -112,7 +130,7 @@
 		if (!confirm("Reset this link? The current link will stop working immediately.")) return;
 		updatingLinkRole = role;
 		try {
-			await resetInviteLink({ organizationId: org.id, role });
+			await resetInviteLink({ target: orgTarget, role });
 		} catch (e) {
 			alert(`Could not reset invite link: ${(e as Error).message}`);
 		}
@@ -183,6 +201,31 @@
 								>
 									Access
 								</button>
+								<!-- svelte-ignore node_invalid_placement_ssr -->
+								<td>
+									<div class="flex justify-end gap-1">
+										{#if member.canViewGrants}
+											<button
+												class="btn btn-ghost btn-xs"
+												onclick={() => grantsModal?.open(member.id, member.user.name)}
+											>
+												Access
+											</button>
+										{/if}
+										{#if member.canRemove}
+											<button
+												class="btn btn-ghost text-error btn-xs"
+												onclick={() => remove(member)}
+												disabled={removingMemberId !== null}
+											>
+												Remove
+												{#if removingMemberId === member.id}
+													<span class="loading loading-xs loading-spinner"></span>
+												{/if}
+											</button>
+										{/if}
+									</div>
+								</td>
 							{/if}
 						</td>
 					</tr>

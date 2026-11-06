@@ -4,21 +4,31 @@ import { joinWithAccess } from "#lib/server/grants.ts";
 import { command, getRequestEvent, query } from "$app/server";
 import { error } from "@sveltejs/kit";
 import * as v from "valibot";
-
 async function findEnabledLink(token: string) {
 	return prisma.inviteLink.findFirst({
-		where: { token, enabled: true },
-		include: { organization: { select: { id: true, name: true } } },
+		// A link whose creator's account is gone has nobody vouching for it anymore
+		where: { token, enabled: true, createdById: { not: null } },
+		include: {
+			organization: { select: { id: true, name: true } },
+			project: { select: { name: true } },
+			timeline: { select: { name: true, project: { select: { name: true } } } },
+		},
 	});
 }
 
-/** Public: lets the join page show the org before the visitor signs in. */
+/** "Project X" or "Project X / Timeline Y", null for org-level links */
+const targetName = (link: NonNullable<Awaited<ReturnType<typeof findEnabledLink>>>) =>
+	link.timeline
+		? `${link.timeline.project.name} / ${link.timeline.name}`
+		: (link.project?.name ?? null);
+
 export const getInviteLinkInfo = query(v.string(), async (token) => {
 	const link = await findEnabledLink(token);
 	const user = getRequestEvent().locals.user;
 	return {
 		valid: !!link,
 		organizationName: link?.organization.name ?? null,
+		targetName: link ? targetName(link) : null,
 		role: link?.role ?? null,
 		signedIn: !!user,
 		alreadyMember:

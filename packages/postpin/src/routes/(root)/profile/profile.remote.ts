@@ -6,6 +6,7 @@ import { DEVICE_CLIENTS } from "#lib/device-clients.ts";
 import { canLeave } from "#lib/roles.ts";
 import { requireOrgRole } from "#lib/server/org-access.ts";
 import { Role } from "@postpin-io/shared/db";
+import { revokeInvitesOf } from "#lib/server/invite-links.ts";
 
 export const getProfile = query(async () => {
 	const id = getRequestEvent().locals.user?.id;
@@ -103,6 +104,7 @@ export const leaveOrganization = command(v.string(), async (organizationId) => {
 				error(400, "The last owner can't leave. Make someone else owner first.");
 			}
 			await tx.member.delete({ where: { id: me.id } }); // grants cascade
+			await revokeInvitesOf(tx, me, null);
 		},
 		{ isolationLevel: "Serializable" },
 	);

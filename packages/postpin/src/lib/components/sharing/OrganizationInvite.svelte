@@ -24,17 +24,18 @@
 
 	let { organizationId }: Props = $props();
 
+	// Same shape everywhere ({ type, id }), so refresh() hits the same cache entry
+	const orgTarget = $derived({ type: "organization" as const, id: organizationId });
+
 	const activeMember = authClient.useActiveMember();
 	const activeRole = $derived(toRole($activeMember.data?.role));
 
 	const canInviteToOrg = $derived(activeRole ? isOrgWide(activeRole) : false);
-	const inviteLinks = $derived(canInviteToOrg ? await getInviteLinks(organizationId) : []);
+	const inviteLinks = $derived(canInviteToOrg ? await getInviteLinks(orgTarget) : []);
 
 	let inviteRole: InviteRole = $state(Role.MEMBER);
-
 	let inviting = $state(false);
 	let inviteEmail = $state("");
-
 	let inviteSent = $state(false);
 
 	async function inviteMember() {
@@ -44,7 +45,7 @@
 			await inviteMemberCommand({
 				email: inviteEmail,
 				role: inviteRole,
-				target: { type: "organization", id: organizationId },
+				target: orgTarget,
 			});
 		} catch (e) {
 			alert(`Could not invite member: ${(e as Error).message}`);
@@ -63,7 +64,7 @@
 	async function toggleLink(role: InviteRole, enabled: boolean) {
 		updatingLinkRole = role;
 		try {
-			await setInviteLinkEnabled({ organizationId, role, enabled });
+			await setInviteLinkEnabled({ target: orgTarget, role, enabled });
 		} catch (e) {
 			alert(`Could not update invite link: ${(e as Error).message}`);
 		}
@@ -74,7 +75,7 @@
 		if (!confirm("Reset this link? The current link will stop working immediately.")) return;
 		updatingLinkRole = role;
 		try {
-			await resetInviteLink({ organizationId, role });
+			await resetInviteLink({ target: orgTarget, role });
 		} catch (e) {
 			alert(`Could not reset invite link: ${(e as Error).message}`);
 		}

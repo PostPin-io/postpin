@@ -5,14 +5,17 @@ import { command, getRequestEvent, query } from "$app/server";
 import { error } from "@sveltejs/kit";
 import * as v from "valibot";
 
+/** Pending, not expired, and the inviter's account still exists (it's deleted → SetNull) */
+const isUsable = (inv: { status: string; expiresAt: Date; inviterId: string | null }) =>
+	inv.status === "pending" && inv.expiresAt > new Date() && inv.inviterId !== null;
+
 /** Public: what the invite page needs to show before (and after) signing in. */
 export const getInvitationPreview = query(v.string(), async (id) => {
 	const invitation = await prisma.invitation.findUnique({
 		where: { id },
 		include: { organization: { select: { name: true } } },
 	});
-	const valid =
-		!!invitation && invitation.status === "pending" && invitation.expiresAt > new Date();
+	const valid = !!invitation && isUsable(invitation);
 
 	return {
 		valid,
@@ -31,7 +34,7 @@ export const acceptInvitation = command(v.string(), async (id) => {
 
 	const organizationId = await prisma.$transaction(async (tx) => {
 		const inv = await tx.invitation.findUnique({ where: { id } });
-		if (!inv || inv.status !== "pending" || inv.expiresAt < new Date()) {
+		if (!inv || !isUsable(inv)) {
 			error(404, "This invitation is no longer valid");
 		}
 		if (inv.email.toLowerCase() !== user.email.toLowerCase()) {

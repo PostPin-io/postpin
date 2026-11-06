@@ -45,9 +45,17 @@
 		<h1 class="text-3xl font-bold">Join {link.organizationName}</h1>
 		<p class="text-base-content/70">
 			{#if link.alreadyMember}
-				You're already a member of this organization.
+				{#if link.targetName}
+					You're already a member. You'll get access to <span class="font-medium"
+						>{link.targetName}</span
+					>.
+				{:else}
+					You're already a member of this organization.
+				{/if}
 			{:else}
-				You'll join as <span class="font-medium">{roleLabel(link.role)}</span>.
+				You'll join as <span class="font-medium">{roleLabel(link.role)}</span>
+				{#if link.targetName}
+					and get access to <span class="font-medium">{link.targetName}</span>{/if}.
 			{/if}
 		</p>
 	</header>

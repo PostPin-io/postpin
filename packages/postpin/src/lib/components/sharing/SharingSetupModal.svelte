@@ -4,6 +4,7 @@
 	import { authClient } from "#lib/auth-client.ts";
 	import OrganizationInvite from "./OrganizationInvite.svelte";
 	import AccessGrants from "./AccessGrants.svelte";
+	import TargetInvite from "./TargetInvite.svelte";
 
 	const session = authClient.useSession();
 	const organizationId = $derived($session.data?.session.activeOrganizationId);
@@ -43,7 +44,10 @@
 				You are sharing the {targetQuery.current.type}: {targetQuery.current.name}
 			</p>
 			{#if targetQuery.current.type !== "export"}
-				<AccessGrants target={{ type: targetQuery.current.type, id: targetQuery.current.id }} />
+				{@const shareTarget = { type: targetQuery.current.type, id: targetQuery.current.id }}
+				<AccessGrants target={shareTarget} />
+				<div class="divider my-2"></div>
+				<TargetInvite target={shareTarget} />
 			{/if}
 		{:else}
 			<span class="loading mt-2 loading-spinner"></span>
