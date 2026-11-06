@@ -5,7 +5,6 @@ import CircleQuestionMark from "@lucide/svelte/icons/circle-question-mark";
 import CircleX from "@lucide/svelte/icons/circle-x";
 import Clock from "@lucide/svelte/icons/clock";
 import Hourglass from "@lucide/svelte/icons/hourglass";
-import ListTree from "@lucide/svelte/icons/list-tree";
 import LoaderCircle from "@lucide/svelte/icons/loader-circle";
 import type { Component } from "svelte";
 

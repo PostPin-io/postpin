@@ -2,7 +2,7 @@
 	import { page } from "$app/state";
 	import { onMount } from "svelte";
 	import { getExportList } from "./exportlist.remote.ts";
-	import { getUrl } from "../../../../../videotests/videotests.remote.ts";
+	import { getUrl } from "./[export]/export.remote.ts";
 	import RenameExportModal from "#lib/components/RenameExportModal.svelte";
 	import DeleteExportModal from "#lib/components/DeleteExportModal.svelte";
 

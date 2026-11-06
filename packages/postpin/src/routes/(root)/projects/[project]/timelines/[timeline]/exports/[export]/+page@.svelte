@@ -29,7 +29,7 @@
 	import { seekSprites as seekSpritesSchema } from "@postpin-io/shared/types/SeekSprites";
 	import * as v from "valibot";
 	import Hourglass from "@lucide/svelte/icons/hourglass";
-	import { jobStateBadges } from "../../../../../../queuetests/job-status";
+	import { jobStateBadges } from "#lib/job-status.ts";
 	import CheckCircle from "@lucide/svelte/icons/check-circle";
 	import ShotGrid from "./ShotGrid.svelte";
 	import MovieBarcode from "./MovieBarcode.svelte";

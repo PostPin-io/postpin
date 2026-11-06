@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { page } from "$app/state";
 	import { onMount } from "svelte";
 	import { getProjects } from "./project.remote.ts";
 	import { getMemberships } from "../profile/profile.remote.ts";
-	import { getUrl } from "../videotests/videotests.remote.ts";
+	import { getUrl } from "../projects/[project]/timelines/[timeline]/exports/[export]/export.remote.ts";
 	import NewProjectModal from "#lib/components/NewProjectModal.svelte";
 	import RenameProjectModal from "#lib/components/RenameProjectModal.svelte";
 	import NewOrgModal from "../../../lib/components/NewOrgModal.svelte";

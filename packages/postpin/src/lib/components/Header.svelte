@@ -54,32 +54,6 @@
 	let { children }: Props = $props();
 </script>
 
-<!-- 
-<header>
-	<div class="corner">
-		<a href="https://svelte.dev/docs/kit">
-			<img src={logo} alt="SvelteKit" />
-		</a>
-	</div>
-
-	<nav>
-		<ul>
-			<li aria-current={page.url.pathname === "/" ? "page" : undefined}>
-				<a href={resolve("/")}>Home</a>
-			</li>
-			<li aria-current={page.url.pathname === "/about" ? "page" : undefined}>
-				<a href={resolve("/about")}>About</a>
-			</li>
-			<li aria-current={page.url.pathname === "/dbtests" ? "page" : undefined}>
-				<a href={resolve("/dbtests")}>dbtests</a>
-			</li>
-		</ul>
-	</nav>
-</header>
-
-<style>
-</style> -->
-
 <header class="w-full rounded-md bg-base-200 shadow-sm max-lg:collapse">
 	<input id="navbar-1-toggle" class="peer hidden" type="checkbox" />
 	<label for="navbar-1-toggle" class="fixed inset-0 hidden max-lg:peer-checked:block"></label>
