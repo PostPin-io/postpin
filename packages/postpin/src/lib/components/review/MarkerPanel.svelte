@@ -12,15 +12,18 @@
 
 	import {
 		getMarkers,
-		getMarkersbyCategory,
 		getCategories,
 		createMarker,
-		createMarkers,
+		pasteMarkers as pasteMarkersRemote,
 		updateMarker,
 		deleteMarkers,
 		createCategory,
 	} from "./MarkerPanel.remote.ts";
-	import { copyMarkers, readMarkerClipboard } from "./markerClipboard.ts";
+	import {
+		readMarkerClipboard,
+		writeMarkerClipboard,
+		clearMarkerClipboard,
+	} from "./markerClipboard.ts";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
@@ -75,6 +78,9 @@
 		};
 		return [...list].sort((a, b) => dir * compare(a, b));
 	}
+	const deletable = $derived(
+		markers.filter((m) => selectedMarkerIds.includes(m.id)).every((m) => m.canDelete),
+	);
 
 	let filteredMarkers = $derived(sortMarkers(markerFilter.apply(markers)));
 	let selectedMarkerIds = $state<string[]>([]);
@@ -198,6 +204,7 @@
 	}
 
 	async function deleteSelectedMarkers() {
+		if (!deletable) return;
 		const ids = markers
 			.filter((marker) => selectedMarkerIds.includes(marker.id))
 			.map((marker) => marker.id);
@@ -233,29 +240,34 @@
 		const selected = markers.filter((marker) => selectedMarkerIds.includes(marker.id));
 		if (selected.length === 0) return;
 		event.preventDefault();
-		copyMarkers(selected);
-		if (key === "x") void deleteSelectedMarkers();
+		if (key === "x" && !deletable) return;
+
+		writeMarkerClipboard({
+			sourceExportId: currentExportId,
+			markerIds: selected.map((m) => m.id),
+			mode: key === "x" ? "cut" : "copy",
+		});
 	}
 
 	let pasting = false;
 
 	async function pasteMarkers() {
 		const clipboard = readMarkerClipboard();
-		if (clipboard.length === 0 || pasting) return;
+		if (!clipboard || pasting) return;
 		pasting = true;
 		try {
-			const { categoryId: fallbackCategoryId, categoryIds } = await resolveDefaultCategory();
-			await createMarkers({
-				exportId: currentExportId,
-				markers: clipboard.map((item) => ({
-					name: item.name,
-					description: item.description,
-					// The copied category may belong to another project
-					categoryId: categoryIds.has(item.categoryId) ? item.categoryId : fallbackCategoryId,
-					frame: Math.max(0, currentFrame + item.offset),
-					responses: item.responses,
-				})),
+			const { categoryId: fallbackCategoryId } = await resolveDefaultCategory();
+			const { skipped } = await pasteMarkersRemote({
+				...clipboard,
+				targetExportId: currentExportId,
+				anchorFrame: Math.max(0, currentFrame),
+				fallbackCategoryId,
 			});
+
+			if (clipboard.mode === "cut") clearMarkerClipboard();
+			if (skipped > 0) alert(`${skipped} marker(s) no longer exist and were skipped.`);
+		} catch (e) {
+			alert(`Could not paste markers: ${(e as Error).message}`);
 		} finally {
 			pasting = false;
 		}
@@ -265,7 +277,7 @@
 		if (!event.metaKey || event.altKey || event.shiftKey) return;
 		if (event.key !== "v" && event.key !== "V") return;
 		if (isTypingTarget(event)) return;
-		if (readMarkerClipboard().length === 0) return;
+		if (!readMarkerClipboard()) return;
 
 		event.preventDefault();
 		void pasteMarkers();
@@ -313,7 +325,6 @@
 		if (!Number.isInteger(frame) || frame < 0 || frame === marker.frame) return;
 		await updateMarker({
 			id: marker.id,
-			exportId: marker.exportId,
 			name: marker.name ?? "",
 			description: marker.description ?? "",
 			categoryId: marker.categoryId,

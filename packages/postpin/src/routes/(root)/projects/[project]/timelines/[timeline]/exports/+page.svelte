@@ -129,18 +129,22 @@
 				Copy link
 			</button>
 		</li>
-		<li class="mt-1 border-t border-base-300 pt-1">
-			<button type="button" onclick={() => renameExport(singleExport)}>
-				<Pencil class="size-4" />
-				Rename export
-			</button>
-		</li>
-		<li>
-			<button type="button" class="text-error" onclick={() => deleteExport(singleExport)}>
-				<Trash2 class="size-4" />
-				Delete export
-			</button>
-		</li>
+		{#if singleExport.canRename}
+			<li class="mt-1 border-t border-base-300 pt-1">
+				<button type="button" onclick={() => renameExport(singleExport)}>
+					<Pencil class="size-4" />
+					Rename export
+				</button>
+			</li>
+		{/if}
+		{#if singleExport.canDelete}
+			<li class:mt-1={!singleExport.canRename} class:border-t={!singleExport.canRename}>
+				<button type="button" class="text-error" onclick={() => deleteExport(singleExport)}>
+					<Trash2 class="size-4" />
+					Delete export
+				</button>
+			</li>
+		{/if}
 	</ul>
 {/snippet}
 

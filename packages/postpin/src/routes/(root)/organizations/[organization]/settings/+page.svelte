@@ -2,9 +2,8 @@
 	import { untrack } from "svelte";
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
-	import { authClient } from "#lib/auth-client.ts";
 	import { availableOrganizationSlug, slugify } from "#lib/slug.ts";
-	import { getOrganizationSettings } from "./settings.remote.ts";
+	import { getOrganizationSettings, renameOrganization } from "./settings.remote.ts";
 
 	type Message = { type: "success" | "error"; text: string } | null;
 
@@ -37,11 +36,7 @@
 		message = null;
 		try {
 			const slug = await availableOrganizationSlug(trimmed, organization.slug);
-			const { error } = await authClient.organization.update({
-				organizationId: organization.id,
-				data: { name: trimmed, slug },
-			});
-			if (error) throw new Error(error.message ?? "Could not rename the organization.");
+			await renameOrganization({ organizationId: organization.id, name: trimmed, slug });
 
 			if (slug !== organization.slug) {
 				await goto(`/organizations/${slug}/settings`, { replaceState: true });
@@ -50,7 +45,8 @@
 			}
 			message = { type: "success", text: "Name updated." };
 		} catch (e) {
-			message = { type: "error", text: (e as Error).message };
+			const body = (e as { body?: { message?: string } }).body;
+			message = { type: "error", text: body?.message ?? (e as Error).message };
 		} finally {
 			saving = false;
 		}
@@ -93,17 +89,22 @@
 				type="text"
 				class="input join-item w-full input-sm"
 				bind:value={name}
-				onkeydown={(e) => e.key === "Enter" && saveName()}
-				disabled={saving}
+				onkeydown={(e) => e.key === "Enter" && organization.canRename && saveName()}
+				disabled={saving || !organization.canRename}
 			/>
-			<button
-				class="btn join-item btn-primary btn-sm"
-				onclick={saveName}
-				disabled={saving || !name.trim() || name.trim() === organization.name}
-			>
-				Save
-				{#if saving}<span class="loading loading-xs loading-spinner"></span>{/if}
-			</button>
+			{#if organization.canRename}
+				<button
+					class="btn join-item btn-primary btn-sm"
+					onclick={saveName}
+					disabled={saving || !name.trim() || name.trim() === organization.name}
+				>
+					Save
+					{#if saving}<span class="loading loading-xs loading-spinner"></span>{/if}
+				</button>
+			{/if}
 		</div>
+		{#if !organization.canRename}
+			<p class="label">Only owners can rename the organization.</p>
+		{/if}
 	</fieldset>
 </div>

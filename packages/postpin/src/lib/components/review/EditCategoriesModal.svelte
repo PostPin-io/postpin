@@ -68,6 +68,7 @@
 	}
 
 	async function removeCategory(id: string) {
+		if (!categories.find((c) => c.id === id)?.canDelete) return;
 		deleteError = "";
 		const usage = await getCategoryUsage(id);
 
@@ -118,8 +119,12 @@
 		newCategoryName = "";
 	}
 	async function renameCategoryHandler(id: string, name: string) {
-		if (name.trim() === "") return;
-		await renameCategory({ id, name: name.trim() });
+		const category = categories.find((c) => c.id === id);
+		if (!category?.canUpdate) return;
+		const trimmedName = name.trim();
+		if (trimmedName === category.name) return;
+		if (trimmedName === "") return;
+		await renameCategory({ id, name: trimmedName });
 		await getCategories(projectId).refresh();
 	}
 </script>
@@ -152,6 +157,7 @@
 							type="text"
 							class="input input-sm"
 							bind:value={category.name}
+							readonly={!category.canUpdate}
 							onblur={() => {
 								renameCategoryHandler(category.id, category.name);
 								isRenaming = null;
@@ -173,24 +179,28 @@
 					{/if}
 					{#if isRenaming !== category.id}
 						<span class="truncate">{category.name}</span>
-						<button
-							type="button"
-							class="btn btn-square btn-ghost btn-sm"
-							aria-label="Delete category"
-							onclick={() => removeCategory(category.id)}
-						>
-							<Trash class="size-[1.1em]" />
-						</button>
-						<button
-							type="button"
-							class="btn btn-square btn-ghost btn-sm"
-							title="rename category"
-							onclick={() => {
-								isRenaming = category.id;
-							}}
-						>
-							<Pencil class="size-[1.1em]" />
-						</button>
+						{#if category.canDelete}
+							<button
+								type="button"
+								class="btn btn-square btn-ghost btn-sm"
+								aria-label="Delete category"
+								onclick={() => removeCategory(category.id)}
+							>
+								<Trash class="size-[1.1em]" />
+							</button>
+						{/if}
+						{#if category.canUpdate}
+							<button
+								type="button"
+								class="btn btn-square btn-ghost btn-sm"
+								title="rename category"
+								onclick={() => {
+									isRenaming = category.id;
+								}}
+							>
+								<Pencil class="size-[1.1em]" />
+							</button>
+						{/if}
 					{/if}
 				</li>
 			{:else}
@@ -246,6 +256,7 @@
 		style="anchor-name: --category-anchor-{category.id}"
 		style:background-color={category.color}
 		aria-label="Choose category color"
+		disabled={!category.canUpdate}
 	></button>
 
 	<ul

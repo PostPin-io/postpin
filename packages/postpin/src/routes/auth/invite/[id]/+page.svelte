@@ -2,7 +2,8 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { authClient } from "#lib/auth-client.ts";
-	import { getInvitationPreview } from "./invite.remote.ts";
+	import { acceptInvitation, getInvitationPreview } from "./invite.remote.ts";
+	import { roleLabel } from "#lib/roles.ts";
 
 	const id = page.params.id!;
 	const invite = $derived(await getInvitationPreview(id));
@@ -16,13 +17,15 @@
 	async function accept() {
 		busy = "accept";
 		errorMessage = null;
-		const { data, error } = await authClient.organization.acceptInvitation({ invitationId: id });
-		if (error) {
-			errorMessage = error.message ?? "Could not accept the invitation.";
+		try {
+			// also sets the active organization
+			await acceptInvitation(id);
+		} catch (e) {
+			errorMessage =
+				(e as { body?: { message?: string } }).body?.message ?? "Could not accept the invitation.";
 			busy = null;
 			return;
 		}
-		await authClient.organization.setActive({ organizationId: data.invitation.organizationId });
 		authClient.$store.notify("$listOrg");
 		authClient.$store.notify("$sessionSignal");
 		await goto("/dashboard", { invalidateAll: true });
@@ -63,7 +66,7 @@
 	<header class="space-y-2 text-center">
 		<h1 class="text-3xl font-bold">Join {invite.organizationName}</h1>
 		<p class="text-base-content/70">
-			You've been invited to join as <span class="font-medium">{invite.role}</span>.
+			You've been invited to join as <span class="font-medium">{roleLabel(invite.role)}</span>.
 		</p>
 	</header>
 

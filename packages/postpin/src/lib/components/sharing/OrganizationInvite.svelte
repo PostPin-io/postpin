@@ -1,13 +1,22 @@
 <script lang="ts">
 	import { page } from "$app/state";
 	import { authClient } from "#lib/auth-client.ts";
-	import { INVITE_ROLES, roleAllows, type InviteRole } from "#lib/roles.ts";
+
+	import {
+		INVITE_ROLES,
+		ROLE_LABELS,
+		canInviteAs,
+		isOrgWide,
+		toRole,
+		type InviteRole,
+	} from "#lib/roles.ts";
+	import { Role } from "@postpin-io/shared/db/enums";
 	import {
 		getInviteLinks,
+		inviteMember as inviteMemberCommand,
 		resetInviteLink,
 		setInviteLinkEnabled,
 	} from "../../../routes/(root)/organizations/[organization]/members/members.remote";
-	import type { Role } from "@postpin-io/shared/db/enums";
 
 	interface Props {
 		organizationId: string;
@@ -16,30 +25,32 @@
 	let { organizationId }: Props = $props();
 
 	const activeMember = authClient.useActiveMember();
-	const canManage = $derived(
-		$activeMember.data
-			? roleAllows($activeMember.data.role, "organization", "updateSettings")
-			: false,
-	);
-	const inviteLinks = $derived(canManage ? await getInviteLinks(organizationId) : []);
+	const activeRole = $derived(toRole($activeMember.data?.role));
+
+	const canInviteToOrg = $derived(activeRole ? isOrgWide(activeRole) : false);
+	const inviteLinks = $derived(canInviteToOrg ? await getInviteLinks(organizationId) : []);
+
+	let inviteRole: InviteRole = $state(Role.MEMBER);
 
 	let inviting = $state(false);
 	let inviteEmail = $state("");
-	let inviteRole: Role = $state("member");
+
 	let inviteSent = $state(false);
 
 	async function inviteMember() {
 		inviting = true;
 		inviteSent = false;
-		const { error } = await authClient.organization.inviteMember({
-			organizationId,
-			email: inviteEmail,
-			role: inviteRole,
-		});
-		inviting = false;
-		if (error) {
-			alert(`Could not invite member: ${error.message}`);
+		try {
+			await inviteMemberCommand({
+				email: inviteEmail,
+				role: inviteRole,
+				target: { type: "organization", id: organizationId },
+			});
+		} catch (e) {
+			alert(`Could not invite member: ${(e as Error).message}`);
 			return;
+		} finally {
+			inviting = false;
 		}
 		inviteEmail = "";
 		inviteSent = true;
@@ -77,40 +88,42 @@
 	}
 </script>
 
-<p class="mt-2 text-sm text-base-content/70">Invite someone to the entire organization.</p>
+{#if canInviteToOrg}
+	<p class="mt-2 text-sm text-base-content/70">Invite someone to the entire organization.</p>
 
-<h4 class="mt-4 font-semibold">Invite by E-Mail</h4>
-<div class="mt-2 flex gap-2">
-	<input
-		type="email"
-		placeholder="name@example.com"
-		class="input-bordered input w-full"
-		bind:value={inviteEmail}
-		oninput={() => (inviteSent = false)}
-	/>
-	<select class="select w-auto capitalize" bind:value={inviteRole} disabled={inviting}>
-		{#each INVITE_ROLES as role (role)}
-			<option value={role}>{role}</option>
-		{/each}
-	</select>
-	<button class="btn btn-primary" onclick={inviteMember} disabled={inviting || !inviteEmail}>
-		Invite
-		{#if inviting}
-			<span class="loading loading-spinner"></span>
-		{/if}
-	</button>
-</div>
-{#if inviteSent}
-	<p class="mt-1 text-sm text-success">Invitation sent.</p>
-{/if}
+	<h4 class="mt-4 font-semibold">Invite by E-Mail</h4>
+	<div class="mt-2 flex gap-2">
+		<input
+			type="email"
+			placeholder="name@example.com"
+			class="input-bordered input w-full"
+			bind:value={inviteEmail}
+			oninput={() => (inviteSent = false)}
+		/>
+		<select class="select w-auto" bind:value={inviteRole} disabled={inviting}>
+			{#each INVITE_ROLES.filter((r) => activeRole && canInviteAs(activeRole, r)) as role (role)}
+				<option value={role}>{ROLE_LABELS[role]}</option>
+			{/each}
+		</select>
 
-{#if canManage}
+		<button class="btn btn-primary" onclick={inviteMember} disabled={inviting || !inviteEmail}>
+			Invite
+			{#if inviting}
+				<span class="loading loading-spinner"></span>
+			{/if}
+		</button>
+	</div>
+	{#if inviteSent}
+		<p class="mt-1 text-sm text-success">Invitation sent.</p>
+	{/if}
+
 	<h4 class="mt-4 font-semibold">Invite links</h4>
 	<p class="text-sm text-base-content/70">Anyone with a link can join with that role.</p>
 	<div class="mt-2 flex flex-col gap-2">
 		{#each inviteLinks as link (link.role)}
 			<div class="flex items-center gap-2">
-				<span class="w-20 capitalize">{link.role}</span>
+				<span class="w-20">{ROLE_LABELS[link.role]}</span>
+
 				<input
 					type="checkbox"
 					class="toggle toggle-sm"
@@ -142,4 +155,8 @@
 			</div>
 		{/each}
 	</div>
+{:else}
+	<p class="mt-2 text-sm text-base-content/70">
+		Only admins and owners can invite people to the entire organization.
+	</p>
 {/if}

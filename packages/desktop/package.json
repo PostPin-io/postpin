@@ -9,7 +9,7 @@
 		"poc": "tsx src/adapters/pro-tools/poc.ts",
 		"dev:server": "vite",
 		"dev:electron": "node build.mjs --dev --watch",
-		"dev:app": "wait-on tcp:localhost:5184 file:dist/main.cjs file:dist/preload.cjs && nodemon --watch dist -e cjs --delay 500ms --exec electron .",
+		"dev:app": "node scripts/dev-app.mjs",
 		"dev": "concurrently --kill-others-on-fail \"pnpm run dev:server\" \"pnpm run dev:electron\" \"pnpm run dev:app\"",
 		"build": "node build.mjs && vite build",
 		"check": "svelte-check --tsgo --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json && tsc -p tsconfig.electron.json"

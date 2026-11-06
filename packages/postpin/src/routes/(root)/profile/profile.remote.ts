@@ -3,6 +3,9 @@ import { error } from "@sveltejs/kit";
 import { command, getRequestEvent, query } from "$app/server";
 import * as v from "valibot";
 import { DEVICE_CLIENTS } from "#lib/device-clients.ts";
+import { canLeave } from "#lib/roles.ts";
+import { requireOrgRole } from "#lib/server/org-access.ts";
+import { Role } from "@postpin-io/shared/db";
 
 export const getProfile = query(async () => {
 	const user = await prisma.user.findUnique({
@@ -84,4 +87,21 @@ export const revokeSession = command(v.string(), async (id) => {
 
 	await prisma.session.deleteMany({ where: { id, userId: user.id } });
 	await getSessions().refresh();
+});
+
+/** hooks.server.ts moves the active organization elsewhere on the next request. */
+export const leaveOrganization = command(v.string(), async (organizationId) => {
+	const me = await requireOrgRole(organizationId, Role.REVIEWER);
+
+	// Serializable: two owners leaving at once must not leave the org without an owner
+	await prisma.$transaction(
+		async (tx) => {
+			const ownerCount = await tx.member.count({ where: { organizationId, role: Role.OWNER } });
+			if (!canLeave(me.role, ownerCount)) {
+				error(400, "The last owner can't leave. Make someone else owner first.");
+			}
+			await tx.member.delete({ where: { id: me.id } }); // grants cascade
+		},
+		{ isolationLevel: "Serializable" },
+	);
 });

@@ -2,12 +2,19 @@ import { prisma } from "#lib/server/database.ts";
 import { command, query } from "$app/server";
 import { Prisma } from "@postpin-io/shared/db";
 import { error } from "@sveltejs/kit";
-import { accessibleExports, authorize, authorizeMarkers } from "#lib/server/org-access.ts";
+import {
+	accessChecker,
+	accessibleExports,
+	authorize,
+	authorizeMarkers,
+} from "#lib/server/org-access.ts";
 import { can } from "#lib/roles.ts";
 
 import * as v from "valibot";
 
 const MAX_BULK = 500;
+
+const authorSelect = { select: { id: true, name: true, image: true } } as const;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -17,23 +24,60 @@ async function assertCategoriesInProject(categoryIds: string[], projectId: strin
 	const count = await prisma.category.count({ where: { id: { in: unique }, projectId } });
 	if (count !== unique.length) error(404, "Not found");
 }
+/**
+ * Same project → keep the category.
+ * Other project → category with the same name there, else the fallback.
+ */
+async function mapCategories(
+	markers: { categoryId: string; category: { name: string; projectId: string } }[],
+	targetProjectId: string,
+	fallbackCategoryId: string,
+) {
+	const foreignNames = [
+		...new Set(
+			markers.filter((m) => m.category.projectId !== targetProjectId).map((m) => m.category.name),
+		),
+	];
+	const byName = new Map(
+		(foreignNames.length
+			? await prisma.category.findMany({
+					where: { projectId: targetProjectId, name: { in: foreignNames } },
+					select: { id: true, name: true },
+				})
+			: []
+		).map((c) => [c.name, c.id]),
+	);
+
+	return (m: (typeof markers)[number]) =>
+		m.category.projectId === targetProjectId
+			? m.categoryId
+			: (byName.get(m.category.name) ?? fallbackCategoryId);
+}
 
 // ─── Marker: Queries ────────────────────────────────────────────────────────
-
 export const getMarkers = query(v.string(), async (exportId: string) => {
-	await authorize("export", "read", { type: "export", id: exportId });
-
-	return await prisma.marker.findMany({
+	const { member, target } = await authorize("export", "read", { type: "export", id: exportId });
+	const allowed = await accessChecker(member);
+	const markers = await prisma.marker.findMany({
 		where: { exportId },
 		orderBy: { frame: "desc" },
 		include: {
-			author: true,
+			author: authorSelect,
 			category: true,
 			responses: {
 				select: { content: true, authorId: true, createdAt: true },
 				orderBy: { createdAt: "asc" },
 			},
 		},
+	});
+
+	return markers.map((m) => {
+		const t = { projectId: target.projectId, timelineId: target.timelineId, ownerId: m.authorId };
+		return {
+			...m,
+			canUpdate: allowed("marker", "update", t),
+			canDelete: allowed("marker", "delete", t),
+		};
 	});
 });
 
@@ -44,7 +88,7 @@ export const getMarkersbyCategory = query(v.string(), async (categoryId: string)
 		where: { categoryId, export: accessibleExports(member) },
 		orderBy: { frame: "desc" },
 		include: {
-			author: true,
+			author: authorSelect,
 			category: true,
 		},
 	});
@@ -52,11 +96,96 @@ export const getMarkersbyCategory = query(v.string(), async (categoryId: string)
 
 // ─── Marker: Commands ───────────────────────────────────────────────────────
 
+export const pasteMarkers = command(
+	v.object({
+		sourceExportId: v.string(),
+		markerIds: v.pipe(v.array(v.string()), v.minLength(1), v.maxLength(MAX_BULK)),
+		targetExportId: v.string(),
+		/** Frame where the earliest pasted marker lands (playhead) */
+		anchorFrame: v.pipe(v.number(), v.integer(), v.minValue(0)),
+		/** Category for markers whose category doesn't exist in the target project */
+		fallbackCategoryId: v.string(),
+		mode: v.picklist(["copy", "cut"]),
+	}),
+	async (data) => {
+		// 1. Rechte: Quelle lesen, Ziel beschreiben
+		await authorize("export", "read", { type: "export", id: data.sourceExportId });
+		const { user, target } = await authorize("marker", "create", {
+			type: "export",
+			id: data.targetExportId,
+		});
+		await assertCategoriesInProject([data.fallbackCategoryId], target.projectId);
+
+		// 2. Quelle aus der DB laden – Inhalte kommen NIE vom Client
+		const source = await prisma.marker.findMany({
+			where: { id: { in: data.markerIds }, exportId: data.sourceExportId },
+			include: {
+				responses: { select: { content: true, authorId: true, createdAt: true } },
+				category: { select: { name: true, projectId: true } },
+			},
+		});
+		// Schon gelöschte Marker im Clipboard werden übersprungen, nicht als Fehler gewertet
+		if (source.length === 0) error(404, "Nothing to paste");
+
+		// 3. Bei "cut" muss der User die Quell-Marker löschen dürfen (Reviewer: nur eigene)
+		if (data.mode === "cut") {
+			await authorizeMarkers(
+				"delete",
+				data.sourceExportId,
+				source.map((m) => m.id),
+			);
+		}
+
+		// 4. Kategorien zuordnen (siehe Schritt 3)
+		const categoryOf = await mapCategories(source, target.projectId!, data.fallbackCategoryId);
+
+		// 5. Anlegen (+ bei "cut" Quelle löschen) in EINER Transaktion
+		const minFrame = Math.min(...source.map((m) => m.frame));
+		await prisma.$transaction(async (tx) => {
+			for (const m of source) {
+				await tx.marker.create({
+					data: {
+						name: m.name,
+						description: m.description,
+						frame: data.anchorFrame + (m.frame - minFrame),
+						exportId: data.targetExportId,
+						categoryId: categoryOf(m),
+						// cut = verschieben → Autor bleibt; copy = neuer Marker → wer einfügt
+						authorId: data.mode === "cut" ? m.authorId : user.id,
+						// nleId bewusst NICHT kopieren: unique pro Export, gehört zum NLE-Original
+						responses: {
+							create: m.responses.map((r) => ({
+								content: r.content,
+								authorId: r.authorId,
+								createdAt: r.createdAt,
+							})),
+						},
+					},
+				});
+			}
+			if (data.mode === "cut") {
+				await tx.marker.deleteMany({
+					where: { id: { in: source.map((m) => m.id) }, exportId: data.sourceExportId },
+				});
+			}
+		});
+
+		// 6. Refresh
+		await Promise.all([
+			getMarkers(data.targetExportId).refresh(),
+			...(data.mode === "cut" && data.sourceExportId !== data.targetExportId
+				? [getMarkers(data.sourceExportId).refresh()]
+				: []),
+		]);
+
+		return { count: source.length, skipped: new Set(data.markerIds).size - source.length };
+	},
+);
 export const createMarker = command(
 	v.object({
 		name: v.string(),
 		description: v.string(),
-		frame: v.number(),
+		frame: v.pipe(v.number(), v.integer(), v.minValue(0)),
 		exportId: v.string(),
 		categoryId: v.string(),
 	}),
@@ -83,86 +212,12 @@ export const createMarker = command(
 	},
 );
 
-export const createMarkers = command(
-	v.object({
-		exportId: v.string(),
-		markers: v.pipe(
-			v.array(
-				v.object({
-					name: v.string(),
-					description: v.string(),
-					frame: v.pipe(v.number(), v.integer(), v.minValue(0)),
-					categoryId: v.string(),
-					responses: v.optional(
-						v.array(
-							v.object({
-								content: v.string(),
-								authorId: v.string(),
-								createdAt: v.string(),
-							}),
-						),
-					),
-				}),
-			),
-			v.minLength(1),
-			v.maxLength(MAX_BULK),
-		),
-	}),
-	async (data) => {
-		const { user, target } = await authorize("marker", "create", {
-			type: "export",
-			id: data.exportId,
-		});
-
-		await assertCategoriesInProject(
-			data.markers.map((m) => m.categoryId),
-			target.projectId,
-		);
-
-		const responseAuthorIds = [
-			...new Set(data.markers.flatMap((m) => (m.responses ?? []).map((r) => r.authorId))),
-		];
-		if (responseAuthorIds.length > 0) {
-			const known = await prisma.member.count({
-				where: { organizationId: target.organizationId, userId: { in: responseAuthorIds } },
-			});
-			if (known !== responseAuthorIds.length) error(400, "Unknown response author");
-		}
-
-		// createMany cannot create nested responses, so create each marker individually
-		const created = await prisma.$transaction(
-			data.markers.map((marker) =>
-				prisma.marker.create({
-					data: {
-						name: marker.name,
-						description: marker.description,
-						frame: marker.frame,
-						categoryId: marker.categoryId,
-						exportId: data.exportId,
-						authorId: user.id,
-						responses: {
-							create: (marker.responses ?? []).map((response) => ({
-								content: response.content,
-								authorId: response.authorId,
-								createdAt: new Date(response.createdAt),
-							})),
-						},
-					},
-					select: { id: true },
-				}),
-			),
-		);
-		await getMarkers(data.exportId).refresh();
-		return { count: created.length };
-	},
-);
-
 export const updateMarker = command(
 	v.object({
 		id: v.string(),
 		name: v.string(),
 		description: v.string(),
-		frame: v.number(),
+		frame: v.pipe(v.number(), v.integer(), v.minValue(0)),
 		categoryId: v.string(),
 	}),
 	async (data) => {
@@ -296,7 +351,7 @@ export const getResponses = query(v.string(), async (markerId: string) => {
 	return await prisma.response.findMany({
 		where: { markerId },
 		orderBy: { createdAt: "asc" },
-		include: { author: true },
+		include: { author: authorSelect },
 	});
 });
 
@@ -326,11 +381,20 @@ export const createResponse = command(
 // ─── Categories ─────────────────────────────────────────────────────────────
 
 export const getCategories = query(v.string(), async (projectId: string) => {
-	await authorize("project", "read", { type: "project", id: projectId });
-
-	return await prisma.category.findMany({
+	const { member } = await authorize("project", "read", { type: "project", id: projectId });
+	const allowed = await accessChecker(member);
+	const categories = await prisma.category.findMany({
 		where: { projectId },
 		orderBy: { name: "asc" },
+	});
+
+	return categories.map((c) => {
+		const t = { projectId, ownerId: c.createdById, loose: true };
+		return {
+			...c,
+			canUpdate: allowed("category", "update", t),
+			canDelete: allowed("category", "delete", t),
+		};
 	});
 });
 
@@ -340,22 +404,30 @@ export const createCategory = command(
 		color: v.string(),
 		projectId: v.string(),
 	}),
+
 	async (data) => {
 		const { user } = await authorize("category", "create", {
 			type: "project",
 			id: data.projectId,
 		});
 
-		const category = await prisma.category.create({
-			data: {
-				name: data.name,
-				color: data.color,
-				projectId: data.projectId,
-				createdById: user.id,
-			},
-		});
-		await getCategories(data.projectId).refresh();
-		return category;
+		try {
+			const category = await prisma.category.create({
+				data: {
+					name: data.name,
+					color: data.color,
+					projectId: data.projectId,
+					createdById: user.id,
+				},
+			});
+			await getCategories(data.projectId).refresh();
+			return category;
+		} catch (e) {
+			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+				error(409, `Category "${data.name}" already exists`);
+			}
+			throw e;
+		}
 	},
 );
 

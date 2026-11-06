@@ -1,10 +1,9 @@
 import { prisma } from "#lib/server/database.ts";
-import { s3Client } from "#lib/server/storage.ts";
 import { authorize } from "#lib/server/org-access.ts";
 import { getRequestEvent, command } from "$app/server";
 import * as v from "valibot";
-import { S3_BUCKET } from "$app/env/private";
 import { deleteMediaFiles } from "#lib/server/media.ts";
+import { isOrgWide } from "#lib/roles.ts";
 
 export const createProject = command(
 	v.object({
@@ -13,13 +12,19 @@ export const createProject = command(
 	async (data) => {
 		const event = getRequestEvent();
 		const organizationId = event.locals.session!.activeOrganizationId!;
-		await authorize("project", "create", { type: "organization", id: organizationId });
+		const { member } = await authorize("project", "create", {
+			type: "organization",
+			id: organizationId,
+		});
 
 		await prisma.project.create({
 			data: {
 				name: data.name,
 				creatorId: event.locals.user!.id,
 				organizationId,
+				...(!isOrgWide(member.role) && {
+					memberGrants: { create: { memberId: member.id, createdById: event.locals.user!.id } },
+				}),
 			},
 		});
 	},

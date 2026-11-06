@@ -37,7 +37,7 @@
 	let renameProjectDialog: RenameProjectModal | null = null;
 	let delProjectDialog: DeleteProjectModal | null = null;
 
-	let projects = $derived(await getProjects());
+	let data = $derived(await getProjects());
 
 	function sortBy(field: typeof sortField) {
 		if (sortField == field) {
@@ -47,16 +47,16 @@
 		}
 	}
 
-	function closeMenu(project: (typeof projects)[number]) {
+	function closeMenu(project: (typeof data.projects)[number]) {
 		document.getElementById(`project-menu-${project.id}`)?.hidePopover();
 	}
 
-	function renameProject(project: (typeof projects)[number]) {
+	function renameProject(project: (typeof data.projects)[number]) {
 		closeMenu(project);
 		renameProjectDialog?.open(project);
 	}
 
-	function deleteProject(project: (typeof projects)[number]) {
+	function deleteProject(project: (typeof data.projects)[number]) {
 		closeMenu(project);
 		delProjectDialog?.open(project);
 	}
@@ -94,7 +94,7 @@
 	Nutzt das Popover-API von daisyUI 5: Das Menü liegt im Top-Layer des Browsers
 	und wird deshalb nicht von overflow-Containern (Tabelle, Card) abgeschnitten.
 -->
-{#snippet actionsMenu(project: (typeof projects)[number], projectHref: string)}
+{#snippet actionsMenu(project: (typeof data.projects)[number], projectHref: string)}
 	<button
 		type="button"
 		class="btn badge shrink-0 badge-ghost"
@@ -117,19 +117,22 @@
 				Open project
 			</a>
 		</li>
-		<li>
-			<button type="button" onclick={() => renameProject(project)}>
-				<Pencil class="size-4" />
-				Rename project
-			</button>
-		</li>
-
-		<li class="mt-1 border-t border-base-300 pt-1">
-			<button type="button" class="text-error" onclick={() => deleteProject(project)}>
-				<Trash class="size-4" />
-				Delete project
-			</button>
-		</li>
+		{#if project.canRename}
+			<li>
+				<button type="button" onclick={() => renameProject(project)}>
+					<Pencil class="size-4" />
+					Rename project
+				</button>
+			</li>
+		{/if}
+		{#if project.canDelete}
+			<li class="mt-1 border-t border-base-300 pt-1">
+				<button type="button" class="text-error" onclick={() => deleteProject(project)}>
+					<Trash class="size-4" />
+					Delete project
+				</button>
+			</li>
+		{/if}
 	</ul>
 {/snippet}
 
@@ -187,13 +190,15 @@
 		<header class="flex justify-between border-b border-base-300 pb-4">
 			<div class="flex gap-2">
 				<h1 class="text-2xl font-bold">Your Projects</h1>
-				<button
-					class="btn rounded-full btn-sm"
-					aria-label="New project"
-					onclick={() => projectDialog?.open()}
-				>
-					<Plus />
-				</button>
+				{#if data.canCreate}
+					<button
+						class="btn rounded-full btn-sm"
+						aria-label="New project"
+						onclick={() => projectDialog?.open()}
+					>
+						<Plus />
+					</button>
+				{/if}
 			</div>
 
 			<div class="flex flex-wrap items-baseline gap-3">
@@ -277,7 +282,7 @@
 
 		{@const query = searchQuery.trim().toLowerCase()}
 		{@const emptyMessage = query ? "No projects match your search." : "No projects yet."}
-		{@const sortedProjects = projects
+		{@const sortedProjects = data.projects
 			.filter((project) => project.name.toLowerCase().includes(query))
 			.sort((a, b) => {
 				const comparison =

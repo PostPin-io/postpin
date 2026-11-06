@@ -9,6 +9,7 @@ import {
 	roleAllows,
 } from "#lib/roles.ts";
 import { prisma } from "#lib/server/database.ts";
+import { INVITATION_TTL_MS, sendInvitationEmail } from "#lib/server/invitations.ts";
 import { authorize, requireOrgRole } from "#lib/server/org-access.ts";
 import { command, query } from "$app/server";
 import { Role } from "@postpin-io/shared/db";
@@ -83,6 +84,7 @@ export const getOrg = query(v.string(), async (slug) => {
 		name: org.name,
 		slug: org.slug,
 		myRole: me.role,
+		myMemberId: me.id,
 		canManageInviteLinks: roleAllows(me.role, "inviteLink", "read") && orgWide,
 		canSeeInvitations,
 		/** The e-mail form creates org-level invitations, which need an org-wide role */
@@ -92,6 +94,7 @@ export const getOrg = query(v.string(), async (slug) => {
 			...m,
 			/** Roles `me` may set on this member, including the current one if allowed at all */
 			assignableRoles: ORG_ROLES.filter((r) => canChangeRole(me.role, m.role, r, ownerCount)),
+			canViewGrants: !isOrgWide(m.role),
 		})),
 		invitations: invitations.map(({ timeline, ...i }) => {
 			const ctx = { isOwn: i.inviterId === me.userId, hasGrant: hasGrantOn({ ...i, timeline }) };
@@ -99,8 +102,8 @@ export const getOrg = query(v.string(), async (slug) => {
 				...i,
 				canUpdate: can(me.role, "invitation", "update", ctx) && canInviteAs(me.role, i.role),
 				canDelete: can(me.role, "invitation", "delete", ctx),
-				/** Resending goes through better-auth, which only lets org-wide roles invite */
-				canResend: orgWide && canInviteAs(me.role, i.role),
+				/** Same rule as resendInvitation */
+				canResend: can(me.role, "invitation", "update", ctx) && canInviteAs(me.role, i.role),
 			};
 		}),
 	};
@@ -194,3 +197,96 @@ export const resetInviteLink = command(
 		await getInviteLinks(organizationId).refresh();
 	},
 );
+
+export const changeMemberRole = command(
+	v.object({ memberId: v.string(), role: v.picklist(ORG_ROLES) }),
+	async ({ memberId, role }) => {
+		const { member: me } = await authorize("member", "updateRole", {
+			type: "member",
+			id: memberId,
+		});
+
+		// Isolation Type Serializable: two owners demoting each other at the same time must not leave zero owners
+		await prisma.$transaction(
+			async (tx) => {
+				const target = await tx.member.findUniqueOrThrow({ where: { id: memberId } });
+				const ownerCount = await tx.member.count({
+					where: { organizationId: target.organizationId, role: Role.OWNER },
+				});
+				if (!canChangeRole(me.role, target.role, role, ownerCount)) error(403, "Not allowed");
+				await tx.member.update({ where: { id: memberId }, data: { role } });
+			},
+			{ isolationLevel: "Serializable" },
+		);
+	},
+);
+const InviteTarget = v.variant("type", [
+	v.object({ type: v.literal("organization"), id: v.string() }),
+	v.object({ type: v.literal("project"), id: v.string() }),
+	v.object({ type: v.literal("timeline"), id: v.string() }),
+]);
+
+export const inviteMember = command(
+	v.object({
+		email: v.pipe(v.string(), v.trim(), v.toLowerCase(), v.email()),
+		role: v.picklist(INVITE_ROLES),
+		target: InviteTarget,
+	}),
+	async ({ email, role, target }) => {
+		const { user, member: me, target: resolved } = await authorize("invitation", "create", target);
+		if (!canInviteAs(me.role, role)) error(403, "Not allowed");
+
+		const alreadyMember = await prisma.member.count({
+			where: { organizationId: resolved.organizationId, user: { email } },
+		});
+		// existing members get access via a grant, not an invitation
+		if (alreadyMember) error(409, "Already a member of this organization");
+
+		const where = {
+			organizationId: resolved.organizationId,
+			email,
+			status: "pending",
+			projectId: target.type === "project" ? target.id : null,
+			timelineId: target.type === "timeline" ? target.id : null,
+		};
+		const expiresAt = new Date(Date.now() + INVITATION_TTL_MS);
+
+		// same target again = refresh the pending invite instead of a duplicate
+		const existing = await prisma.invitation.findFirst({ where });
+		const invitation = existing
+			? await prisma.invitation.update({
+					where: { id: existing.id },
+					data: { role, expiresAt, inviterId: user.id },
+				})
+			: await prisma.invitation.create({
+					data: { ...where, role, expiresAt, inviterId: user.id },
+				});
+
+		const org = await prisma.organization.findUniqueOrThrow({
+			where: { id: resolved.organizationId },
+		});
+		await sendInvitationEmail(invitation, org.name, user.name);
+		await getOrg(org.slug).refresh();
+	},
+);
+
+/** Sends the e-mail again and restarts the expiry, also for already expired invitations. */
+export const resendInvitation = command(v.string(), async (invitationId) => {
+	const { user, member: me } = await authorize("invitation", "update", {
+		type: "invitation",
+		id: invitationId,
+	});
+	const invitation = await prisma.invitation.findUniqueOrThrow({
+		where: { id: invitationId },
+		include: { organization: { select: { name: true, slug: true } } },
+	});
+	if (invitation.status !== "pending") error(400, "Invitation is not pending");
+	if (!canInviteAs(me.role, invitation.role)) error(403, "Not allowed");
+
+	await prisma.invitation.update({
+		where: { id: invitationId },
+		data: { expiresAt: new Date(Date.now() + INVITATION_TTL_MS) },
+	});
+	await sendInvitationEmail(invitation, invitation.organization.name, user.name);
+	await getOrg(invitation.organization.slug).refresh();
+});

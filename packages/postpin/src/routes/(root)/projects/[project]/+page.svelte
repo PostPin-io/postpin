@@ -33,7 +33,7 @@
 	let renameTimelineDialog: RenameTimelineModal | null = null;
 	let timelineDialog: NewTimelineModal | null = null;
 
-	let timelines = $derived(await getTimelines(page.params.project || ""));
+	let data = $derived(await getTimelines(page.params.project || ""));
 
 	function sortBy(field: typeof sortField) {
 		if (sortField == field) {
@@ -43,7 +43,7 @@
 		}
 	}
 
-	function exportLinks(timeline: (typeof timelines)[number]) {
+	function exportLinks(timeline: (typeof data.timelines)[number]) {
 		const latest = timeline.exports[0];
 		const base = `/projects/${page.params.project}/timelines/${timeline.id}/exports`;
 		return {
@@ -53,16 +53,16 @@
 		};
 	}
 
-	function closeMenu(timeline: (typeof timelines)[number]) {
+	function closeMenu(timeline: (typeof data.timelines)[number]) {
 		document.getElementById(`timeline-menu-${timeline.id}`)?.hidePopover();
 	}
 
-	function renameTimeline(timeline: (typeof timelines)[number]) {
+	function renameTimeline(timeline: (typeof data.timelines)[number]) {
 		closeMenu(timeline);
 		renameTimelineDialog?.open(timeline);
 	}
 
-	function deleteTimeline(timeline: (typeof timelines)[number]) {
+	function deleteTimeline(timeline: (typeof data.timelines)[number]) {
 		closeMenu(timeline);
 		delTimelineDialog?.open(timeline);
 	}
@@ -96,7 +96,7 @@
 </script>
 
 {#snippet actionsMenu(
-	timeline: (typeof timelines)[number],
+	timeline: (typeof data.timelines)[number],
 	exportHref: string | null,
 	exportListHref: string | null,
 )}
@@ -133,18 +133,23 @@
 			<li class="menu-disabled"><span>No exports yet</span></li>
 		{/if}
 
-		<li class="mt-1 border-t border-base-300 pt-1">
-			<button type="button" onclick={() => renameTimeline(timeline)}>
-				<Pencil class="size-4" />
-				Rename timeline
-			</button>
-		</li>
-		<li>
-			<button type="button" class="text-error" onclick={() => deleteTimeline(timeline)}>
-				<Trash class="size-4" />
-				Delete timeline
-			</button>
-		</li>
+		{#if timeline.canRename}
+			<li>
+				<button type="button" onclick={() => renameTimeline(timeline)}>
+					<Pencil class="size-4" />
+					Rename timeline
+				</button>
+			</li>
+		{/if}
+
+		{#if timeline.canDelete}
+			<li>
+				<button type="button" class="text-error" onclick={() => deleteTimeline(timeline)}>
+					<Trash class="size-4" />
+					Delete timeline
+				</button>
+			</li>
+		{/if}
 	</ul>
 {/snippet}
 
@@ -177,13 +182,15 @@
 		<header class="flex justify-between border-b border-base-300 pb-4">
 			<div class="flex gap-2">
 				<h1 class="text-2xl font-bold">Your Timelines</h1>
-				<button
-					class="btn rounded-full btn-sm"
-					aria-label="New timeline"
-					onclick={() => timelineDialog?.open()}
-				>
-					<Plus />
-				</button>
+				{#if data.canCreate}
+					<button
+						class="btn rounded-full btn-sm"
+						aria-label="New timeline"
+						onclick={() => timelineDialog?.open()}
+					>
+						<Plus />
+					</button>
+				{/if}
 			</div>
 
 			<div class="flex flex-wrap items-baseline gap-3">
@@ -268,7 +275,7 @@
 
 		{@const query = searchQuery.trim().toLowerCase()}
 		{@const emptyMessage = query ? "No timelines match your search." : "No timelines yet."}
-		{@const sortedTimelines = timelines
+		{@const sortedTimelines = data.timelines
 			.filter((item) => item.name.toLowerCase().includes(query))
 			.sort((a, b) => {
 				const comparison =

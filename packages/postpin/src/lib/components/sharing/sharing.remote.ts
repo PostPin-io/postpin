@@ -2,6 +2,7 @@ import { error } from "@sveltejs/kit";
 import { getRequestEvent, query } from "$app/server";
 import { prisma } from "#lib/server/database.ts";
 import * as v from "valibot";
+import { authorize } from "#lib/server/org-access.ts";
 
 // The most specific id given decides what is being shared: export, then timeline, then project
 export const getSharingTarget = query(
@@ -25,6 +26,7 @@ export const getSharingTarget = query(
 				select: { id: true, name: true },
 			});
 			if (!exp) error(404, "Export not found");
+			await authorize("export", "read", { type: "export", id: exportId });
 			return { type: "export" as const, ...exp };
 		}
 
@@ -33,6 +35,7 @@ export const getSharingTarget = query(
 				where: { id: timelineId, projectId, project: projectWhere },
 				select: { id: true, name: true },
 			});
+			await authorize("timeline", "read", { type: "timeline", id: timelineId });
 			if (!timeline) error(404, "Timeline not found");
 			return { type: "timeline" as const, ...timeline };
 		}
@@ -42,6 +45,7 @@ export const getSharingTarget = query(
 			select: { id: true, name: true },
 		});
 		if (!project) error(404, "Project not found");
+		await authorize("project", "read", { type: "project", id: projectId });
 		return { type: "project" as const, ...project };
 	},
 );

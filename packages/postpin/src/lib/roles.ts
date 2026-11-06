@@ -98,9 +98,30 @@ const RANK: Record<Role, number> = {
 	[Role.ADMIN]: 2,
 	[Role.OWNER]: 3,
 };
+/** Display names for roles. Record<Role, …> → a new role without a label is a type error. */
+export const ROLE_LABELS: Record<Role, string> = {
+	[Role.OWNER]: "Owner",
+	[Role.ADMIN]: "Admin",
+	[Role.MEMBER]: "Member",
+	[Role.REVIEWER]: "Reviewer",
+};
+
+/**
+ * Label for any role value, also the plain strings better-auth hands out
+ * (`$activeMember.data.role`, `invite.role`). Unknown values are shown as they are.
+ */
+export const roleLabel = (role: string | null | undefined) =>
+	role ? (ROLE_LABELS[role as Role] ?? role) : "";
 
 /** Highest first */
 export const ORG_ROLES = (Object.keys(RANK) as Role[]).sort((a, b) => RANK[b] - RANK[a]);
+
+/**
+ * better-auth types roles as plain strings. Turns such a value into a `Role`,
+ * or null if it isn't one (e.g. an old lowercase "member").
+ */
+export const toRole = (value: string | null | undefined): Role | null =>
+	ORG_ROLES.includes(value as Role) ? (value as Role) : null;
 
 export const MANAGER_ROLES: Role[] = [Role.OWNER, Role.ADMIN];
 /** These roles act org-wide; all others only below their grants */

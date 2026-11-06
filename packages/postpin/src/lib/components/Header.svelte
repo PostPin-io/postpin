@@ -3,22 +3,32 @@
 	import { page } from "$app/state";
 	import { authClient } from "#lib/auth-client.ts";
 	import { goto, refreshAll } from "$app/navigation";
-	import { hasRoleOrHigher, MANAGER_ROLES } from "#lib/roles.ts";
+
 	import type { Snippet } from "svelte";
 	import Logo from "#lib/components/Logo.svelte";
 	import Share from "@lucide/svelte/icons/share";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
+
+	import { roleAllows, ORG_ROLES } from "#lib/roles.ts";
+	import type { Role } from "@postpin-io/shared/db/enums";
+
 	let sharingSetupModal: SharingSetupModal | null = null;
 	const session = authClient.useSession();
 	const organizations = authClient.useListOrganizations();
 	const activeMember = authClient.useActiveMember();
 
+	const activeRole = $derived.by(() => {
+		const role = $activeMember.data?.role;
+		return ORG_ROLES.includes(role as Role) ? (role as Role) : null;
+	});
+
+	const canEditSettings = $derived(
+		activeRole ? roleAllows(activeRole, "organization", "updateSettings") : false,
+	);
+
 	let activeOrganizationId = $derived($session.data?.session.activeOrganizationId);
 	let activeOrganization = $derived(
 		$organizations.data?.find((org) => org.id === activeOrganizationId),
-	);
-	let canManageThisOrg = $derived(
-		$activeMember.data ? hasRoleOrHigher($activeMember.data.role, MANAGER_ROLES) : false,
 	);
 
 	async function switchOrganization(organizationId: string) {
@@ -100,13 +110,16 @@
 				{/if}
 				PostPin
 			</a>
-			{#if activeOrganization && canManageThisOrg}
+			{#if activeOrganization}
 				<a href={`/organizations/${activeOrganization.slug}/members`} class="btn btn-ghost btn-sm"
 					>Members</a
 				>
-				<a href={`/organizations/${activeOrganization.slug}/settings`} class="btn btn-ghost btn-sm"
-					>Settings</a
-				>
+				{#if canEditSettings}
+					<a
+						href={`/organizations/${activeOrganization.slug}/settings`}
+						class="btn btn-ghost btn-sm">Settings</a
+					>
+				{/if}
 			{/if}
 			<ul class="menu menu-horizontal px-1">
 				{#if page.params.project && page.params.timeline}

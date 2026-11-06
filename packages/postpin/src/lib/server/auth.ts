@@ -11,19 +11,27 @@ import { Role } from "@postpin-io/shared/db";
 import { ac, betterAuthRoles } from "#lib/better-auth-roles.ts";
 
 export const auth = betterAuth({
+	// Org writes go through our own commands (roles.ts + authorize): better-auth's access control
+	// knows neither reviewers, grants nor invite targets. Only HTTP is blocked, auth.api.* still works.
+	disabledPaths: [
+		"/organization/update-member-role",
+		"/organization/invite-member",
+		"/organization/cancel-invitation",
+		"/organization/accept-invitation",
+		"/organization/update",
+		"/organization/leave",
+		"/organization/remove-member",
+		"/organization/delete",
+		// reads that bypass the filtered member list in getOrg
+		"/organization/list-members",
+		"/organization/get-full-organization",
+		"/organization/list-invitations",
+	],
 	database: prismaAdapter(prisma, {
 		provider: "postgresql",
 	}),
 	plugins: [
 		organization({
-			async sendInvitationEmail(data) {
-				const inviteLink = `${BETTER_AUTH_URL}/auth/invite/${data.id}`;
-				await sendEmail(
-					data.email,
-					`You're invited to join ${data.organization.name}`,
-					`You have been invited to join the organization ${data.organization.name} by ${data.inviter.user.name}. Use this link to accept the invitation: ${inviteLink}`,
-				);
-			},
 			creatorRole: Role.OWNER,
 			ac,
 			roles: betterAuthRoles,

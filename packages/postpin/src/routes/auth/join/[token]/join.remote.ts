@@ -1,5 +1,6 @@
 import { auth } from "#lib/server/auth.ts";
 import { prisma } from "#lib/server/database.ts";
+import { joinWithAccess } from "#lib/server/grants.ts";
 import { command, getRequestEvent, query } from "$app/server";
 import { error } from "@sveltejs/kit";
 import * as v from "valibot";
@@ -33,19 +34,17 @@ export const joinViaLink = command(v.string(), async (token) => {
 	const link = await findEnabledLink(token);
 	if (!link) error(404, "This invite link is no longer valid");
 
-	// never change the role of someone who is already a member
-	const existing = await prisma.member.findFirst({
-		where: { organizationId: link.organizationId, userId: signedInUser.id },
-	});
-	if (!existing) {
-		await auth.api.addMember({
-			body: {
-				userId: signedInUser.id,
-				organizationId: link.organizationId,
-				role: link.role,
-			},
-		});
-	}
+	// Existing members keep their role, but a project/timeline link still grants access
+	await prisma.$transaction((tx) =>
+		joinWithAccess(tx, {
+			organizationId: link.organizationId,
+			userId: signedInUser.id,
+			role: link.role,
+			projectId: link.projectId,
+			timelineId: link.timelineId,
+			createdById: link.createdById,
+		}),
+	);
 
 	await auth.api.setActiveOrganization({
 		headers: request.headers,

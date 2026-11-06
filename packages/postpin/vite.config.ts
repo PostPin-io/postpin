@@ -20,4 +20,8 @@ export default defineConfig({
 			inspector: true,
 		}),
 	],
+	server: {
+		// POSTPIN_HOST=0.0.0.0 -> reachable from other devices in the network
+		host: process.env.POSTPIN_HOST,
+	},
 });

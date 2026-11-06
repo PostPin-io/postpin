@@ -2,8 +2,15 @@
 	import { untrack } from "svelte";
 	import { refreshAll } from "$app/navigation";
 	import { authClient } from "#lib/auth-client.ts";
-	import { getMemberships, getProfile, getSessions, revokeSession } from "./profile.remote.ts";
+	import {
+		getMemberships,
+		getProfile,
+		getSessions,
+		leaveOrganization,
+		revokeSession,
+	} from "./profile.remote.ts";
 	import NewOrgModal from "../../../lib/components/NewOrgModal.svelte";
+	import { roleLabel } from "#lib/roles.ts";
 
 	type Message = { type: "success" | "error"; text: string } | null;
 
@@ -119,12 +126,14 @@
 
 		leaving = org.id;
 		orgMessage = null;
-		const { error } = await authClient.organization.leave({ organizationId: org.id });
-		leaving = null;
-
-		if (error) {
-			orgMessage = { type: "error", text: error.message ?? "Could not leave the organization." };
+		try {
+			await leaveOrganization(org.id);
+		} catch (e) {
+			const text = (e as { body?: { message?: string } }).body?.message;
+			orgMessage = { type: "error", text: text ?? "Could not leave the organization." };
 			return;
+		} finally {
+			leaving = null;
 		}
 
 		orgMessage = { type: "success", text: `You left ${org.name}.` };
@@ -349,7 +358,7 @@
 					<div class="flex items-center gap-2 text-sm">
 						<a class="link font-medium link-hover" href={`/organizations/${org.slug}`}>{org.name}</a
 						>
-						<span class="badge badge-ghost badge-sm">{org.role}</span>
+						<span class="badge badge-ghost badge-sm">{roleLabel(org.role)}</span>
 					</div>
 					<button
 						type="button"

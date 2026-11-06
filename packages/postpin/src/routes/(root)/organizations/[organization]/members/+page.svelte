@@ -2,28 +2,37 @@
 	import {
 		cancelInvitation,
 		changeInvitationRole,
+		changeMemberRole,
 		getInviteLinks,
 		getOrg,
+		inviteMember as inviteMemberCommand,
+		resendInvitation,
 		resetInviteLink,
 		setInviteLinkEnabled,
 	} from "./members.remote";
 	import { page } from "$app/state";
-	import { authClient } from "#lib/auth-client.ts";
-	import type { InviteRole } from "#lib/roles.ts";
+	import { ROLE_LABELS, type InviteRole } from "#lib/roles.ts";
+
 	import { Role } from "@postpin-io/shared/db/enums";
+	import MemberGrantsModal from "./MemberGrantsModal.svelte";
+	let grantsModal: MemberGrantsModal | null = null;
 
 	const org = $derived(await getOrg(page.params.organization!));
 
 	let changingRoleOf = $state<string | null>(null);
-	async function changeRole(memberId: string, newRole: string) {
+	async function changeRole(memberId: string, newRole: Role) {
 		changingRoleOf = memberId;
-		const { error } = await authClient.organization.updateMemberRole({
-			organizationId: org.id,
-			memberId,
-			role: newRole,
-		});
-		if (error) {
-			alert(`Could not change role: ${error.message}`);
+		try {
+			await changeMemberRole({ memberId, role: newRole });
+		} catch (e) {
+			alert(`Could not change role: ${(e as Error).message}`);
+			changingRoleOf = null;
+			return;
+		}
+		// Header, menus and useActiveMember still hold the old role
+		if (memberId === org.myMemberId) {
+			location.reload();
+			return;
 		}
 		await getOrg(page.params.organization!).refresh();
 		changingRoleOf = null;
@@ -35,15 +44,16 @@
 
 	async function inviteMember() {
 		inviting = true;
-		const { error } = await authClient.organization.inviteMember({
-			organizationId: org.id,
-			email: inviteEmail,
-			role: inviteRole,
-		});
-		if (error) {
-			alert(`Could not invite member: ${error.message}`);
+		try {
+			await inviteMemberCommand({
+				email: inviteEmail,
+				role: inviteRole,
+				target: { type: "organization", id: org.id },
+			});
+			inviteEmail = "";
+		} catch (e) {
+			alert(`Could not invite member: ${(e as Error).message}`);
 		}
-		await getOrg(page.params.organization!).refresh();
 		inviting = false;
 	}
 	let resendingInviteId: string | null = $state(null);
@@ -61,16 +71,12 @@
 		changingInviteRoleOf = null;
 	}
 
-	async function resendInvite(invite: { id: string; email: string; role: Role }) {
+	async function resendInvite(invite: { id: string }) {
 		resendingInviteId = invite.id;
-		const { error } = await authClient.organization.inviteMember({
-			organizationId: org.id,
-			email: invite.email,
-			role: invite.role,
-			resend: true,
-		});
-		if (error) {
-			alert(`Could not resend invite: ${error.message}`);
+		try {
+			await resendInvitation(invite.id);
+		} catch (e) {
+			alert(`Could not resend invite: ${(e as Error).message}`);
 		}
 		resendingInviteId = null;
 	}
@@ -135,7 +141,7 @@
 		disabled={disabled || options.length < 2}
 	>
 		{#each options as role (role)}
-			<option value={role}>{role.charAt(0).toUpperCase() + role.slice(1)}</option>
+			<option value={role}>{ROLE_LABELS[role]}</option>
 		{/each}
 	</select>
 {/snippet}
@@ -153,6 +159,7 @@
 					<th>Name</th>
 					<th>Email</th>
 					<th>Role</th>
+					<th></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -167,6 +174,16 @@
 								(role) => changeRole(member.id, role),
 								changingRoleOf === member.id,
 							)}
+						</td>
+						<td>
+							{#if member.canViewGrants}
+								<button
+									class="btn btn-ghost btn-xs"
+									onclick={() => grantsModal?.open(member.id, member.user.name)}
+								>
+									Access
+								</button>
+							{/if}
 						</td>
 					</tr>
 				{/each}
@@ -279,7 +296,7 @@
 				<tbody>
 					{#each inviteLinks as link (link.role)}
 						<tr>
-							<td class="capitalize">{link.role}</td>
+							<td class="capitalize">{ROLE_LABELS[link.role]}</td>
 							<td>
 								<input
 									type="checkbox"
@@ -328,3 +345,5 @@
 		</div>
 	{/if}
 </div>
+
+<MemberGrantsModal bind:this={grantsModal} />

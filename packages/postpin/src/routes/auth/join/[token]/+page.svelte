@@ -3,6 +3,7 @@
 	import { page } from "$app/state";
 	import { authClient } from "#lib/auth-client.ts";
 	import { getInviteLinkInfo, joinViaLink } from "./join.remote.ts";
+	import { roleLabel } from "#lib/roles.ts";
 
 	const token = page.params.token!;
 	const link = $derived(await getInviteLinkInfo(token));
@@ -46,7 +47,7 @@
 			{#if link.alreadyMember}
 				You're already a member of this organization.
 			{:else}
-				You'll join as <span class="font-medium">{link.role}</span>.
+				You'll join as <span class="font-medium">{roleLabel(link.role)}</span>.
 			{/if}
 		</p>
 	</header>

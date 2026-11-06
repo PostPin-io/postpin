@@ -10,18 +10,14 @@
 	import { onDestroy, onMount } from "svelte";
 	import X from "@lucide/svelte/icons/x";
 	import CircleArrowLeft from "@lucide/svelte/icons/circle-arrow-left";
+	import type { ReviewMarker } from "./types";
 
 	let { marker, startFrame, onclose }: Props = $props();
 	let titleInputField: HTMLInputElement | null = null;
 	let titleFocusToggled = $state(false);
 	interface Props {
 		onclose?: () => void;
-		marker: Prisma.MarkerGetPayload<{
-			include: {
-				author: true;
-				category: true;
-			};
-		}>;
+		marker: ReviewMarker;
 		startFrame: number;
 	}
 
@@ -62,6 +58,7 @@
 
 	async function persist() {
 		clearTimeout(timer);
+		if (!marker.canUpdate) return;
 		if (removed) return;
 		if (saving) {
 			queued = true;
@@ -81,7 +78,6 @@
 		try {
 			await updateMarker({
 				id: marker.id,
-				exportId: marker.exportId,
 				name: next.name,
 				description: next.description,
 				categoryId: next.categoryId,
@@ -101,6 +97,7 @@
 		editCategoriesModal.open(page.params.project ?? "");
 	}
 	export async function remove() {
+		if (!marker.canDelete) return;
 		removed = true;
 		clearTimeout(timer);
 		saving = true;
@@ -140,7 +137,13 @@
 	<div class="card-body h-full min-h-0 w-full gap-3 p-4">
 		<div class="flex items-center justify-between gap-3">
 			<div class="flex-screen flex gap-2">
-				<h2 class="card-title text-base">Edit marker</h2>
+				<h2 class="card-title text-base">
+					{#if marker.canUpdate}
+						Edit Marker
+					{:else}
+						View Marker
+					{/if}
+				</h2>
 
 				<CategorySelector
 					value={categoryId}
@@ -149,17 +152,20 @@
 						localStorage.setItem("DefaultCategory", id);
 						void persist();
 					}}
+					readonly={!marker.canUpdate}
 				/>
 
-				<button
-					type="button"
-					class="btn btn-square"
-					title="New category"
-					aria-label="New category"
-					onclick={openEditCategoriesModal}
-				>
-					<ClipboardList size={20} />
-				</button>
+				{#if marker.canUpdate}
+					<button
+						type="button"
+						class="btn btn-square"
+						title="New category"
+						aria-label="New category"
+						onclick={openEditCategoriesModal}
+					>
+						<ClipboardList size={20} />
+					</button>
+				{/if}
 
 				<!-- <span class="badge badge-outline tabular-nums" title="Marker frame">
 					Frame {marker.frame - startFrame}
@@ -175,9 +181,18 @@
 				>
 					<X />
 				</button>
-				<button type="button" class="btn btn-outline btn-error" disabled={saving} onclick={remove}>
-					<Trash size={20} />
-				</button>
+				{#if marker.canDelete}
+					<button
+						type="button"
+						class="btn btn-square btn-error"
+						title="Delete marker"
+						aria-label="Delete marker"
+						disabled={saving}
+						onclick={() => remove()}
+					>
+						<Trash size={20} />
+					</button>
+				{/if}
 			</div>
 		</div>
 		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -197,6 +212,7 @@
 					onfocus={() => (fieldFocused = true)}
 					onblur={() => (fieldFocused = false)}
 					oninput={() => schedule()}
+					readonly={!marker.canUpdate}
 				/>
 				<button
 					type="button"
@@ -212,6 +228,7 @@
 			</div>
 
 			<textarea
+				readonly={!marker.canUpdate}
 				class="textarea min-h-0 w-full flex-1 resize-none"
 				rows="2"
 				placeholder="Description"

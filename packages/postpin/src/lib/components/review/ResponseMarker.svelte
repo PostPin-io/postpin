@@ -1,18 +1,13 @@
 <script lang="ts">
-	import type { Prisma } from "@postpin-io/shared/db";
 	import { createResponse } from "./MarkerPanel.remote";
 	import CategoryBadge from "./CategoryBadge.svelte";
 	import ArrowLeft from "@lucide/svelte/icons/arrow-left";
 	import Send from "@lucide/svelte/icons/send";
+	import type { ReviewMarker } from "./types";
 
 	interface Props {
-		onclose?: () => void;
-		marker: Prisma.MarkerGetPayload<{
-			include: {
-				author: true;
-				category: true;
-			};
-		}>;
+		marker: ReviewMarker;
+		onclose: () => void;
 	}
 	let { marker, onclose }: Props = $props();
 

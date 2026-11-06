@@ -241,6 +241,55 @@ export function accessibleExports(member: AccessMember): Prisma.ExportWhereInput
 	return { timeline: accessibleTimelines(member) };
 }
 
+/**
+ * In-memory version of `hasGrant` (strict) for checking many targets at once.
+ * Org-wide roles cover everything.
+ */
+export async function grantScope(member: AccessMember) {
+	if (isOrgWide(member.role))
+		return {
+			covers: (_projectId: string, _timelineId?: string | null) => true,
+			coversAny: (_projectId: string) => true,
+		};
+	const mine = await prisma.memberGrant.findMany({
+		where: { memberId: member.id },
+		select: { projectId: true, timelineId: true, timeline: { select: { projectId: true } } },
+	});
+
+	const projects = new Set(mine.flatMap((g) => (g.projectId ? [g.projectId] : [])));
+	const timelines = new Set(mine.flatMap((g) => (g.timelineId ? [g.timelineId] : [])));
+	const anyInProject = new Set(mine.map((g) => g.projectId ?? g.timeline!.projectId));
+
+	return {
+		covers: (projectId: string, timelineId?: string | null) =>
+			projects.has(projectId) || (!!timelineId && timelines.has(timelineId)),
+		coversAny: (projectId: string) => anyInProject.has(projectId),
+	};
+}
+
+/** Same rules as authorize(), for many targets at once and without throwing. For UI flags. */
+export async function accessChecker(member: AccessMember & { userId: string }) {
+	const scope = await grantScope(member);
+	return <A extends Area>(
+		area: A,
+		action: Action<A>,
+		t: {
+			projectId: string | null;
+			timelineId?: string | null;
+			ownerId?: string | null;
+			loose?: boolean;
+		},
+	) =>
+		can(member.role, area, action, {
+			isOwn: t.ownerId != null && t.ownerId === member.userId,
+			hasGrant: !t.projectId
+				? false
+				: t.loose
+					? scope.coversAny(t.projectId)
+					: scope.covers(t.projectId, t.timelineId),
+		});
+}
+
 // ─── Members ────────────────────────────────────────────────────────────────
 
 /** Membership of the signed-in user in their active organization, null if there is none. */

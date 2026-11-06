@@ -7,6 +7,7 @@
 	import { getResponses } from "./MarkerPanel.remote";
 	import Timecode from "./Timecode.svelte";
 	import CategoryBadge from "./CategoryBadge.svelte";
+	import type { ReviewMarker } from "./types";
 
 	interface Props {
 		active?: boolean;
@@ -17,12 +18,7 @@
 		/** Called with the new absolute frame when the marker's timecode is edited */
 		onreposition?: (frame: number) => void;
 		onrespond?: () => void;
-		marker: Prisma.MarkerGetPayload<{
-			include: {
-				author: true;
-				category: true;
-			};
-		}>;
+		marker: ReviewMarker;
 		frameRate: FrameRate;
 		startFrame: number;
 	}
@@ -189,7 +185,9 @@
 								>
 									<p class="text-xs break-words whitespace-pre-wrap">{response.content}</p>
 									<div class="mt-1 text-[11px] text-base-content/60">
-										{response.author.name} · {dateTimeFormat.format(response.createdAt)}
+										{response.author?.name ?? "Deleted User"} · {dateTimeFormat.format(
+											response.createdAt,
+										)}
 									</div>
 								</div>
 							</li>
@@ -219,7 +217,7 @@
 							{@render categoryBadge("badge-sm p-0 px-2")}
 						{/if}
 
-						<span class="truncate">By {marker.author.name}</span>
+						<span class="truncate">By {marker.author?.name ?? "Deleted User"}</span>
 
 						<span class="font-normal text-base-content/60 tabular-nums">
 							{dateFormat.format(marker.createdAt)}

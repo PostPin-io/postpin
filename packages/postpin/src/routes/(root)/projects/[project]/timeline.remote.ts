@@ -1,5 +1,5 @@
 import { prisma } from "#lib/server/database.ts";
-import { accessibleTimelines, authorize } from "#lib/server/org-access.ts";
+import { accessChecker, accessibleTimelines, authorize } from "#lib/server/org-access.ts";
 import { query } from "$app/server";
 
 import * as valibot from "valibot";
@@ -23,6 +23,13 @@ export const getTimelines = query(valibot.string(), async (projectId) => {
 			},
 		},
 	});
-
-	return timelines;
+	const allowed = await accessChecker(member);
+	return {
+		canCreate: allowed("timeline", "create", { projectId }),
+		timelines: timelines.map((t) => ({
+			...t,
+			canRename: allowed("timeline", "rename", { projectId, timelineId: t.id }),
+			canDelete: allowed("timeline", "delete", { projectId, timelineId: t.id }),
+		})),
+	};
 });

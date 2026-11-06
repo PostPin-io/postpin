@@ -12,7 +12,8 @@
 		"charts": "d2 docs/architecture/architecture.d2 docs/architecture/architecture.svg",
 		"charts:watch": "nodemon --watch docs/architecture -e d2 --exec \"pnpm charts\"",
 		"setup": "pnpm install && pnpm -r run setup",
-		"check": "pnpm -r run check"
+		"check": "pnpm -r run check",
+		"dev:host": "POSTPIN_HOST=0.0.0.0 pnpm dev"
 	},
 	"devDependencies": {
 		"@mdi/svg": "^7.4.47",

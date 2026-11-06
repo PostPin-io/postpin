@@ -3,6 +3,7 @@
 	import { getSharingTarget } from "./sharing.remote";
 	import { authClient } from "#lib/auth-client.ts";
 	import OrganizationInvite from "./OrganizationInvite.svelte";
+	import AccessGrants from "./AccessGrants.svelte";
 
 	const session = authClient.useSession();
 	const organizationId = $derived($session.data?.session.activeOrganizationId);
@@ -41,6 +42,9 @@
 			<p class="mt-2 text-sm text-base-content/70">
 				You are sharing the {targetQuery.current.type}: {targetQuery.current.name}
 			</p>
+			{#if targetQuery.current.type !== "export"}
+				<AccessGrants target={{ type: targetQuery.current.type, id: targetQuery.current.id }} />
+			{/if}
 		{:else}
 			<span class="loading mt-2 loading-spinner"></span>
 		{/if}

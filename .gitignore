@@ -6,3 +6,5 @@ dev-data
 packages/api-client-ts/.src-tmp*
 packages/api-client-ts/.build.lock
 openapi-ts-error-*.log
+
+packages/desktop/.dev-app.pid

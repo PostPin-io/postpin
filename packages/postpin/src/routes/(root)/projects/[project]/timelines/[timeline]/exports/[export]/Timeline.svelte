@@ -15,12 +15,11 @@
 		frameAtSeconds,
 		secondsAtFrame,
 	} from "@postpin-io/shared/logic/timecode";
+	import type { ReviewMarker } from "#lib/components/review/types.ts";
 
 	interface Props {
 		snapshot: TimelineSnapshot;
-		markers: Prisma.MarkerGetPayload<{
-			include: { category: true; author: true };
-		}>[];
+		markers: ReviewMarker[];
 		videoPositionSeconds: number;
 		paused: boolean;
 		playbackRate: number;
@@ -202,6 +201,10 @@
 		marker: (typeof markers)[number],
 	) {
 		if (event.button !== 0) return;
+		if (!marker.canUpdate) {
+			seek(marker.frame);
+			return;
+		}
 		// Keep the ruler from starting a scrub
 		event.stopPropagation();
 		event.currentTarget.setPointerCapture(event.pointerId);
@@ -223,7 +226,6 @@
 				seek(frame);
 				await updateMarker({
 					id: marker.id,
-					exportId: marker.exportId,
 					name: marker.name ?? "",
 					description: marker.description ?? "",
 					categoryId: marker.categoryId,

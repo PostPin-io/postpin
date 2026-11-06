@@ -97,7 +97,7 @@ export interface TimelineInfo {
 export interface NleBridge {
 	getCapabilities(): Promise<Capabilities>;
 	getProjectId(): Promise<string>;
-	getTimelineInfo(): Promise<TimelineInfo>;
+	getTimelineInfo(): Promise<TimelineInfo | null>;
 	getMarkers(): Promise<NleMarker[]>;
 	/**
 	 * writes the markers and returns their ids, in the same order. A marker whose nleId still exists
