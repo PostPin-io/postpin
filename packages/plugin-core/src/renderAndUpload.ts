@@ -47,8 +47,11 @@ export async function renderAndUpload({
 	}
 
 	onStep("Rendering preview...");
+	const timelineSnapshot = await nle.buildTimelineSnapshot();
+	if (!timelineSnapshot) {
+		throw new Error("Failed to build timeline snapshot");
+	}
 	const renderedPath = await nle.renderPreview(onRenderProgress);
-	const timelineSnapshot = (await nle.buildTimelineSnapshot()) as TimelineSnapshot;
 
 	onStep("Render complete. Creating export...");
 	const { data: createdExport } = await createExport({
