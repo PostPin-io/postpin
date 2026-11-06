@@ -8,3 +8,5 @@ packages/api-client-ts/.build.lock
 openapi-ts-error-*.log
 
 packages/desktop/.dev-app.pid
+coverage
+.svelte-kit

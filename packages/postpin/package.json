@@ -15,7 +15,12 @@
 		"build:api-client": "sh scripts/build-api-client.sh",
 		"generate:api": "tsoa spec-and-routes && prettier --write src/api/build",
 		"generate:api:watch": "nodemon --watch src/api --ignore src/api/build -e ts --exec \"pnpm run generate:api\"",
-		"build:api-client:watch": "nodemon --watch src/api/build/swagger.json -e json --delay 2 --exec \"pnpm run build:api-client\""
+		"build:api-client:watch": "nodemon --watch src/api/build/swagger.json -e json --delay 2 --exec \"pnpm run build:api-client\"",
+		"test": "pnpm run test:unit && pnpm run test:integration",
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage && vitest run --config vitest.integration.config.ts --coverage --coverage.reportsDirectory=coverage/integration",
+		"test:unit": "vitest run",
+		"test:integration": "vitest run --config vitest.integration.config.ts"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
@@ -32,6 +37,7 @@
 		"@tailwindcss/vite": "^4.3.0",
 		"@types/node": "^24",
 		"@types/pg": "^8.23.1",
+		"@vitest/coverage-v8": "5.1.0",
 		"concurrently": "^10.0.6",
 		"daisyui": "^5.7.47",
 		"eslint": "^10.4.1",
@@ -49,7 +55,8 @@
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.60.1",
 		"valibot": "^1.5.0",
-		"vite": "^8.3.0"
+		"vite": "^8.3.0",
+		"vitest": "^5.1.0"
 	},
 	"imports": {
 		"#lib": "./src/lib/index.js",

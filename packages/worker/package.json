@@ -12,7 +12,9 @@
 		"build": "tsc",
 		"start": "node --enable-source-maps dist/index.js",
 		"typecheck": "tsc --noEmit",
-		"lint": "tsc --noEmit"
+		"lint": "tsc --noEmit",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage"
 	},
 	"dependencies": {
 		"@aws-sdk/lib-storage": "^3.1149.0",
@@ -23,8 +25,10 @@
 	},
 	"devDependencies": {
 		"@types/node": "^26.6.5",
+		"@vitest/coverage-v8": "5.1.0",
 		"tsx": "^4.23.15",
-		"typescript": "^7.0.2"
+		"typescript": "^7.0.2",
+		"vitest": "5.1.0"
 	},
 	"main": "dist/index.js"
 }

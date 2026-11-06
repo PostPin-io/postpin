@@ -1,9 +1,7 @@
 {
 	"entryFile": "src/api/dummy.ts",
 	"noImplicitAdditionalProperties": "throw-on-extras",
-	"controllerPathGlobs": [
-		"src/api/**/*Controller.ts"
-	],
+	"controllerPathGlobs": ["src/api/**/*Controller.ts"],
 	"compilerOptions": {
 		"module": 99,
 		"moduleResolution": 100,

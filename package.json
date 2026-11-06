@@ -13,7 +13,9 @@
 		"charts:watch": "nodemon --watch docs/architecture -e d2 --exec \"pnpm charts\"",
 		"setup": "pnpm install && pnpm -r run setup",
 		"check": "pnpm -r run check",
-		"dev:host": "POSTPIN_HOST=0.0.0.0 pnpm dev"
+		"dev:host": "POSTPIN_HOST=0.0.0.0 pnpm dev",
+		"test": "pnpm -r --if-present run test",
+		"test:coverage": "pnpm -r --if-present run test:coverage"
 	},
 	"devDependencies": {
 		"@mdi/svg": "^7.4.47",
