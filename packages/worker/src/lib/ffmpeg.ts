@@ -65,6 +65,9 @@ export async function ffprobe(pathOrUrl: string): Promise<ProbeResult> {
 			"json",
 			pathOrUrl,
 		]);
+		ffprobeProcess.on("error", (err) =>
+			reject(new Error(`ffprobe could not be started: ${err.message}`)),
+		);
 
 		let output = "";
 		ffprobeProcess.stdout.on("data", (data) => {

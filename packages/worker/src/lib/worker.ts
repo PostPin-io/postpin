@@ -19,8 +19,12 @@ export function createWorker<Q extends QueueName>(
 	return new Worker(
 		name,
 		(job: Job, ...args: ProcessorArgs) => {
-			const handler = handlers[job.name as JobName<Q>] as
-				((job: Job, ...args: ProcessorArgs) => Promise<unknown>) | undefined;
+			const handler = Object.hasOwn(handlers, job.name)
+				? (handlers[job.name as JobName<Q>] as (
+						job: Job,
+						...args: ProcessorArgs
+					) => Promise<unknown>)
+				: undefined;
 			if (!handler) throw new Error(`No handler for job "${job.name}" on queue "${name}"`);
 			return handler(job, ...args);
 		},
