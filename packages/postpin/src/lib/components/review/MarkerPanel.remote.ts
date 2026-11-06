@@ -11,7 +11,6 @@ const MAX_BULK = 500;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-/** Alle Kategorien müssen existieren und im angegebenen Projekt liegen, sonst 404. */
 async function assertCategoriesInProject(categoryIds: string[], projectId: string | null) {
 	if (!projectId) error(404, "Not found");
 	const unique = [...new Set(categoryIds)];
@@ -41,7 +40,6 @@ export const getMarkers = query(v.string(), async (exportId: string) => {
 export const getMarkersbyCategory = query(v.string(), async (categoryId: string) => {
 	const { member } = await authorize("category", "read", { type: "category", id: categoryId });
 
-	// Kategorien hängen am Projekt: nur Marker aus Exports zeigen, auf die der User Zugriff hat
 	return await prisma.marker.findMany({
 		where: { categoryId, export: accessibleExports(member) },
 		orderBy: { frame: "desc" },
@@ -121,8 +119,6 @@ export const createMarkers = command(
 			target.projectId,
 		);
 
-		// authorId der Responses kommt vom Client (Import). Verhindern, dass man
-		// Antworten im Namen fremder Personen anlegt: nur Mitglieder dieser Org erlauben.
 		const responseAuthorIds = [
 			...new Set(data.markers.flatMap((m) => (m.responses ?? []).map((r) => r.authorId))),
 		];
@@ -161,10 +157,6 @@ export const createMarkers = command(
 	},
 );
 
-/**
- * `exportId` ist bewusst nicht mehr Teil der Eingabe: ein Marker darf nicht
- * über diesen Command in einen anderen Export verschoben werden.
- */
 export const updateMarker = command(
 	v.object({
 		id: v.string(),
@@ -198,7 +190,7 @@ export const deleteMarker = command(v.string(), async (id) => {
 
 	await Promise.all([
 		getMarkers(marker.exportId).refresh(),
-		isCategoryUsed(marker.categoryId).refresh(),
+		getCategoryUsage(marker.categoryId).refresh(),
 	]);
 
 	return marker;
@@ -219,7 +211,7 @@ export const deleteMarkers = command(
 		const categoryIds = new Set(markers.map((m) => m.categoryId));
 		await Promise.all([
 			getMarkers(data.exportId).refresh(),
-			...[...categoryIds].map((categoryId) => isCategoryUsed(categoryId).refresh()),
+			...[...categoryIds].map((categoryId) => getCategoryUsage(categoryId).refresh()),
 		]);
 
 		return result;
@@ -242,34 +234,38 @@ export const moveMarker = command(
 			(id) => id !== data.targetCategoryId,
 		);
 
-		const { moved, deletedCategoryIds } = await prisma.$transaction(async (tx) => {
-			const { count } = await tx.marker.updateMany({
-				where: { id: { in: markerIds }, exportId: data.exportId },
-				data: { categoryId: data.targetCategoryId },
-			});
-
-			const deleted: string[] = [];
-			for (const categoryId of sourceCategoryIds) {
-				// "Leer" = keine Marker im ganzen Projekt (Kategorien hängen am Projekt)
-				const remaining = await tx.marker.count({ where: { categoryId } });
-				if (remaining > 0) continue;
-
-				// Nur löschen, wenn der User sie selbst angelegt hat
-				const res = await tx.category.deleteMany({
-					where: { id: categoryId, createdById: user.id },
-				});
-				if (res.count > 0) deleted.push(categoryId);
-			}
-			return { moved: count, deletedCategoryIds: deleted };
+		// The transaction now only performs the move. Automatic cleanup happens afterwards,
+		// so that a race condition (new marker in the source category → P2003) does not roll back the allowed
+		// move.
+		const { count: moved } = await prisma.marker.updateMany({
+			where: { id: { in: markerIds }, exportId: data.exportId },
+			data: { categoryId: data.targetCategoryId },
 		});
 
-		// Gelöschte Kategorien nicht mehr refreshen: isCategoryUsed würde dort 404 werfen
+		const deletedCategoryIds: string[] = [];
+		for (const categoryId of sourceCategoryIds) {
+			// "Empty" = no markers in the entire project (categories are attached to the project)
+			if ((await prisma.marker.count({ where: { categoryId } })) > 0) continue;
+
+			try {
+				// Only delete if the user created it themselves
+				const res = await prisma.category.deleteMany({
+					where: { id: categoryId, createdById: user.id },
+				});
+				if (res.count > 0) deletedCategoryIds.push(categoryId);
+			} catch (e) {
+				// In the meantime, a marker has been added: the category simply remains
+				if (!(e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003")) throw e;
+			}
+		}
+
+		// Don't refresh deleted categories anymore: getCategoryUsage would return a 404 there
 		const stillExisting = sourceCategoryIds.filter((id) => !deletedCategoryIds.includes(id));
 
 		await Promise.all([
 			getMarkers(data.exportId).refresh(),
-			isCategoryUsed(data.targetCategoryId).refresh(),
-			...stillExisting.map((id) => isCategoryUsed(id).refresh()),
+			getCategoryUsage(data.targetCategoryId).refresh(),
+			...stillExisting.map((id) => getCategoryUsage(id).refresh()),
 			...(deletedCategoryIds.length > 0 ? [getCategories(target.projectId!).refresh()] : []),
 		]);
 
@@ -330,7 +326,6 @@ export const createResponse = command(
 // ─── Categories ─────────────────────────────────────────────────────────────
 
 export const getCategories = query(v.string(), async (projectId: string) => {
-	// Project-read ist auch mit reinem Timeline-Grant erlaubt (loose in authorize)
 	await authorize("project", "read", { type: "project", id: projectId });
 
 	return await prisma.category.findMany({
@@ -346,7 +341,6 @@ export const createCategory = command(
 		projectId: v.string(),
 	}),
 	async (data) => {
-		// Bei `create` ist das Target der Parent (das Projekt)
 		const { user } = await authorize("category", "create", {
 			type: "project",
 			id: data.projectId,
@@ -365,46 +359,35 @@ export const createCategory = command(
 	},
 );
 
-export const isCategoryUsed = query(v.string(), async (categoryId: string) => {
-	await authorize("category", "read", { type: "category", id: categoryId });
+/**
+ * Replaces `isCategoryUsed`. Intentionally counts across the entire project (including exports without access);
+ * only numbers are returned, not content.
+ *
+ * - `total`: all markers in the category
+ * - `foreign`: markers from other users (including markers from deleted users, `authorId = NULL`)
+ * - `canMoveForeign`: is the current user allowed to move other users’ markers (Member+)?
+ */
+export const getCategoryUsage = query(v.string(), async (categoryId: string) => {
+	const { user, member } = await authorize("category", "read", {
+		type: "category",
+		id: categoryId,
+	});
 
-	// Bewusst projektweit (auch Exports ohne Zugriff): es geht nur um "kann gelöscht werden?"
-	const count = await prisma.marker.count({ where: { categoryId } });
-	return count > 0;
+	const [total, foreign] = await Promise.all([
+		prisma.marker.count({ where: { categoryId } }),
+
+		prisma.marker.count({
+			where: { categoryId, OR: [{ authorId: { not: user.id } }, { authorId: null }] },
+		}),
+	]);
+
+	const canMoveForeign = can(member.role, "category", "delete", {
+		hasGrant: true,
+		isOwn: false,
+	});
+
+	return { total, foreign, canMoveForeign };
 });
-
-export const mergeCategories = command(
-	v.object({
-		sourceCategoryId: v.string(),
-		targetCategoryId: v.string(),
-	}),
-	async (data) => {
-		if (data.sourceCategoryId === data.targetCategoryId) error(400, "Same category");
-
-		const { member, target } = await authorize("category", "update", {
-			type: "category",
-			id: data.sourceCategoryId,
-		});
-		// Reviewer dürfen ihre eigenen Kategorien ändern (update: own), ein Merge verschiebt
-		// aber auch fremde Marker. Deshalb nur, wenn die Rolle fremde Kategorien ändern darf.
-		if (!can(member.role, "category", "update", { hasGrant: true, isOwn: false })) {
-			error(403, "Not allowed");
-		}
-		await assertCategoriesInProject([data.targetCategoryId], target.projectId);
-
-		const markers = await prisma.marker.updateMany({
-			where: { categoryId: data.sourceCategoryId },
-			data: { categoryId: data.targetCategoryId },
-		});
-
-		await Promise.all([
-			isCategoryUsed(data.sourceCategoryId).refresh(),
-			isCategoryUsed(data.targetCategoryId).refresh(),
-		]);
-
-		return markers;
-	},
-);
 
 export const changeCategoryColor = command(
 	v.object({
@@ -423,27 +406,75 @@ export const changeCategoryColor = command(
 	},
 );
 
-export const deleteCategory = command(v.string(), async (id) => {
-	// 404 (statt { reason: "NOT_FOUND" }), damit niemand Kategorie-IDs fremder Orgs abtasten kann
-	const { target } = await authorize("category", "delete", { type: "category", id });
+export const deleteCategory = command(
+	v.object({
+		id: v.string(),
 
-	try {
-		await prisma.category.delete({ where: { id } });
-	} catch (e) {
-		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
-			return {
-				success: false,
-				reason: "CATEGORY_IN_USE" as const,
-			};
+		mergeIntoId: v.optional(v.string()),
+
+		exportId: v.optional(v.string()),
+	}),
+	async ({ id, mergeIntoId, exportId }) => {
+		// 404 (instead of { reason: “NOT_FOUND” }), so that no one can scan for category IDs from other organizations
+		const { user, member, target } = await authorize("category", "delete", {
+			type: "category",
+			id,
+		});
+
+		if (mergeIntoId === id) error(400, "Same category");
+		if (mergeIntoId) await assertCategoriesInProject([mergeIntoId], target.projectId);
+
+		const mayMoveForeignMarkers = can(member.role, "category", "delete", {
+			hasGrant: true,
+			isOwn: false,
+		});
+
+		let result;
+		try {
+			result = await prisma.$transaction(async (tx) => {
+				const total = await tx.marker.count({ where: { categoryId: id } });
+
+				if (total > 0) {
+					if (!mayMoveForeignMarkers) {
+						const foreign = await tx.marker.count({
+							where: {
+								categoryId: id,
+								OR: [{ authorId: { not: user.id } }, { authorId: null }],
+							},
+						});
+						if (foreign > 0) return { success: false, reason: "HAS_FOREIGN_MARKERS" } as const;
+					}
+
+					if (!mergeIntoId) return { success: false, reason: "CATEGORY_IN_USE" } as const;
+
+					await tx.marker.updateMany({
+						where: { categoryId: id },
+						data: { categoryId: mergeIntoId },
+					});
+				}
+
+				await tx.category.delete({ where: { id } });
+				return { success: true } as const;
+			});
+		} catch (e) {
+			// Race: zwischen count und delete ist ein neuer Marker dazugekommen
+			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
+				return { success: false, reason: "CATEGORY_IN_USE" } as const;
+			}
+			throw e;
 		}
+		if (!result.success) return result;
 
-		throw e;
-	}
+		// getCategoryUsage(id) der gelöschten Kategorie nicht refreshen: würde jetzt 404 werfen
+		await Promise.all([
+			getCategories(target.projectId!).refresh(),
+			...(mergeIntoId ? [getCategoryUsage(mergeIntoId).refresh()] : []),
+			...(exportId ? [getMarkers(exportId).refresh()] : []),
+		]);
 
-	await getCategories(target.projectId!).refresh();
-
-	return { success: true as const };
-});
+		return { success: true } as const;
+	},
+);
 
 /**
  * `page.params.export` gibt es auf dem Server nicht zuverlässig. Wenn die Marker-Liste
