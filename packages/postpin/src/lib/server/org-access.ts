@@ -323,6 +323,18 @@ export async function requireOrgRole(organizationId: string, minRole: Role) {
 	return member;
 }
 
+/**
+ * When does a grant on any timeline inside the project count?
+ * - reading a project (navigating into it with a timeline grant)
+ * - anything about categories (they live on the project)
+ */
+function isLoose(resolved: ResolvedTarget, target: Target, area: Area, action: string) {
+	return (
+		resolved.anyGrantInProject === true ||
+		(target.type === "project" && (action === "read" || area === "category"))
+	);
+}
+
 // ─── authorize ──────────────────────────────────────────────────────────────
 
 /**
@@ -340,12 +352,7 @@ export async function authorize<A extends Area>(area: A, action: Action<A>, targ
 
 	const member = await requireMember(resolved.organizationId, user.id);
 
-	// Navigating into a project you only have a timeline grant for must work.
-	// Same for creating a category: its parent is the project, but categories
-	// must be usable with a timeline grant (see anyGrantInProject).
-	const loose =
-		resolved.anyGrantInProject === true ||
-		(target.type === "project" && (action === "read" || area === "category"));
+	const loose = isLoose(resolved, target, area, action);
 
 	const ctx = {
 		isOwn: resolved.ownerId !== null && resolved.ownerId === user.id,
@@ -354,10 +361,8 @@ export async function authorize<A extends Area>(area: A, action: Action<A>, targ
 
 	if (!can(member.role, area, action, ctx)) {
 		// 403 only if the user may see the target at all, otherwise pretend it doesn't exist
-		error(
-			canSee(member.role, target, ctx) ? 403 : 404,
-			canSee(member.role, target, ctx) ? "Not allowed" : "Not found",
-		);
+		const visible = await canSee(member, target, resolved, ctx);
+		error(visible ? 403 : 404, visible ? "Not allowed" : "Not found");
 	}
 
 	return { user, member, target: resolved };
@@ -394,11 +399,27 @@ export async function authorizeMarkers(
 	return { user, member, target, markers };
 }
 
-function canSee(role: Role, target: Target, ctx: { isOwn: boolean; hasGrant: boolean }) {
+async function canSee(
+	member: { id: string; role: Role },
+	target: Target,
+	resolved: ResolvedTarget,
+	ctx: { isOwn: boolean; hasGrant: boolean },
+) {
 	const actions: readonly string[] = ACTIONS[target.type];
 	// Areas without a read action (organization, grant): being a member is enough
 	if (!actions.includes("read")) return true;
-	return can(role, target.type, "read" as Action<typeof target.type>, ctx);
+
+	// "Could they read it?" must use the grant rule of a real read,
+	// which can be looser than the one of the denied action.
+	let hasGrantForRead = ctx.hasGrant;
+	if (!hasGrantForRead && isLoose(resolved, target, target.type, "read")) {
+		hasGrantForRead = await hasGrant(member.id, resolved, true);
+	}
+
+	return can(member.role, target.type, "read" as Action<typeof target.type>, {
+		...ctx,
+		hasGrant: hasGrantForRead,
+	});
 }
 
 /** Gate for anything addressed by `mediaId`: requires read access to the export the media belongs to. */
