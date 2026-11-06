@@ -18,7 +18,7 @@ export const ACTIONS = {
 	/** Access to a project or timeline for an existing org member */
 	grant: ["create", "delete"],
 	member: ["read", "updateRole", "remove"],
-	organization: ["rename", "delete", "transferOwnership", "updateSettings"],
+	organization: ["rename", "delete", "updateSettings"],
 } as const;
 
 export type Area = keyof typeof ACTIONS;
@@ -71,7 +71,7 @@ const admin = extend(member, {
 });
 
 const owner = extend(admin, {
-	organization: { rename: all, delete: all, transferOwnership: all },
+	organization: { rename: all, delete: all },
 });
 
 export const roles: Record<Role, Permissions> = {
@@ -111,7 +111,7 @@ export const ROLE_LABELS: Record<Role, string> = {
  * (`$activeMember.data.role`, `invite.role`). Unknown values are shown as they are.
  */
 export const roleLabel = (role: string | null | undefined) =>
-	role ? (ROLE_LABELS[role as Role] ?? role) : "";
+	role ? (Object.hasOwn(ROLE_LABELS, role) ? ROLE_LABELS[role as Role] : role) : "Unknown";
 
 /** Highest first */
 export const ORG_ROLES = (Object.keys(RANK) as Role[]).sort((a, b) => RANK[b] - RANK[a]);
