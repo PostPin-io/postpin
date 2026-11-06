@@ -19,17 +19,14 @@
 
 		console.log("Logging in with:", { email, password });
 
-		const { data, error } = await authClient.signIn.email(
+		await authClient.signIn.email(
 			{
 				email, // user email address
 				password, // user password -> min 8 characters by default
 				callbackURL: redirectTo, // A URL to redirect to after the user verifies their email (optional)
 			},
 			{
-				onRequest: (ctx) => {
-					//show loading
-				},
-				onSuccess: (ctx) => {
+				onSuccess: () => {
 					goto(redirectTo);
 				},
 				onError: (ctx) => {

@@ -13,7 +13,7 @@
 	import Pencil from "@lucide/svelte/icons/pencil";
 	import Check from "@lucide/svelte/icons/check";
 	import Trash from "@lucide/svelte/icons/trash";
-	import { HueyRoot, hueyColor } from "@hueycolor/svelte";
+	import { hueyColor } from "@hueycolor/svelte";
 	let dialog: HTMLDialogElement;
 	let usedCategoryWarning: HTMLDialogElement;
 

@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { authClient } from "#lib/auth-client.ts";
-	import { slugify } from "#lib/slug.ts";
-	import { invalidateAll, refreshAll } from "$app/navigation";
+	import { refreshAll } from "$app/navigation";
 	import { createTimeline } from "./TimelineModal.remote";
 
 	interface Props {

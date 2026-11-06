@@ -2,8 +2,7 @@
 	import EditCategoriesModal from "./EditCategoriesModal.svelte";
 	import CategorySelector from "../CategorySelector.svelte";
 
-	import type { Prisma } from "@postpin-io/shared/db";
-	import { updateMarker, deleteMarker, getCategories, createCategory } from "./MarkerPanel.remote";
+	import { updateMarker, deleteMarker, getCategories } from "./MarkerPanel.remote";
 	import { page } from "$app/state";
 	import ClipboardList from "@lucide/svelte/icons/clipboard-list";
 	import Trash from "@lucide/svelte/icons/trash";
@@ -12,6 +11,7 @@
 	import CircleArrowLeft from "@lucide/svelte/icons/circle-arrow-left";
 	import type { ReviewMarker } from "./types";
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let { marker, startFrame, onclose }: Props = $props();
 	let titleInputField: HTMLInputElement | null = null;
 	let titleFocusToggled = $state(false);

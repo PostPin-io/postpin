@@ -2,8 +2,6 @@
 	import { createMarker } from "./MarkerPanel.remote";
 	import { page } from "$app/state";
 
-	import Marker from "./Marker.svelte";
-
 	let { currentFrame }: Props = $props();
 
 	interface Props {

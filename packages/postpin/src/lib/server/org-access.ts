@@ -248,7 +248,9 @@ export function accessibleExports(member: AccessMember): Prisma.ExportWhereInput
 export async function grantScope(member: AccessMember) {
 	if (isOrgWide(member.role))
 		return {
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			covers: (_projectId: string, _timelineId?: string | null) => true,
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			coversAny: (_projectId: string) => true,
 		};
 	const mine = await prisma.memberGrant.findMany({

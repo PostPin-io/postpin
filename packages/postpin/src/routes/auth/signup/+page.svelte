@@ -24,7 +24,7 @@
 
 		console.log("Signing up with:", { firstName, lastName, email, password });
 
-		const { data, error } = await authClient.signUp.email(
+		await authClient.signUp.email(
 			{
 				email, // user email address
 				password, // user password -> min 8 characters by default
@@ -32,10 +32,10 @@
 				callbackURL: redirectTo, // A URL to redirect to after the user verifies their email (optional)
 			},
 			{
-				onRequest: (ctx) => {
+				onRequest: () => {
 					//show loading
 				},
-				onSuccess: (ctx) => {
+				onSuccess: () => {
 					goto(redirectTo);
 				},
 				onError: (ctx) => {

@@ -5,6 +5,7 @@ import { HttpError } from "./HttpError.ts";
 export async function hapiAuthentication(
 	request: Request,
 	securityName: string,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	_scopes?: string[],
 ) {
 	if (securityName !== "session")
