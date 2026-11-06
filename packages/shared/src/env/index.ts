@@ -9,7 +9,7 @@ export const envBoolean = v.optional(
 	"false",
 );
 
-export const envNumber = v.pipe(v.string(), v.toNumber());
+export const envNumber = v.pipe(v.string(), v.trim(), v.nonEmpty(), v.toNumber());
 
 export const s3EnvVars = {
 	S3_ENDPOINT: {
