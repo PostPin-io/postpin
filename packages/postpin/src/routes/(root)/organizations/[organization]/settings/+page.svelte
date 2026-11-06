@@ -2,8 +2,33 @@
 	import { untrack } from "svelte";
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
-	import { availableOrganizationSlug, slugify } from "#lib/slug.ts";
+	import { availableOrganizationSlug } from "#lib/slug.ts";
 	import { getOrganizationSettings, renameOrganization } from "./settings.remote.ts";
+	import { authClient } from "#lib/auth-client.ts";
+	import { deleteOrganization } from "./settings.remote.ts";
+
+	let deleteDialog: HTMLDialogElement | null = null;
+	let confirmName = $state("");
+	let deleting = $state(false);
+	let deleteError = $state<string | null>(null);
+
+	async function removeOrganization() {
+		deleting = true;
+		deleteError = null;
+		try {
+			await deleteOrganization({ organizationId: organization.id, confirmName });
+		} catch (e) {
+			deleteError =
+				(e as { body?: { message?: string } }).body?.message ??
+				"Could not delete the organization.";
+			deleting = false;
+			return;
+		}
+		// the org switcher and session still hold the deleted org
+		authClient.$store.notify("$listOrg");
+		authClient.$store.notify("$sessionSignal");
+		await goto("/dashboard", { invalidateAll: true });
+	}
 
 	type Message = { type: "success" | "error"; text: string } | null;
 
@@ -107,4 +132,43 @@
 			<p class="label">Only owners can rename the organization.</p>
 		{/if}
 	</fieldset>
+	{#if organization.canDelete}
+		<fieldset class="fieldset rounded-box border border-error/40 bg-base-100 p-4">
+			<legend class="fieldset-legend text-error">Danger zone</legend>
+			<p class="text-sm">
+				Deletes the organization with all projects, timelines, exports, markers and videos. This
+				can't be undone.
+			</p>
+			<button
+				class="btn w-fit btn-outline btn-error btn-sm"
+				onclick={() => {
+					confirmName = "";
+					deleteError = null;
+					deleteDialog?.showModal();
+				}}
+			>
+				Delete organization
+			</button>
+		</fieldset>
+	{/if}
 </div>
+<dialog class="modal" bind:this={deleteDialog}>
+	<div class="modal-box flex flex-col gap-3">
+		<h3 class="text-lg font-bold">Delete {organization.name}?</h3>
+		<p class="text-sm">Type <span class="font-semibold">{organization.name}</span> to confirm.</p>
+		<input class="input w-full" bind:value={confirmName} disabled={deleting} />
+		{#if deleteError}<p class="text-sm text-error">{deleteError}</p>{/if}
+		<div class="modal-action">
+			<button class="btn" onclick={() => deleteDialog?.close()} disabled={deleting}>Cancel</button>
+			<button
+				class="btn btn-error"
+				onclick={removeOrganization}
+				disabled={deleting || confirmName.trim() !== organization.name}
+			>
+				Delete forever
+				{#if deleting}<span class="loading loading-xs loading-spinner"></span>{/if}
+			</button>
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
