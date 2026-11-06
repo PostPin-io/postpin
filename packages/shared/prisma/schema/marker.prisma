@@ -11,8 +11,12 @@ model Marker {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  export     Export   @relation(fields: [exportId], references: [id], onDelete: Cascade)
-  exportId   String
+  export   Export @relation(fields: [exportId], references: [id], onDelete: Cascade)
+  exportId String
+  /// NoAction: a category with markers can't be deleted (use merge first).
+  /// Postgres checks this right after a cascade removes categories — NOT at the end of
+  /// the outer statement. Deleting a project/org must delete markers first: see purgeExports().
+
   category   Category @relation(fields: [categoryId], references: [id], onDelete: NoAction)
   categoryId String
   author     User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)

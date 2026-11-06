@@ -2,8 +2,8 @@ import { prisma } from "#lib/server/database.ts";
 import { authorize } from "#lib/server/org-access.ts";
 import { getRequestEvent, command } from "$app/server";
 import * as v from "valibot";
-import { deleteMediaFiles } from "#lib/server/media.ts";
 import { isOrgWide } from "#lib/roles.ts";
+import { deleteMediaFolders, purgeExports } from "#lib/server/media.ts";
 import { error } from "@sveltejs/kit";
 
 export const createProject = command(
@@ -39,23 +39,14 @@ export const deleteProject = command(
 	async (data) => {
 		const { target } = await authorize("project", "delete", { type: "project", id: data.id });
 
-		const media = await prisma.media.findMany({
-			where: {
-				export: {
-					timeline: {
-						projectId: data.id,
-					},
-				},
-			},
-		});
-		await Promise.all(media.map((m) => deleteMediaFiles(m.id)));
+		const mediaIds = await prisma.$transaction(async (tx) => {
+			const ids = await purgeExports(tx, { timeline: { projectId: data.id } });
 
-		await prisma.project.delete({
-			where: {
-				id: data.id,
-				organizationId: target.organizationId,
-			},
+			await tx.project.delete({ where: { id: data.id, organizationId: target.organizationId } });
+			return ids;
 		});
+
+		await deleteMediaFolders(mediaIds, `deleteProject ${data.id}`);
 	},
 );
 

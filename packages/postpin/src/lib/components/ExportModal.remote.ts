@@ -1,5 +1,5 @@
 import { prisma } from "#lib/server/database.ts";
-import { deleteMediaFiles } from "#lib/server/media.ts";
+import { deleteMediaFolders, purgeExports } from "#lib/server/media.ts";
 import { authorize } from "#lib/server/org-access.ts";
 import { command } from "$app/server";
 import * as v from "valibot";
@@ -24,16 +24,12 @@ export const renameExport = command(
 export const deleteExport = command(v.object({ id: v.string() }), async (data) => {
 	await authorize("export", "delete", { type: "export", id: data.id });
 
-	const exp = await prisma.export.findUniqueOrThrow({
-		where: { id: data.id },
-		select: { mediaId: true },
+	const mediaIds = await prisma.$transaction(async (tx) => {
+		const ids = await purgeExports(tx, { id: data.id });
+		// exports without media are not removed by purgeExports
+		await tx.export.deleteMany({ where: { id: data.id } });
+		return ids;
 	});
 
-	if (exp.mediaId) {
-		// Deleting the media cascades to the export and the proxy media
-		await prisma.media.delete({ where: { id: exp.mediaId } });
-		await deleteMediaFiles(exp.mediaId);
-	} else {
-		await prisma.export.delete({ where: { id: data.id } });
-	}
+	await deleteMediaFolders(mediaIds, `deleteExport ${data.id}`);
 });

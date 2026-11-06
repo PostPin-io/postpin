@@ -10,6 +10,7 @@ import {
 import { prisma } from "#lib/server/database.ts";
 import { s3Client } from "./storage";
 import { JobWeights } from "@postpin-io/shared/queue";
+import type { Prisma } from "@postpin-io/shared/db";
 
 const flowProducer = building ? (null as unknown as TypedFlowProducer) : getFlowProducer(env);
 
@@ -134,6 +135,38 @@ export async function deleteMediaFiles(mediaId: string) {
 		}
 		ContinuationToken = res.NextContinuationToken;
 	} while (ContinuationToken);
+}
+/**
+ * Deletes markers and media of all matching exports, inside the caller's transaction.
+ * Returns the media ids whose bucket folders the caller removes AFTER commit.
+ *
+ * Markers go first: Postgres checks marker_categoryId_fkey (NO ACTION) right after a
+ * cascade deletes categories, before another cascade path reaches the markers.
+ * Then the original media files: their cascade removes media, exports, proxies and
+ * thumbnails. Exports without media are left to the caller (or the parent's cascade).
+ */
+export async function purgeExports(tx: Prisma.TransactionClient, where: Prisma.ExportWhereInput) {
+	const exports = await tx.export.findMany({
+		where,
+		select: { id: true, mediaId: true, media: { select: { originalId: true } } },
+	});
+	const exportIds = exports.map((e) => e.id);
+	const mediaIds = exports.flatMap((e) => (e.mediaId ? [e.mediaId] : []));
+	const originalIds = exports.flatMap((e) => (e.media ? [e.media.originalId] : []));
+
+	// responses cascade with their marker
+	await tx.marker.deleteMany({ where: { exportId: { in: exportIds } } });
+
+	await tx.mediaFile.deleteMany({ where: { id: { in: originalIds } } });
+
+	return mediaIds;
+}
+
+/** Bucket cleanup after the DB commit. Failures only leave orphaned files, never broken rows. */
+export async function deleteMediaFolders(mediaIds: string[], context: string) {
+	const results = await Promise.allSettled(mediaIds.map((id) => deleteMediaFiles(id)));
+	const failed = results.filter((r) => r.status === "rejected").length;
+	if (failed > 0) console.error(`${context}: ${failed} media folders left in the bucket`);
 }
 
 type NonOptional<T> = T extends null | undefined ? never : T;

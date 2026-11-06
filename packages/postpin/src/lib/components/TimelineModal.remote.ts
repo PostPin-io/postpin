@@ -1,9 +1,9 @@
 import { prisma } from "#lib/server/database.ts";
-import { deleteMediaFiles } from "#lib/server/media.ts";
 import { error } from "@sveltejs/kit";
 import { authorize } from "#lib/server/org-access.ts";
 import { command } from "$app/server";
 import * as v from "valibot";
+import { deleteMediaFolders, purgeExports } from "#lib/server/media.ts";
 
 export const createTimeline = command(
 	v.object({
@@ -28,18 +28,14 @@ export const deleteTimeline = command(
 	}),
 	async (data) => {
 		const { target } = await authorize("timeline", "delete", { type: "timeline", id: data.id });
+
 		if (target.projectId !== data.projectId) error(404, "Not found");
-
-		const media = await prisma.media.findMany({
-			where: {
-				export: {
-					timelineId: data.id,
-				},
-			},
+		const mediaIds = await prisma.$transaction(async (tx) => {
+			const ids = await purgeExports(tx, { timelineId: data.id });
+			await tx.timeline.delete({ where: { id: data.id, projectId: data.projectId } });
+			return ids;
 		});
-		await Promise.all(media.map((m) => deleteMediaFiles(m.id)));
-
-		await prisma.timeline.delete({ where: { id: data.id, projectId: data.projectId } });
+		await deleteMediaFolders(mediaIds, `deleteTimeline ${data.id}`);
 	},
 );
 export const renameTimeline = command(
@@ -49,7 +45,8 @@ export const renameTimeline = command(
 		name: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(100)),
 	}),
 	async (data) => {
-		await authorize("timeline", "rename", { type: "timeline", id: data.id });
+		const { target } = await authorize("timeline", "rename", { type: "timeline", id: data.id });
+		if (target.projectId !== data.projectId) error(404, "Not found");
 
 		await prisma.timeline.update({
 			where: { id: data.id, projectId: data.projectId },
