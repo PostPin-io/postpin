@@ -24,68 +24,33 @@
 		secondsAtFrame,
 	} from "../../../../../../../../../../shared/src/logic/timecode";
 	import { getMarkers } from "#lib/components/review/MarkerPanel.remote.ts";
-	import { TIMELINE_MODES, type TimelineMode } from "#lib/components/review/VideoPlayer.ts";
-	import type { ThumbnailImage } from "@videojs/html";
-	import { seekSprites as seekSpritesSchema } from "@postpin-io/shared/types/SeekSprites";
-	import * as v from "valibot";
-	import Hourglass from "@lucide/svelte/icons/hourglass";
-	import { jobStateBadges } from "#lib/job-status.ts";
+	import type { TimelineMode } from "#lib/components/review/VideoPlayer.ts";
+	import {
+		defaultLayout,
+		normalizeSizes,
+		parsePaneLayout,
+		parseQuality,
+		parseTimelineMode,
+		seekThumbnailTiles,
+		type PaneLayout,
+	} from "./exportView.ts";
 	import CheckCircle from "@lucide/svelte/icons/check-circle";
 	import ShotGrid from "./ShotGrid.svelte";
 	import MovieBarcode from "./MovieBarcode.svelte";
+	import { jobStateBadges } from "#lib/job-status.ts";
 
 	const STORAGE_KEY = "postpin:export-panes";
 
-	const defaults = {
-		main: [75, 25],
-		left: [65, 35],
-	};
-
-	type PaneLayout = {
-		main: number[];
-		left: number[];
-	};
-
 	function loadLayout(): PaneLayout {
-		if (typeof localStorage === "undefined") {
-			return {
-				main: [...defaults.main],
-				left: [...defaults.left],
-			};
-		}
-
+		if (typeof localStorage === "undefined") return defaultLayout();
 		try {
-			const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
-
-			const valid = (sizes: unknown, count: number): sizes is number[] =>
-				Array.isArray(sizes) &&
-				sizes.length === count &&
-				sizes.every((size) => typeof size === "number" && Number.isFinite(size) && size >= 0) &&
-				sizes.reduce((sum, size) => sum + size, 0) > 0;
-
-			return {
-				main: valid(saved?.main, 2) ? [...saved.main] : [...defaults.main],
-				left: valid(saved?.left, 2) ? [...saved.left] : [...defaults.left],
-			};
+			return parsePaneLayout(localStorage.getItem(STORAGE_KEY));
 		} catch {
-			return {
-				main: [...defaults.main],
-				left: [...defaults.left],
-			};
+			return defaultLayout();
 		}
 	}
 
 	let layout = $state<PaneLayout>(loadLayout());
-
-	function normalizeSizes(sizes: number[]): number[] {
-		const total = sizes.reduce((sum, size) => sum + size, 0);
-
-		if (total <= 0) {
-			return sizes.map(() => 100 / sizes.length);
-		}
-
-		return sizes.map((size) => (size / total) * 100);
-	}
 
 	function saveLayout(key: keyof PaneLayout, event: CustomEvent<{ size: number }[]>) {
 		const sizes = event.detail.map((pane) => pane.size);
@@ -103,26 +68,6 @@
 
 	let isMarkerVisible = $state(true);
 	let isTimelineVisible = $state(true);
-
-	function toggleMarkerPanel() {
-		isMarkerVisible = !isMarkerVisible;
-
-		if (isMarkerVisible) {
-			layout.main = [...defaults.main];
-		} else {
-			layout.main = [100, 0];
-		}
-	}
-
-	function toggleTimelinePanel() {
-		isTimelineVisible = !isTimelineVisible;
-
-		if (isTimelineVisible) {
-			layout.left = [...defaults.left];
-		} else {
-			layout.left = [100, 0];
-		}
-	}
 
 	const exportQuery = $derived(
 		getExport({
@@ -336,8 +281,7 @@
 
 	function loadQuality(): number | "auto" {
 		try {
-			const saved = Number(localStorage.getItem(QUALITY_KEY));
-			return saved > 0 ? saved : "auto";
+			return parseQuality(localStorage.getItem(QUALITY_KEY));
 		} catch {
 			return "auto";
 		}
@@ -353,32 +297,15 @@
 	});
 
 	const spriteInfo = $derived(mediaId ? await getSeekSprites({ mediaId }).catch(() => null) : null);
-	const seekThumbnails = $derived.by((): ThumbnailImage[] => {
-		if (!spriteInfo) return [];
-		const { seekSprites, urls: spriteUrls } = spriteInfo;
-		if (!seekSprites || spriteUrls.length === 0) return [];
-		const perSheet = spriteInfo.seekSprites.columns * spriteInfo.seekSprites.rows;
-		return Array.from({ length: spriteInfo.seekSprites.count }, (_, i) => ({
-			url: spriteUrls[Math.floor(i / perSheet)]!,
-			startTime: i * spriteInfo.seekSprites.interval,
-			endTime: (i + 1) * spriteInfo.seekSprites.interval,
-			width: spriteInfo.seekSprites.tileWidth,
-			height: spriteInfo.seekSprites.tileHeight,
-			coords: {
-				x: (i % spriteInfo.seekSprites.columns) * spriteInfo.seekSprites.tileWidth,
-				y:
-					Math.floor((i % perSheet) / spriteInfo.seekSprites.columns) *
-					spriteInfo.seekSprites.tileHeight,
-			},
-		}));
-	});
+	const seekThumbnails = $derived(
+		spriteInfo?.seekSprites ? seekThumbnailTiles(spriteInfo.seekSprites, spriteInfo.urls) : [],
+	);
 
 	let viewMode: "shot-grid" | "timeline" = $state("timeline");
 	const TIMELINE_MODE_KEY = "postpin:timeline-mode";
 	function loadTimelineMode(): TimelineMode {
 		if (typeof localStorage === "undefined") return "full";
-		const stored = localStorage.getItem(TIMELINE_MODE_KEY);
-		return TIMELINE_MODES.find((mode) => mode === stored) ?? "full";
+		return parseTimelineMode(localStorage.getItem(TIMELINE_MODE_KEY));
 	}
 	let timelineMode = $state<TimelineMode>(loadTimelineMode());
 	$effect(() => {

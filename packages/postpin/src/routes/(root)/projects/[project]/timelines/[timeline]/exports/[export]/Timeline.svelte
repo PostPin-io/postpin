@@ -1,14 +1,18 @@
 <script lang="ts">
 	import { tick } from "svelte";
 	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
-	import type { Prisma } from "@postpin-io/shared/db";
 	import { onMount } from "svelte";
 	import type { ThumbnailElement, ThumbnailImage } from "@videojs/html";
+	import { seekToMarker, type TimelineMode } from "#lib/components/review/VideoPlayer.ts";
 	import {
-		PLAYBACK_RATES,
-		seekToMarker,
-		type TimelineMode,
-	} from "#lib/components/review/VideoPlayer.ts";
+		adjacentCut,
+		buildLanes,
+		collapsedLaneCount,
+		stepPlaybackRate,
+		tickStep,
+		timelineCuts,
+		visibleTicks,
+	} from "./timelineView.ts";
 	import { getMarkers, updateMarker } from "#lib/components/review/MarkerPanel.remote.ts";
 	import {
 		formatTimecode,
@@ -48,9 +52,6 @@
 	const MAX_PIXELS_PER_FRAME = 20;
 	// Ruler labels stay at least this far apart
 	const MIN_TICK_SPACING = 100;
-	// Tick intervals in frames (below one second) and in seconds
-	const TICK_STEPS_FRAMES = [1, 2, 5, 10];
-	const TICK_STEPS_SECONDS = [1, 2, 5, 10, 30, 60, 120, 300, 600, 1800, 3600];
 
 	// 1 = full timeline visible
 	let zoom = $state(1);
@@ -66,27 +67,9 @@
 			: 1,
 	);
 
-	type Lane = {
-		id: string;
-		name: string;
-		type: string;
-		clips: TimelineSnapshot["tracks"][number]["clips"];
-	};
-
 	const collapsed = $derived(mode !== "full");
 
-	let tracks = $derived.by((): Lane[] => {
-		if (mode === "scrub") return [];
-		const video = snapshot.tracks.filter((track) => track.type === "video");
-		const audio = snapshot.tracks.filter((track) => track.type === "audio");
-		if (!collapsed) return [...video.reverse(), ...audio];
-		// Higher tracks come later and are drawn on top
-		const merge = (type: string, name: string, list: typeof video): Lane[] =>
-			list.length > 0
-				? [{ id: type, name, type, clips: list.flatMap((track) => track.clips) }]
-				: [];
-		return [...merge("video", "Video", video), ...merge("audio", "Audio", audio)];
-	});
+	let tracks = $derived(buildLanes(snapshot.tracks, mode));
 	const laneHeight = $derived(collapsed ? "h-7" : "h-12");
 
 	let headers = $state<HTMLDivElement>();
@@ -99,18 +82,12 @@
 
 	// Compact layout has one merged lane per track type, regardless of the current state.
 	// Using tracks.length here would count every track while expanded and report a wrong height.
-	const collapsedLaneCount = $derived(
-		mode === "scrub"
-			? 0
-			: new Set(
-					snapshot.tracks.map((track) => track.type).filter((t) => t === "video" || t === "audio"),
-				).size,
-	);
+	const collapsedLanes = $derived(collapsedLaneCount(snapshot.tracks, mode));
 
 	$effect(() => {
 		// toolbar, ruler (h-12), 28px lanes, plus fixed room for the scrollbar. Not measured, as the
 		// scrollbar appearing would resize the pane and loop.
-		onCollapsedHeight(toolbarHeight + 48 + collapsedLaneCount * 28 + COLLAPSED_BOTTOM_SPACE);
+		onCollapsedHeight(toolbarHeight + 48 + collapsedLanes * 28 + COLLAPSED_BOTTOM_SPACE);
 	});
 
 	const fps = $derived(snapshot.frameRate.fpsNumerator / snapshot.frameRate.fpsDenominator);
@@ -129,27 +106,10 @@
 	}
 
 	// Clip starts and ends on all tracks
-	let cuts = $derived(
-		[
-			...new Set([
-				firstFrame,
-				lastFrame,
-				...snapshot.tracks.flatMap((track) =>
-					track.clips.flatMap((clip) => [
-						clip.startFrameIndex,
-						// ensure that end is within the timeline
-						Math.min(clip.startFrameIndex + clip.durationFrameCount, lastFrame),
-					]),
-				),
-			]),
-		].sort((a, b) => a - b),
-	);
+	let cuts = $derived(timelineCuts(snapshot.tracks, firstFrame, lastFrame));
 
 	function seekToCut(direction: -1 | 1) {
-		const cut =
-			direction < 0
-				? cuts.findLast((frame) => frame < playHeadPosition)
-				: cuts.find((frame) => frame > playHeadPosition);
+		const cut = adjacentCut(cuts, playHeadPosition, direction);
 		if (cut !== undefined) seek(cut);
 	}
 
@@ -159,31 +119,22 @@
 	}
 
 	function changePlaybackRate(direction: -1 | 1) {
-		const index = PLAYBACK_RATES.findIndex((rate) => rate >= playbackRate);
-		const current = index === -1 ? PLAYBACK_RATES.length - 1 : index;
-		playbackRate =
-			PLAYBACK_RATES[Math.min(Math.max(current + direction, 0), PLAYBACK_RATES.length - 1)];
+		playbackRate = stepPlaybackRate(playbackRate, direction);
 	}
 
-	let tickFrames = $derived.by(() => {
-		const minFrames = MIN_TICK_SPACING / pixelsPerFrame;
-		const steps = [...TICK_STEPS_FRAMES, ...TICK_STEPS_SECONDS.map((s) => Math.round(s * fps))];
-		return steps.find((step) => step >= minFrames) ?? steps[steps.length - 1];
-	});
+	let tickFrames = $derived(tickStep(pixelsPerFrame, fps, MIN_TICK_SPACING));
 
 	// Only the ticks in view, a long timeline zoomed in has thousands
-	let ticks = $derived.by(() => {
-		if (pixelsPerFrame <= 0) return [];
-		const first = Math.floor(scrollLeft / pixelsPerFrame / tickFrames);
-		const last = Math.min(
-			Math.ceil((scrollLeft + viewportWidth) / pixelsPerFrame / tickFrames),
-			Math.floor((snapshot.durationFrameCount - 1) / tickFrames),
-		);
-		return Array.from(
-			{ length: Math.max(last - first + 1, 0) },
-			(_, i) => firstFrame + (first + i) * tickFrames,
-		);
-	});
+	let ticks = $derived(
+		visibleTicks({
+			scrollLeft,
+			viewportWidth,
+			pixelsPerFrame,
+			tickFrames,
+			durationFrameCount: snapshot.durationFrameCount,
+			firstFrame,
+		}),
+	);
 
 	let visibleMarkers = $derived(
 		markers.filter((m) => {
