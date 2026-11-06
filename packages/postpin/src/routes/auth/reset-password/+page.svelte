@@ -46,6 +46,19 @@
 	</p>
 </header>
 
+{#if formMessage}
+	<div class="alert" role={formMessage.type === "error" ? "alert" : "status"}>
+		<span>{formMessage.text}</span>
+		<button
+			class="btn btn-ghost btn-sm"
+			aria-label="Close message"
+			onclick={() => (formMessage = null)}
+		>
+			×
+		</button>
+	</div>
+{/if}
+
 <div class="space-y-4">
 	<label class="form-control w-full">
 		<div class="h-4"></div>

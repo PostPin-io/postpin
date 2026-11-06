@@ -30,7 +30,7 @@ const sessionHandler: Handle = async ({ event, resolve }) => {
 		await syncActiveOrganization(event.locals.session, event.locals.user);
 	}
 
-	const publicPaths = ["/", /\/auth\/.*/, /^\/api\//];
+	const publicPaths = ["/", /^\/auth\//, /^\/api\//];
 
 	const isPublicPath = publicPaths.some((path) => {
 		if (typeof path === "string") {
@@ -42,23 +42,24 @@ const sessionHandler: Handle = async ({ event, resolve }) => {
 
 	if (!isPublicPath && !event.locals.user) {
 		return new Response(null, {
-			status: 301,
+			status: 303,
 			headers: { Location: "/auth/login?redirect=" + encodeURIComponent(event.url.pathname) },
 		});
 	}
 
-	const noOrgsPaths = ["/dashboard", "/profile"];
-	if (
-		event.locals.user &&
-		event.locals.user.memberships.length === 0 &&
-		!noOrgsPaths.some((path) => event.url.pathname.startsWith(path))
-	) {
-		if (noOrgsPaths.some((path) => event.url.pathname.startsWith(path))) {
-			return new Response(null, {
-				status: 301,
-				headers: { Location: "/dashboard" },
-			});
-		}
+	const NO_ORG_PATHS = ["/dashboard", "/profile", "/admin"];
+	const allowedWithoutOrg =
+		isPublicPath ||
+		event.url.pathname.startsWith("/_app/") ||
+		NO_ORG_PATHS.some(
+			(path) => event.url.pathname == path || event.url.pathname.startsWith(path + "/"),
+		);
+
+	if (event.locals.user && event.locals.user.memberships.length === 0 && !allowedWithoutOrg) {
+		return new Response(null, {
+			status: 303,
+			headers: { Location: "/dashboard" },
+		});
 	}
 
 	return resolve(event);

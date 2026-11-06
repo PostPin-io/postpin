@@ -8,8 +8,10 @@ import { requireOrgRole } from "#lib/server/org-access.ts";
 import { Role } from "@postpin-io/shared/db";
 
 export const getProfile = query(async () => {
+	const id = getRequestEvent().locals.user?.id;
+	if (!id) error(401, "Not signed in");
 	const user = await prisma.user.findUnique({
-		where: { id: getRequestEvent().locals.user?.id },
+		where: { id },
 		select: { id: true, name: true, email: true, emailVerified: true, createdAt: true },
 	});
 	if (!user) error(404, "User not found");

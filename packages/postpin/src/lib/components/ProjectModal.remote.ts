@@ -4,26 +4,29 @@ import { getRequestEvent, command } from "$app/server";
 import * as v from "valibot";
 import { deleteMediaFiles } from "#lib/server/media.ts";
 import { isOrgWide } from "#lib/roles.ts";
+import { error } from "@sveltejs/kit";
 
 export const createProject = command(
 	v.object({
 		name: v.string(),
 	}),
 	async (data) => {
-		const event = getRequestEvent();
-		const organizationId = event.locals.session!.activeOrganizationId!;
-		const { member } = await authorize("project", "create", {
+		const { session } = getRequestEvent().locals;
+		if (!session) error(401, "Not signed in");
+		if (!session.activeOrganizationId) error(400, "No active organization");
+
+		const { user, member } = await authorize("project", "create", {
 			type: "organization",
-			id: organizationId,
+			id: session.activeOrganizationId,
 		});
 
 		await prisma.project.create({
 			data: {
 				name: data.name,
-				creatorId: event.locals.user!.id,
-				organizationId,
+				creatorId: user.id,
+				organizationId: member.organizationId,
 				...(!isOrgWide(member.role) && {
-					memberGrants: { create: { memberId: member.id, createdById: event.locals.user!.id } },
+					memberGrants: { create: { memberId: member.id, createdById: user.id } },
 				}),
 			},
 		});
