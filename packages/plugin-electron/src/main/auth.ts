@@ -15,7 +15,12 @@ export interface AuthOptions {
 const deviceHeaders = () => ({ "x-device-name": hostname().replace(/\.local$/, "") });
 
 export function createAuth({ clientId, defaultServerUrl }: AuthOptions) {
+	// serverUrl is only stored for a self-hosted server. The hosted one isn't, so it always follows
+	// this build's default: a dev build's localhost doesn't stick to a release build sharing the
+	// store, and a changed default reaches everyone.
 	const store = new Store<{ token?: string; serverUrl?: string }>({ name: "auth" });
+	// earlier versions stored the default as well
+	if (store.get("serverUrl") === defaultServerUrl) store.delete("serverUrl");
 
 	const getServerUrl = () => store.get("serverUrl") ?? defaultServerUrl;
 
@@ -23,7 +28,8 @@ export function createAuth({ clientId, defaultServerUrl }: AuthOptions) {
 		const serverUrl = url.trim().replace(/\/+$/, "") || defaultServerUrl;
 		// clear token on server change
 		if (serverUrl !== getServerUrl()) store.delete("token");
-		store.set("serverUrl", serverUrl);
+		if (serverUrl === defaultServerUrl) store.delete("serverUrl");
+		else store.set("serverUrl", serverUrl);
 	}
 
 	const getAuthClient = () =>
