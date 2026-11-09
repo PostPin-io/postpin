@@ -18,7 +18,7 @@ To run PostPin on your own server, you need Docker, a containerization platform 
    ```sh
    mkdir postpin && cd postpin
    curl -fsSLO https://github.com/PostPin-io/postpin/releases/latest/download/compose.yml
-   curl -fsSL -o .env https://github.com/PostPin-io/postpin/releases/latest/download/.env.example
+   curl -fsSL -o .env https://github.com/PostPin-io/postpin/releases/latest/download/env.example
    ```
 
 2. Edit `.env` and replace every `change-me`. Generate the secrets with:
