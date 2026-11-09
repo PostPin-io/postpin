@@ -1,5 +1,9 @@
 # PostPin
 
+## Getting Started
+
+See [Self-Hosting PostPin](docs/self-hosting.md) for instructions on how to install and run PostPin on your own server.
+
 ## System Architecture
 
 ![System Architecture](./docs/architecture/architecture.svg)

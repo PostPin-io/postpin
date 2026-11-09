@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postpin
+          POSTGRES_PASSWORD: postpin
+          POSTGRES_DB: postpin_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postpin"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Integration tests migrate this database in their global setup
+      TEST_DATABASE_URL: postgresql://postpin:postpin@localhost:5432/postpin_test?schema=public
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm test
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm lint
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: setup
+        uses: ./.github/actions/setup
+        with:
+          ptsl-proto: ${{ secrets.PTSL_PROTO_B64 }}
+      - if: steps.setup.outputs.ptsl-ready == 'true'
+        run: pnpm check
+      - if: steps.setup.outputs.ptsl-ready != 'true'
+        run: pnpm -r --filter '!@postpin-io/desktop' run check
+  codegen:
+    runs-on: ubuntu-latest
+    env:
+      # Dummy
+      DATABASE_URL: postgresql://postpin:postpin@localhost:5432/postpin_test?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm --filter @postpin-io/postpin run generate:api
+      - run: pnpm --filter @postpin-io/postpin run build:api-client
+      - run: pnpm --filter @postpin-io/shared run db:generate
+      - run: pnpm --filter @postpin-io/plugin-electron run generate:ipc
+      - run: git diff --exit-code
+      - run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git status; git diff; exit 1
+          fi

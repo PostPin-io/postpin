@@ -6,6 +6,7 @@
 	"main": "dist/main.cjs",
 	"scripts": {
 		"setup": "node scripts/setup.mjs",
+		"secret:ptsl": "node scripts/upload-ptsl-secret.mjs",
 		"poc": "tsx src/adapters/pro-tools/poc.ts",
 		"dev:server": "vite",
 		"dev:electron": "node build.mjs --dev --watch",
