@@ -12,28 +12,35 @@
 	let dialog: HTMLDialogElement | null = null;
 	let isOpen = $state(false);
 
-	export function open() {
+	type Target = { projectId: string; timelineId?: string; exportId?: string };
+	// Lets pages outside a project route (e.g. the dashboard) share a specific project
+	let explicitTarget = $state<Target | undefined>();
+
+	export function open(target?: Target) {
+		explicitTarget = target;
 		isOpen = true;
 		dialog?.showModal();
 	}
 
-	// Detected from the current route, so it follows wherever the modal is opened
-	const targetQuery = $derived(
-		isOpen && page.params.project
-			? getSharingTarget({
-					projectId: page.params.project,
-					timelineId: page.params.timeline,
-					exportId: page.params.export,
-				})
-			: undefined,
+	// Detected from the current route unless the caller passed a target
+	const target = $derived<Target | undefined>(
+		explicitTarget ??
+			(page.params.project
+				? {
+						projectId: page.params.project,
+						timelineId: page.params.timeline,
+						exportId: page.params.export,
+					}
+				: undefined),
 	);
+	const targetQuery = $derived(isOpen && target ? getSharingTarget(target) : undefined);
 </script>
 
 <dialog class="modal" bind:this={dialog} onclose={() => (isOpen = false)}>
 	<div class="modal-box">
 		<h3 class="text-lg font-bold">Time to collaborate</h3>
 
-		{#if !page.params.project}
+		{#if !target}
 			{#if isOpen && organizationId}
 				<OrganizationInvite {organizationId} />
 			{/if}

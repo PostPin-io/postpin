@@ -39,6 +39,7 @@ export const getProjects = query(async () => {
 			...p,
 			canRename: allowed("project", "rename", { projectId: p.id }),
 			canDelete: allowed("project", "delete", { projectId: p.id }),
+			canShare: allowed("grant", "create", { projectId: p.id }),
 		})),
 	};
 });

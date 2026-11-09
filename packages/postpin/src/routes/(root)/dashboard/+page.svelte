@@ -7,6 +7,7 @@
 	import RenameProjectModal from "#lib/components/RenameProjectModal.svelte";
 	import NewOrgModal from "../../../lib/components/NewOrgModal.svelte";
 	import DeleteProjectModal from "#lib/components/DeleteProjectModal.svelte";
+	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
 	import LoadingAnimation from "#lib/components/LoadingAnimation.svelte";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
@@ -16,6 +17,7 @@
 	import Ellipsis from "@lucide/svelte/icons/ellipsis";
 	import FolderOpen from "@lucide/svelte/icons/folder-open";
 	import Pencil from "@lucide/svelte/icons/pencil";
+	import Share from "@lucide/svelte/icons/share";
 	import Trash from "@lucide/svelte/icons/trash";
 	import Plus from "@lucide/svelte/icons/plus";
 
@@ -35,6 +37,7 @@
 	let projectDialog: NewProjectModal | null = null;
 	let renameProjectDialog: RenameProjectModal | null = null;
 	let delProjectDialog: DeleteProjectModal | null = null;
+	let shareProjectDialog: SharingSetupModal | null = null;
 
 	let data = $derived(await getProjects());
 
@@ -53,6 +56,11 @@
 	function renameProject(project: (typeof data.projects)[number]) {
 		closeMenu(project);
 		renameProjectDialog?.open(project);
+	}
+
+	function shareProject(project: (typeof data.projects)[number]) {
+		closeMenu(project);
+		shareProjectDialog?.open({ projectId: project.id });
 	}
 
 	function deleteProject(project: (typeof data.projects)[number]) {
@@ -121,6 +129,14 @@
 				<button type="button" onclick={() => renameProject(project)}>
 					<Pencil class="size-4" />
 					Rename project
+				</button>
+			</li>
+		{/if}
+		{#if project.canShare}
+			<li>
+				<button type="button" onclick={() => shareProject(project)}>
+					<Share class="size-4" />
+					Share project
 				</button>
 			</li>
 		{/if}
@@ -442,3 +458,4 @@
 <NewProjectModal bind:this={projectDialog} />
 <RenameProjectModal bind:this={renameProjectDialog} />
 <DeleteProjectModal bind:this={delProjectDialog} />
+<SharingSetupModal bind:this={shareProjectDialog} />

@@ -1,9 +1,20 @@
 import { prisma } from "#lib/server/database.ts";
-import { Controller, Get, Path, Response, Request, Route, Security } from "@tsoa/runtime";
+import {
+	Body,
+	Controller,
+	Get,
+	Path,
+	Post,
+	Response,
+	Request,
+	Route,
+	Security,
+} from "@tsoa/runtime";
 import { HttpError } from "../HttpError.ts";
 import type { Request as HapiRequest } from "@hapi/hapi";
 import { apiAuthorize } from "../access.ts";
 import { accessibleProjects, accessibleTimelines } from "#lib/server/org-access.ts";
+import { isOrgWide } from "#lib/roles.ts";
 
 interface Project {
 	id: string;
@@ -83,5 +94,44 @@ export class ProjectController extends Controller {
 			throw new HttpError(404, "Project not found");
 		}
 		return project;
+	}
+
+	/** Creates a project in the given organization, or in the active one if none is given. */
+	@Post("")
+	@Response(400, "No active organization")
+	public async createProject(
+		@Request() request: HapiRequest,
+		@Body() body: { name: string; organizationId?: string },
+	): Promise<ProjectWithOrg> {
+		const name = body.name.trim();
+		if (name.length < 1 || name.length > 100) {
+			throw new HttpError(400, "Name must be 1-100 characters");
+		}
+		const organizationId = body.organizationId ?? request.app.locals.session?.activeOrganizationId;
+		if (!organizationId) throw new HttpError(400, "No active organization");
+
+		const { user, member } = await apiAuthorize("project", "create", {
+			type: "organization",
+			id: organizationId,
+		});
+
+		return prisma.project.create({
+			data: {
+				name,
+				creatorId: user.id,
+				organizationId: member.organizationId,
+				...(!isOrgWide(member.role) && {
+					memberGrants: { create: { memberId: member.id, createdById: user.id } },
+				}),
+			},
+			select: {
+				id: true,
+				name: true,
+				createdAt: true,
+				updatedAt: true,
+				nleProjectId: true,
+				organization: { select: { id: true, name: true } },
+			},
+		});
 	}
 }

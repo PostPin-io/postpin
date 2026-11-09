@@ -15,6 +15,12 @@ import type {
 	CreateExportData,
 	CreateExportErrors,
 	CreateExportResponses,
+	CreateProjectData,
+	CreateProjectErrors,
+	CreateProjectResponses,
+	CreateTimelineData,
+	CreateTimelineErrors,
+	CreateTimelineResponses,
 	GetCategoriesData,
 	GetCategoriesResponses,
 	GetDocsHtmlData,
@@ -56,6 +62,19 @@ export type Options<
 	meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
 
+export const createTimeline = <ThrowOnError extends boolean = false>(
+	options: Options<CreateTimelineData, ThrowOnError>,
+): RequestResult<CreateTimelineResponses, CreateTimelineErrors, ThrowOnError> =>
+	(options.client ?? client).post<CreateTimelineResponses, CreateTimelineErrors, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
+		url: "/v1/projects/{projectId}/timelines",
+		...options,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
+	});
+
 export const getOpenApiSpec = <ThrowOnError extends boolean = false>(
 	options?: Options<GetOpenApiSpecData, ThrowOnError>,
 ): RequestResult<GetOpenApiSpecResponses, unknown, ThrowOnError> =>
@@ -79,6 +98,22 @@ export const getProjects = <ThrowOnError extends boolean = false>(
 		security: [{ scheme: "bearer", type: "http" }],
 		url: "/v1/projects",
 		...options,
+	});
+
+/**
+ * Creates a project in the given organization, or in the active one if none is given.
+ */
+export const createProject = <ThrowOnError extends boolean = false>(
+	options: Options<CreateProjectData, ThrowOnError>,
+): RequestResult<CreateProjectResponses, CreateProjectErrors, ThrowOnError> =>
+	(options.client ?? client).post<CreateProjectResponses, CreateProjectErrors, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
+		url: "/v1/projects",
+		...options,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
 	});
 
 export const getProject = <ThrowOnError extends boolean = false>(
