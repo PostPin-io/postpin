@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PageMeta from "#lib/components/PageMeta.svelte";
 	import { untrack } from "svelte";
 	import { refreshAll } from "$app/navigation";
 	import { authClient } from "#lib/auth-client.ts";
@@ -158,9 +159,7 @@
 	let dialog: NewOrgModal | null = null;
 </script>
 
-<svelte:head>
-	<title>Profile | PostPin</title>
-</svelte:head>
+<PageMeta title="Profile" description="Manage your PostPin profile, organizations and sessions." />
 
 {#snippet alert(message: Message, clear: () => void)}
 	{#if message}

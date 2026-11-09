@@ -1,10 +1,8 @@
 <script lang="ts">
+	import PageMeta from "#lib/components/PageMeta.svelte";
 </script>
 
-<svelte:head>
-	<title>Home</title>
-	<meta name="description" content="Svelte demo app" />
-</svelte:head>
+<PageMeta />
 
 <section></section>
 <a class="text- btn size-60 h-full w-full btn-ghost" href="/dashboard"> Home </a>

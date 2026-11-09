@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PageMeta from "#lib/components/PageMeta.svelte";
 	import { authClient } from "#lib/auth-client.ts"; //import the auth client
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
@@ -42,10 +43,7 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Login | PostPin</title>
-	<meta name="description" content="Log in to your PostPin account." />
-</svelte:head>
+<PageMeta title="Login" description="Log in to your PostPin account." />
 
 <header class="space-y-2 text-center">
 	<h1 class="text-3xl font-bold">Welcome back</h1>

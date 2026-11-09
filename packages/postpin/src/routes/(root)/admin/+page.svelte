@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PageMeta from "#lib/components/PageMeta.svelte";
 	import { onMount } from "svelte";
 	import { jobStateBadges } from "#lib/job-status.ts";
 	import {
@@ -77,6 +78,8 @@
 			: "N/A";
 	}
 </script>
+
+<PageMeta title="Admin" description="Monitor PostPin's job queues and system health." />
 
 {#snippet dot(ok: boolean)}
 	<span class="status {ok ? 'status-success' : 'status-error'}"></span>

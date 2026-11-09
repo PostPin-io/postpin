@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PageMeta from "#lib/components/PageMeta.svelte";
 	import {
 		cancelInvitation,
 		changeInvitationRole,
@@ -143,6 +144,11 @@
 		setTimeout(() => (copiedLinkRole = null), 1500);
 	}
 </script>
+
+<PageMeta
+	title="{org.name} members"
+	description="Manage the members and invitations of {org.name}."
+/>
 
 {#snippet roleSelect(
 	value: Role,

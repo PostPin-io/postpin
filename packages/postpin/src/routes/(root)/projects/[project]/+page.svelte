@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PageMeta from "#lib/components/PageMeta.svelte";
 	import { page } from "$app/state";
 	import { onMount } from "svelte";
 	import { getTimelines } from "./timeline.remote.ts";
@@ -94,6 +95,8 @@
 		localStorage.setItem("SortDirectionStatus", sortDirection);
 	});
 </script>
+
+<PageMeta title="{data.projectName} timelines" description="The timelines of {data.projectName}." />
 
 {#snippet actionsMenu(
 	timeline: (typeof data.timelines)[number],

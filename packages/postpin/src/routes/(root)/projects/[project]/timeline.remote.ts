@@ -6,6 +6,10 @@ import * as valibot from "valibot";
 
 export const getTimelines = query(valibot.string(), async (projectId) => {
 	const { member } = await authorize("project", "read", { type: "project", id: projectId });
+	const project = await prisma.project.findUniqueOrThrow({
+		where: { id: projectId },
+		select: { name: true },
+	});
 	const timelines = await prisma.timeline.findMany({
 		where: {
 			projectId,
@@ -25,6 +29,7 @@ export const getTimelines = query(valibot.string(), async (projectId) => {
 	});
 	const allowed = await accessChecker(member);
 	return {
+		projectName: project.name,
 		canCreate: allowed("timeline", "create", { projectId }),
 		timelines: timelines.map((t) => ({
 			...t,

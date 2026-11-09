@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PageMeta from "#lib/components/PageMeta.svelte";
 	import { authClient } from "#lib/auth-client.ts";
 	let formMessage = $state<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -34,10 +35,7 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Reset Password | PostPin</title>
-	<meta name="description" content="Reset your PostPin password." />
-</svelte:head>
+<PageMeta title="Reset Password" description="Reset your PostPin password." />
 
 <header class="space-y-2 text-center">
 	<h1 class="text-3xl font-bold">Reset Password</h1>

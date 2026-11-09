@@ -4,6 +4,15 @@ import { query } from "$app/server";
 
 import * as valibot from "valibot";
 
+export const getTimelineName = query(valibot.string(), async (timelineId) => {
+	await authorize("timeline", "read", { type: "timeline", id: timelineId });
+	const timeline = await prisma.timeline.findUniqueOrThrow({
+		where: { id: timelineId },
+		select: { name: true },
+	});
+	return timeline.name;
+});
+
 export const getExportList = query(valibot.string(), async (timelineId) => {
 	const { member, target } = await authorize("timeline", "read", {
 		type: "timeline",

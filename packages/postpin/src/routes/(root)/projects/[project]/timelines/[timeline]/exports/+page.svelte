@@ -1,7 +1,8 @@
 <script lang="ts">
+	import PageMeta from "#lib/components/PageMeta.svelte";
 	import { page } from "$app/state";
 	import { onMount } from "svelte";
-	import { getExportList } from "./exportlist.remote.ts";
+	import { getExportList, getTimelineName } from "./exportlist.remote.ts";
 	import { getUrl } from "./[export]/export.remote.ts";
 	import RenameExportModal from "#lib/components/RenameExportModal.svelte";
 	import DeleteExportModal from "#lib/components/DeleteExportModal.svelte";
@@ -31,6 +32,7 @@
 	let deleteExportDialog: DeleteExportModal | null = null;
 
 	let exports = $derived(await getExportList(page.params.timeline || ""));
+	let timelineName = $derived(await getTimelineName(page.params.timeline || ""));
 
 	function sortBy(field: typeof sortField) {
 		if (sortField == field) {
@@ -94,6 +96,8 @@
 		localStorage.setItem("SortDirectionStatus", sortDirection);
 	});
 </script>
+
+<PageMeta title="{timelineName} exports" description="The exports of {timelineName}." />
 
 <!--
 	Ein Dropdown für alle Aktionen eines Exports (Öffnen, Link kopieren, Umbenennen, Löschen).

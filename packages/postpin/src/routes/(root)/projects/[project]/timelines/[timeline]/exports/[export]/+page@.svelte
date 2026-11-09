@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PageMeta from "#lib/components/PageMeta.svelte";
 	import { onMount, tick } from "svelte";
 	import { isInsideOverlay, isPlainKey, isTypingTarget } from "#lib/keyboard.ts";
 	import { page } from "$app/state";
@@ -328,6 +329,8 @@
 	let videoQualities = $state<number[]>([]);
 	let videoMuted = $state(false);
 </script>
+
+<PageMeta title={exp?.name ?? "Export"} description="Watch this export and review its markers." />
 
 <svelte:window onkeydown={onGlobalKeyDown} />
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PageMeta from "#lib/components/PageMeta.svelte";
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { authClient } from "#lib/auth-client.ts";
@@ -50,9 +51,7 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Invitation | PostPin</title>
-</svelte:head>
+<PageMeta title="Invitation" description="Accept an invitation to a PostPin organization." />
 
 {#if !invite.valid}
 	<header class="space-y-2 text-center">

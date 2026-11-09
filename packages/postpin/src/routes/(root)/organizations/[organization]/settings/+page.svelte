@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PageMeta from "#lib/components/PageMeta.svelte";
 	import { untrack } from "svelte";
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
@@ -78,9 +79,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{organization.name} settings | PostPin</title>
-</svelte:head>
+<PageMeta
+	title="{organization.name} settings"
+	description="Manage the settings of {organization.name}."
+/>
 
 <div class="flex flex-col gap-4 p-6">
 	<header class="flex items-baseline justify-between gap-4">

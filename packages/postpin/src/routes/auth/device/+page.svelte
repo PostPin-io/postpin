@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PageMeta from "#lib/components/PageMeta.svelte";
 	import { authClient } from "#lib/auth-client.ts"; //import the auth client
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
@@ -83,10 +84,7 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Connect Device | PostPin</title>
-	<meta name="description" content="Connect a device to your PostPin account." />
-</svelte:head>
+<PageMeta title="Connect Device" description="Connect a device to your PostPin account." />
 
 <header class="space-y-2 text-center">
 	<h1 class="text-3xl font-bold">Connect a device</h1>

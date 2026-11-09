@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PageMeta from "#lib/components/PageMeta.svelte";
 	import { page } from "$app/state";
 	import { authClient } from "#lib/auth-client.ts";
 	import { goto } from "$app/navigation";
@@ -43,11 +44,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Choose a new password | PostPin</title>
-
-	<meta name="description" content="Choose a new password for your PostPin account." />
-</svelte:head>
+<PageMeta
+	title="Choose a new password"
+	description="Choose a new password for your PostPin account."
+/>
 
 <header class="space-y-2 text-center">
 	<h1 class="text-3xl font-bold">Choose a new password</h1>

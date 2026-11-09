@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PageMeta from "#lib/components/PageMeta.svelte";
 	import { onMount } from "svelte";
 	import { getProjects } from "./project.remote.ts";
 	import { getMemberships } from "../profile/profile.remote.ts";
@@ -95,6 +96,8 @@
 		localStorage.setItem("SortDirectionStatus", sortDirection);
 	});
 </script>
+
+<PageMeta title="Projects" description="Your PostPin projects." />
 
 <!--
 	Ein Dropdown für alle Aktionen eines Projekts (Öffnen, Umbenennen, Löschen).
