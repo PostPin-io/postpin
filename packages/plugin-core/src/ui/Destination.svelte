@@ -35,6 +35,10 @@
 		selectedExportId?: string;
 		// exportId is only set in "export" mode
 		onSelect: (projectId: string, timelineId: string, exportId?: string) => void;
+		onCreateProject?: (name: string, organizationId?: string) => Promise<string>;
+		onCreateTimeline?: (projectId: string, name: string) => Promise<string>;
+		// called when the choose button is clicked, to refresh `projects`; the modal doesn't wait for it
+		onBeforeChoose?: () => unknown;
 	}
 
 	let {
@@ -50,6 +54,9 @@
 		selectedTimelineId,
 		selectedExportId,
 		onSelect,
+		onCreateProject,
+		onCreateTimeline,
+		onBeforeChoose,
 		browserUrl,
 	}: Props = $props();
 
@@ -82,7 +89,10 @@
 		<button
 			type="button"
 			class={["btn btn-sm self-start", highlightChoose && "btn-primary"]}
-			onclick={() => modal?.open()}
+			onclick={() => {
+				onBeforeChoose?.();
+				modal?.open();
+			}}
 		>
 			Choose export
 		</button>
@@ -106,4 +116,6 @@
 	{selectedTimelineId}
 	{selectedExportId}
 	{onSelect}
+	{onCreateProject}
+	{onCreateTimeline}
 />

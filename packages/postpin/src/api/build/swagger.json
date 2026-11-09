@@ -575,6 +575,81 @@
 		"contact": {}
 	},
 	"paths": {
+		"/v1/projects/{projectId}/timelines": {
+			"post": {
+				"operationId": "CreateTimeline",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"nleTimelineId": {
+											"type": "string",
+											"nullable": true
+										},
+										"updatedAt": {
+											"type": "string",
+											"format": "date-time"
+										},
+										"createdAt": {
+											"type": "string",
+											"format": "date-time"
+										},
+										"name": {
+											"type": "string"
+										},
+										"id": {
+											"type": "string"
+										}
+									},
+									"required": ["nleTimelineId", "updatedAt", "createdAt", "name", "id"],
+									"type": "object"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid name"
+					},
+					"404": {
+						"description": "Project not found"
+					}
+				},
+				"security": [
+					{
+						"session": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"name": {
+										"type": "string"
+									}
+								},
+								"required": ["name"],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/v1/openapi.json": {
 			"get": {
 				"operationId": "GetOpenApiSpec",
@@ -635,6 +710,50 @@
 					}
 				],
 				"parameters": []
+			},
+			"post": {
+				"operationId": "CreateProject",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ProjectWithOrg"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "No active organization"
+					}
+				},
+				"description": "Creates a project in the given organization, or in the active one if none is given.",
+				"security": [
+					{
+						"session": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"organizationId": {
+										"type": "string"
+									},
+									"name": {
+										"type": "string"
+									}
+								},
+								"required": ["name"],
+								"type": "object"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/v1/projects/{projectId}": {

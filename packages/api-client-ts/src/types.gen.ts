@@ -204,6 +204,43 @@ export type CategoryCreateParams = {
 	name: string;
 };
 
+export type CreateTimelineData = {
+	body: {
+		name: string;
+	};
+	path: {
+		projectId: string;
+	};
+	query?: never;
+	url: "/v1/projects/{projectId}/timelines";
+};
+
+export type CreateTimelineErrors = {
+	/**
+	 * Invalid name
+	 */
+	400: unknown;
+	/**
+	 * Project not found
+	 */
+	404: unknown;
+};
+
+export type CreateTimelineResponses = {
+	/**
+	 * Ok
+	 */
+	200: {
+		nleTimelineId: string | null;
+		updatedAt: string;
+		createdAt: string;
+		name: string;
+		id: string;
+	};
+};
+
+export type CreateTimelineResponse = CreateTimelineResponses[keyof CreateTimelineResponses];
+
 export type GetOpenApiSpecData = {
 	body?: never;
 	path?: never;
@@ -249,6 +286,32 @@ export type GetProjectsResponses = {
 };
 
 export type GetProjectsResponse = GetProjectsResponses[keyof GetProjectsResponses];
+
+export type CreateProjectData = {
+	body: {
+		organizationId?: string;
+		name: string;
+	};
+	path?: never;
+	query?: never;
+	url: "/v1/projects";
+};
+
+export type CreateProjectErrors = {
+	/**
+	 * No active organization
+	 */
+	400: unknown;
+};
+
+export type CreateProjectResponses = {
+	/**
+	 * Ok
+	 */
+	200: ProjectWithOrg;
+};
+
+export type CreateProjectResponse = CreateProjectResponses[keyof CreateProjectResponses];
 
 export type GetProjectData = {
 	body?: never;

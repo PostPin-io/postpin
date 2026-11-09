@@ -4,6 +4,8 @@
 import type { TsoaRoute } from "@tsoa/runtime";
 import { fetchMiddlewares, HapiTemplateService } from "@tsoa/runtime";
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { TimelineController } from "./../controllers/TimelineController";
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { SpecController } from "./../controllers/SpecController";
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ProjectController } from "./../controllers/ProjectController";
@@ -424,6 +426,66 @@ export function RegisterRoutes(server: any) {
 	//  NOTE: If you do not see routes for all of your controllers in this file, then you might not have informed tsoa of where to look
 	//      Please look into the "controllerPathGlobs" config option described in the readme: https://github.com/lukeautry/tsoa
 	// ###########################################################################################################
+	const argsTimelineController_createTimeline: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		body: {
+			in: "body",
+			name: "body",
+			required: true,
+			dataType: "nestedObjectLiteral",
+			nestedProperties: { name: { dataType: "string", required: true } },
+		},
+	};
+	server.route({
+		method: "post",
+		path: "/v1/projects/{projectId}/timelines",
+		options: {
+			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(TimelineController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(TimelineController.prototype.createTimeline),
+			],
+			handler: function TimelineController_createTimeline(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsTimelineController_createTimeline,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new TimelineController();
+
+				return templateService.apiHandler({
+					methodName: "createTimeline",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 	const argsSpecController_getOpenApiSpec: Record<string, TsoaRoute.ParameterSchema> = {};
 	server.route({
 		method: "get",
@@ -617,6 +679,69 @@ export function RegisterRoutes(server: any) {
 
 				return templateService.apiHandler({
 					methodName: "getProject",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsProjectController_createProject: Record<string, TsoaRoute.ParameterSchema> = {
+		request: { in: "request", name: "request", required: true, dataType: "object" },
+		body: {
+			in: "body",
+			name: "body",
+			required: true,
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				organizationId: { dataType: "string" },
+				name: { dataType: "string", required: true },
+			},
+		},
+	};
+	server.route({
+		method: "post",
+		path: "/v1/projects",
+		options: {
+			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ProjectController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ProjectController.prototype.createProject),
+			],
+			handler: function ProjectController_createProject(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsProjectController_createProject,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new ProjectController();
+
+				return templateService.apiHandler({
+					methodName: "createProject",
 					controller,
 					h,
 					validatedArgs,

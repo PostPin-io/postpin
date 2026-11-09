@@ -1,5 +1,7 @@
 <script lang="ts">
 	import {
+		createProject,
+		createTimeline,
 		getExports,
 		type GetExportsResponse,
 		type ProjectWithTimelines,
@@ -52,12 +54,14 @@
 		}
 		return response;
 	});
-	const [capabilities, projectsWithTimelines, lastSettings, nleTimeline] = await Promise.all([
+	const [capabilities, loadedProjects, lastSettings, nleTimeline] = await Promise.all([
 		nle.getCapabilities(),
 		loadProjectsWithTimelines(client),
 		host.getSettings(),
 		nle.getTimelineInfo(),
 	]);
+
+	let projectsWithTimelines = $state(loadedProjects);
 
 	// The PostPin timeline linked to the timeline open in the NLE
 	function findLinked(): Location | null {
@@ -98,11 +102,28 @@
 		exportsByTimeline[location.timeline.id] = exports;
 		return exports;
 	}
-	Promise.all(
-		projectsWithTimelines.flatMap((project) =>
-			project.timelines.map((timeline) => refreshExports({ project, timeline }).catch(() => [])),
-		),
-	);
+	function refreshAllExports() {
+		return Promise.all(
+			projectsWithTimelines.flatMap((project) =>
+				project.timelines.map((timeline) => refreshExports({ project, timeline }).catch(() => [])),
+			),
+		);
+	}
+	refreshAllExports();
+
+	// Called when a picker opens, so it lists projects and timelines created elsewhere. The modal
+	// opens right away and the lists update once the data arrives.
+	let refreshing: Promise<unknown> | null = null;
+	function refreshProjects() {
+		refreshing ??= loadProjectsWithTimelines(client)
+			.then((projects) => {
+				projectsWithTimelines = projects;
+				return refreshAllExports();
+			})
+			.catch(() => {})
+			.finally(() => (refreshing = null));
+		return refreshing;
+	}
 	const projectsWithExports = $derived(
 		projectsWithTimelines.map((project) => ({
 			...project,
@@ -117,6 +138,28 @@
 		const project = projectsWithTimelines.find((p) => p.id === projectId);
 		const timeline = project?.timelines.find((t: Timeline) => t.id === timelineId);
 		return project && timeline ? { project, timeline } : null;
+	}
+
+	async function createNewProject(name: string, organizationId?: string) {
+		const { data } = await createProject({
+			client,
+			body: { name, organizationId },
+			throwOnError: true,
+		});
+		projectsWithTimelines.unshift({ ...data, timelines: [] });
+		return data.id;
+	}
+
+	async function createNewTimeline(projectId: string, name: string) {
+		const { data } = await createTimeline({
+			client,
+			path: { projectId },
+			body: { name },
+			throwOnError: true,
+		});
+		projectsWithTimelines.find((p) => p.id === projectId)?.timelines.unshift(data);
+		exportsByTimeline[data.id] = [];
+		return data.id;
 	}
 
 	function selectUploadTarget(projectId: string, timelineId: string) {
@@ -343,6 +386,9 @@
 					selectedProjectId={uploadTarget?.project.id}
 					selectedTimelineId={uploadTarget?.timeline.id}
 					onSelect={selectUploadTarget}
+					onBeforeChoose={refreshProjects}
+					onCreateProject={createNewProject}
+					onCreateTimeline={createNewTimeline}
 					emptyText="This timeline isn't linked to a PostPin timeline yet."
 					highlightChoose={!uploadTarget}
 					browserUrl={uploadTarget
@@ -394,6 +440,9 @@
 					selectedTimelineId={markerTarget?.timeline.id}
 					selectedExportId={markerTarget?.export?.id}
 					onSelect={selectMarkerTarget}
+					onBeforeChoose={refreshProjects}
+					onCreateProject={createNewProject}
+					onCreateTimeline={createNewTimeline}
 					browserUrl={markerTarget?.export
 						? `/projects/${markerTarget.project.id}/timelines/${markerTarget.timeline.id}/exports/${markerTarget.export.id}`
 						: undefined}
