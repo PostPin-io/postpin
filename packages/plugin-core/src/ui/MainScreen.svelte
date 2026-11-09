@@ -8,8 +8,14 @@
 		type Timeline,
 	} from "@postpin-io/api-client-ts";
 	import { createClient } from "@postpin-io/api-client-ts/client";
-	import type { Snippet } from "svelte";
-	import type { RenderProgress, Settings, UploadProgress } from "../bridge";
+	import { onMount, type Snippet } from "svelte";
+	import type {
+		Capabilities,
+		RenderProgress,
+		Settings,
+		TimelineInfo,
+		UploadProgress,
+	} from "../bridge";
 	import { errorMessage } from "../errors";
 	import { loadProjectsWithTimelines } from "../projects";
 	import { renderAndUpload as runRenderAndUpload } from "../renderAndUpload";
@@ -22,7 +28,6 @@
 	import RenderToDisk from "./RenderToDisk.svelte";
 	import SettingsIcon from "@lucide/svelte/icons/settings";
 	import Globe from "@lucide/svelte/icons/globe";
-	import Link from "@lucide/svelte/icons/link";
 	import LogOut from "@lucide/svelte/icons/log-out";
 	import PostPinLogo from "./PostPinLogo.svelte";
 
@@ -54,24 +59,74 @@
 		}
 		return response;
 	});
-	const [capabilities, loadedProjects, lastSettings, nleTimeline] = await Promise.all([
-		nle.getCapabilities(),
+
+	type NleState =
+		| { status: "connecting" }
+		| { status: "connected"; capabilities: Capabilities; timeline: TimelineInfo | null }
+		| { status: "disconnected"; error: string };
+	let nleState = $state<NleState>({ status: "connecting" });
+
+	const [loadedProjects, lastSettings] = await Promise.all([
 		loadProjectsWithTimelines(client),
 		host.getSettings(),
-		nle.getTimelineInfo(),
 	]);
 
 	let projectsWithTimelines = $state(loadedProjects);
 
-	// The PostPin timeline linked to the timeline open in the NLE
-	function findLinked(): Location | null {
-		if (!nleTimeline) return null;
-		for (const project of projectsWithTimelines) {
-			const timeline = project.timelines.find((t: Timeline) => t.nleTimelineId === nleTimeline.id);
-			if (timeline) return { project, timeline };
+	let nleConnectTimer: ReturnType<typeof setTimeout> | null = null;
+	function clearNleConnectTimer() {
+		if (nleConnectTimer) {
+			clearTimeout(nleConnectTimer);
+			nleConnectTimer = null;
 		}
-		return null;
 	}
+	// Connects to the NLE, retrying every few seconds while it isn't reachable.
+	// Concurrent calls share one attempt, so there is only ever one retry loop.
+	const RETRY_MS = 3000;
+	let connecting: Promise<void> | null = null;
+	let destroyed = false;
+	function scheduleConnect() {
+		if (!destroyed) nleConnectTimer = setTimeout(connectNle, RETRY_MS);
+	}
+	function connectNle() {
+		clearNleConnectTimer();
+		// Hosts can be unreachable while they work (Reaper blocks while rendering), try again later
+		if (isBusy) {
+			scheduleConnect();
+			return Promise.resolve();
+		}
+		connecting ??= (async () => {
+			let timeline: TimelineInfo | null;
+			try {
+				const [capabilities, info] = await Promise.all([
+					nle.getCapabilities(),
+					nle.getTimelineInfo(),
+				]);
+				timeline = info;
+				nleState = { status: "connected", capabilities, timeline };
+			} catch (err) {
+				nleState = { status: "disconnected", error: errorMessage(err) };
+				scheduleConnect();
+				return;
+			} finally {
+				connecting = null;
+			}
+			// A failing PostPin request isn't an NLE problem, so it doesn't change nleState
+			await applyLinked(timeline).catch(() => {});
+		})();
+		return connecting;
+	}
+
+	const capabilities = $derived(nleState.status === "connected" ? nleState.capabilities : null);
+	const nleTimeline = $derived(nleState.status === "connected" ? nleState.timeline : null);
+
+	onMount(() => {
+		connectNle();
+		return () => {
+			destroyed = true;
+			clearNleConnectTimer();
+		};
+	});
 
 	// Newest first
 	async function loadExports({ project, timeline }: Location) {
@@ -83,16 +138,34 @@
 		return data.exports.toSorted((a, b) => b.createdAt.localeCompare(a.createdAt));
 	}
 
-	const linked = findLinked();
+	function findLinked(timeline: TimelineInfo | null): Location | null {
+		if (!timeline) return null;
+		for (const project of projectsWithTimelines) {
+			const linkedTimeline = project.timelines.find(
+				(t: Timeline) => t.nleTimelineId === timeline.id,
+			);
+			if (linkedTimeline) return { project, timeline: linkedTimeline };
+		}
+		return null;
+	}
 
 	let settings = $state<Settings>(lastSettings);
 	let showDiskSettings = $state(false);
 	// Renders go to a timeline, marker actions work on one export of a timeline.
-	// Both start at the linked timeline and its latest export.
-	let uploadTarget = $state<Location | null>(linked);
-	let markerTarget = $state<(Location & { export: TimelineExport | null }) | null>(
-		linked ? { ...linked, export: (await loadExports(linked))[0] ?? null } : null,
-	);
+	// Both start at the linked timeline and its latest export, once the NLE is connected.
+	let uploadTarget = $state<Location | null>(null);
+	let markerTarget = $state<(Location & { export: TimelineExport | null }) | null>(null);
+
+	// Fills in the targets the user hasn't chosen yet, keeps the ones they have
+	async function applyLinked(timeline: TimelineInfo | null) {
+		const location = findLinked(timeline);
+		if (!location) return;
+		uploadTarget ??= location;
+		if (!markerTarget) {
+			const exports = await refreshExports(location);
+			markerTarget ??= { ...location, export: exports[0] ?? null };
+		}
+	}
 
 	// Exports of every timeline for the export picker, newest first. Loads in the background so the
 	// screen doesn't wait for one request per timeline.
@@ -188,6 +261,7 @@
 			await action();
 		} catch (err) {
 			error = errorMessage(err);
+			connectNle();
 		} finally {
 			isBusy = null;
 		}
@@ -202,6 +276,7 @@
 			log = ["Done"];
 		} catch (err) {
 			error = errorMessage(err);
+			connectNle();
 		} finally {
 			isBusy = null;
 		}
@@ -281,8 +356,8 @@
 		return runShort("deletingMarkers", () => nle.clearMarkers());
 	}
 
-	const canRender = $derived(!!uploadTarget && !isBusy);
-	const canSync = $derived(!!markerTarget?.export && !isBusy);
+	const canRender = $derived(nleState.status === "connected" && !!uploadTarget && !isBusy);
+	const canSync = $derived(nleState.status === "connected" && !!markerTarget?.export && !isBusy);
 </script>
 
 <!-- Fills the window: the header stays put, only the content below it scrolls -->
@@ -322,11 +397,14 @@
 		<div class="grid grid-cols-1 gap-4 p-4 @2xl:grid-cols-[1fr_1.15fr_1fr] @2xl:gap-x-0">
 			<div class="@2xl:col-start-1 @2xl:row-span-2 @2xl:row-start-1 @2xl:grid">
 				<HostNode
-					hostName={capabilities.hostName}
+					hostName={capabilities?.hostName ?? null}
+					status={nleState.status}
+					error={nleState.status === "disconnected" ? nleState.error : null}
+					onRetry={connectNle}
 					thumbnailDataUrl={nleTimeline?.thumbnailDataUrl}
 					timelineName={nleTimeline?.name ?? null}
 					projectName={nleTimeline?.projectName ?? null}
-					disabled={isBusy !== null}
+					disabled={isBusy !== null || nleState.status !== "connected"}
 					onClearMarkers={deleteMarkers}
 					{header}
 				/>
@@ -358,7 +436,7 @@
 										: "choose a location first"}
 								</span>
 							</button>
-							{#if capabilities.renderToDisk}
+							{#if capabilities?.renderToDisk}
 								<button
 									type="button"
 									class={[
@@ -459,7 +537,7 @@
 			</div>
 		</div>
 
-		{#if showDiskSettings && capabilities.renderToDisk && !isBusy}
+		{#if showDiskSettings && capabilities?.renderToDisk && !isBusy}
 			<div
 				class="mx-4 mb-4 flex flex-col gap-2 rounded-box border-2 border-dashed border-base-content/30 p-4"
 			>

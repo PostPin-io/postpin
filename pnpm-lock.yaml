@@ -198,6 +198,9 @@ importers:
       '@bufbuild/protobuf':
         specifier: ^2.17.0
         version: 2.17.0
+      '@marshallofsound/ipc':
+        specifier: ^2.7.1
+        version: 2.7.1(patch_hash=b82256c29516905c9fed967ce26291a31da648f53648922b51eef2f1bdd65dc2)(electron@45.2.3(supports-color@10.2.2))
       '@postpin-io/api-client-ts':
         specifier: workspace:*
         version: link:../api-client-ts
@@ -237,6 +240,9 @@ importers:
       electron-builder:
         specifier: ^26.18.0
         version: 26.18.0(electron-builder-squirrel-windows@26.18.0)(supports-color@10.2.2)
+      electron-store:
+        specifier: ^12.0.0
+        version: 12.0.0
       electron-updater:
         specifier: ^6.8.11
         version: 6.8.11(supports-color@10.2.2)
@@ -6519,6 +6525,11 @@ snapshots:
   '@marshallofsound/ipc@2.7.1(patch_hash=b82256c29516905c9fed967ce26291a31da648f53648922b51eef2f1bdd65dc2)(electron@36.3.2(supports-color@10.2.2))':
     dependencies:
       electron: 36.3.2(supports-color@10.2.2)
+      langium: 4.4.0
+
+  '@marshallofsound/ipc@2.7.1(patch_hash=b82256c29516905c9fed967ce26291a31da648f53648922b51eef2f1bdd65dc2)(electron@45.2.3(supports-color@10.2.2))':
+    dependencies:
+      electron: 45.2.3(supports-color@10.2.2)
       langium: 4.4.0
 
   '@mdi/svg@7.4.47': {}

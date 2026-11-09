@@ -8,6 +8,7 @@
 		"setup": "node scripts/setup.mjs",
 		"secret:ptsl": "node scripts/upload-ptsl-secret.mjs",
 		"poc": "tsx src/adapters/pro-tools/poc.ts",
+		"generate:ipc": "generate-ipc src/schema src/ipc && prettier --write src/ipc",
 		"dev:server": "vite",
 		"dev:electron": "node build.mjs --dev --watch",
 		"dev:app": "node scripts/dev-app.mjs",
@@ -21,6 +22,7 @@
 	"type": "module",
 	"devDependencies": {
 		"@bufbuild/protobuf": "^2.17.0",
+		"@marshallofsound/ipc": "^2.7.1",
 		"@postpin-io/api-client-ts": "workspace:*",
 		"@postpin-io/plugin-core": "workspace:*",
 		"@postpin-io/plugin-electron": "workspace:*",
@@ -34,6 +36,7 @@
 		"daisyui": "^5.7.50",
 		"electron": "^45.2.3",
 		"electron-builder": "^26.18.0",
+		"electron-store": "^12.0.0",
 		"electron-updater": "^6.8.11",
 		"esbuild": "^0.28.2",
 		"grpc-tools": "^1.13.1",
