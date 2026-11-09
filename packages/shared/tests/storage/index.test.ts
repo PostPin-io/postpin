@@ -16,6 +16,7 @@ import type { S3Env } from "../../src/env/index.ts";
 
 const env: S3Env = {
 	S3_ENDPOINT: "http://minio:9000",
+	S3_PUBLIC_ENDPOINT: undefined,
 	S3_FORCE_PATH_STYLE: true,
 	S3_ACCESS_KEY: "key",
 	S3_SECRET_KEY: "secret",

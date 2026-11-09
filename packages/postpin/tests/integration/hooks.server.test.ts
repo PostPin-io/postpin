@@ -295,3 +295,22 @@ describe("routing", () => {
 		expect(resolve).toHaveBeenCalledOnce();
 	});
 });
+
+describe("/health", () => {
+	it("answers without a session lookup or login redirect", async () => {
+		const getSession = vi.spyOn(auth.api, "getSession");
+		const { res, resolve } = await run("/health");
+		expect(res.status).toBe(200);
+		expect(await res.json()).toEqual({ status: "ok" });
+		expect(res.headers.get("cache-control")).toBe("no-store");
+		expect(resolve).not.toHaveBeenCalled();
+		expect(getSession).not.toHaveBeenCalled();
+	});
+
+	it("reports 503 without details when the database is unreachable", async () => {
+		vi.spyOn(prisma, "$queryRaw").mockRejectedValue(new Error("connection refused"));
+		const { res } = await run("/health");
+		expect(res.status).toBe(503);
+		expect(await res.json()).toEqual({ status: "error" });
+	});
+});

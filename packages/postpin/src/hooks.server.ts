@@ -4,6 +4,7 @@ import { building } from "$app/env";
 import { sequence, type Handle } from "@sveltejs/kit/hooks";
 import { handleApiRequest } from "./api";
 import { prisma } from "#lib/server/database.ts";
+import { healthHandler } from "#lib/server/health.ts";
 
 const authHandler: Handle = async ({ event, resolve }) => {
 	return svelteKitHandler({ event, resolve, auth, building });
@@ -100,4 +101,4 @@ async function syncActiveOrganization(
 	}
 }
 
-export const handle = sequence(authHandler, sessionHandler, apiHandler);
+export const handle = sequence(healthHandler, authHandler, sessionHandler, apiHandler);

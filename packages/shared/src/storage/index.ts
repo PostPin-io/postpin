@@ -3,9 +3,9 @@ import type { S3Env } from "../env/index.ts";
 export * from "./paths.ts";
 export * from "./multipart.ts";
 
-export function createS3Client(env: S3Env): S3 {
+function buildClient(env: S3Env, endpoint: string | undefined): S3 {
 	return new S3({
-		endpoint: env.S3_ENDPOINT,
+		endpoint,
 		forcePathStyle: env.S3_FORCE_PATH_STYLE,
 		region: env.S3_REGION,
 		credentials: {
@@ -15,6 +15,19 @@ export function createS3Client(env: S3Env): S3 {
 		requestChecksumCalculation: "WHEN_REQUIRED",
 		responseChecksumValidation: "WHEN_REQUIRED",
 	});
+}
+
+/** Client for S3 operations, talks to `S3_ENDPOINT`. */
+export function createS3Client(env: S3Env): S3 {
+	return buildClient(env, env.S3_ENDPOINT);
+}
+
+/**
+ * Client for presigning URLs handed to browsers and plugins. It never connects to S3 itself; the
+ * signature covers the host, so the URLs must be signed for the public endpoint up front.
+ */
+export function createS3PresignClient(env: S3Env): S3 {
+	return buildClient(env, env.S3_PUBLIC_ENDPOINT ?? env.S3_ENDPOINT);
 }
 
 export async function ensureBucket(client: S3, env: S3Env): Promise<void> {

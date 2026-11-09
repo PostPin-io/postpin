@@ -1,7 +1,7 @@
 import * as env from "$app/env/private";
 import { prisma } from "#lib/server/database.ts";
 import { startMediaProcessing } from "#lib/server/media.ts";
-import { s3Client } from "#lib/server/storage.ts";
+import { s3Client, s3PresignClient } from "#lib/server/storage.ts";
 import {
 	abortMultipartUpload,
 	completeMultipartUpload,
@@ -152,6 +152,8 @@ export class ExportController extends Controller {
 			env,
 			{ mediaId: media!.id, type: "original" },
 			body.fileSize,
+			// the plugin PUTs the parts, so they're signed for the public endpoint
+			s3PresignClient,
 		);
 		return { mediaId: media!.id, ...upload };
 	}

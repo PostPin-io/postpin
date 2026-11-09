@@ -1,7 +1,7 @@
 import * as env from "$app/env/private";
 import { error } from "@sveltejs/kit";
 import { query } from "$app/server";
-import { s3Client } from "#lib/server/storage.ts";
+import { s3PresignClient } from "#lib/server/storage.ts";
 import { prisma } from "#lib/server/database.ts";
 import { getMediaJobs } from "#lib/server/media.ts";
 import { authorize, requireMediaAccess } from "#lib/server/org-access.ts";
@@ -56,7 +56,7 @@ export const getUrl = query(
 	}),
 	async (object) => {
 		await requireMediaAccess(object.mediaId);
-		return await getPresignedUrl(s3Client, env, object);
+		return await getPresignedUrl(s3PresignClient, env, object);
 	},
 );
 
@@ -76,7 +76,7 @@ export const getSeekSprites = query(
 			seekSprites: media.seekSprites as SeekSprites,
 			urls: await Promise.all(
 				Array.from({ length: sheets }, (_, index) =>
-					getPresignedUrl(s3Client, env, { mediaId: object.mediaId, type: "sprite", index }),
+					getPresignedUrl(s3PresignClient, env, { mediaId: object.mediaId, type: "sprite", index }),
 				),
 			),
 		};
@@ -101,7 +101,7 @@ export const getShotThumbnails = query(
 			height,
 			urls: await Promise.all(
 				Array.from({ length: count }, (_, index) =>
-					getPresignedUrl(s3Client, env, {
+					getPresignedUrl(s3PresignClient, env, {
 						mediaId: object.mediaId,
 						type: "shotThumbnails",
 						index,

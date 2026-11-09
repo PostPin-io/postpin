@@ -69,24 +69,27 @@ describe("parseEnv", () => {
 		expect(parseEnv(s3EnvVars, S3_BASE)).toEqual({
 			...S3_BASE,
 			S3_ENDPOINT: undefined,
+			S3_PUBLIC_ENDPOINT: undefined,
 			S3_FORCE_PATH_STYLE: false,
 		});
 	});
 
-	it("treats an empty S3_ENDPOINT as unset", () => {
-		expect(parseEnv(s3EnvVars, { ...S3_BASE, S3_ENDPOINT: "" }).S3_ENDPOINT).toBeUndefined();
-	});
+	describe.each(["S3_ENDPOINT", "S3_PUBLIC_ENDPOINT"] as const)("%s", (name) => {
+		it("treats an empty value as unset", () => {
+			expect(parseEnv(s3EnvVars, { ...S3_BASE, [name]: "" })[name]).toBeUndefined();
+		});
 
-	it("keeps a valid S3_ENDPOINT", () => {
-		expect(
-			parseEnv(s3EnvVars, { ...S3_BASE, S3_ENDPOINT: "http://localhost:9000" }).S3_ENDPOINT,
-		).toBe("http://localhost:9000");
-	});
+		it("keeps a valid URL", () => {
+			expect(parseEnv(s3EnvVars, { ...S3_BASE, [name]: "http://localhost:9000" })[name]).toBe(
+				"http://localhost:9000",
+			);
+		});
 
-	it("rejects an S3_ENDPOINT that isn't a URL", () => {
-		expect(() => parseEnv(s3EnvVars, { ...S3_BASE, S3_ENDPOINT: "not a url" })).toThrow(
-			/S3_ENDPOINT/,
-		);
+		it("rejects a value that isn't a URL", () => {
+			expect(() => parseEnv(s3EnvVars, { ...S3_BASE, [name]: "not a url" })).toThrow(
+				new RegExp(name),
+			);
+		});
 	});
 
 	it("reports every invalid var in one error", () => {

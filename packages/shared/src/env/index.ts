@@ -11,14 +11,18 @@ export const envBoolean = v.optional(
 
 export const envNumber = v.pipe(v.string(), v.trim(), v.nonEmpty(), v.toNumber());
 
+/** An optional URL; an empty string counts as unset (compose writes `VAR=` for unset vars). */
+const envOptionalUrl = v.pipe(
+	v.optional(v.string()),
+	v.transform((value) => value || undefined),
+	v.optional(v.pipe(v.string(), v.url())),
+);
+
 export const s3EnvVars = {
-	S3_ENDPOINT: {
-		schema: v.pipe(
-			v.optional(v.string()),
-			v.transform((value) => value || undefined),
-			v.optional(v.pipe(v.string(), v.url())),
-		),
-	},
+	/** Endpoint the app and worker use for S3 operations, e.g. `http://rustfs:9000` inside compose. */
+	S3_ENDPOINT: { schema: envOptionalUrl },
+	/** Endpoint in presigned URLs for browsers and plugins. Falls back to `S3_ENDPOINT`. */
+	S3_PUBLIC_ENDPOINT: { schema: envOptionalUrl },
 	S3_FORCE_PATH_STYLE: { schema: envBoolean },
 	S3_ACCESS_KEY: { schema: v.string() },
 	S3_SECRET_KEY: { schema: v.string() },
