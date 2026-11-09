@@ -3,6 +3,8 @@
 node_modules
 .svelte-check
 dev-data
+# data of deploy/compose.yml when it is started inside the repo
+deploy/data
 packages/api-client-ts/.src-tmp*
 packages/api-client-ts/.build.lock
 openapi-ts-error-*.log

@@ -1,0 +1,104 @@
+# PostPin for self-hosting. See docs/self-hosting.md.
+#
+#   cp .env.example .env    # copy .env file and fill in the values
+#   docker compose up -d
+#
+# App (port 3000) and S3 storage (port 9000) only listen on localhost; put your reverse proxy in
+# front of both. Values that are the same for every installation (hostnames inside this network)
+# are set here instead of in .env. All data is stored in ./data next to this file.
+
+name: postpin
+
+x-postpin-env: &postpin-env
+  DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  S3_ENDPOINT: http://rustfs:9000
+  S3_FORCE_PATH_STYLE: "true"
+
+x-postpin-depends-on: &postpin-depends-on
+  db:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+  rustfs:
+    condition: service_healthy
+
+services:
+  app:
+    image: ${POSTPIN_APP_IMAGE:-ghcr.io/postpin-io/postpin}:${POSTPIN_VERSION:-latest}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      <<: *postpin-env
+      # adapter-node checks form submissions against this origin
+      ORIGIN: ${BETTER_AUTH_URL}
+    depends_on: *postpin-depends-on
+    ports:
+      - 127.0.0.1:${APP_PORT:-3000}:3000
+
+  worker:
+    image: ${POSTPIN_WORKER_IMAGE:-ghcr.io/postpin-io/postpin-worker}:${POSTPIN_VERSION:-latest}
+    restart: unless-stopped
+    env_file: .env
+    environment: *postpin-env
+    depends_on: *postpin-depends-on
+    # The worker gives active jobs 25s to finish on shutdown (packages/worker/src/lib/shutdown.ts);
+    # Docker's default of 10s would kill it before that
+    stop_grace_period: 30s
+
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./data/db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    volumes:
+      - ./data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # rustfs runs as uid 10001 and can't take over ./data/s3 when Docker creates it as root,
+  # so this one-shot container hands the directory over before rustfs starts
+  rustfs-init:
+    image: rustfs/rustfs:1.0.4
+    user: "0:0"
+    entrypoint: ["chown", "10001:10001", "/data"]
+    volumes:
+      - ./data/s3:/data
+    restart: "no"
+
+  rustfs:
+    image: rustfs/rustfs:1.0.4
+    restart: unless-stopped
+    environment:
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY}
+    volumes:
+      - ./data/s3:/data
+    depends_on:
+      rustfs-init:
+        condition: service_completed_successfully
+    ports:
+      - 127.0.0.1:${S3_PORT:-9000}:9000
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

@@ -6,7 +6,7 @@ import type { S3Env } from "../../src/env/index.ts";
 
 const env: S3Env = {
 	S3_ENDPOINT: "http://rustfs:9000",
-	S3_PUBLIC_ENDPOINT: "https://s3.example.com",
+	S3_PUBLIC_ENDPOINT: "https://media.example.com",
 	S3_FORCE_PATH_STYLE: true,
 	S3_ACCESS_KEY: "key",
 	S3_SECRET_KEY: "secret",
@@ -22,7 +22,7 @@ async function signedUrl(client: ReturnType<typeof createS3Client>) {
 describe("createS3PresignClient", () => {
 	it("signs URLs for the public endpoint", async () => {
 		const url = await signedUrl(createS3PresignClient(env));
-		expect(url.origin).toBe("https://s3.example.com");
+		expect(url.origin).toBe("https://media.example.com");
 		expect(url.pathname).toBe("/bucket/m/original");
 		expect(url.searchParams.get("X-Amz-SignedHeaders")).toBe("host");
 	});
