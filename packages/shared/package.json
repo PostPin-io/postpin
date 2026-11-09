@@ -15,8 +15,8 @@
 		"./logic/*": "./src/logic/*.ts"
 	},
 	"scripts": {
-		"db:generate": "prisma generate --config prisma7.config.ts",
-		"db:migrate": "prisma migrate dev --config prisma7.config.ts",
+		"db:generate": "prisma generate --config prisma7.config.ts && prettier --write src/db/prisma",
+		"db:migrate": "prisma migrate dev --config prisma7.config.ts && prettier --write src/db/prisma",
 		"typecheck": "tsc --noEmit",
 		"lint": "tsc --noEmit",
 		"test": "vitest run",
