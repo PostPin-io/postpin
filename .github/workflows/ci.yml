@@ -31,19 +31,19 @@ jobs:
       TEST_DATABASE_URL: postgresql://postpin:postpin@localhost:5432/postpin_test?schema=public
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - run: pnpm test
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - run: pnpm lint
   typecheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: setup
         uses: ./.github/actions/setup
         with:
@@ -58,7 +58,7 @@ jobs:
       # Dummy
       DATABASE_URL: postgresql://postpin:postpin@localhost:5432/postpin_test?schema=public
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - run: pnpm --filter @postpin-io/postpin run generate:api
       - run: pnpm --filter @postpin-io/postpin run build:api-client
@@ -91,9 +91,9 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
         with:
           context: .
           file: packages/${{ matrix.image }}/Dockerfile

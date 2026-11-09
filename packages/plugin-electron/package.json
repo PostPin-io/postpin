@@ -21,7 +21,7 @@
 	"dependencies": {
 		"@postpin-io/plugin-core": "workspace:*",
 		"@postpin-io/shared": "workspace:*",
-		"better-auth": "^1.7.11",
+		"better-auth": "^1.7.18",
 		"electron-store": "^12.0.0"
 	},
 	"peerDependencies": {
@@ -29,7 +29,7 @@
 	},
 	"devDependencies": {
 		"@marshallofsound/ipc": "^2.7.1",
-		"@types/node": "^26.6.5",
+		"@types/node": "^26.6.6",
 		"electron": "~36.3.2",
 		"nodemon": "^3.1.14",
 		"typescript": "^7.0.2"

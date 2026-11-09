@@ -13,9 +13,10 @@ FROM mwader/static-ffmpeg:${FFMPEG_VERSION} AS ffmpeg
 
 # --- Build (glibc, for native build tools like esbuild) -------------------------------------------
 FROM node:${NODE_VERSION}-slim AS build
-RUN npm install -g pnpm@12.16.1
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+# Same pnpm version as CI and local development (packageManager in package.json)
+RUN npm install -g "$(node -p "require('./package.json').packageManager")"
 COPY patches ./patches
 # Every workspace manifest, so the workspace matches pnpm-lock.yaml
 COPY packages/api-client-ts/package.json packages/api-client-ts/
