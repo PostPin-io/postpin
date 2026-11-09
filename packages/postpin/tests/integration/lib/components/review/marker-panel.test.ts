@@ -19,6 +19,7 @@ import {
 	renameCategory,
 	updateMarker,
 } from "#lib/components/review/MarkerPanel.remote.ts";
+import { ensureGuestCategory } from "#lib/server/share-links.ts";
 import { contentWorld, signInAs, type ContentWorld } from "../../../../helpers/content-world.ts";
 import { prisma } from "../../../../helpers/db.ts";
 import { expectStatus } from "../../../../helpers/expect.ts";
@@ -978,5 +979,42 @@ describe("deleteCategory", () => {
 		await signInAs(w.org, MEMBER, [{ projectId: w.projectB.id }]);
 		await expectStatus(deleteCategory({ id: w.catA.id }), 404);
 		expect(await prisma.category.count()).toBe(3);
+	});
+});
+describe("guest category", () => {
+	let guestId: string;
+	beforeEach(async () => {
+		guestId = await prisma.$transaction((tx) => ensureGuestCategory(tx, w.projectA.id));
+		signIn(w.owner.user, w.org.id);
+	});
+
+	it("can't be deleted", async () => {
+		expect(await deleteCategory({ id: guestId })).toEqual({
+			success: false,
+			reason: "GUEST_CATEGORY",
+		});
+	});
+
+	it("can't be merged into another", async () => {
+		expect(await deleteCategory({ id: guestId, mergeIntoId: w.catA.id })).toMatchObject({
+			reason: "GUEST_CATEGORY",
+		});
+	});
+
+	it("nothing can be merged into it", async () => {
+		await expectStatus(deleteCategory({ id: w.catA.id, mergeIntoId: guestId }), 400);
+	});
+
+	it("team markers can't be moved into it", async () => {
+		const m = await f.createMarker(w.exp1, w.catA, { author: w.owner.user });
+		await expectStatus(
+			moveMarker({ exportId: w.exp1.id, ids: [m.id], targetCategoryId: guestId }),
+			400,
+		);
+	});
+
+	it("is flagged and not deletable in getCategories, but renamable", async () => {
+		const guest = (await getCategories(w.projectA.id)).find((c) => c.id === guestId)!;
+		expect(guest).toMatchObject({ isGuest: true, canDelete: false, canUpdate: true });
 	});
 });

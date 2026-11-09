@@ -1,3 +1,5 @@
+import type { Cookies } from "@sveltejs/kit";
+
 /**
  * Fake for SvelteKit's request event. Server code reads the signed-in user and
  * session from `getRequestEvent().locals`; tests set them with `signIn()`.
@@ -9,15 +11,24 @@ type Locals = {
 
 let locals: Locals = {};
 
+const noCookies = { get: () => undefined, set: () => {}, delete: () => {} } as unknown as Cookies;
+let cookies: Cookies = noCookies;
+
 export const currentEvent = () => ({
 	locals,
 	request: new Request("http://localhost/"),
 	url: new URL("http://localhost/"),
-	cookies: { get: () => undefined, set: () => {}, delete: () => {} },
+	cookies,
 });
 
 export function resetRequestEvent() {
 	locals = {};
+	cookies = noCookies;
+}
+
+/** Act as the browser holding these cookies (share-link guests) */
+export function useCookies(jar: Cookies) {
+	cookies = jar;
 }
 
 /** Act as `user` with `organizationId` as the active org (better-auth session). */

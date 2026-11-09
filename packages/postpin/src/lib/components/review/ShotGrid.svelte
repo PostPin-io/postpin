@@ -2,21 +2,19 @@
 	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 	import { getShots } from "@postpin-io/shared/logic/shots";
 	import { formatTimecode } from "@postpin-io/shared/logic/timecode";
-	import { getShotThumbnails } from "./export.remote";
 
 	interface Props {
 		snapshot: TimelineSnapshot;
-		mediaId: string;
-		thumbnailsReady: boolean;
+		/** One per shot, by shot index; undefined while they are being made or loaded */
+		thumbnailUrls: string[] | undefined;
 		currentFrame: number;
 		onSeek(frame: number): void;
 	}
 
-	let { snapshot, mediaId, thumbnailsReady, currentFrame, onSeek }: Props = $props();
+	let { snapshot, thumbnailUrls, currentFrame, onSeek }: Props = $props();
 
 	const shots = $derived(getShots(snapshot));
 	// the query 404s until the job is done, so only ask once the polled export says it is
-	const shotThumbnails = $derived(thumbnailsReady ? getShotThumbnails({ mediaId }) : undefined);
 
 	let cols = $state(5);
 	const maxCols = $derived(Math.floor(window.innerWidth / 100));
@@ -37,7 +35,8 @@
 					{@const isCurrentShot =
 						currentFrame >= shot.startFrameIndex &&
 						currentFrame < shot.startFrameIndex + shot.durationFrameCount}
-					{@const url = shotThumbnails?.current?.urls[shot.index]}
+					{@const url = thumbnailUrls?.[shot.index]}
+
 					<button
 						type="button"
 						class="flex cursor-pointer flex-col gap-1 rounded p-1 text-left hover:bg-base-200 {isCurrentShot

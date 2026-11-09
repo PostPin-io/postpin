@@ -3,7 +3,7 @@
 	import { page } from "$app/state";
 	import { onMount } from "svelte";
 	import { getTimelines } from "./timeline.remote.ts";
-	import { getUrl } from "./timelines/[timeline]/exports/[export]/export.remote.ts";
+	import { getUrl } from "#lib/components/review/export.remote.ts";
 	import NewTimelineModal from "#lib/components/NewTimelineModal.svelte";
 	import RenameTimelineModal from "#lib/components/RenameTimelineModal.svelte";
 	import DeleteTimelineModal from "#lib/components/DeleteTimelineModal.svelte";

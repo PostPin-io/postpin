@@ -7,7 +7,7 @@ import {
 	getSeekSprites,
 	getShotThumbnails,
 	getUrl,
-} from "../../../../../../../../../../src/routes/(root)/projects/[project]/timelines/[timeline]/exports/[export]/export.remote.ts";
+} from "#lib/components/review/export.remote.ts";
 import {
 	contentWorld,
 	signInAs,

@@ -124,6 +124,11 @@ const models: TsoaRoute.Models = {
 					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
 					required: true,
 				},
+				guestId: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
 				authorId: {
 					dataType: "union",
 					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
@@ -155,6 +160,11 @@ const models: TsoaRoute.Models = {
 		dataType: "refObject",
 		properties: {
 			nleId: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			guestId: {
 				dataType: "union",
 				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
 				required: true,

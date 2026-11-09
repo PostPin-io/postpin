@@ -6,7 +6,7 @@ import {
 	parseQuality,
 	parseTimelineMode,
 	seekThumbnailTiles,
-} from "../../../../src/routes/(root)/projects/[project]/timelines/[timeline]/exports/[export]/exportView.ts";
+} from "#lib/components/review/exportView.ts";
 
 describe("parsePaneLayout", () => {
 	it("defaults when nothing is stored", () => {

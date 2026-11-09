@@ -74,6 +74,24 @@ describe("signed out", () => {
 		expect([302, 303, 307]).toContain(res.status);
 	});
 
+	it("remote functions are reachable; each one checks access itself", async () => {
+		const { res, resolve } = await run("/_app/remote/abc123/getShareInfo");
+		expect(resolve).toHaveBeenCalledOnce();
+		expect(res.headers.get("location")).toBeNull();
+	});
+
+	it("share links are public", async () => {
+		const { res, resolve } = await run("/s/sometoken");
+		expect(resolve).toHaveBeenCalledOnce();
+		expect(res.headers.get("location")).toBeNull();
+	});
+
+	it("paths that merely start with /s still redirect to the login", async () => {
+		const { res, resolve } = await run("/settings");
+		expect(resolve).not.toHaveBeenCalled();
+		expect(res.headers.get("location")).toMatch(/^\/auth\/login/);
+	});
+
 	it("paths that merely contain /auth/ still redirect to the login", async () => {
 		const { res, resolve } = await run("/projects/abc/auth/x");
 		expect(resolve).not.toHaveBeenCalled();
@@ -166,6 +184,7 @@ describe("signed in without an organization", () => {
 		["the start page", "/"],
 		["accepting an invitation", "/auth/invite/inv1"],
 		["joining via invite link", "/auth/join/token1"],
+		["a share link", "/s/token1"],
 		["remote functions (dashboard, profile)", "/_app/remote/abc123/getProfile"],
 	])("may open %s (%s)", async (_, path) => {
 		const { res, resolve } = await run(path, { headers: await noOrgUser() });

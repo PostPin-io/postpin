@@ -48,6 +48,7 @@ export type MarkerResponse = ResponseModel;
 
 export type DefaultSelection36MarkerPayload = {
 	nleId: string | null;
+	guestId: string | null;
 	authorId: string | null;
 	categoryId: string;
 	exportId: string;
@@ -63,6 +64,7 @@ export type MarkerModel = DefaultSelection36MarkerPayload;
 
 export type MarkerWithResponses = {
 	nleId: string | null;
+	guestId: string | null;
 	authorId: string | null;
 	categoryId: string;
 	exportId: string;

@@ -36,22 +36,32 @@ export async function ensureBucket(client: S3, env: S3Env): Promise<void> {
 	}
 }
 
+/**
+ * Allows `origin` to use the bucket from the browser. Origins that are already allowed stay:
+ * several app instances may share one bucket (e.g. dev server and a local Docker build), and
+ * replacing the list would lock out whichever started first.
+ */
 export async function ensureCORS(client: S3, env: S3Env, origin: string): Promise<void> {
+	// direct comparison of objects may not work due to ordering, so we check the rules instead
+	const currentCors = await client.getBucketCors({ Bucket: env.S3_BUCKET }).catch(() => null);
+	const allowedOrigins = [
+		...new Set([
+			...(currentCors?.CORSRules?.flatMap((rule) => rule.AllowedOrigins ?? []) ?? []),
+			origin,
+		]),
+	];
 	const corsConfig = {
 		CORSRules: [
 			{
 				AllowedHeaders: ["*"],
 				AllowedMethods: ["GET", "PUT", "POST", "DELETE", "HEAD"],
-				AllowedOrigins: [origin],
+				AllowedOrigins: allowedOrigins,
 				MaxAgeSeconds: 3000,
 				ExposeHeaders: ["Content-Range", "Content-Length", "ETag"],
 			},
 		],
 	};
 
-	// check if the CORS configuration is already set
-	// direct comparison of objects may not work due to ordering, so we check the rules instead
-	const currentCors = await client.getBucketCors({ Bucket: env.S3_BUCKET }).catch(() => null);
 	if (
 		currentCors &&
 		currentCors.CORSRules &&

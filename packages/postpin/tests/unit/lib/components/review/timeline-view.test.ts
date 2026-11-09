@@ -8,7 +8,7 @@ import {
 	tickStep,
 	timelineCuts,
 	visibleTicks,
-} from "../../../../src/routes/(root)/projects/[project]/timelines/[timeline]/exports/[export]/timelineView.ts";
+} from "#lib/components/review/timelineView.ts";
 
 const clip = (id: string, start: number, duration: number): Clip => ({
 	id,

@@ -2,6 +2,8 @@ import { prisma } from "#lib/server/database.ts";
 import { command, query } from "$app/server";
 import { Prisma } from "@postpin-io/shared/db";
 import { error } from "@sveltejs/kit";
+import { isGuestCategory } from "#lib/server/share-links.ts";
+
 import {
 	accessChecker,
 	accessibleExports,
@@ -24,6 +26,9 @@ async function assertCategoriesInProject(categoryIds: string[], projectId: strin
 	const unique = [...new Set(categoryIds)];
 	const count = await prisma.category.count({ where: { id: { in: unique }, projectId } });
 	if (count !== unique.length) error(404, "Not found");
+	if (await prisma.project.count({ where: { guestCategoryId: { in: unique } } })) {
+		error(400, "The guest category is reserved for share-link visitors");
+	}
 }
 
 /**
@@ -413,17 +418,22 @@ export const createResponse = command(
 export const getCategories = query(v.string(), async (projectId: string) => {
 	const { member } = await authorize("project", "read", { type: "project", id: projectId });
 	const allowed = await accessChecker(member);
-	const categories = await prisma.category.findMany({
-		where: { projectId },
-		orderBy: { name: "asc" },
-	});
+	const [categories, project] = await Promise.all([
+		prisma.category.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
+		prisma.project.findUniqueOrThrow({
+			where: { id: projectId },
+			select: { guestCategoryId: true },
+		}),
+	]);
 
 	return categories.map((c) => {
 		const t = { projectId, ownerId: c.createdById, loose: true };
+		const isGuest = c.id === project.guestCategoryId;
 		return {
 			...c,
+			isGuest,
 			canUpdate: allowed("category", "update", t),
-			canDelete: allowed("category", "delete", t),
+			canDelete: !isGuest && allowed("category", "delete", t),
 		};
 	});
 });
@@ -517,6 +527,7 @@ export const deleteCategory = command(
 			type: "category",
 			id,
 		});
+		if (await isGuestCategory(id)) return { success: false, reason: "GUEST_CATEGORY" } as const;
 
 		if (mergeIntoId === id) error(400, "Same category");
 		if (mergeIntoId) await assertCategoriesInProject([mergeIntoId], target.projectId);

@@ -28,6 +28,7 @@
 		muted = $bindable(false),
 		fullscreen = $bindable(false),
 		fullscreenControls,
+		overlay,
 	}: {
 		source: VideoSource;
 		poster?: string;
@@ -43,6 +44,8 @@
 		fullscreen?: boolean;
 		/** Control bar shown over the video while in fullscreen, where the page's own bar is out of view */
 		fullscreenControls?: Snippet;
+		/** Drawn over the video (also in fullscreen), e.g. the share-link note */
+		overlay?: Snippet;
 	} = $props();
 
 	let container = $state<HTMLElement>();
@@ -335,6 +338,7 @@
 				</div>
 			{/key}
 		{/if}
+		{#if overlay}{@render overlay()}{/if}
 	</div>
 
 	{#if fullscreen && fullscreenControls}

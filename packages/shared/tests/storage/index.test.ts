@@ -81,10 +81,34 @@ describe("ensureCORS", () => {
 		expect(client.putBucketCors).not.toHaveBeenCalled();
 	});
 
+	it("leaves the bucket alone when the origin is already allowed next to others", async () => {
+		const shared = { ...matchingRule, AllowedOrigins: ["https://other", ORIGIN] };
+		client.getBucketCors.mockResolvedValue({ CORSRules: [shared] });
+		await ensureCORS(s3Client, env, ORIGIN);
+		expect(client.putBucketCors).not.toHaveBeenCalled();
+	});
+
+	it("adds the origin and keeps the ones already allowed (another instance on the same bucket)", async () => {
+		client.getBucketCors.mockResolvedValue({
+			CORSRules: [
+				{ ...matchingRule, AllowedOrigins: ["https://other"] },
+				{ ...matchingRule, AllowedOrigins: ["https://third", "https://other"] },
+			],
+		});
+		await ensureCORS(s3Client, env, ORIGIN);
+		expect(client.putBucketCors).toHaveBeenCalledWith({
+			Bucket: "bucket",
+			CORSConfiguration: {
+				CORSRules: [
+					{ ...matchingRule, AllowedOrigins: ["https://other", "https://third", ORIGIN] },
+				],
+			},
+		});
+	});
+
 	it.each([
 		["no configuration", null],
 		["no rules", {}],
-		["another origin", { CORSRules: [{ ...matchingRule, AllowedOrigins: ["https://other"] }] }],
 		["other methods", { CORSRules: [{ ...matchingRule, AllowedMethods: ["GET"] }] }],
 		["another max age", { CORSRules: [{ ...matchingRule, MaxAgeSeconds: 1 }] }],
 		["other exposed headers", { CORSRules: [{ ...matchingRule, ExposeHeaders: [] }] }],
