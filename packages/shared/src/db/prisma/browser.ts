@@ -116,3 +116,8 @@ export type Export = Prisma.ExportModel;
  *
  */
 export type ShareLink = Prisma.ShareLinkModel;
+/**
+ * Model ShareGuest
+ * A visitor who opened a share link and entered a name. One per browser (cookie).
+ */
+export type ShareGuest = Prisma.ShareGuestModel;

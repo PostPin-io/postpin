@@ -410,6 +410,7 @@ export const ModelName = {
 	Timeline: "Timeline",
 	Export: "Export",
 	ShareLink: "ShareLink",
+	ShareGuest: "ShareGuest",
 } as const;
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -449,7 +450,8 @@ export type TypeMap<
 			| "project"
 			| "timeline"
 			| "export"
-			| "shareLink";
+			| "shareLink"
+			| "shareGuest";
 		txIsolationLevel: TransactionIsolationLevel;
 	};
 	model: {
@@ -1935,6 +1937,80 @@ export type TypeMap<
 				};
 			};
 		};
+		ShareGuest: {
+			payload: Prisma.$ShareGuestPayload<ExtArgs>;
+			fields: Prisma.ShareGuestFieldRefs;
+			operations: {
+				findUnique: {
+					args: Prisma.ShareGuestFindUniqueArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareGuestPayload> | null;
+				};
+				findUniqueOrThrow: {
+					args: Prisma.ShareGuestFindUniqueOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareGuestPayload>;
+				};
+				findFirst: {
+					args: Prisma.ShareGuestFindFirstArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareGuestPayload> | null;
+				};
+				findFirstOrThrow: {
+					args: Prisma.ShareGuestFindFirstOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareGuestPayload>;
+				};
+				findMany: {
+					args: Prisma.ShareGuestFindManyArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareGuestPayload>[];
+				};
+				create: {
+					args: Prisma.ShareGuestCreateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareGuestPayload>;
+				};
+				createMany: {
+					args: Prisma.ShareGuestCreateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				createManyAndReturn: {
+					args: Prisma.ShareGuestCreateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareGuestPayload>[];
+				};
+				delete: {
+					args: Prisma.ShareGuestDeleteArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareGuestPayload>;
+				};
+				update: {
+					args: Prisma.ShareGuestUpdateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareGuestPayload>;
+				};
+				deleteMany: {
+					args: Prisma.ShareGuestDeleteManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateMany: {
+					args: Prisma.ShareGuestUpdateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateManyAndReturn: {
+					args: Prisma.ShareGuestUpdateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareGuestPayload>[];
+				};
+				upsert: {
+					args: Prisma.ShareGuestUpsertArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareGuestPayload>;
+				};
+				aggregate: {
+					args: Prisma.ShareGuestAggregateArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.AggregateShareGuest>;
+				};
+				groupBy: {
+					args: Prisma.ShareGuestGroupByArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.ShareGuestGroupByOutputType>[];
+				};
+				count: {
+					args: Prisma.ShareGuestCountArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.ShareGuestCountAggregateOutputType> | number;
+				};
+			};
+		};
 	};
 } & {
 	other: {
@@ -2062,6 +2138,7 @@ export const MarkerScalarFieldEnum = {
 	exportId: "exportId",
 	categoryId: "categoryId",
 	authorId: "authorId",
+	guestId: "guestId",
 	nleId: "nleId",
 } as const;
 
@@ -2217,6 +2294,7 @@ export const ProjectScalarFieldEnum = {
 	updatedAt: "updatedAt",
 	creatorId: "creatorId",
 	organizationId: "organizationId",
+	guestCategoryId: "guestCategoryId",
 	nleProjectId: "nleProjectId",
 } as const;
 
@@ -2255,11 +2333,27 @@ export const ShareLinkScalarFieldEnum = {
 	updatedAt: "updatedAt",
 	exportId: "exportId",
 	creatorId: "creatorId",
+	token: "token",
+	expiresAt: "expiresAt",
+	revokedAt: "revokedAt",
+	timelinePanelVisible: "timelinePanelVisible",
 	markerPanelVisible: "markerPanelVisible",
+	note: "note",
 } as const;
 
 export type ShareLinkScalarFieldEnum =
 	(typeof ShareLinkScalarFieldEnum)[keyof typeof ShareLinkScalarFieldEnum];
+
+export const ShareGuestScalarFieldEnum = {
+	id: "id",
+	createdAt: "createdAt",
+	shareLinkId: "shareLinkId",
+	name: "name",
+	sessionTokenHash: "sessionTokenHash",
+} as const;
+
+export type ShareGuestScalarFieldEnum =
+	(typeof ShareGuestScalarFieldEnum)[keyof typeof ShareGuestScalarFieldEnum];
 
 export const SortOrder = {
 	asc: "asc",
@@ -2570,6 +2664,7 @@ export type GlobalOmitConfig = {
 	timeline?: Prisma.TimelineOmit;
 	export?: Prisma.ExportOmit;
 	shareLink?: Prisma.ShareLinkOmit;
+	shareGuest?: Prisma.ShareGuestOmit;
 };
 
 /* Types for Logging */
