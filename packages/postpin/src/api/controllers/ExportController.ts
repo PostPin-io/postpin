@@ -1,7 +1,7 @@
 import * as env from "$app/env/private";
 import { prisma } from "#lib/server/database.ts";
 import { startMediaProcessing } from "#lib/server/media.ts";
-import { s3Client } from "#lib/server/storage.ts";
+import { s3Client, s3PresignClient } from "#lib/server/storage.ts";
 import {
 	abortMultipartUpload,
 	completeMultipartUpload,
@@ -10,7 +10,7 @@ import {
 	type UploadedPart,
 } from "@postpin-io/shared/storage";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
-import { Body, Controller, Get, Path, Post, Response, Route, Security } from "tsoa";
+import { Body, Controller, Get, Path, Post, Response, Route, Security } from "@tsoa/runtime";
 import { HttpError } from "../HttpError.ts";
 import type { Prisma } from "@postpin-io/shared/db";
 import { apiAuthorize } from "../access.ts";
@@ -152,6 +152,8 @@ export class ExportController extends Controller {
 			env,
 			{ mediaId: media!.id, type: "original" },
 			body.fileSize,
+			// the plugin PUTs the parts, so they're signed for the public endpoint
+			s3PresignClient,
 		);
 		return { mediaId: media!.id, ...upload };
 	}

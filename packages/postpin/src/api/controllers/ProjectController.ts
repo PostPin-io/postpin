@@ -1,5 +1,15 @@
 import { prisma } from "#lib/server/database.ts";
-import { Body, Controller, Get, Path, Post, Response, Request, Route, Security } from "tsoa";
+import {
+	Body,
+	Controller,
+	Get,
+	Path,
+	Post,
+	Response,
+	Request,
+	Route,
+	Security,
+} from "@tsoa/runtime";
 import { HttpError } from "../HttpError.ts";
 import type { Request as HapiRequest } from "@hapi/hapi";
 import { apiAuthorize } from "../access.ts";

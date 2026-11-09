@@ -1,3 +1,5 @@
+# Services for local development (pnpm dev runs app and worker on the host).
+# For running PostPin on a server, see deploy/compose.yml and docs/self-hosting.md.
 services:
   db:
     image: postgres:18

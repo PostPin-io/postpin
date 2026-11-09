@@ -20,22 +20,20 @@
 		"@postpin-io/plugin-electron": "workspace:*",
 		"@postpin-io/shared": "workspace:*",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
+		"@tailwindcss/vite": "^4.3.5",
 		"@tsconfig/svelte": "^5.0.8",
-		"@types/node": "^26.6.5",
-		"@typescript/native": "npm:typescript@7",
-		"concurrently": "^10.0.6",
-		"daisyui": "^5.7.47",
+		"@types/node": "^26.6.6",
+		"@typescript/native": "npm:typescript@^7.0.2",
+		"concurrently": "^10.0.7",
+		"daisyui": "^5.7.50",
 		"electron": "~36.3.2",
 		"esbuild": "^0.28.2",
 		"nodemon": "^3.1.14",
-		"svelte": "^5.57.2",
-		"svelte-check": "^4.7.6",
-		"tailwindcss": "^4.3.3",
+		"svelte": "^5.57.3",
+		"svelte-check": "^4.7.8",
+		"tailwindcss": "^4.3.5",
 		"typescript": "^6.0.3",
-		"vite": "^8.3.4"
+		"vite": "^8.3.6"
 	},
-	"type": "module",
-	"dependencies": {
-		"@tailwindcss/vite": "^4.3.3"
-	}
+	"type": "module"
 }

@@ -1,7 +1,7 @@
 import * as env from "$app/env/private";
 import { prisma } from "#lib/server/database.ts";
 import { requireMediaAccess } from "#lib/server/org-access.ts";
-import { s3Client } from "#lib/server/storage.ts";
+import { s3PresignClient } from "#lib/server/storage.ts";
 import { getPresignedUrl } from "@postpin-io/shared/storage";
 import { hlsInfo } from "@postpin-io/shared/types/HlsIndex";
 import { error, type RequestHandler } from "@sveltejs/kit";
@@ -22,7 +22,7 @@ export const GET: RequestHandler = async ({ params }) => {
 	const hls = v.parse(hlsInfo, file.hls);
 	// every segment is a byte range of this one file
 	const url = await getPresignedUrl(
-		s3Client,
+		s3PresignClient,
 		env,
 		{ mediaId, type: "proxy", proxyId: file.id },
 		"get",

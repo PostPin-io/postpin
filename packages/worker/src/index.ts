@@ -4,6 +4,7 @@ import { env } from "./lib/env.ts";
 import { heavyHandlers, lightHandlers } from "./lib/queue.ts";
 import { createWorker } from "./lib/worker.ts";
 import { prisma } from "./lib/database.ts";
+import { registerShutdown, SHUTDOWN_TIMEOUT_MS } from "./lib/shutdown.ts";
 
 export const heavyWorker = createWorker(Queues.heavy, heavyHandlers, env, queues[Queues.heavy]);
 export const lightWorker = createWorker(Queues.light, lightHandlers, env, queues[Queues.light]);
@@ -18,4 +19,10 @@ lightWorker.on("failed", async (job) => {
 			status: "FAILED",
 		},
 	});
+});
+
+registerShutdown({
+	workers: [heavyWorker, lightWorker],
+	timeoutMs: SHUTDOWN_TIMEOUT_MS,
+	cleanup: () => prisma.$disconnect(),
 });

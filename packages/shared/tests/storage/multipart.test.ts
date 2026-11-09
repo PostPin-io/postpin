@@ -79,6 +79,18 @@ describe("createMultipartUpload", () => {
 		}
 	});
 
+	it("signs the parts with the S3 client unless a presign client is given", async () => {
+		await createMultipartUpload(client, env, object, 10);
+		expect(presigner.getSignedUrl.mock.calls[0]![0]).toBe(client);
+
+		presigner.getSignedUrl.mockClear();
+		const presignClient = {} as S3;
+		await createMultipartUpload(client, env, object, 10, presignClient);
+		expect(presigner.getSignedUrl.mock.calls[0]![0]).toBe(presignClient);
+		// the upload itself is still created through the S3 client
+		expect(send).toHaveBeenCalledTimes(2);
+	});
+
 	it("grows the part size in whole MiB so huge files stay within 10000 parts", async () => {
 		const size = 1024 * GiB;
 		const upload = await createMultipartUpload(client, env, object, size);

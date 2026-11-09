@@ -7,6 +7,7 @@ import { execSync } from "node:child_process";
 import pkg from "./package.json" with { type: "json" };
 
 function appVersion() {
+	if (process.env.POSTPIN_VERSION) return process.env.POSTPIN_VERSION; // CI/CD pipeline sets this
 	try {
 		const sha = execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim();
 		const dirty = execSync("git status --porcelain", { encoding: "utf8" }).trim() ? "-dirty" : "";

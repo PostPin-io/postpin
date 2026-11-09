@@ -38,6 +38,8 @@ export async function createMultipartUpload(
 	env: S3Env,
 	object: S3Object,
 	fileSize: number,
+	/** Signs the part URLs; pass the public presign client when they leave the server. */
+	presignClient: S3 = s3Client,
 ): Promise<MultipartUpload> {
 	const key = getS3ObjectPath(object);
 	const { UploadId } = await s3Client.send(
@@ -51,7 +53,7 @@ export async function createMultipartUpload(
 		Array.from({ length: partCount }, async (_, i) => ({
 			partNumber: i + 1,
 			url: await getSignedUrl(
-				s3Client,
+				presignClient,
 				new UploadPartCommand({
 					Bucket: env.S3_BUCKET,
 					Key: key,

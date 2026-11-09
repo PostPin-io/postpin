@@ -16,8 +16,17 @@ vi.mock("../src/lib/queue.ts", () => ({
 }));
 vi.mock("../src/lib/database.ts", async () => (await import("./handlers/mocks.ts")).database);
 vi.mock("../src/lib/env.ts", async () => (await import("./handlers/mocks.ts")).env);
+// Keep the real signal handlers out of the test process
+vi.mock("../src/lib/shutdown.ts", () => ({
+	registerShutdown: vi.fn(),
+	SHUTDOWN_TIMEOUT_MS: 25_000,
+}));
 
 import { heavyWorker, lightWorker } from "../src/index.ts";
+import { registerShutdown } from "../src/lib/shutdown.ts";
+
+// Captured before beforeEach clears all mocks
+const shutdownOptions = vi.mocked(registerShutdown).mock.calls[0]?.[0];
 
 type FakeWorker = EventEmitter & { name: string; handlers: object; opts: object };
 const light = lightWorker as unknown as FakeWorker;
@@ -55,5 +64,13 @@ describe("worker entry", () => {
 		await fail({ name: "probe", data: { mediaId: "m1" } });
 		await fail(undefined);
 		expect(prisma.media.update).not.toHaveBeenCalled();
+	});
+
+	it("shuts both workers down gracefully on SIGTERM", () => {
+		expect(shutdownOptions).toMatchObject({
+			workers: [heavyWorker, lightWorker],
+			timeoutMs: 25_000,
+		});
+		expect(shutdownOptions?.cleanup).toBeTypeOf("function");
 	});
 });

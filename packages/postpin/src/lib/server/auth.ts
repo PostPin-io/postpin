@@ -3,7 +3,8 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./database"; // your prisma client instance
 import { sendEmail } from "./email";
 import { organization } from "better-auth/plugins";
-import { BETTER_AUTH_URL } from "$app/env/private";
+import { BETTER_AUTH_SECRET, BETTER_AUTH_URL } from "$app/env/private";
+import { building } from "$app/env";
 import { bearer, deviceAuthorization } from "better-auth/plugins";
 import { DEVICE_CLIENTS } from "#lib/device-clients.ts";
 import { createAuthMiddleware, getIP } from "better-auth/api";
@@ -11,6 +12,9 @@ import { Role } from "@postpin-io/shared/db";
 import { ac, betterAuthRoles } from "#lib/better-auth-roles.ts";
 
 export const auth = betterAuth({
+	// The build imports this module without env (see env.ts), and better-auth refuses to start
+	// without a secret. The placeholder never signs anything: at runtime env.ts requires the real one.
+	secret: building ? "build-only-placeholder-never-used-at-runtime" : BETTER_AUTH_SECRET,
 	// Org writes go through our own commands (roles.ts + authorize): better-auth's access control
 	// knows neither reviewers, grants nor invite targets. Only HTTP is blocked, auth.api.* still works.
 	disabledPaths: [
