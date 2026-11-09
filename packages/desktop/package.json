@@ -47,8 +47,5 @@
 		"typescript": "^6.0.3",
 		"vite": "^8.3.5",
 		"wait-on": "^9.0.1"
-	},
-	"dependencies": {
-		"@lottiefiles/dotlottie-web": "^0.82.1"
 	}
 }

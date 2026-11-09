@@ -10,7 +10,7 @@ import {
 	type UploadedPart,
 } from "@postpin-io/shared/storage";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
-import { Body, Controller, Get, Path, Post, Response, Route, Security } from "tsoa";
+import { Body, Controller, Get, Path, Post, Response, Route, Security } from "@tsoa/runtime";
 import { HttpError } from "../HttpError.ts";
 import type { Prisma } from "@postpin-io/shared/db";
 import { apiAuthorize } from "../access.ts";

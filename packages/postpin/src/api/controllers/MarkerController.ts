@@ -1,5 +1,5 @@
 import { prisma } from "#lib/server/database.ts";
-import { Body, Controller, Get, Path, Put, Response, Route, Security } from "tsoa";
+import { Body, Controller, Get, Path, Put, Response, Route, Security } from "@tsoa/runtime";
 import { HttpError } from "../HttpError.ts";
 import type { Marker, Response as MarkerResponse } from "@postpin-io/shared/db";
 import { apiAuthorize } from "../access.ts";

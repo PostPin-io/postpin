@@ -1,5 +1,5 @@
 // src/users/usersController.ts
-import { Controller, Get, Route } from "tsoa";
+import { Controller, Get, Route } from "@tsoa/runtime";
 import spec from "../build/swagger.json";
 import docsHtml from "./docs.html?raw";
 
