@@ -9,8 +9,8 @@
 	},
 	"scripts": {
 		"dev": "tsx watch --env-file-if-exists=.env src/index.ts",
-		"build": "tsc",
-		"start": "node --enable-source-maps dist/index.js",
+		"build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node26 --sourcemap --outfile=dist/index.mjs --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\"",
+		"start": "node --enable-source-maps dist/index.mjs",
 		"typecheck": "tsc --noEmit",
 		"lint": "tsc --noEmit",
 		"test": "vitest run",
@@ -25,6 +25,7 @@
 	"devDependencies": {
 		"@types/node": "^26.6.5",
 		"@vitest/coverage-v8": "5.1.0",
+		"esbuild": "^0.28.2",
 		"tsx": "^4.23.15",
 		"typescript": "^7.0.2",
 		"vitest": "5.1.0"

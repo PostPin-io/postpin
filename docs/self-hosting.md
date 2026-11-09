@@ -2,7 +2,13 @@
 
 ## Overview
 
+To run PostPin on your own server, you need Docker, a containerization platform that runs Linux containers. PostPin is distributed as a set of Docker images, and the easiest way to run them is with Docker Compose. PostPin ships as two images: the app (web interface and API) and a worker that processes uploaded media, e.g. transcoding videos and creating thumbnails. In addition, PostPin needs a Postgres database, a Redis queue and S3-compatible storage for media. The easiest way to get all of these is with the bundled `docker-compose.yml`, which runs PostPin, Postgres, Redis and a small S3 server called rustfs.
+
 ## Requirements
+
+- a linux server with Docker and Docker Compose installed (any basic VPS will do, although transcoding videos is CPU-intensive and may be slow on small instances)
+- a domain name and TLS certificate (PostPin requires HTTPS for sign-in and media uploads)
+- a working SMTP server for sending email verification, password reset and invitation emails (PostPin will start without it, but users can't verify their address or reset their password)
 
 ## Quickstart
 
@@ -27,6 +33,7 @@ PostPin is configured through environment variables, set in the `.env` file next
 | `POSTGRES_PASSWORD` |         | Password for that user.                                                                                      |
 | `POSTGRES_DB`       |         | Database the bundled Postgres container is created with.                                                     |
 | `DATABASE_URL`      |         | Connection URL used by app and worker, e.g. `postgresql://postpin:<password>@db:5432/postpin?schema=public`. |
+| `SKIP_MIGRATIONS`   |         | Set to `true` to skip database migrations on startup.                                                        |
 
 ### Storage
 
@@ -100,6 +107,8 @@ CORS rule manually (methods `GET, PUT, POST, DELETE, HEAD`, exposed headers
 > `client_max_body_size 0;` in nginx).
 
 ## Updates & Versions
+
+PostPin will run database migrations automatically on startup, so you can update by pulling the new images and restarting the containers. This can be automated by Watchtower or similar tools. The app and worker images share the same version, so always update both at the same time. If you set `SKIP_MIGRATIONS` to `true`, PostPin will skip migrations and may fail to start if the database is not up-to-date.
 
 ## Backups
 

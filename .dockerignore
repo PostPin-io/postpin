@@ -1,0 +1,27 @@
+# Build context is the repo root (the images need the pnpm workspace).
+# Patterns without **/ only match at the root, so generated dirs need it.
+**/node_modules
+# Only the packages' build output; packages/postpin/src/api/build is committed tsoa codegen
+packages/*/dist
+packages/*/build
+**/.svelte-kit
+**/coverage
+**/*.log
+.git
+.github
+.husky
+.vscode
+dev-data
+docs
+**/.env
+**/.env.*
+!**/.env.example
+
+# Not part of the server images, but their manifests must stay so the
+# workspace still matches pnpm-lock.yaml
+packages/desktop/*
+!packages/desktop/package.json
+packages/plugin-*/*
+!packages/plugin-*/package.json
+packages/api-client-ts/*
+!packages/api-client-ts/package.json

@@ -257,38 +257,25 @@ importers:
         version: 8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
 
   packages/postpin:
-    dependencies:
+    devDependencies:
       '@aws-sdk/client-s3':
         specifier: ^3.1149.0
         version: 3.1149.0
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.1149.0
         version: 3.1149.0
-      '@hapi/boom':
-        specifier: ^10.0.1
-        version: 10.0.1
-      '@hapi/hapi':
-        specifier: ^21.4.10
-        version: 21.4.10
-      '@tsoa/runtime':
-        specifier: 7.0.0-alpha.0
-        version: 7.0.0-alpha.0(supports-color@10.2.2)
-      better-auth:
-        specifier: ^1.7.7
-        version: 1.7.11(@prisma/client@7.10.0(prisma@7.10.0(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3))(typescript@6.0.3))(@sveltejs/kit@3.0.1(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.2(@typescript-eslint/types@8.71.1))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.1))(typescript@6.0.3)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))(mysql2@3.15.3)(pg@8.23.1)(prisma@7.10.0(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(svelte@5.57.2(@typescript-eslint/types@8.71.1))(vitest@5.1.0)
-      bullmq:
-        specifier: ^6.3.13
-        version: 6.3.13(ioredis@6.0.0(supports-color@10.2.2))(pg@8.23.1)
-      pg:
-        specifier: ^8.23.1
-        version: 8.23.1
-    devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))
       '@fontsource/fira-mono':
         specifier: ^5.2.7
         version: 5.3.0
+      '@hapi/boom':
+        specifier: ^10.0.1
+        version: 10.0.1
+      '@hapi/hapi':
+        specifier: ^21.4.10
+        version: 21.4.10
       '@hey-api/openapi-ts':
         specifier: ^0.99.0
         version: 0.99.0(magicast@0.5.5)(typescript@6.0.3)
@@ -328,6 +315,9 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.3.0
         version: 4.3.3(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+      '@tsoa/runtime':
+        specifier: 7.0.0-alpha.0
+        version: 7.0.0-alpha.0(supports-color@10.2.2)
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
@@ -340,6 +330,12 @@ importers:
       '@vitest/coverage-v8':
         specifier: 5.1.0
         version: 5.1.0(vitest@5.1.0)
+      better-auth:
+        specifier: ^1.7.7
+        version: 1.7.11(@prisma/client@7.10.0(prisma@7.10.0(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3))(typescript@6.0.3))(@sveltejs/kit@3.0.1(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.2(@typescript-eslint/types@8.71.1))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.1))(typescript@6.0.3)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))(mysql2@3.15.3)(pg@8.23.1)(prisma@7.10.0(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(svelte@5.57.2(@typescript-eslint/types@8.71.1))(vitest@5.1.0)
+      bullmq:
+        specifier: ^6.3.13
+        version: 6.3.13(ioredis@6.0.0(supports-color@10.2.2))(pg@8.23.1)
       concurrently:
         specifier: ^10.0.6
         version: 10.0.6
@@ -364,6 +360,9 @@ importers:
       nodemon:
         specifier: ^3.1.14
         version: 3.1.14
+      pg:
+        specifier: ^8.23.1
+        version: 8.23.1
       prettier:
         specifier: ^3.8.3
         version: 3.9.9
@@ -421,12 +420,9 @@ importers:
       bullmq:
         specifier: ^6.3.12
         version: 6.3.13(ioredis@6.0.0(supports-color@5.5.0))(pg@8.23.1)
-      dotenv:
-        specifier: ^18.0.6
-        version: 18.0.6
-      prisma:
-        specifier: ^7.10.0
-        version: 7.10.0(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@7.0.2)
+      pg:
+        specifier: ^8.23.1
+        version: 8.23.1
       smpte-timecode:
         specifier: ^1.3.6
         version: 1.3.6
@@ -437,12 +433,24 @@ importers:
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
+      '@types/pg':
+        specifier: ^8.23.1
+        version: 8.23.1
       '@types/smpte-timecode':
         specifier: ^1.2.5
         version: 1.2.5
       '@vitest/coverage-v8':
         specifier: 5.1.0
         version: 5.1.0(vitest@5.1.0)
+      dotenv:
+        specifier: ^18.0.6
+        version: 18.0.6
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
+      prisma:
+        specifier: ^7.10.0
+        version: 7.10.0(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@7.0.2)
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
@@ -471,6 +479,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: 5.1.0
         version: 5.1.0(vitest@5.1.0)
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
