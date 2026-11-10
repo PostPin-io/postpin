@@ -1,0 +1,29 @@
+appId: io.postpin.desktop
+productName: PostPin Desktop
+# No spaces: GitHub renames spaces in asset names and latest*.yml would point nowhere
+artifactName: PostPin-Desktop-${version}-${arch}.${ext}
+directories:
+  output: release
+files:
+  - dist/**/*
+  - "!dist/**/*.map"
+  - package.json
+mac:
+  identity: "Hannes Rueger (M273PG74WU)"
+  category: public.app-category.video
+  icon: dist/icon.png
+  hardenedRuntime: true
+  # Off locally, enabled in the release workflow via -c.mac.notarize=true
+  notarize: false
+  target:
+    - { target: dmg, arch: universal }
+    - { target: zip, arch: universal } # electron-updater needs the zip on macOS
+win:
+  icon: dist/icon.png
+  target: nsis
+nsis:
+  oneClick: true
+publish:
+  provider: github
+  owner: PostPin-io
+  repo: postpin
