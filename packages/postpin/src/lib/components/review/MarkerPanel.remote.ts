@@ -2,7 +2,9 @@ import { prisma } from "#lib/server/database.ts";
 import { command, query } from "$app/server";
 import { Prisma } from "@postpin-io/shared/db";
 import { error } from "@sveltejs/kit";
-import { isGuestCategory } from "#lib/server/share-links.ts";
+import { ensureGuestCategory, isGuestCategory } from "#lib/server/share-links.ts";
+import { readExport, requireMarkers } from "#lib/server/review-access.ts";
+import { markersKey, scopeOf } from "./markerScope.ts";
 
 import {
 	accessChecker,
@@ -49,6 +51,25 @@ async function assertFramesInTimeline(exportId: string, frames: number[]) {
 	}
 }
 const timelineRange = v.object({ startFrameIndex: v.number(), durationFrameCount: v.number() });
+/** Set by the share page: the call is a share-link guest's (see readExport) */
+const shareToken = v.optional(v.string());
+
+/**
+ * A guest's own marker on the linked export, else 404: someone else's marker
+ * (another guest's or the team's) looks like it doesn't exist.
+ */
+async function guestMarker(id: string, token: string) {
+	const marker = await prisma.marker.findUnique({
+		where: { id },
+		select: { exportId: true, guestId: true },
+	});
+	if (!marker) error(404, "Not found");
+	const reader = await readExport(marker.exportId, token);
+	if (reader.kind !== "guest" || marker.guestId !== reader.guest.id) error(404, "Not found");
+	requireMarkers(reader);
+	return { reader, exportId: marker.exportId };
+}
+
 /**
  * Same project → keep the category.
  * Other project → category with the same name there, else the fallback.
@@ -80,31 +101,52 @@ async function mapCategories(
 }
 
 // ─── Marker: Queries ────────────────────────────────────────────────────────
-export const getMarkers = query(v.string(), async (exportId: string) => {
-	const { member, target } = await authorize("export", "read", { type: "export", id: exportId });
-	const allowed = await accessChecker(member);
-	const markers = await prisma.marker.findMany({
-		where: { exportId },
-		orderBy: { frame: "desc" },
-		include: {
+export const getMarkers = query(
+	v.union([v.string(), v.object({ exportId: v.string(), shareToken: v.string() })]),
+	async (key) => {
+		const { exportId, shareToken } = scopeOf(key);
+		const reader = await readExport(exportId, shareToken);
+		const include = {
 			author: authorSelect,
+			guest: { select: { name: true } },
 			category: true,
-			responses: {
-				select: { content: true, authorId: true, createdAt: true },
-				orderBy: { createdAt: "asc" },
-			},
-		},
-	});
+		} as const;
 
-	return markers.map((m) => {
-		const t = { projectId: target.projectId, timelineId: target.timelineId, ownerId: m.authorId };
-		return {
-			...m,
-			canUpdate: allowed("marker", "update", t),
-			canDelete: allowed("marker", "delete", t),
-		};
-	});
-});
+		if (reader.kind === "guest") {
+			requireMarkers(reader);
+			const markers = await prisma.marker.findMany({
+				where: { exportId, guestId: reader.guest.id },
+				orderBy: { frame: "desc" },
+				include,
+			});
+			// Guests never see responses, and may change all of their own markers
+			return markers.map((m) => ({ ...m, responses: [], canUpdate: true, canDelete: true }));
+		}
+
+		const { member, target } = reader;
+		const allowed = await accessChecker(member);
+		const markers = await prisma.marker.findMany({
+			where: { exportId },
+			orderBy: { frame: "desc" },
+			include: {
+				...include,
+				responses: {
+					select: { content: true, authorId: true, createdAt: true },
+					orderBy: { createdAt: "asc" },
+				},
+			},
+		});
+
+		return markers.map((m) => {
+			const t = { projectId: target.projectId, timelineId: target.timelineId, ownerId: m.authorId };
+			return {
+				...m,
+				canUpdate: allowed("marker", "update", t),
+				canDelete: allowed("marker", "delete", t),
+			};
+		});
+	},
+);
 
 export const getMarkersbyCategory = query(v.string(), async (categoryId: string) => {
 	const { member } = await authorize("category", "read", { type: "category", id: categoryId });
@@ -164,6 +206,11 @@ export const pasteMarkers = command(
 		// 4. Kategorien zuordnen (siehe Schritt 3)
 		const categoryOf = await mapCategories(source, target.projectId!, data.fallbackCategoryId);
 
+		const { guestCategoryId } = await prisma.project.findUniqueOrThrow({
+			where: { id: target.projectId! },
+			select: { guestCategoryId: true },
+		});
+
 		// 5. Anlegen (+ bei "cut" Quelle löschen) in EINER Transaktion
 		const minFrame = Math.min(...source.map((m) => m.frame));
 		await assertFramesInTimeline(
@@ -178,9 +225,15 @@ export const pasteMarkers = command(
 						description: m.description,
 						frame: data.anchorFrame + (m.frame - minFrame),
 						exportId: data.targetExportId,
-						categoryId: categoryOf(m),
-						// cut = verschieben → Autor bleibt; copy = neuer Marker → wer einfügt
+						// a copy is a team marker: it may not sit in the guest category
+						categoryId:
+							data.mode === "copy" && m.categoryId === guestCategoryId
+								? data.fallbackCategoryId
+								: categoryOf(m),
+						// cut = verschieben → Autor bleibt (auch ein Gast); copy = neuer Marker → wer einfügt
 						authorId: data.mode === "cut" ? m.authorId : user.id,
+						guestId: data.mode === "cut" ? m.guestId : null,
+
 						// nleId bewusst NICHT kopieren: unique pro Export, gehört zum NLE-Original
 						responses: {
 							create: m.responses.map((r) => ({
@@ -216,9 +269,36 @@ export const createMarker = command(
 		description: v.string(),
 		frame: v.pipe(v.number(), v.integer(), v.minValue(0)),
 		exportId: v.string(),
-		categoryId: v.string(),
+		/** Members only; guests always get the project's guest category */
+		categoryId: v.optional(v.string()),
+		shareToken,
 	}),
 	async (data) => {
+		// ─── Guest: always the guest category, the guest as author ───
+		if (data.shareToken) {
+			const reader = await readExport(data.exportId, data.shareToken);
+			if (reader.kind !== "guest") error(404, "Not found");
+			requireMarkers(reader);
+			await assertFramesInTimeline(data.exportId, [data.frame]);
+
+			const marker = await prisma.$transaction(async (tx) =>
+				tx.marker.create({
+					data: {
+						name: data.name,
+						description: data.description,
+						frame: data.frame,
+						exportId: data.exportId,
+						categoryId: await ensureGuestCategory(tx, reader.link.export.timeline.projectId),
+						guestId: reader.guest.id,
+					},
+				}),
+			);
+			await getMarkers(markersKey(data.exportId, data.shareToken)).refresh();
+			return marker;
+		}
+
+		// ─── Member: as before ───
+		if (!data.categoryId) error(400, "Category required");
 		// Bei `create` ist das Target der Parent (der Export)
 		const { user, target } = await authorize("marker", "create", {
 			type: "export",
@@ -248,9 +328,24 @@ export const updateMarker = command(
 		name: v.string(),
 		description: v.string(),
 		frame: v.pipe(v.number(), v.integer(), v.minValue(0)),
+		/** Ignored for guests: their markers stay in the guest category */
 		categoryId: v.string(),
+		shareToken,
 	}),
 	async (data) => {
+		// ─── Guest: only own markers, category stays ───
+		if (data.shareToken) {
+			const { exportId } = await guestMarker(data.id, data.shareToken);
+			await assertFramesInTimeline(exportId, [data.frame]);
+			const marker = await prisma.marker.update({
+				where: { id: data.id },
+				data: { name: data.name, description: data.description, frame: data.frame },
+			});
+			await getMarkers(markersKey(exportId, data.shareToken)).refresh();
+			return marker;
+		}
+
+		// ─── Member: as before ───
 		const { target } = await authorize("marker", "update", { type: "marker", id: data.id });
 		await assertCategoriesInProject([data.categoryId], target.projectId);
 		const { exportId } = await prisma.marker.findUniqueOrThrow({
@@ -273,25 +368,52 @@ export const updateMarker = command(
 	},
 );
 
-export const deleteMarker = command(v.string(), async (id) => {
-	await authorize("marker", "delete", { type: "marker", id });
+export const deleteMarker = command(
+	v.union([v.string(), v.object({ id: v.string(), shareToken: v.string() })]),
+	async (arg) => {
+		// ─── Guest ───
+		if (typeof arg !== "string") {
+			const { exportId } = await guestMarker(arg.id, arg.shareToken);
+			const marker = await prisma.marker.delete({ where: { id: arg.id } });
+			await getMarkers(markersKey(exportId, arg.shareToken)).refresh();
+			return marker;
+		}
 
-	const marker = await prisma.marker.delete({ where: { id } });
+		// ─── Member: as before ───
+		const id = arg;
+		await authorize("marker", "delete", { type: "marker", id });
 
-	await Promise.all([
-		getMarkers(marker.exportId).refresh(),
-		getCategoryUsage(marker.categoryId).refresh(),
-	]);
+		const marker = await prisma.marker.delete({ where: { id } });
 
-	return marker;
-});
+		await Promise.all([
+			getMarkers(marker.exportId).refresh(),
+			getCategoryUsage(marker.categoryId).refresh(),
+		]);
+
+		return marker;
+	},
+);
 
 export const deleteMarkers = command(
 	v.object({
 		exportId: v.string(),
 		ids: v.pipe(v.array(v.string()), v.maxLength(MAX_BULK)),
+		shareToken,
 	}),
 	async (data) => {
+		// ─── Guest: only own markers; anyone else's ids in the list are skipped ───
+		if (data.shareToken) {
+			const reader = await readExport(data.exportId, data.shareToken);
+			if (reader.kind !== "guest") error(404, "Not found");
+			requireMarkers(reader);
+			const result = await prisma.marker.deleteMany({
+				where: { id: { in: data.ids }, exportId: data.exportId, guestId: reader.guest.id },
+			});
+			await getMarkers(markersKey(data.exportId, data.shareToken)).refresh();
+			return result;
+		}
+
+		// ─── Member: as before ───
 		const { markers } = await authorizeMarkers("delete", data.exportId, data.ids);
 
 		const result = await prisma.marker.deleteMany({

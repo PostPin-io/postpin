@@ -42,15 +42,8 @@
 
 	import { jobStateBadges } from "#lib/job-status.ts";
 
-	/** Set on a share link: the same view, limited to what the link shows */
-	type ShareContext = {
-		token: string;
-		exportName: string;
-		guestName: string;
-		note: string | null;
-		timelinePanelVisible: boolean;
-		markerPanelVisible: boolean;
-	};
+	import { setShareContext, type ShareContext } from "./shareContext.ts";
+	import { markersKey } from "./markerScope.ts";
 
 	interface Props {
 		exportId: string;
@@ -60,6 +53,7 @@
 		share?: ShareContext;
 	}
 	let { exportId, projectId, timelineId, share }: Props = $props();
+	setShareContext(() => share);
 
 	const shareToken = $derived(share?.token);
 	// The note greets the guest; the header button hides and shows it again
@@ -115,8 +109,10 @@
 	// A boolean, so the refetches while processing don't count as a change and reset the layout
 	const hasExport = $derived(!!exp);
 	let isLoading = $derived(!hasExport || !isMounted || !isLayoutReady);
-	// Phase 7: the guest's own markers
-	let allMarkers = $derived(share ? [] : await getMarkers(exportId));
+	// Guests without the marker panel: no markers at all (the server would answer 403)
+	let allMarkers = $derived(
+		isMarkerVisible ? await getMarkers(markersKey(exportId, shareToken)) : [],
+	);
 	let markers = $derived(markerFilter.apply(allMarkers));
 	let originalUrl = $state<string | undefined>(undefined);
 	let thumbnailUrl = $state<string | undefined>(undefined);
@@ -558,20 +554,14 @@
 							<MovieBarcode data={barcode} />
 						{/if}
 					{/if}
-					{#if share}
-						<!-- Phase 7: the guest's own markers -->
-						<div class="flex flex-1 items-center justify-center p-4 text-sm text-base-content/50">
-							Your markers will appear here.
-						</div>
-					{:else}
-						<MarkerPanel
-							{currentFrame}
-							onseek={seekToFrame}
-							startFrame={snapshot!.startFrameIndex}
-							frameRate={snapshot!.frameRate}
-							frameCount={snapshot!.durationFrameCount}
-						/>
-					{/if}
+					<MarkerPanel
+						{exportId}
+						{currentFrame}
+						onseek={seekToFrame}
+						startFrame={snapshot!.startFrameIndex}
+						frameRate={snapshot!.frameRate}
+						frameCount={snapshot!.durationFrameCount}
+					/>
 				</Pane>
 			{/if}
 		</Splitpanes>

@@ -43,3 +43,9 @@ export function requireTimeline(reader: Reader) {
 		error(403, "The timeline isn't shared");
 	}
 }
+/** Guests only work with markers when the link shows the marker panel */
+export function requireMarkers(reader: Reader) {
+	if (reader.kind === "guest" && !reader.link.markerPanelVisible) {
+		error(403, "Markers are turned off for this link");
+	}
+}

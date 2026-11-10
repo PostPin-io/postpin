@@ -38,11 +38,16 @@
 		onrespond,
 	}: Props = $props();
 
+	import { useShare } from "./shareContext.ts";
+	const getShare = useShare();
+	const share = $derived(getShare());
+
 	let isOpen = $state(false);
 	let responsesCollapsed = $state(false);
 
 	// Responses are only fetched while the marker is expanded
-	let responses = $derived(isOpen ? await getResponses(marker.id) : []);
+	// Responses are only fetched while the marker is expanded, and never for guests
+	let responses = $derived(isOpen && !share ? await getResponses(marker.id) : []);
 
 	const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
 		dateStyle: "medium",
@@ -196,21 +201,21 @@
 						{/each}
 					</ol>
 				{/if}
-
-				<div class="flex justify-end">
-					<button
-						type="button"
-						class="btn btn-outline btn-xs"
-						onclick={(e) => {
-							e.stopPropagation();
-							onrespond?.();
-						}}
-					>
-						<MessageSquareReply size={14} />
-						Respond
-					</button>
-				</div>
-
+				{#if !share}
+					<div class="flex justify-end">
+						<button
+							type="button"
+							class="btn btn-outline btn-xs"
+							onclick={(e) => {
+								e.stopPropagation();
+								onrespond?.();
+							}}
+						>
+							<MessageSquareReply size={14} />
+							Respond
+						</button>
+					</div>
+				{/if}
 				<div
 					class="flex items-center justify-between gap-3 border-t border-base-300 pt-2 text-xs text-base-content/60"
 				>
@@ -219,7 +224,12 @@
 							{@render categoryBadge("badge-sm p-0 px-2")}
 						{/if}
 
-						<span class="truncate">By {marker.author?.name ?? "Deleted User"}</span>
+						{#if marker.guest}
+							<span class="truncate">By {marker.guest.name}</span>
+							<span class="badge badge-ghost badge-xs">Gast</span>
+						{:else}
+							<span class="truncate">By {marker.author?.name ?? "Deleted User"}</span>
+						{/if}
 
 						<span class="font-normal text-base-content/60 tabular-nums">
 							{dateFormat.format(marker.createdAt)}

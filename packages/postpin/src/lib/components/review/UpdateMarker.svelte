@@ -10,6 +10,7 @@
 	import X from "@lucide/svelte/icons/x";
 	import CircleArrowLeft from "@lucide/svelte/icons/circle-arrow-left";
 	import type { ReviewMarker } from "./types";
+	import { useShare } from "./shareContext.ts";
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let { marker, startFrame, onclose }: Props = $props();
@@ -20,6 +21,8 @@
 		marker: ReviewMarker;
 		startFrame: number;
 	}
+	const getShare = useShare();
+	const share = $derived(getShare());
 
 	let editCategoriesModal: EditCategoriesModal;
 	// The parent keys this component on the marker id, so the initial values are intentional
@@ -33,7 +36,8 @@
 	let fieldFocused = $state(false);
 
 	let projectId = $derived(page.params.project ?? "");
-	let categories = $derived(await getCategories(projectId));
+	// Guests don't pick categories: their markers stay in the guest category
+	let categories = $derived(share ? [] : await getCategories(projectId));
 	let categoryId = $derived(selectedCategoryId ?? categories[0]?.id);
 
 	// Last values sent to the server, so changes are detected independently of the refreshed prop
@@ -82,7 +86,9 @@
 				description: next.description,
 				categoryId: next.categoryId,
 				frame: marker.frame,
+				shareToken: share?.token,
 			});
+
 			saved = { ...next, categoryId: next.categoryId };
 		} finally {
 			saving = false;
@@ -102,7 +108,7 @@
 		clearTimeout(timer);
 		saving = true;
 		try {
-			await deleteMarker(marker.id);
+			await deleteMarker(share ? { id: marker.id, shareToken: share.token } : marker.id);
 		} catch (error) {
 			removed = false;
 			throw error;
@@ -144,29 +150,29 @@
 						View Marker
 					{/if}
 				</h2>
+				{#if !share}
+					<CategorySelector
+						value={categoryId}
+						onselect={(id) => {
+							selectedCategoryId = id;
+							localStorage.setItem("DefaultCategory", id);
+							void persist();
+						}}
+						readonly={!marker.canUpdate}
+					/>
 
-				<CategorySelector
-					value={categoryId}
-					onselect={(id) => {
-						selectedCategoryId = id;
-						localStorage.setItem("DefaultCategory", id);
-						void persist();
-					}}
-					readonly={!marker.canUpdate}
-				/>
-
-				{#if marker.canUpdate}
-					<button
-						type="button"
-						class="btn btn-square"
-						title="New category"
-						aria-label="New category"
-						onclick={openEditCategoriesModal}
-					>
-						<ClipboardList size={20} />
-					</button>
+					{#if marker.canUpdate}
+						<button
+							type="button"
+							class="btn btn-square"
+							title="New category"
+							aria-label="New category"
+							onclick={openEditCategoriesModal}
+						>
+							<ClipboardList size={20} />
+						</button>
+					{/if}
 				{/if}
-
 				<!-- <span class="badge badge-outline tabular-nums" title="Marker frame">
 					Frame {marker.frame - startFrame}
 					</span> -->

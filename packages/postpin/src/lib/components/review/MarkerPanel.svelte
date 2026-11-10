@@ -15,6 +15,8 @@
 	} from "./markerList.ts";
 	import Ellipsis from "@lucide/svelte/icons/ellipsis";
 	import { Pane, Splitpanes } from "svelte-splitpanes";
+	import { useShare } from "./shareContext.ts";
+	import { markersKey } from "./markerScope.ts";
 
 	import {
 		getMarkers,
@@ -35,6 +37,7 @@
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
 
 	interface Props {
+		exportId: string;
 		currentFrame: number;
 		onseek: (frame: number) => void;
 		startFrame: number;
@@ -42,19 +45,26 @@
 		/** Timeline length in frames */
 		frameCount: number;
 	}
-	let { currentFrame, onseek, frameRate, startFrame, frameCount }: Props = $props();
+	let { exportId, currentFrame, onseek, frameRate, startFrame, frameCount }: Props = $props();
 	let updateMarkerComponent: UpdateMarker | null = null;
-	const currentExportId = $derived(page.params.export ?? "");
+
+	// On a share link: guests see only their own markers, no categories, no copy/paste
+	const getShare = useShare();
+	const share = $derived(getShare());
+	const shareToken = $derived(share?.token);
+
+	const currentExportId = $derived(exportId);
+	// Team only: the share page has no project in its URL, and guests don't pick categories
 	const projectId = $derived(page.params.project ?? "");
 	const defaultCategory = $derived(localStorage.getItem("DefaultCategory") ?? "");
 
-	let markers = $derived(await getMarkers(currentExportId));
+	let markers = $derived(await getMarkers(markersKey(currentExportId, shareToken)));
 
 	let markerAtPlayhead = $derived(markers.find((marker) => marker.frame === currentFrame));
 
 	let markersComponents: Marker[] = $state([]);
 
-	let categories = $derived(await getCategories(projectId));
+	let categories = $derived(share ? [] : await getCategories(projectId));
 	let categorySearch = $state("");
 	let filteredCategories = $derived(
 		categories.filter((c) => c.name.toLowerCase().includes(categorySearch.trim().toLowerCase())),
@@ -158,13 +168,15 @@
 		if (creating) return;
 		creating = true;
 		try {
-			const { categoryId } = await resolveDefaultCategory();
+			// Guests have no categories: the server puts their markers in the guest category
+			const categoryId = share ? undefined : (await resolveDefaultCategory()).categoryId;
 			return await createMarker({
 				exportId: currentExportId,
 				name: "",
 				description: "",
-				categoryId: categoryId,
+				categoryId,
 				frame: currentFrame,
+				shareToken,
 			});
 		} finally {
 			creating = false;
@@ -190,7 +202,7 @@
 			.filter((marker) => selectedMarkerIds.includes(marker.id))
 			.map((marker) => marker.id);
 		if (ids.length === 0) return;
-		await deleteMarkers({ exportId: currentExportId, ids });
+		await deleteMarkers({ exportId: currentExportId, ids, shareToken });
 		selectedMarkerIds = [];
 	}
 
@@ -210,6 +222,9 @@
 	}
 
 	function copyOrCutKeypress(event: KeyboardEvent) {
+		// Copy and paste work across exports: team only
+		if (share) return;
+
 		if (!event.metaKey || event.altKey || event.shiftKey) return;
 		const key = event.key.toLowerCase();
 		if (key !== "c" && key !== "x") return;
@@ -255,6 +270,9 @@
 	}
 
 	function pasteKeypress(event: KeyboardEvent) {
+		// Copy and paste work across exports: team only
+		if (share) return;
+
 		if (!event.metaKey || event.altKey || event.shiftKey) return;
 		if (event.key !== "v" && event.key !== "V") return;
 		if (isTypingTarget(event)) return;
@@ -308,6 +326,7 @@
 			description: marker.description ?? "",
 			categoryId: marker.categoryId,
 			frame,
+			shareToken,
 		});
 	}
 
@@ -359,40 +378,42 @@
 				tabindex="-1"
 				class="menu dropdown-content z-1 w-52 rounded-box bg-base-100 p-2 shadow-sm"
 			>
-				<li>
-					<details>
-						<summary>Filter for Category</summary>
-						<ul>
-							<li class="p-0 menu-title">
-								<input
-									type="search"
-									class="input w-full input-xs"
-									placeholder="Search categories"
-									bind:value={categorySearch}
-								/>
-							</li>
-							<li>
-								<a
-									class={markerFilter.categoryIds.length === 0 ? "menu-active" : ""}
-									onclick={() => markerFilter.clear()}>All</a
-								>
-							</li>
-							{#each filteredCategories as category (category.id)}
-								<li>
-									<label class="flex cursor-pointer items-center gap-2">
-										<input
-											type="checkbox"
-											class="checkbox checkbox-xs"
-											checked={markerFilter.isActive(category.id)}
-											onchange={() => markerFilter.toggle(category.id)}
-										/>
-										<CategoryBadge {category} class="badge-xs" />
-									</label>
+				{#if !share}
+					<li>
+						<details>
+							<summary>Filter for Category</summary>
+							<ul>
+								<li class="p-0 menu-title">
+									<input
+										type="search"
+										class="input w-full input-xs"
+										placeholder="Search categories"
+										bind:value={categorySearch}
+									/>
 								</li>
-							{/each}
-						</ul>
-					</details>
-				</li>
+								<li>
+									<a
+										class={markerFilter.categoryIds.length === 0 ? "menu-active" : ""}
+										onclick={() => markerFilter.clear()}>All</a
+									>
+								</li>
+								{#each filteredCategories as category (category.id)}
+									<li>
+										<label class="flex cursor-pointer items-center gap-2">
+											<input
+												type="checkbox"
+												class="checkbox checkbox-xs"
+												checked={markerFilter.isActive(category.id)}
+												onchange={() => markerFilter.toggle(category.id)}
+											/>
+											<CategoryBadge {category} class="badge-xs" />
+										</label>
+									</li>
+								{/each}
+							</ul>
+						</details>
+					</li>
+				{/if}
 				<li>
 					<details>
 						<summary>Sort by</summary>

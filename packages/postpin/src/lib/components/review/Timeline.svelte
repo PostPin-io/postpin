@@ -20,6 +20,8 @@
 		secondsAtFrame,
 	} from "@postpin-io/shared/logic/timecode";
 	import type { ReviewMarker } from "#lib/components/review/types.ts";
+	import { useShare } from "./shareContext.ts";
+	import { markersKey } from "./markerScope.ts";
 
 	interface Props {
 		snapshot: TimelineSnapshot;
@@ -32,6 +34,9 @@
 
 		onCollapsedHeight: (height: number) => void;
 	}
+
+	const getShare = useShare();
+	const share = $derived(getShare());
 
 	let {
 		snapshot,
@@ -181,8 +186,9 @@
 					description: marker.description ?? "",
 					categoryId: marker.categoryId,
 					frame,
+					shareToken: share?.token,
 				});
-				await getMarkers(marker.exportId).refresh();
+				await getMarkers(markersKey(marker.exportId, share?.token)).refresh();
 			}
 		} finally {
 			markerDrag = null;
