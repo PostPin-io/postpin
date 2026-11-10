@@ -24,7 +24,8 @@
 	const getShare = useShare();
 	const share = $derived(getShare());
 
-	let editCategoriesModal: EditCategoriesModal;
+	// Team only: the modal loads the project's categories as soon as it renders
+	let editCategoriesModal = $state<EditCategoriesModal>();
 	// The parent keys this component on the marker id, so the initial values are intentional
 
 	let name = $state(marker.name);
@@ -100,7 +101,7 @@
 	}
 
 	async function openEditCategoriesModal() {
-		editCategoriesModal.open(page.params.project ?? "");
+		editCategoriesModal?.open(page.params.project ?? "");
 	}
 	export async function remove() {
 		if (!marker.canDelete) return;
@@ -254,4 +255,6 @@
 		</form>
 	</div>
 </section>
-<EditCategoriesModal bind:this={editCategoriesModal} />
+{#if !share}
+	<EditCategoriesModal bind:this={editCategoriesModal} />
+{/if}

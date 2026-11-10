@@ -80,6 +80,12 @@ describe("signed out", () => {
 		expect(res.headers.get("location")).toBeNull();
 	});
 
+	it("HLS playlists are reachable for share-link guests; the routes check access (readMedia)", async () => {
+		const { res, resolve } = await run("/media/m1/master.m3u8?share=token1");
+		expect(resolve).toHaveBeenCalledOnce();
+		expect(res.headers.get("location")).toBeNull();
+	});
+
 	it("share links are public", async () => {
 		const { res, resolve } = await run("/s/sometoken");
 		expect(resolve).toHaveBeenCalledOnce();

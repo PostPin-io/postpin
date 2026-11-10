@@ -122,6 +122,7 @@
 	const mediaId = $derived(media?.id);
 	const mediaStatus = $derived(media?.status);
 	const hasThumbnail = $derived(!!media?.thumbnail);
+	const hasSeekSprites = $derived(!!media?.seekSprites);
 
 	// the query 404s until the job is done, so only ask once the polled export says it is
 	const shotThumbnails = $derived(
@@ -286,8 +287,10 @@
 		}
 	});
 
+	// Only ask once the export says the sprites exist: the query 404s before. No `.catch()` on the
+	// query here: inside an async derived it trips a Svelte invariant ("Batch has scheduled effects")
 	const spriteInfo = $derived(
-		mediaId ? await getSeekSprites({ mediaId, shareToken }).catch(() => null) : null,
+		mediaId && hasSeekSprites ? await getSeekSprites({ mediaId, shareToken }) : null,
 	);
 	const seekThumbnails = $derived(
 		spriteInfo?.seekSprites ? seekThumbnailTiles(spriteInfo.seekSprites, spriteInfo.urls) : [],
