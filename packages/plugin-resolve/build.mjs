@@ -1,11 +1,12 @@
 import esbuild from "esbuild";
 import fs from "node:fs/promises";
 
+const { version } = JSON.parse(await fs.readFile("package.json", "utf8"));
 const dev = process.argv.includes("--dev");
 const watch = process.argv.includes("--watch");
 const install = process.argv.includes("--install");
 const PLUGIN_DIR =
-	"/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/com.postpin.resolve";
+	"/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/io.postpin.plugin.resolve";
 
 if (install) {
 	try {
@@ -18,11 +19,16 @@ if (install) {
 
 await fs.rm("dist", { recursive: true, force: true });
 await fs.mkdir("dist");
-await fs.cp("manifest.xml", "dist/manifest.xml");
+// Resolve shows this version; keep it numeric (0.2.0-rc.1 -> 0.2.0)
+const manifest = await fs.readFile("manifest.xml", "utf8");
+await fs.writeFile(
+	"dist/manifest.xml",
+	manifest.replace(/<Version>.*<\/Version>/, `<Version>${version.split("-")[0]}</Version>`),
+);
 await fs.cp("node_modules/@postpin-io/plugin-electron/assets/icon.png", "dist/icon.png");
 await fs.writeFile(
 	"dist/package.json",
-	JSON.stringify({ name: "postpin-resolve", version: "1.0.0", main: "main.js" }, null, 2),
+	JSON.stringify({ name: "postpin-resolve", version, main: "main.js" }, null, 2),
 );
 
 let installing = Promise.resolve();

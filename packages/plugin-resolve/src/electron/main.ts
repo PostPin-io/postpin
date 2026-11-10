@@ -39,7 +39,7 @@ declare const DEV_SERVER_URL: string;
 declare const DEFAULT_SERVER_URL: string;
 
 const PLUGIN_ID = "io.postpin.plugin.resolve";
-const CLIENT_ID = "io.postpin.plugin-resolve";
+const CLIENT_ID = "io.postpin.plugin.resolve";
 
 const WorkflowIntegration: WI = WorkflowIntegrationModule;
 

@@ -78,7 +78,7 @@ jobs:
 
   merge:
     name: publish (${{ matrix.image.name }})
-    needs: [build, desktop-mac, desktop-win]
+    needs: [build, desktop-mac, desktop-win, resolve-mac]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -211,8 +211,54 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  # Resolve plugin: signed + notarized .pkg
+  resolve-mac:
+    runs-on: macos-latest
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - name: Set version from tag
+        working-directory: packages/plugin-resolve
+        run: npm pkg set version="${GITHUB_REF_NAME#v}"
+      - name: Import signing certificate
+        env:
+          MAC_CERTS_P12_BASE64: ${{ secrets.MAC_CERTS_P12_BASE64 }}
+          MAC_CERTS_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
+        run: |
+          kc="$RUNNER_TEMP/signing.keychain-db"
+          kc_pw=$(openssl rand -hex 16)
+          security create-keychain -p "$kc_pw" "$kc"
+          security set-keychain-settings -lut 21600 "$kc"
+          security unlock-keychain -p "$kc_pw" "$kc"
+          printf '%s' "$MAC_CERTS_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/certs.p12"
+          security import "$RUNNER_TEMP/certs.p12" -k "$kc" -P "$MAC_CERTS_PASSWORD" -T /usr/bin/productbuild
+          rm "$RUNNER_TEMP/certs.p12"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$kc_pw" "$kc" > /dev/null
+          # Word splitting is intended: one argument per existing keychain
+          # shellcheck disable=SC2046
+          security list-keychains -d user -s "$kc" $(security list-keychains -d user | tr -d '"')
+      - name: Build, sign and notarize
+        working-directory: packages/plugin-resolve
+        env:
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          export APPLE_API_KEY="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY_ID}.p8"
+          printf '%s' "$APPLE_API_KEY_P8" > "$APPLE_API_KEY"
+          pnpm run dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: resolve-mac
+          path: packages/plugin-resolve/release/*.pkg
+          if-no-files-found: error
+          retention-days: 1
+
   release:
-    needs: [merge, desktop-mac, desktop-win]
+    needs: [merge, desktop-mac, desktop-win, resolve-mac]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -222,6 +268,11 @@ jobs:
         with:
           path: ${{ runner.temp }}/desktop
           pattern: desktop-*
+          merge-multiple: true
+      - uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/desktop
+          pattern: resolve-*
           merge-multiple: true
       - name: Create GitHub Release
         env:

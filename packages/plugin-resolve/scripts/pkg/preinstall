@@ -1,0 +1,7 @@
+#!/bin/sh
+# Remove the previous version first so no stale files stay behind
+PLUGINS="/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins"
+rm -rf "$PLUGINS/io.postpin.plugin.resolve"
+# Folder name of development installs before 0.2.0; it has the same plugin ID and would show up twice
+rm -rf "$PLUGINS/com.postpin.resolve"
+exit 0
