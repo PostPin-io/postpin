@@ -2,10 +2,14 @@ import { describe, expect, it } from "vitest";
 import * as v from "valibot";
 import {
 	GUEST_NAME_MAX_LENGTH,
+	MAX_RECIPIENTS_PER_SEND,
 	NOTE_MAX_LENGTH,
 	expiresAtFor,
+	parseEmailList,
 	shareGuestName,
+	shareLinkMailContent,
 	shareLinkNote,
+	shareLinkRecipients,
 	shareLinkStatus,
 	shareUrlLifetime,
 } from "../../src/logic/share-links.ts";
@@ -59,4 +63,75 @@ describe("shareUrlLifetime", () => {
 	])("%s", (_, secondsLeft, expected) =>
 		expect(shareUrlLifetime(new Date(now.getTime() + secondsLeft * 1000), now)).toBe(expected),
 	);
+});
+
+describe("parseEmailList", () => {
+	it("splits on commas, semicolons, spaces and line breaks", () => {
+		expect(parseEmailList("a@x.io, b@x.io;c@x.io\nd@x.io e@x.io").valid).toEqual([
+			"a@x.io",
+			"b@x.io",
+			"c@x.io",
+			"d@x.io",
+			"e@x.io",
+		]);
+	});
+
+	it('takes the address out of "Name <address>"', () => {
+		expect(parseEmailList("Anna Muster <Anna@X.io>, ben@x.io").valid).toEqual([
+			"anna@x.io",
+			"ben@x.io",
+		]);
+	});
+
+	it("drops duplicates regardless of case and reports invalid entries", () => {
+		expect(parseEmailList("a@x.io A@X.IO nope b@")).toEqual({
+			valid: ["a@x.io"],
+			invalid: ["nope", "b@"],
+		});
+	});
+
+	it("is empty for blank text", () => {
+		expect(parseEmailList("  \n , ")).toEqual({ valid: [], invalid: [] });
+	});
+});
+
+describe("shareLinkRecipients", () => {
+	it("trims, lower-cases and dedupes", () => {
+		expect(v.parse(shareLinkRecipients, [" A@x.io ", "a@x.io", "b@x.io"])).toEqual([
+			"a@x.io",
+			"b@x.io",
+		]);
+	});
+
+	it.each([
+		["no address", []],
+		["an invalid one", ["a@x.io", "nope"]],
+		["too many", Array.from({ length: MAX_RECIPIENTS_PER_SEND + 1 }, (_, i) => `u${i}@x.io`)],
+	])("rejects %s", (_, list) => {
+		expect(() => v.parse(shareLinkRecipients, list)).toThrow();
+	});
+});
+
+describe("shareLinkMailContent", () => {
+	const base = {
+		senderName: "Hannes",
+		exportName: "Cut 3",
+		url: "https://app.postpin.io/s/abc",
+		expiresAt: new Date("2026-11-16T12:00:00Z"),
+	};
+
+	it("names sender and export, ends with link and expiry", () => {
+		const mail = shareLinkMailContent({ ...base, note: null });
+		expect(mail.subject).toBe('Hannes shared "Cut 3" with you');
+		expect(mail.text).toContain("https://app.postpin.io/s/abc");
+		expect(mail.text).toContain("November 16, 2026");
+		expect(mail.text.split("\n")[1]).toBe("");
+	});
+
+	it("puts the note right after the first line", () => {
+		const lines = shareLinkMailContent({ ...base, note: "Please check the ending" }).text.split(
+			"\n",
+		);
+		expect(lines[2]).toBe("Please check the ending");
+	});
 });

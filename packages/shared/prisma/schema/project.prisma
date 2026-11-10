@@ -60,23 +60,27 @@ model Export {
 }
 
 model ShareLink {
-  id                   String       @id @default(cuid())
-  createdAt            DateTime     @default(now())
-  updatedAt            DateTime     @updatedAt
-  export               Export       @relation(fields: [exportId], references: [id], onDelete: Cascade)
+  id                   String          @id @default(cuid())
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  export               Export          @relation(fields: [exportId], references: [id], onDelete: Cascade)
   exportId             String
-  creator              User?        @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  creator              User?           @relation(fields: [creatorId], references: [id], onDelete: SetNull)
   creatorId            String?
   /// Random, URL-safe. Not the id: cuids are guessable-ish and can't be rotated.
-  token                String       @unique
+  token                String          @unique
   expiresAt            DateTime
   /// Set instead of deleting, so the list stays traceable
   revokedAt            DateTime?
-  timelinePanelVisible Boolean      @default(false)
-  markerPanelVisible   Boolean      @default(true)
+  timelinePanelVisible Boolean         @default(false)
+  markerPanelVisible   Boolean         @default(true)
   /// Plain text, length checked in the app (NOTE_MAX_LENGTH)
   note                 String?
   guests               ShareGuest[]
+  mails                ShareLinkMail[]
+  /// Visits by guests: a reload within 30 minutes counts as the same visit (recordShareView)
+  viewCount            Int             @default(0)
+  lastViewedAt         DateTime?
 
   @@index([exportId])
   @@map("share_link")
@@ -91,8 +95,24 @@ model ShareGuest {
   name             String
   /// sha256 of the cookie value; the raw token never touches the DB
   sessionTokenHash String    @unique
-  markers          Marker[]
+  lastViewedAt     DateTime?
+
+  markers Marker[]
 
   @@index([shareLinkId])
   @@map("share_guest")
+}
+
+/// One "send by e-mail" of a share link. Counts toward the sender's daily limit per link.
+model ShareLinkMail {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  shareLink   ShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
+  shareLinkId String
+  sender      User?     @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  senderId    String?
+  recipients  String[]
+
+  @@index([shareLinkId, senderId, createdAt])
+  @@map("share_link_mail")
 }

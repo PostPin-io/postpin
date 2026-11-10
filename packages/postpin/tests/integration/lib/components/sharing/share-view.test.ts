@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { getShareInfo, joinShare } from "#lib/components/sharing/share-view.remote.ts";
+import {
+	getShareInfo,
+	joinShare,
+	recordShareView,
+} from "#lib/components/sharing/share-view.remote.ts";
 import { shareGuestCookieName } from "#lib/server/share-guests.ts";
 import { fakeCookies } from "../../../../helpers/cookies.ts";
 import { prisma } from "../../../../helpers/db.ts";
@@ -80,5 +84,43 @@ describe("joinShare", () => {
 		const second = await f.createShareLink(exp);
 		await joinShare({ token: link.token, name: "Anna" });
 		expect((await getShareInfo(second.token)).guest).toBeNull();
+	});
+});
+
+describe("recordShareView", () => {
+	const linkRow = () => prisma.shareLink.findUniqueOrThrow({ where: { id: link.id } });
+
+	it("counts a visit and remembers when link and guest were seen", async () => {
+		await joinShare({ token: link.token, name: "Anna" });
+		await recordShareView(link.token);
+
+		const row = await linkRow();
+		expect(row.viewCount).toBe(1);
+		expect(row.lastViewedAt).not.toBeNull();
+		expect(
+			(await prisma.shareGuest.findFirstOrThrow({ where: { shareLinkId: link.id } })).lastViewedAt,
+		).not.toBeNull();
+	});
+
+	it("a reload within 30 minutes is the same visit, a later one counts again", async () => {
+		await joinShare({ token: link.token, name: "Anna" });
+		await recordShareView(link.token);
+		await recordShareView(link.token);
+		expect((await linkRow()).viewCount).toBe(1);
+
+		await prisma.shareGuest.updateMany({
+			where: { shareLinkId: link.id },
+			data: { lastViewedAt: new Date(Date.now() - 31 * 60 * 1000) },
+		});
+		await recordShareView(link.token);
+		expect((await linkRow()).viewCount).toBe(2);
+	});
+
+	it("401 before joining, 410 on a revoked link; nothing counted", async () => {
+		await expectStatus(recordShareView(link.token), 401);
+		await joinShare({ token: link.token, name: "Anna" });
+		await prisma.shareLink.update({ where: { id: link.id }, data: { revokedAt: new Date() } });
+		await expectStatus(recordShareView(link.token), 410);
+		expect((await linkRow()).viewCount).toBe(0);
 	});
 });

@@ -215,6 +215,7 @@ export type UserWhereInput = {
 	responses?: Prisma.ResponseListRelationFilter;
 	createdGrants?: Prisma.MemberGrantListRelationFilter;
 	createdShareLinks?: Prisma.ShareLinkListRelationFilter;
+	sentShareLinkMails?: Prisma.ShareLinkMailListRelationFilter;
 	createdCategories?: Prisma.CategoryListRelationFilter;
 	inviteLinks?: Prisma.InviteLinkListRelationFilter;
 };
@@ -238,6 +239,7 @@ export type UserOrderByWithRelationInput = {
 	responses?: Prisma.ResponseOrderByRelationAggregateInput;
 	createdGrants?: Prisma.MemberGrantOrderByRelationAggregateInput;
 	createdShareLinks?: Prisma.ShareLinkOrderByRelationAggregateInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailOrderByRelationAggregateInput;
 	createdCategories?: Prisma.CategoryOrderByRelationAggregateInput;
 	inviteLinks?: Prisma.InviteLinkOrderByRelationAggregateInput;
 };
@@ -268,6 +270,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
 		responses?: Prisma.ResponseListRelationFilter;
 		createdGrants?: Prisma.MemberGrantListRelationFilter;
 		createdShareLinks?: Prisma.ShareLinkListRelationFilter;
+		sentShareLinkMails?: Prisma.ShareLinkMailListRelationFilter;
 		createdCategories?: Prisma.CategoryListRelationFilter;
 		inviteLinks?: Prisma.InviteLinkListRelationFilter;
 	},
@@ -320,6 +323,7 @@ export type UserCreateInput = {
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
@@ -342,6 +346,7 @@ export type UserUncheckedCreateInput = {
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
@@ -364,6 +369,7 @@ export type UserUpdateInput = {
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
@@ -386,6 +392,7 @@ export type UserUncheckedUpdateInput = {
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
@@ -879,6 +886,34 @@ export type UserUpdateOneWithoutCreatedShareLinksNestedInput = {
 	>;
 };
 
+export type UserCreateNestedOneWithoutSentShareLinkMailsInput = {
+	create?: Prisma.XOR<
+		Prisma.UserCreateWithoutSentShareLinkMailsInput,
+		Prisma.UserUncheckedCreateWithoutSentShareLinkMailsInput
+	>;
+	connectOrCreate?: Prisma.UserCreateOrConnectWithoutSentShareLinkMailsInput;
+	connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneWithoutSentShareLinkMailsNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.UserCreateWithoutSentShareLinkMailsInput,
+		Prisma.UserUncheckedCreateWithoutSentShareLinkMailsInput
+	>;
+	connectOrCreate?: Prisma.UserCreateOrConnectWithoutSentShareLinkMailsInput;
+	upsert?: Prisma.UserUpsertWithoutSentShareLinkMailsInput;
+	disconnect?: Prisma.UserWhereInput | boolean;
+	delete?: Prisma.UserWhereInput | boolean;
+	connect?: Prisma.UserWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.UserUpdateToOneWithWhereWithoutSentShareLinkMailsInput,
+			Prisma.UserUpdateWithoutSentShareLinkMailsInput
+		>,
+		Prisma.UserUncheckedUpdateWithoutSentShareLinkMailsInput
+	>;
+};
+
 export type UserCreateWithoutSessionsInput = {
 	id?: string;
 	name: string;
@@ -896,6 +931,7 @@ export type UserCreateWithoutSessionsInput = {
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
@@ -917,6 +953,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
@@ -966,6 +1003,7 @@ export type UserUpdateWithoutSessionsInput = {
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
@@ -987,6 +1025,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
@@ -1008,6 +1047,7 @@ export type UserCreateWithoutAccountsInput = {
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
@@ -1029,6 +1069,7 @@ export type UserUncheckedCreateWithoutAccountsInput = {
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
@@ -1078,6 +1119,7 @@ export type UserUpdateWithoutAccountsInput = {
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
@@ -1099,6 +1141,7 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
@@ -1120,6 +1163,7 @@ export type UserCreateWithoutMarkersInput = {
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
@@ -1141,6 +1185,7 @@ export type UserUncheckedCreateWithoutMarkersInput = {
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
@@ -1190,6 +1235,7 @@ export type UserUpdateWithoutMarkersInput = {
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
@@ -1211,6 +1257,7 @@ export type UserUncheckedUpdateWithoutMarkersInput = {
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
@@ -1233,6 +1280,7 @@ export type UserCreateWithoutCreatedCategoriesInput = {
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1254,6 +1302,7 @@ export type UserUncheckedCreateWithoutCreatedCategoriesInput = {
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1303,6 +1352,7 @@ export type UserUpdateWithoutCreatedCategoriesInput = {
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1324,6 +1374,7 @@ export type UserUncheckedUpdateWithoutCreatedCategoriesInput = {
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1344,6 +1395,7 @@ export type UserCreateWithoutResponsesInput = {
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
@@ -1365,6 +1417,7 @@ export type UserUncheckedCreateWithoutResponsesInput = {
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
@@ -1414,6 +1467,7 @@ export type UserUpdateWithoutResponsesInput = {
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
@@ -1435,6 +1489,7 @@ export type UserUncheckedUpdateWithoutResponsesInput = {
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
@@ -1456,6 +1511,7 @@ export type UserCreateWithoutLastActiveOrganizationInput = {
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
@@ -1477,6 +1533,7 @@ export type UserUncheckedCreateWithoutLastActiveOrganizationInput = {
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
@@ -1555,6 +1612,7 @@ export type UserCreateWithoutMembershipsInput = {
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
@@ -1576,6 +1634,7 @@ export type UserUncheckedCreateWithoutMembershipsInput = {
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
@@ -1625,6 +1684,7 @@ export type UserUpdateWithoutMembershipsInput = {
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
@@ -1646,6 +1706,7 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
@@ -1667,6 +1728,7 @@ export type UserCreateWithoutInvitationsInput = {
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
@@ -1688,6 +1750,7 @@ export type UserUncheckedCreateWithoutInvitationsInput = {
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
@@ -1737,6 +1800,7 @@ export type UserUpdateWithoutInvitationsInput = {
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
@@ -1758,6 +1822,7 @@ export type UserUncheckedUpdateWithoutInvitationsInput = {
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
@@ -1780,6 +1845,7 @@ export type UserCreateWithoutInviteLinksInput = {
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1801,6 +1867,7 @@ export type UserUncheckedCreateWithoutInviteLinksInput = {
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1850,6 +1917,7 @@ export type UserUpdateWithoutInviteLinksInput = {
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1871,6 +1939,7 @@ export type UserUncheckedUpdateWithoutInviteLinksInput = {
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1891,6 +1960,7 @@ export type UserCreateWithoutCreatedGrantsInput = {
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
@@ -1912,6 +1982,7 @@ export type UserUncheckedCreateWithoutCreatedGrantsInput = {
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
@@ -1961,6 +2032,7 @@ export type UserUpdateWithoutCreatedGrantsInput = {
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
@@ -1982,6 +2054,7 @@ export type UserUncheckedUpdateWithoutCreatedGrantsInput = {
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
@@ -2003,6 +2076,7 @@ export type UserCreateWithoutCreatedProjectsInput = {
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
@@ -2024,6 +2098,7 @@ export type UserUncheckedCreateWithoutCreatedProjectsInput = {
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
@@ -2073,6 +2148,7 @@ export type UserUpdateWithoutCreatedProjectsInput = {
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
@@ -2094,6 +2170,7 @@ export type UserUncheckedUpdateWithoutCreatedProjectsInput = {
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
@@ -2115,6 +2192,7 @@ export type UserCreateWithoutCreatedShareLinksInput = {
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
@@ -2136,6 +2214,7 @@ export type UserUncheckedCreateWithoutCreatedShareLinksInput = {
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
@@ -2185,6 +2264,7 @@ export type UserUpdateWithoutCreatedShareLinksInput = {
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
@@ -2206,6 +2286,123 @@ export type UserUncheckedUpdateWithoutCreatedShareLinksInput = {
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
+	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+};
+
+export type UserCreateWithoutSentShareLinkMailsInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	email: string;
+	emailVerified?: boolean;
+	image?: string | null;
+	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
+	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
+	createdProjects?: Prisma.ProjectCreateNestedManyWithoutCreatorInput;
+	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
+	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
+	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
+	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
+	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+};
+
+export type UserUncheckedCreateWithoutSentShareLinkMailsInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	email: string;
+	emailVerified?: boolean;
+	image?: string | null;
+	lastActiveOrganizationId?: string | null;
+	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
+	accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput;
+	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
+	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
+	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
+	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+};
+
+export type UserCreateOrConnectWithoutSentShareLinkMailsInput = {
+	where: Prisma.UserWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.UserCreateWithoutSentShareLinkMailsInput,
+		Prisma.UserUncheckedCreateWithoutSentShareLinkMailsInput
+	>;
+};
+
+export type UserUpsertWithoutSentShareLinkMailsInput = {
+	update: Prisma.XOR<
+		Prisma.UserUpdateWithoutSentShareLinkMailsInput,
+		Prisma.UserUncheckedUpdateWithoutSentShareLinkMailsInput
+	>;
+	create: Prisma.XOR<
+		Prisma.UserCreateWithoutSentShareLinkMailsInput,
+		Prisma.UserUncheckedCreateWithoutSentShareLinkMailsInput
+	>;
+	where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutSentShareLinkMailsInput = {
+	where?: Prisma.UserWhereInput;
+	data: Prisma.XOR<
+		Prisma.UserUpdateWithoutSentShareLinkMailsInput,
+		Prisma.UserUncheckedUpdateWithoutSentShareLinkMailsInput
+	>;
+};
+
+export type UserUpdateWithoutSentShareLinkMailsInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	email?: Prisma.StringFieldUpdateOperationsInput | string;
+	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
+	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
+	createdProjects?: Prisma.ProjectUpdateManyWithoutCreatorNestedInput;
+	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
+	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
+	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
+	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
+	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutSentShareLinkMailsInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	email?: Prisma.StringFieldUpdateOperationsInput | string;
+	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
+	accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput;
+	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
+	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
+	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
+	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
@@ -2237,6 +2434,7 @@ export type UserUpdateWithoutLastActiveOrganizationInput = {
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
@@ -2258,6 +2456,7 @@ export type UserUncheckedUpdateWithoutLastActiveOrganizationInput = {
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
@@ -2286,6 +2485,7 @@ export type UserCountOutputType = {
 	responses: number;
 	createdGrants: number;
 	createdShareLinks: number;
+	sentShareLinkMails: number;
 	createdCategories: number;
 	inviteLinks: number;
 };
@@ -2302,6 +2502,7 @@ export type UserCountOutputTypeSelect<
 	responses?: boolean | UserCountOutputTypeCountResponsesArgs;
 	createdGrants?: boolean | UserCountOutputTypeCountCreatedGrantsArgs;
 	createdShareLinks?: boolean | UserCountOutputTypeCountCreatedShareLinksArgs;
+	sentShareLinkMails?: boolean | UserCountOutputTypeCountSentShareLinkMailsArgs;
 	createdCategories?: boolean | UserCountOutputTypeCountCreatedCategoriesArgs;
 	inviteLinks?: boolean | UserCountOutputTypeCountInviteLinksArgs;
 };
@@ -2402,6 +2603,15 @@ export type UserCountOutputTypeCountCreatedShareLinksArgs<
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountSentShareLinkMailsArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	where?: Prisma.ShareLinkMailWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountCreatedCategoriesArgs<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
@@ -2439,6 +2649,7 @@ export type UserSelect<
 		responses?: boolean | Prisma.User$responsesArgs<ExtArgs>;
 		createdGrants?: boolean | Prisma.User$createdGrantsArgs<ExtArgs>;
 		createdShareLinks?: boolean | Prisma.User$createdShareLinksArgs<ExtArgs>;
+		sentShareLinkMails?: boolean | Prisma.User$sentShareLinkMailsArgs<ExtArgs>;
 		createdCategories?: boolean | Prisma.User$createdCategoriesArgs<ExtArgs>;
 		inviteLinks?: boolean | Prisma.User$inviteLinksArgs<ExtArgs>;
 		_count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
@@ -2517,6 +2728,7 @@ export type UserInclude<
 	responses?: boolean | Prisma.User$responsesArgs<ExtArgs>;
 	createdGrants?: boolean | Prisma.User$createdGrantsArgs<ExtArgs>;
 	createdShareLinks?: boolean | Prisma.User$createdShareLinksArgs<ExtArgs>;
+	sentShareLinkMails?: boolean | Prisma.User$sentShareLinkMailsArgs<ExtArgs>;
 	createdCategories?: boolean | Prisma.User$createdCategoriesArgs<ExtArgs>;
 	inviteLinks?: boolean | Prisma.User$inviteLinksArgs<ExtArgs>;
 	_count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
@@ -2547,6 +2759,7 @@ export type $UserPayload<
 		responses: Prisma.$ResponsePayload<ExtArgs>[];
 		createdGrants: Prisma.$MemberGrantPayload<ExtArgs>[];
 		createdShareLinks: Prisma.$ShareLinkPayload<ExtArgs>[];
+		sentShareLinkMails: Prisma.$ShareLinkMailPayload<ExtArgs>[];
 		createdCategories: Prisma.$CategoryPayload<ExtArgs>[];
 		inviteLinks: Prisma.$InviteLinkPayload<ExtArgs>[];
 	};
@@ -3176,6 +3389,17 @@ export interface Prisma__UserClient<
 	): Prisma.PrismaPromise<
 		| runtime.Types.Result.GetResult<
 				Prisma.$ShareLinkPayload<ExtArgs>,
+				T,
+				"findMany",
+				GlobalOmitOptions
+		  >
+		| Null
+	>;
+	sentShareLinkMails<T extends Prisma.User$sentShareLinkMailsArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.User$sentShareLinkMailsArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		| runtime.Types.Result.GetResult<
+				Prisma.$ShareLinkMailPayload<ExtArgs>,
 				T,
 				"findMany",
 				GlobalOmitOptions
@@ -3924,6 +4148,33 @@ export type User$createdShareLinksArgs<
 	take?: number;
 	skip?: number;
 	distinct?: Prisma.ShareLinkScalarFieldEnum | Prisma.ShareLinkScalarFieldEnum[];
+};
+
+/**
+ * User.sentShareLinkMails
+ */
+export type User$sentShareLinkMailsArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the ShareLinkMail
+	 */
+	select?: Prisma.ShareLinkMailSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the ShareLinkMail
+	 */
+	omit?: Prisma.ShareLinkMailOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.ShareLinkMailInclude<ExtArgs> | null;
+	where?: Prisma.ShareLinkMailWhereInput;
+	orderBy?:
+		Prisma.ShareLinkMailOrderByWithRelationInput | Prisma.ShareLinkMailOrderByWithRelationInput[];
+	cursor?: Prisma.ShareLinkMailWhereUniqueInput;
+	take?: number;
+	skip?: number;
+	distinct?: Prisma.ShareLinkMailScalarFieldEnum | Prisma.ShareLinkMailScalarFieldEnum[];
 };
 
 /**

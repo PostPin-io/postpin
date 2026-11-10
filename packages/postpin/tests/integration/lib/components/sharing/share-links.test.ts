@@ -108,6 +108,28 @@ describe("updateShareLink / revokeShareLink", () => {
 });
 
 describe("getShareLinks", () => {
+	it("includes visits, guests and the last visit", async () => {
+		signIn(w.owner.user, w.org.id);
+		const link = await f.createShareLink(w.exp1, { creator: w.owner.user });
+		const seen = new Date("2026-11-10T09:00:00Z");
+		await prisma.shareLink.update({
+			where: { id: link.id },
+			data: { viewCount: 4, lastViewedAt: seen },
+		});
+		await prisma.shareGuest.createMany({
+			data: [
+				{ shareLinkId: link.id, name: "Anna", sessionTokenHash: `h1-${link.id}` },
+				{ shareLinkId: link.id, name: "Ben", sessionTokenHash: `h2-${link.id}` },
+			],
+		});
+
+		expect((await getShareLinks(w.exp1.id)).find((l) => l.id === link.id)).toMatchObject({
+			viewCount: 4,
+			guestCount: 2,
+			lastViewedAt: seen,
+		});
+	});
+
 	it("lists with status and per-link permissions", async () => {
 		const own = await signInAs(w.org, MEMBER, [{ projectId: w.projectA.id }]);
 		await f.createShareLink(w.exp1, { creator: own.user });

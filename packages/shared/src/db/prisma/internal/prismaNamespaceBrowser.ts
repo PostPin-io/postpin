@@ -69,6 +69,7 @@ export const ModelName = {
 	Export: "Export",
 	ShareLink: "ShareLink",
 	ShareGuest: "ShareGuest",
+	ShareLinkMail: "ShareLinkMail",
 } as const;
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -376,6 +377,8 @@ export const ShareLinkScalarFieldEnum = {
 	timelinePanelVisible: "timelinePanelVisible",
 	markerPanelVisible: "markerPanelVisible",
 	note: "note",
+	viewCount: "viewCount",
+	lastViewedAt: "lastViewedAt",
 } as const;
 
 export type ShareLinkScalarFieldEnum =
@@ -387,10 +390,22 @@ export const ShareGuestScalarFieldEnum = {
 	shareLinkId: "shareLinkId",
 	name: "name",
 	sessionTokenHash: "sessionTokenHash",
+	lastViewedAt: "lastViewedAt",
 } as const;
 
 export type ShareGuestScalarFieldEnum =
 	(typeof ShareGuestScalarFieldEnum)[keyof typeof ShareGuestScalarFieldEnum];
+
+export const ShareLinkMailScalarFieldEnum = {
+	id: "id",
+	createdAt: "createdAt",
+	shareLinkId: "shareLinkId",
+	senderId: "senderId",
+	recipients: "recipients",
+} as const;
+
+export type ShareLinkMailScalarFieldEnum =
+	(typeof ShareLinkMailScalarFieldEnum)[keyof typeof ShareLinkMailScalarFieldEnum];
 
 export const SortOrder = {
 	asc: "asc",

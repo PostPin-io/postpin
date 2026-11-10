@@ -4,7 +4,11 @@
 	import ExportReview from "#lib/components/review/ExportReview.svelte";
 	import PageMeta from "#lib/components/PageMeta.svelte";
 	import ShareLinkError from "#lib/components/sharing/ShareLinkError.svelte";
-	import { getShareInfo, joinShare } from "#lib/components/sharing/share-view.remote.ts";
+	import {
+		getShareInfo,
+		joinShare,
+		recordShareView,
+	} from "#lib/components/sharing/share-view.remote.ts";
 
 	const token = $derived(page.params.token!);
 	const infoQuery = $derived(getShareInfo(token));
@@ -14,6 +18,16 @@
 	let name = $state("");
 	let joining = $state(false);
 	let joinError = $state<string | null>(null);
+
+	// Once per page load, as soon as the guest is known (also right after joining)
+	let viewRecorded = false;
+	$effect(() => {
+		if (!info?.guest || viewRecorded) return;
+		viewRecorded = true;
+		recordShareView(token).catch(() => {
+			// counting is best effort: the view works without it
+		});
+	});
 
 	async function join(event: SubmitEvent) {
 		event.preventDefault();

@@ -1,7 +1,9 @@
 import { command, getRequestEvent, query } from "$app/server";
 import * as v from "valibot";
 import { shareGuestName } from "@postpin-io/shared/logic/share-links";
-import { createShareGuest, findShareGuest } from "#lib/server/share-guests.ts";
+import { prisma } from "#lib/server/database.ts";
+import { createShareGuest, findShareGuest, requireShareGuest } from "#lib/server/share-guests.ts";
+
 import { resolveShareLink } from "#lib/server/share-links.ts";
 
 /**
@@ -31,3 +33,24 @@ export const joinShare = command(
 		await getShareInfo(token).refresh();
 	},
 );
+/** A reload within this time is the same visit */
+const VISIT_GAP_MS = 30 * 60 * 1000;
+
+/**
+ * Called once when a guest opens the share view. Counts visits (not reloads) and remembers
+ * when the link and this guest were last seen; the team sees both in the share modal.
+ */
+export const recordShareView = command(v.string(), async (token) => {
+	const { link, guest } = await requireShareGuest(token, getRequestEvent().cookies);
+	const now = new Date();
+	const newVisit =
+		!guest.lastViewedAt || now.getTime() - guest.lastViewedAt.getTime() > VISIT_GAP_MS;
+
+	await prisma.$transaction([
+		prisma.shareGuest.update({ where: { id: guest.id }, data: { lastViewedAt: now } }),
+		prisma.shareLink.update({
+			where: { id: link.id },
+			data: { lastViewedAt: now, ...(newVisit && { viewCount: { increment: 1 } }) },
+		}),
+	]);
+});

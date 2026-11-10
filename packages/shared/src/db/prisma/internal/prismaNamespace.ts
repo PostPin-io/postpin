@@ -411,6 +411,7 @@ export const ModelName = {
 	Export: "Export",
 	ShareLink: "ShareLink",
 	ShareGuest: "ShareGuest",
+	ShareLinkMail: "ShareLinkMail",
 } as const;
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -451,7 +452,8 @@ export type TypeMap<
 			| "timeline"
 			| "export"
 			| "shareLink"
-			| "shareGuest";
+			| "shareGuest"
+			| "shareLinkMail";
 		txIsolationLevel: TransactionIsolationLevel;
 	};
 	model: {
@@ -2011,6 +2013,81 @@ export type TypeMap<
 				};
 			};
 		};
+		ShareLinkMail: {
+			payload: Prisma.$ShareLinkMailPayload<ExtArgs>;
+			fields: Prisma.ShareLinkMailFieldRefs;
+			operations: {
+				findUnique: {
+					args: Prisma.ShareLinkMailFindUniqueArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareLinkMailPayload> | null;
+				};
+				findUniqueOrThrow: {
+					args: Prisma.ShareLinkMailFindUniqueOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareLinkMailPayload>;
+				};
+				findFirst: {
+					args: Prisma.ShareLinkMailFindFirstArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareLinkMailPayload> | null;
+				};
+				findFirstOrThrow: {
+					args: Prisma.ShareLinkMailFindFirstOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareLinkMailPayload>;
+				};
+				findMany: {
+					args: Prisma.ShareLinkMailFindManyArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareLinkMailPayload>[];
+				};
+				create: {
+					args: Prisma.ShareLinkMailCreateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareLinkMailPayload>;
+				};
+				createMany: {
+					args: Prisma.ShareLinkMailCreateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				createManyAndReturn: {
+					args: Prisma.ShareLinkMailCreateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareLinkMailPayload>[];
+				};
+				delete: {
+					args: Prisma.ShareLinkMailDeleteArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareLinkMailPayload>;
+				};
+				update: {
+					args: Prisma.ShareLinkMailUpdateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareLinkMailPayload>;
+				};
+				deleteMany: {
+					args: Prisma.ShareLinkMailDeleteManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateMany: {
+					args: Prisma.ShareLinkMailUpdateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateManyAndReturn: {
+					args: Prisma.ShareLinkMailUpdateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareLinkMailPayload>[];
+				};
+				upsert: {
+					args: Prisma.ShareLinkMailUpsertArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$ShareLinkMailPayload>;
+				};
+				aggregate: {
+					args: Prisma.ShareLinkMailAggregateArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.AggregateShareLinkMail>;
+				};
+				groupBy: {
+					args: Prisma.ShareLinkMailGroupByArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.ShareLinkMailGroupByOutputType>[];
+				};
+				count: {
+					args: Prisma.ShareLinkMailCountArgs<ExtArgs>;
+					result:
+						runtime.Types.Utils.Optional<Prisma.ShareLinkMailCountAggregateOutputType> | number;
+				};
+			};
+		};
 	};
 } & {
 	other: {
@@ -2339,6 +2416,8 @@ export const ShareLinkScalarFieldEnum = {
 	timelinePanelVisible: "timelinePanelVisible",
 	markerPanelVisible: "markerPanelVisible",
 	note: "note",
+	viewCount: "viewCount",
+	lastViewedAt: "lastViewedAt",
 } as const;
 
 export type ShareLinkScalarFieldEnum =
@@ -2350,10 +2429,22 @@ export const ShareGuestScalarFieldEnum = {
 	shareLinkId: "shareLinkId",
 	name: "name",
 	sessionTokenHash: "sessionTokenHash",
+	lastViewedAt: "lastViewedAt",
 } as const;
 
 export type ShareGuestScalarFieldEnum =
 	(typeof ShareGuestScalarFieldEnum)[keyof typeof ShareGuestScalarFieldEnum];
+
+export const ShareLinkMailScalarFieldEnum = {
+	id: "id",
+	createdAt: "createdAt",
+	shareLinkId: "shareLinkId",
+	senderId: "senderId",
+	recipients: "recipients",
+} as const;
+
+export type ShareLinkMailScalarFieldEnum =
+	(typeof ShareLinkMailScalarFieldEnum)[keyof typeof ShareLinkMailScalarFieldEnum];
 
 export const SortOrder = {
 	asc: "asc",
@@ -2665,6 +2756,7 @@ export type GlobalOmitConfig = {
 	export?: Prisma.ExportOmit;
 	shareLink?: Prisma.ShareLinkOmit;
 	shareGuest?: Prisma.ShareGuestOmit;
+	shareLinkMail?: Prisma.ShareLinkMailOmit;
 };
 
 /* Types for Logging */

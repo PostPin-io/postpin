@@ -28,4 +28,5 @@ export type * from "./models/Timeline.ts";
 export type * from "./models/Export.ts";
 export type * from "./models/ShareLink.ts";
 export type * from "./models/ShareGuest.ts";
+export type * from "./models/ShareLinkMail.ts";
 export type * from "./commonInputTypes.ts";

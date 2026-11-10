@@ -1,12 +1,20 @@
 import { error } from "@sveltejs/kit";
 import { command, query } from "$app/server";
 import * as v from "valibot";
+import { BETTER_AUTH_URL } from "$app/env/private";
 import {
+	MAX_RECIPIENTS_PER_DAY,
 	expiresAtFor,
+	shareLinkMailContent,
 	shareLinkNote,
+	shareLinkPath,
 	shareLinkPreset,
+	shareLinkRecipients,
 	shareLinkStatus,
 } from "@postpin-io/shared/logic/share-links";
+import { sendEmail } from "#lib/server/email.ts";
+import { recipientsSentToday } from "#lib/server/share-link-mails.ts";
+
 import { prisma } from "#lib/server/database.ts";
 import { accessChecker, authorize } from "#lib/server/org-access.ts";
 import { ensureGuestCategory, newShareToken } from "#lib/server/share-links.ts";
@@ -18,7 +26,10 @@ export const getShareLinks = query(v.string(), async (exportId: string) => {
 	const links = await prisma.shareLink.findMany({
 		where: { exportId },
 		orderBy: { createdAt: "desc" },
-		include: { creator: { select: { id: true, name: true } } },
+		include: {
+			creator: { select: { id: true, name: true } },
+			_count: { select: { guests: true } },
+		},
 	});
 
 	return links.map((link) => {
@@ -33,6 +44,7 @@ export const getShareLinks = query(v.string(), async (exportId: string) => {
 			status,
 			canUpdate: status !== "revoked" && allowed("shareLink", "update", t),
 			canRevoke: status !== "revoked" && allowed("shareLink", "delete", t),
+			guestCount: link._count.guests,
 		};
 	});
 });
@@ -117,3 +129,53 @@ export const revokeShareLink = command(v.object({ id: v.string() }), async ({ id
 
 	await getShareLinks(exportId).refresh();
 });
+/**
+ * Mails the link to free-text addresses: one mail per recipient (nobody sees the others),
+ * replies go to the sender. Whoever may create share links on the export may send them.
+ */
+export const sendShareLink = command(
+	v.object({ id: v.string(), emails: shareLinkRecipients }),
+	async ({ id, emails }) => {
+		const link = await prisma.shareLink.findUnique({
+			where: { id },
+			include: { export: { select: { name: true } } },
+		});
+		if (!link) error(404, "Not found");
+		const { user } = await authorize("shareLink", "create", {
+			type: "export",
+			id: link.exportId,
+		});
+		if (shareLinkStatus(link) !== "active") error(409, "This link is no longer active");
+
+		// Two sends at the same moment can both pass this check; good enough against misuse
+		const sentToday = await recipientsSentToday(link.id, user.id);
+		if (sentToday + emails.length > MAX_RECIPIENTS_PER_DAY) {
+			const left = Math.max(0, MAX_RECIPIENTS_PER_DAY - sentToday);
+			error(
+				429,
+				`You can send this link to at most ${MAX_RECIPIENTS_PER_DAY} people a day (${left} left today).`,
+			);
+		}
+
+		// Logged before sending: a failing mail server must not reset the limit
+		await prisma.shareLinkMail.create({
+			data: { shareLinkId: link.id, senderId: user.id, recipients: emails },
+		});
+
+		const { subject, text } = shareLinkMailContent({
+			senderName: user.name,
+			exportName: link.export.name,
+			url: BETTER_AUTH_URL + shareLinkPath(link.token),
+			note: link.note,
+			expiresAt: link.expiresAt,
+		});
+		const results = await Promise.allSettled(
+			emails.map((to) => sendEmail(to, subject, text, { replyTo: user.email })),
+		);
+		const failed = emails.filter((_, i) => results[i]!.status === "rejected");
+		if (failed.length === emails.length) {
+			error(502, "The e-mails could not be sent. Please try again later.");
+		}
+		return { sent: emails.length - failed.length, failed };
+	},
+);

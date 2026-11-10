@@ -59,3 +59,62 @@ export function shareUrlLifetime(expiresAt: Date, now = new Date()) {
 	const left = Math.floor((expiresAt.getTime() - now.getTime()) / 1000);
 	return Math.max(1, Math.min(MAX_URL_LIFETIME_SECONDS, left));
 }
+
+// ─── Sending by e-mail ──────────────────────────────────────────────────────
+
+export const MAX_RECIPIENTS_PER_SEND = 20;
+/** Per sender and link, rolling 24 h */
+export const MAX_RECIPIENTS_PER_DAY = 50;
+
+const emailAddress = v.pipe(v.string(), v.email());
+
+/** Server side: the list the client sends, trimmed, lower-cased, without duplicates */
+export const shareLinkRecipients = v.pipe(
+	v.array(v.pipe(v.string(), v.trim(), v.toLowerCase(), v.email())),
+	v.minLength(1, "Enter at least one e-mail address"),
+	v.maxLength(MAX_RECIPIENTS_PER_SEND, `At most ${MAX_RECIPIENTS_PER_SEND} recipients at once`),
+	v.transform((list) => [...new Set(list)]),
+);
+
+/**
+ * Client side: free text → addresses. Separated by commas, semicolons, line breaks or spaces;
+ * "Anna Muster <anna@example.com>" works too. Duplicates are dropped, case is ignored.
+ */
+export function parseEmailList(text: string) {
+	const entries = text.split(/[,;\n]+/).flatMap((entry) => {
+		const bracketed = entry.match(/<([^>]+)>/);
+		return bracketed ? [bracketed[1]!] : entry.split(/\s+/);
+	});
+	const valid: string[] = [];
+	const invalid: string[] = [];
+	for (const raw of entries) {
+		const address = raw.trim().toLowerCase();
+		if (!address) continue;
+		const list = v.is(emailAddress, address) ? valid : invalid;
+		if (!list.includes(address)) list.push(address);
+	}
+	return { valid, invalid };
+}
+
+const mailDate = new Intl.DateTimeFormat("en", { dateStyle: "long", timeZone: "UTC" });
+
+/** Subject and plain text of the mail; the note comes first, as the sender wrote it */
+export function shareLinkMailContent(mail: {
+	senderName: string;
+	exportName: string;
+	url: string;
+	note: string | null;
+	expiresAt: Date;
+}) {
+	const lines = [
+		`${mail.senderName} shared the video "${mail.exportName}" with you on PostPin.`,
+		...(mail.note ? ["", mail.note] : []),
+		"",
+		`Watch it and leave your markers: ${mail.url}`,
+		`The link works until ${mailDate.format(mail.expiresAt)}.`,
+	];
+	return {
+		subject: `${mail.senderName} shared "${mail.exportName}" with you`,
+		text: lines.join("\n"),
+	};
+}
