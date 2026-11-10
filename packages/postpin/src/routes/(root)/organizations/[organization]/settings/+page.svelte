@@ -85,13 +85,6 @@
 />
 
 <div class="flex flex-col gap-4 p-6">
-	<header class="flex items-baseline justify-between gap-4">
-		<h1 class="text-2xl font-bold">Organization settings</h1>
-		<p class="text-sm text-base-content/70">
-			Created {new Date(organization.createdAt).toLocaleDateString()}
-		</p>
-	</header>
-
 	<fieldset class="fieldset rounded-box border border-base-300 bg-base-100 p-4">
 		<legend class="fieldset-legend">Name</legend>
 		{#if message}

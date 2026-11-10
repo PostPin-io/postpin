@@ -19,7 +19,7 @@
 		resendInvitation,
 		resetInviteLink,
 		setInviteLinkEnabled,
-	} from "../../../routes/(root)/organizations/[organization]/members/members.remote";
+	} from "../../../routes/(root)/organizations/[organization]/settings/members/members.remote";
 
 	interface Props {
 		target: Exclude<InviteTarget, { type: "organization" }>;

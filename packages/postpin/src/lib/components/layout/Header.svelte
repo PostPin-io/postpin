@@ -24,9 +24,6 @@
 		return ORG_ROLES.includes(role as Role) ? (role as Role) : null;
 	});
 
-	const canEditSettings = $derived(
-		activeRole ? roleAllows(activeRole, "organization", "updateSettings") : false,
-	);
 	// On an export page: the number of active share links next to the share button
 	const exportId = $derived(page.params.export);
 	const mayShareLinks = $derived(
@@ -96,15 +93,12 @@
 				PostPin
 			</a>
 			{#if activeOrganization}
-				<a href={`/organizations/${activeOrganization.slug}/members`} class="btn btn-ghost btn-sm"
-					>Members</a
+				<a
+					href={resolve("/(root)/organizations/[organization]/settings", {
+						organization: activeOrganization.slug,
+					})}
+					class="btn btn-ghost btn-sm">Settings</a
 				>
-				{#if canEditSettings}
-					<a
-						href={`/organizations/${activeOrganization.slug}/settings`}
-						class="btn btn-ghost btn-sm">Settings</a
-					>
-				{/if}
 			{/if}
 			<ul class="menu menu-horizontal px-1">
 				{#if page.params.project && page.params.timeline}

@@ -16,7 +16,7 @@
 		inviteMember as inviteMemberCommand,
 		resetInviteLink,
 		setInviteLinkEnabled,
-	} from "../../../routes/(root)/organizations/[organization]/members/members.remote";
+	} from "../../../routes/(root)/organizations/[organization]/settings/members/members.remote";
 
 	interface Props {
 		organizationId: string;

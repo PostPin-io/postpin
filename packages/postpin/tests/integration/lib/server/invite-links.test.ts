@@ -6,7 +6,7 @@ import {
 	changeMemberRole,
 	removeMember,
 	setInviteLinkEnabled,
-} from "../../../../src/routes/(root)/organizations/[organization]/members/members.remote.ts";
+} from "../../../../src/routes/(root)/organizations/[organization]/settings/members/members.remote.ts";
 import { leaveOrganization } from "../../../../src/routes/(root)/profile/profile.remote.ts";
 import {
 	getInviteLinkInfo,

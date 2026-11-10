@@ -171,11 +171,8 @@
 {/snippet}
 
 <div class="flex flex-col gap-4 p-6">
-	<header class="flex items-baseline justify-between gap-4">
-		<h1 class="text-2xl font-bold">{org.name} Members</h1>
-	</header>
+	<h2 class="text-lg font-semibold">All Members</h2>
 
-	<h2 class="text-lg font-semibold">Members</h2>
 	<div class="overflow-x-auto rounded-box bg-base-100 shadow">
 		<table class="table w-full">
 			<thead>

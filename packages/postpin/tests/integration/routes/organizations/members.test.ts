@@ -12,7 +12,7 @@ import {
 	resendInvitation,
 	resetInviteLink,
 	setInviteLinkEnabled,
-} from "../../../../src/routes/(root)/organizations/[organization]/members/members.remote.ts";
+} from "../../../../src/routes/(root)/organizations/[organization]/settings/members/members.remote.ts";
 import { prisma } from "../../../helpers/db.ts";
 import { expectStatus } from "../../../helpers/expect.ts";
 import * as f from "../../../helpers/factories.ts";
