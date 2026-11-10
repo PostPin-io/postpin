@@ -1,6 +1,7 @@
 // NOTE: Follow the security guide while implementing the app https://www.electronjs.org/docs/tutorial/security
 
 import { createWindow, exposeHostBridge, exposeNleBridge } from "@postpin-io/plugin-electron/main";
+import { autoUpdater } from "electron-updater";
 import { app, BrowserWindow } from "electron";
 import path from "path";
 import { createProToolsAdapter } from "../adapters/pro-tools";
@@ -28,6 +29,7 @@ function openWindow() {
 app.whenReady().then(() => {
 	if (process.platform === "darwin" && !app.isPackaged) app.dock?.setIcon(ICON_PATH);
 	openWindow();
+	if (app.isPackaged) autoUpdater.checkForUpdatesAndNotify();
 });
 
 app.on("window-all-closed", () => {

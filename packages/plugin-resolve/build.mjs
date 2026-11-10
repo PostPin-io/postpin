@@ -1,11 +1,26 @@
 import esbuild from "esbuild";
 import fs from "node:fs/promises";
+import path from "node:path";
 
+const { version } = JSON.parse(await fs.readFile("package.json", "utf8"));
 const dev = process.argv.includes("--dev");
 const watch = process.argv.includes("--watch");
 const install = process.argv.includes("--install");
 const PLUGIN_DIR =
-	"/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/com.postpin.resolve";
+	"/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/io.postpin.plugin.resolve";
+
+// Resolve's native module differs per platform: darwin (universal), win32-x64 or win32-arm64
+const target =
+	process.argv.find((arg) => arg.startsWith("--target="))?.slice("--target=".length) ??
+	(process.platform === "darwin" ? "darwin" : `${process.platform}-${process.arch}`);
+const nativeModule = {
+	name: "native-module",
+	setup(build) {
+		build.onResolve({ filter: /WorkflowIntegration\.node$/ }, () => ({
+			path: path.resolve("native", target, "WorkflowIntegration.node"),
+		}));
+	},
+};
 
 if (install) {
 	try {
@@ -18,11 +33,16 @@ if (install) {
 
 await fs.rm("dist", { recursive: true, force: true });
 await fs.mkdir("dist");
-await fs.cp("manifest.xml", "dist/manifest.xml");
+// Resolve shows this version; keep it numeric (0.2.0-rc.1 -> 0.2.0)
+const manifest = await fs.readFile("manifest.xml", "utf8");
+await fs.writeFile(
+	"dist/manifest.xml",
+	manifest.replace(/<Version>.*<\/Version>/, `<Version>${version.split("-")[0]}</Version>`),
+);
 await fs.cp("node_modules/@postpin-io/plugin-electron/assets/icon.png", "dist/icon.png");
 await fs.writeFile(
 	"dist/package.json",
-	JSON.stringify({ name: "postpin-resolve", version: "1.0.0", main: "main.js" }, null, 2),
+	JSON.stringify({ name: "postpin-resolve", version, main: "main.js" }, null, 2),
 );
 
 let installing = Promise.resolve();
@@ -57,6 +77,7 @@ const builds = [
 		external: ["electron"],
 		minify: true,
 		sourcemap: true,
+		plugins: [nativeModule],
 		loader: {
 			".node": "copy",
 		},
@@ -81,7 +102,10 @@ const builds = [
 
 if (watch) {
 	for (const options of builds) {
-		const ctx = await esbuild.context({ ...options, plugins: [logRebuilds(options.outfile)] });
+		const ctx = await esbuild.context({
+			...options,
+			plugins: [...(options.plugins ?? []), logRebuilds(options.outfile)],
+		});
 		await ctx.watch();
 	}
 } else {

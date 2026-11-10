@@ -7,6 +7,13 @@ const sdkFolder = path.join(import.meta.dirname, "../src/third-party/protools-sd
 const protoPath = path.join(sdkFolder, "PTSL.proto");
 const distFolder = path.join(sdkFolder, "dist");
 
+const bin = (/** @type {string} */ name) =>
+	path.join(
+		import.meta.dirname,
+		"../node_modules/.bin",
+		process.platform === "win32" ? `${name}.cmd` : name,
+	);
+
 if (!(await fs.stat(protoPath).catch(() => null))) {
 	console.log(
 		"Please download the Avid Pro Tools SDK from https://developer.avid.com/scripting/ and copy the PTSL.proto from Source/PTSL.proto to src/third-party/protools-sdk/PTSL.proto",
@@ -18,7 +25,7 @@ await fs.rm(distFolder, { recursive: true, force: true });
 await fs.mkdir(distFolder, { recursive: true });
 
 const protocArgs = `\
-		--plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto \
+		--plugin=protoc-gen-ts_proto=${bin("protoc-gen-ts_proto")} \
 		--ts_proto_out=${distFolder} \
 		--ts_proto_opt=outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false,snakeToCamel=keys,protoJsonFormat=false \
 		--proto_path=${sdkFolder} \
@@ -30,7 +37,7 @@ function runProtoc(/** @type {string} */ binary) {
 
 try {
 	try {
-		runProtoc("./node_modules/.bin/grpc_tools_node_protoc");
+		runProtoc(bin("grpc_tools_node_protoc"));
 	} catch (e) {
 		// grpc-tools only ships an x86_64 protoc, which can't run on Apple Silicon without Rosetta
 		if (process.platform !== "darwin" || process.arch !== "arm64") throw e;
