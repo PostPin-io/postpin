@@ -78,7 +78,7 @@ jobs:
 
   merge:
     name: publish (${{ matrix.image.name }})
-    needs: build
+    needs: [build, desktop-mac, desktop-win]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -144,14 +144,85 @@ jobs:
           VERSION: ${{ steps.meta.outputs.version }}
         run: docker buildx imagetools inspect "${IMAGE}:${VERSION}"
 
+  # macOS: signed + notarized. Only this job gets the signing secrets (environment release, tags v*).
+  desktop-mac:
+    runs-on: macos-latest
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          ptsl-proto: ${{ secrets.PTSL_PROTO_B64 }}
+      - name: Set version from tag
+        working-directory: packages/desktop
+        run: npm pkg set version="${GITHUB_REF_NAME#v}"
+      - name: Build, sign and notarize
+        working-directory: packages/desktop
+        env:
+          CSC_LINK: ${{ secrets.MAC_CERTS_P12_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        # electron-builder wants the API key as a file path in APPLE_API_KEY
+        run: |
+          export APPLE_API_KEY="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY_ID}.p8"
+          printf '%s' "$APPLE_API_KEY_P8" > "$APPLE_API_KEY"
+          pnpm run dist -c.mac.notarize=true
+      - uses: actions/upload-artifact@v7
+        with:
+          name: desktop-mac
+          path: |
+            packages/desktop/release/*.dmg
+            packages/desktop/release/*.zip
+            packages/desktop/release/*.blockmap
+            packages/desktop/release/latest-mac.yml
+          if-no-files-found: error
+          retention-days: 1
+
+  # Windows: unsigned NSIS installer for now (SmartScreen warning on first start)
+  desktop-win:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          ptsl-proto: ${{ secrets.PTSL_PROTO_B64 }}
+      - name: Set version from tag
+        working-directory: packages/desktop
+        run: npm pkg set version="${GITHUB_REF_NAME#v}"
+      - name: Build
+        working-directory: packages/desktop
+        run: pnpm run dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: desktop-win
+          path: |
+            packages/desktop/release/*.exe
+            packages/desktop/release/*.blockmap
+            packages/desktop/release/latest.yml
+          if-no-files-found: error
+          retention-days: 1
+
   release:
-    needs: merge
+    needs: [merge, desktop-mac, desktop-win]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v7
-
+      - uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/desktop
+          pattern: desktop-*
+          merge-multiple: true
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -161,5 +232,5 @@ jobs:
           cp deploy/.env.example "$RUNNER_TEMP/env.example"
           prerelease=()
           if [[ "$TAG" == *-* ]]; then prerelease=(--prerelease); fi
-          gh release create "$TAG" deploy/compose.yml "$RUNNER_TEMP/env.example" \
+          gh release create "$TAG" deploy/compose.yml "$RUNNER_TEMP/env.example" "$RUNNER_TEMP"/desktop/* \
             --title "$TAG" --generate-notes --verify-tag "${prerelease[@]}"
