@@ -9,14 +9,15 @@ describe("hostInfo", () => {
 		expect(info.logo as string).toMatch(/davinci-resolve.*\.png|^data:image\/png/);
 	});
 
-	it("returns monochrome paths for Pro Tools and Premiere Pro", () => {
-		for (const name of ["Pro Tools", "Premiere Pro"]) {
+	it("returns app icon URLs for Pro Tools and Premiere Pro", () => {
+		for (const [name, file] of [
+			["Pro Tools", "pro-tools"],
+			["Premiere Pro", "premiere-pro"],
+		]) {
 			const { displayName, logo } = hostInfo(name);
 			expect(displayName).toBe(name);
-			expect(logo).toMatchObject({
-				viewBox: expect.any(String),
-				path: expect.stringMatching(/^M/),
-			});
+			expect(logo).toBeTypeOf("string");
+			expect(logo as string).toMatch(new RegExp(`${file}.*\\.png|^data:image/png`));
 		}
 	});
 

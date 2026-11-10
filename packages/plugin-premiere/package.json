@@ -1,0 +1,29 @@
+{
+	"name": "@postpin-io/premiere-plugin",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "vite build && vite build -c vite.ui.config.ts",
+		"dev": "concurrently --kill-others-on-fail \"vite build --watch --mode development\" \"vite build -c vite.ui.config.ts --watch --mode development\"",
+		"check": "tsc --noEmit -p tsconfig.json",
+		"dist": "pnpm run build && ./scripts/build-ccx.sh"
+	},
+	"devDependencies": {
+		"@adobe/premierepro": "^27.0.0",
+		"@postpin-io/api-client-ts": "workspace:*",
+		"@postpin-io/plugin-core": "workspace:*",
+		"@postpin-io/shared": "workspace:*",
+		"@sveltejs/vite-plugin-svelte": "^7.3.1",
+		"@tailwindcss/vite": "^4.3.5",
+		"@tsconfig/svelte": "^5.0.8",
+		"@typescript/native": "npm:typescript@^7.0.2",
+		"concurrently": "^10.0.7",
+		"daisyui": "^5.7.50",
+		"svelte": "^5.57.3",
+		"svelte-check": "^4.7.8",
+		"tailwindcss": "^4.3.5",
+		"typescript": "^6.0.3",
+		"vite": "^8.3.6"
+	}
+}

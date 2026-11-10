@@ -1,0 +1,44 @@
+{
+	"manifestVersion": 5,
+	"id": "io.postpin.plugin.premiere",
+	"name": "PostPin",
+	"version": "0.1.0",
+	"main": "index.html",
+	"host": {
+		"app": "premierepro",
+		"minVersion": "26.0.0"
+	},
+	"entrypoints": [
+		{
+			"type": "panel",
+			"id": "postpin.panel",
+			"label": {
+				"default": "PostPin"
+			},
+			"minimumSize": {
+				"width": 280,
+				"height": 300
+			},
+			"preferredDockedSize": {
+				"width": 360,
+				"height": 600
+			}
+		}
+	],
+	"requiredPermissions": {
+		"localFileSystem": "fullAccess",
+		"network": {
+			"domains": "all"
+		},
+		"launchProcess": {
+			"schemes": ["http", "https"],
+			"extensions": []
+		},
+		"webview": {
+			"allow": "yes",
+			"domains": "all",
+			"allowLocalRendering": "yes",
+			"enableMessageBridge": "localAndRemote"
+		}
+	}
+}

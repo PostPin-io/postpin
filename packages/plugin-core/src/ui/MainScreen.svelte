@@ -28,9 +28,13 @@
 
 	interface Props {
 		header?: Snippet;
+		// room for the window buttons of a hidden title bar (Electron), not needed in a host panel
+		titleBarInset?: boolean;
+		// fetch for the API client, for hosts whose UI can't reach the server directly
+		fetch?: typeof globalThis.fetch;
 	}
 
-	let { header }: Props = $props();
+	let { header, titleBarInset = true, fetch }: Props = $props();
 
 	const { nle, host } = getBridges();
 
@@ -43,6 +47,8 @@
 	const client = createClient({
 		baseUrl: `${await host.getServerUrl()}/api`,
 		auth: async () => (await host.getToken()) ?? undefined,
+		// svelte-ignore state_referenced_locally
+		fetch,
 	});
 	// Token expired or session revoked: log out, App then shows the login screen.
 	// Several requests can fail at once, so log out only once.
@@ -285,10 +291,19 @@
 	const canSync = $derived(!!markerTarget?.export && !isBusy);
 </script>
 
+<!-- Label arrows point at PostPin: up when stacked, right when PostPin is on the right -->
+{#snippet toPostPin()}<span class="@3xl:hidden">↑</span><span class="hidden @3xl:inline">→</span
+	>{/snippet}
+{#snippet fromPostPin()}<span class="@3xl:hidden">↓</span><span class="hidden @3xl:inline">←</span
+	>{/snippet}
+
 <!-- Fills the window: the header stays put, only the content below it scrolls -->
 <main class="@container flex h-screen flex-col">
 	<header
-		class="flex shrink-0 items-center border-t border-base-content/20 px-4 py-2 text-sm select-none [app-region:drag] ms-16"
+		class={[
+			"flex shrink-0 items-center border-t border-base-content/20 px-4 py-2 text-sm select-none [app-region:drag]",
+			titleBarInset && "ms-16",
+		]}
 	>
 		<button
 			type="button"
@@ -319,22 +334,77 @@
 	</header>
 
 	<div class="min-h-0 flex-1 overflow-y-auto">
-		<div class="grid grid-cols-1 gap-4 p-4 @2xl:grid-cols-[1fr_1.15fr_1fr] @2xl:gap-x-0">
-			<div class="@2xl:col-start-1 @2xl:row-span-2 @2xl:row-start-1 @2xl:grid">
-				<HostNode
-					hostName={capabilities.hostName}
-					thumbnailDataUrl={nleTimeline?.thumbnailDataUrl}
-					timelineName={nleTimeline?.name ?? null}
-					projectName={nleTimeline?.projectName ?? null}
-					disabled={isBusy !== null}
-					onClearMarkers={deleteMarkers}
-					{header}
-				/>
-			</div>
+		<!-- Stacked: PostPin on top, the actions, the program at the bottom, joined by vertical arrows.
+		     @md: PostPin's two parts side by side, each action right below its part.
+		     @3xl: the program left, the actions in the middle, PostPin right, joined by horizontal arrows.
+		     PostPin's parts line up with the actions through subgrid. Below @3xl the rows have no gap,
+		     so the arrows reach the boxes. -->
+		<div
+			class="grid grid-cols-1 p-4 @md:grid-cols-2 @md:gap-x-4 @3xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.2fr)] @3xl:gap-x-0 @3xl:gap-y-4"
+		>
+			<section
+				class="grid min-w-0 rounded-box border-2 border-base-content/50 @md:col-span-2 @md:grid-cols-subgrid @md:gap-x-0 @3xl:col-span-1 @3xl:col-start-3 @3xl:row-span-2 @3xl:row-start-1 @3xl:grid-cols-1 @3xl:grid-rows-subgrid @3xl:gap-y-0"
+			>
+				<div class="min-w-0 p-4">
+					<Destination
+						framed={false}
+						title="Upload to"
+						path={uploadTarget?.project.name}
+						name={uploadTarget?.timeline.name}
+						mode="timeline"
+						projects={projectsWithTimelines}
+						selectedProjectId={uploadTarget?.project.id}
+						selectedTimelineId={uploadTarget?.timeline.id}
+						onSelect={selectUploadTarget}
+						onBeforeChoose={refreshProjects}
+						onCreateProject={createNewProject}
+						onCreateTimeline={createNewTimeline}
+						emptyText="This timeline isn't linked to a PostPin timeline yet."
+						highlightChoose={!uploadTarget}
+						browserUrl={uploadTarget
+							? `/projects/${uploadTarget.project.id}/timelines/${uploadTarget.timeline.id}/exports`
+							: undefined}
+					></Destination>
+				</div>
+
+				<div
+					class="min-w-0 border-t border-base-content/30 p-4 @md:border-t-0 @md:border-l @3xl:border-t @3xl:border-l-0"
+				>
+					<Destination
+						framed={false}
+						title="Markers with"
+						path={markerTarget
+							? `${markerTarget.project.name} › ${markerTarget.timeline.name}`
+							: undefined}
+						name={markerTarget?.export?.name}
+						mode="export"
+						projects={projectsWithExports}
+						selectedProjectId={markerTarget?.project.id}
+						selectedTimelineId={markerTarget?.timeline.id}
+						selectedExportId={markerTarget?.export?.id}
+						onSelect={selectMarkerTarget}
+						onBeforeChoose={refreshProjects}
+						onCreateProject={createNewProject}
+						onCreateTimeline={createNewTimeline}
+						browserUrl={markerTarget?.export
+							? `/projects/${markerTarget.project.id}/timelines/${markerTarget.timeline.id}/exports/${markerTarget.export.id}`
+							: undefined}
+						emptyText={markerTarget
+							? "No exports in this timeline yet. Render one first."
+							: "No export selected."}
+					>
+						{#if markerTarget?.export}
+							<span class="text-sm text-base-content/60">
+								{new Date(markerTarget.export.createdAt).toLocaleString()}
+							</span>
+						{/if}
+					</Destination>
+				</div>
+			</section>
 
 			{#if isBusy == "rendering"}
 				<div
-					class="flex flex-col justify-center gap-3 @2xl:col-start-2 @2xl:row-span-2 @2xl:row-start-1 @2xl:px-4"
+					class="flex flex-col justify-center gap-3 py-4 @md:col-span-2 @md:col-start-1 @md:row-start-2 @3xl:col-span-1 @3xl:col-start-2 @3xl:row-span-2 @3xl:row-start-1 @3xl:px-4 @3xl:py-0"
 				>
 					<ProgressBars {renderProgress} {uploadProgress} />
 					{#if log.length}
@@ -342,17 +412,19 @@
 					{/if}
 				</div>
 			{:else}
-				<div class="flex items-center @2xl:col-start-2 @2xl:row-start-1">
+				<div
+					class="flex min-w-0 flex-col @md:col-start-1 @md:row-start-2 @3xl:col-start-2 @3xl:row-start-1 @3xl:flex-row @3xl:items-center"
+				>
 					<FlowArrow direction="right" disabled={!canRender}>
-						<div class="join">
+						<div class="join max-w-full">
 							<button
 								type="button"
-								class="btn join-item h-auto flex-col gap-0 py-2 btn-primary"
+								class="btn join-item h-auto min-w-0 flex-col gap-0 py-2 whitespace-normal btn-primary"
 								disabled={!canRender}
 								onclick={renderAndUpload}
 							>
-								Render & Upload →
-								<span class="text-xs font-normal opacity-75">
+								Render & Upload {@render toPostPin()}
+								<span class="text-xs font-normal break-words opacity-75">
 									{uploadTarget
 										? `new export in ${uploadTarget.timeline.name}`
 										: "choose a location first"}
@@ -374,52 +446,30 @@
 						</div>
 					</FlowArrow>
 				</div>
-			{/if}
 
-			<div class="@2xl:col-start-3 @2xl:row-start-1 @2xl:grid">
-				<Destination
-					title="Upload to"
-					path={uploadTarget?.project.name}
-					name={uploadTarget?.timeline.name}
-					mode="timeline"
-					projects={projectsWithTimelines}
-					selectedProjectId={uploadTarget?.project.id}
-					selectedTimelineId={uploadTarget?.timeline.id}
-					onSelect={selectUploadTarget}
-					onBeforeChoose={refreshProjects}
-					onCreateProject={createNewProject}
-					onCreateTimeline={createNewTimeline}
-					emptyText="This timeline isn't linked to a PostPin timeline yet."
-					highlightChoose={!uploadTarget}
-					browserUrl={uploadTarget
-						? `/projects/${uploadTarget.project.id}/timelines/${uploadTarget.timeline.id}/exports`
-						: undefined}
-				></Destination>
-			</div>
-
-			{#if isBusy !== "rendering"}
-				<div class="flex items-center @2xl:col-start-2 @2xl:row-start-2">
+				<div
+					class="flex min-w-0 flex-col @md:col-start-2 @md:row-start-2 @3xl:col-start-2 @3xl:row-start-2 @3xl:flex-row @3xl:items-center"
+				>
 					<FlowArrow direction="both" disabled={!canSync}>
 						<div
-							class="flex min-w-48 flex-col gap-2 rounded-box border-2 border-base-content/50 p-3"
+							class="flex w-48 max-w-full flex-col gap-2 rounded-box border-2 border-base-content/50 p-3"
 						>
-							<h3
-								class="truncate text-center text-xs tracking-widest text-base-content/60 uppercase"
-							>
-								Markers{markerTarget?.export ? ` · ${markerTarget.export.name}` : ""}
+							<!-- the export's name is in the PostPin box already -->
+							<h3 class="text-center text-xs tracking-widest text-base-content/60 uppercase">
+								Markers
 							</h3>
 							<button type="button" class="btn" disabled={!canSync} onclick={syncUp}>
 								{#if isBusy == "syncingMarkersUp"}
 									<span class="loading loading-spinner loading-sm ms-2"></span>
 								{:else}
-									Push markers →
+									Push markers {@render toPostPin()}
 								{/if}
 							</button>
 							<button type="button" class="btn" disabled={!canSync} onclick={syncDown}>
 								{#if isBusy == "syncingMarkersDown"}
 									<span class="loading loading-spinner loading-sm ms-2"></span>
 								{:else}
-									← Pull comments
+									{@render fromPostPin()} Pull comments
 								{/if}
 							</button>
 						</div>
@@ -427,35 +477,18 @@
 				</div>
 			{/if}
 
-			<div class="@2xl:col-start-3 @2xl:row-start-2 @2xl:grid">
-				<Destination
-					title="Markers with"
-					path={markerTarget
-						? `${markerTarget.project.name} › ${markerTarget.timeline.name}`
-						: undefined}
-					name={markerTarget?.export?.name}
-					mode="export"
-					projects={projectsWithExports}
-					selectedProjectId={markerTarget?.project.id}
-					selectedTimelineId={markerTarget?.timeline.id}
-					selectedExportId={markerTarget?.export?.id}
-					onSelect={selectMarkerTarget}
-					onBeforeChoose={refreshProjects}
-					onCreateProject={createNewProject}
-					onCreateTimeline={createNewTimeline}
-					browserUrl={markerTarget?.export
-						? `/projects/${markerTarget.project.id}/timelines/${markerTarget.timeline.id}/exports/${markerTarget.export.id}`
-						: undefined}
-					emptyText={markerTarget
-						? "No exports in this timeline yet. Render one first."
-						: "No export selected."}
-				>
-					{#if markerTarget?.export}
-						<span class="text-sm text-base-content/60">
-							{new Date(markerTarget.export.createdAt).toLocaleString()}
-						</span>
-					{/if}
-				</Destination>
+			<div
+				class="@md:col-span-2 @md:row-start-3 @3xl:col-span-1 @3xl:col-start-1 @3xl:row-span-2 @3xl:row-start-1 @3xl:grid"
+			>
+				<HostNode
+					hostName={capabilities.hostName}
+					thumbnailDataUrl={nleTimeline?.thumbnailDataUrl}
+					timelineName={nleTimeline?.name ?? null}
+					projectName={nleTimeline?.projectName ?? null}
+					disabled={isBusy !== null}
+					onClearMarkers={deleteMarkers}
+					{header}
+				/>
 			</div>
 		</div>
 

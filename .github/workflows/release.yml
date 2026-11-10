@@ -78,7 +78,7 @@ jobs:
 
   merge:
     name: publish (${{ matrix.image.name }})
-    needs: [build, desktop-mac, desktop-win, resolve-mac, resolve-win]
+    needs: [build, desktop-mac, desktop-win, resolve-mac, resolve-win, premiere]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -279,8 +279,32 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  # Premiere plugin: .ccx (a zip of dist/), no signing for distribution outside the Marketplace
+  premiere:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - name: Build
+        working-directory: packages/plugin-premiere
+        run: pnpm run build
+      - name: Set version from tag
+        working-directory: packages/plugin-premiere
+        run: npm pkg set version="${GITHUB_REF_NAME#v}"
+      - name: Build .ccx
+        working-directory: packages/plugin-premiere
+        run: pnpm run dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: premiere
+          path: packages/plugin-premiere/release/*.ccx
+          if-no-files-found: error
+          retention-days: 1
+
   release:
-    needs: [merge, desktop-mac, desktop-win, resolve-mac, resolve-win]
+    needs: [merge, desktop-mac, desktop-win, resolve-mac, resolve-win, premiere]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -295,6 +319,11 @@ jobs:
         with:
           path: ${{ runner.temp }}/desktop
           pattern: resolve-*
+          merge-multiple: true
+      - uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/desktop
+          pattern: premiere-*
           merge-multiple: true
       - name: Create GitHub Release
         env:
