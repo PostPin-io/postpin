@@ -933,7 +933,7 @@ export interface ProjectSettings {
 	timelineDropFrameTimecode: string;
 	/** '0' or '1' */
 	timelineInterlaceProcessing: string;
-	/** Read-only. e.g. '24' */
+	/** e.g. '24'. Updated automatically when timelineFrameRate is set */
 	timelinePlaybackFrameRate: string;
 	/** '0' or '1' */
 	timelineOutputResMatchTimelineRes: string;
@@ -1283,6 +1283,16 @@ export interface ExportFrameOptions {
 	filePath: string | null;
 	/** Caps the longer edge in pixels, scaling the other edge proportionally (default: 0, no scaling) */
 	maxDimension: number | null;
+	/** Image quality 1 to 100 (JPEG only, default: 100) */
+	quality: number | null;
+	/** Left edge of the region of interest, as a fraction of the frame width, 0 to 1 (default: 0) */
+	roiX: number | null;
+	/** Top edge of the region of interest, as a fraction of the frame height, 0 to 1 (default: 0) */
+	roiY: number | null;
+	/** Width of the region of interest, as a fraction of the frame width (default: 1, the whole width). Only supported for jpg and png output. maxDimension then caps the region instead of the whole frame, so the frame is rendered large enough for the region to reach it */
+	roiWidth: number | null;
+	/** Height of the region of interest, as a fraction of the frame height (default: 1, the whole height). Note the fractions are per-axis, so equal roiWidth and roiHeight are not a square region unless the frame is square */
+	roiHeight: number | null;
 }
 
 export interface ExportFrameResult {
@@ -1292,6 +1302,51 @@ export interface ExportFrameResult {
 	error: string | null;
 	/** Base64-encoded image bytes (set when outputType is 'encodedString' and success is True) */
 	data: string | null;
+	/** Width in pixels of the exported frame, after maxDimension was applied (set when success is True) */
+	width: number | null;
+	/** Height in pixels of the exported frame, after maxDimension was applied (set when success is True) */
+	height: number | null;
+}
+
+export interface ThumbnailFrame {
+	/** 0-based frame offset into the source, as ExportFrame takes */
+	frameOffset: number;
+	/** Drawn over the cell (default: the frame offset). Use it to label cells with a timecode or a clip name, so what the grid shows reads back to the source */
+	label: string | null;
+}
+
+export interface ExportThumbnailsOptions {
+	/** 'file' or 'encodedString' (default: 'encodedString') */
+	outputType: string | null;
+	/** 'jpg' or 'png', used when outputType is 'encodedString' (default: 'jpg') */
+	encodedImageFormat: string | null;
+	/** Output file path, format inferred from extension (required when outputType is 'file') */
+	filePath: string | null;
+	/** Caps the longer edge of the whole sheet in pixels, not of one cell (default: 0, no scaling). The budget is split across the cells, so more frames means smaller cells */
+	maxDimension: number | null;
+	/** Image quality in percent, 1 to 100 (JPEG only, ignored by the other formats, default: 100) */
+	quality: number | null;
+}
+
+export interface ExportThumbnailsResult {
+	/** True if the thumbnails were composited successfully */
+	success: boolean;
+	/** Error message (set on failure) */
+	error: string | null;
+	/** Base64-encoded image bytes (set when outputType is 'encodedString' and success is True) */
+	data: string | null;
+	/** Width in pixels of the composited sheet (set when success is True) */
+	width: number | null;
+	/** Height in pixels of the composited sheet (set when success is True) */
+	height: number | null;
+	/** Cells per row of the grid, chosen to keep the sheet near square (set when success is True) */
+	columns: number | null;
+	/** Rows of the grid. Cells fill it left to right, top to bottom, in the order frames were given (set when success is True) */
+	rows: number | null;
+	/** Width in pixels of one cell (set when success is True) */
+	cellWidth: number | null;
+	/** Height in pixels of one cell (set when success is True) */
+	cellHeight: number | null;
 }
 
 export interface RenderJobInfo {
@@ -1491,6 +1546,21 @@ export interface SmartSwitchSettings {
 	switchOnVideoOnly: boolean;
 	/** Default: resolve.SMART_SWITCH_QUALITY_BETTER */
 	quality: SmartSwitchQuality;
+}
+
+export interface ExtrasPackageInfo {
+	/** Display name, also the identifier accepted by InstallExtrasPackage(), e.g. 'AI Slate ID' */
+	name: string;
+	/** Localized description of the Extras Package */
+	description: string;
+	/** 'installed', 'downloading', 'installing' or 'notInstalled' */
+	status: string;
+	/** How far the phase named by status has got, 0.0 to 1.0 */
+	progress: number;
+	/** Download size in bytes */
+	downloadSize: number;
+	/** Size on disk once installed, in bytes */
+	installedSize: number;
 }
 
 export interface SpeechSettings {
@@ -2265,6 +2335,12 @@ export interface Resolve {
 	GetProductName(): P<string>;
 	/** Returns whether this is the Studio version of the product */
 	IsStudio(): P<boolean>;
+	/** Returns the Extras Download Manager packages available for this system: optional packages, mostly AI models, that Studio and AI functions require. See README.md section 'Studio and AI Scripting APIs'. */
+	GetExtrasPackages(): P<ExtrasPackageInfo[]>;
+	/** Queues the installation of an Extras Package, as given by the 'name' of a GetExtrasPackages() entry. Poll GetExtrasPackages() for status and progress. */
+	InstallExtrasPackage(name: string): P<boolean>;
+	/** Queues removal of an Extras Package, as given by the 'name' of a GetExtrasPackages() entry. Cancels an ongoing download. */
+	UninstallExtrasPackage(name: string): P<boolean>;
 	/** Returns a list of available UI layout preset names */
 	GetLayoutPresetList(): P<string[]>;
 	/** Returns all available effects that can be applied to a timeline item. Optional argument mediaType: "video" (default), "photo" or "audio" restricts the list to effects applicable to that media type. */
@@ -2709,6 +2785,11 @@ export interface MediaPoolItem {
 		frameOffset: number,
 		exportFrameOptions?: Partial<ExportFrameOptions>,
 	): P<ExportFrameResult>;
+	/** Renders the given frames (0-based offsets from the item start) into a single grid image, filled in the order given */
+	ExportThumbnails(
+		frames: (number | Partial<ThumbnailFrame>)[],
+		exportThumbnailsOptions?: Partial<ExportThumbnailsOptions>,
+	): P<ExportThumbnailsResult>;
 	/** Delete marker at frame number from the media pool item. */
 	DeleteMarkerAtFrame(frameNum: number): P<boolean>;
 	/** Delete first matching marker with specified customData. */
@@ -2855,6 +2936,11 @@ export interface Timeline {
 		frameOffset: number,
 		exportFrameOptions?: Partial<ExportFrameOptions>,
 	): P<ExportFrameResult>;
+	/** Renders the given frames (0-based offsets from the timeline start) into a single grid image, filled in the order given */
+	ExportThumbnails(
+		frames: (number | Partial<ThumbnailFrame>)[],
+		exportThumbnailsOptions?: Partial<ExportThumbnailsOptions>,
+	): P<ExportThumbnailsResult>;
 	/** Adds track of TrackType. Optional argument subTrackType. */
 	AddTrack(trackType: TrackType, subTrackType?: AudioSubTrackType): P<boolean>;
 	/** Deletes track of trackType and given trackIndex. 1 <= trackIndex <= GetTrackCount(trackType). */
@@ -3071,6 +3157,11 @@ export interface TimelineItem {
 		frameOffset: number,
 		exportFrameOptions?: Partial<ExportFrameOptions>,
 	): P<ExportFrameResult>;
+	/** Renders the given frames (0-based offsets from the item start) into a single grid image, filled in the order given */
+	ExportThumbnails(
+		frames: (number | Partial<ThumbnailFrame>)[],
+		exportThumbnailsOptions?: Partial<ExportThumbnailsOptions>,
+	): P<ExportThumbnailsResult>;
 	/** Returns a dict (frameId -> {information}) of all markers and dicts with their information */
 	GetMarkers(): P<Record<number, MarkerInfo>>;
 	/** Returns marker {information} for the first matching marker with specified customData */
@@ -3127,6 +3218,8 @@ export interface TimelineItem {
 	GetVersionNameList(versionType: VersionType): P<string[]>;
 	/** Sets CDL values on the node. Keys of map are: 'NodeIndex', 'Slope', 'Offset', 'Power', 'Saturation' */
 	SetCDL(CDL: Partial<CDL>): P<boolean>;
+	/** Returns the ASC CDL equivalent of the primaries of the node at nodeIndex, as the dict */
+	GetCDL(nodeIndex: number): P<CDL>;
 	/** Adds mediaPoolItem as a new take. Initializes a take selector for the timeline item if needed. By default, the full clip extents is added. startFrame and endFrame are optional arguments used to specify the extents */
 	AddTake(mediaPoolItem: MediaPoolItem, startFrame?: number, endFrame?: number): P<boolean>;
 	/** Returns the index of the currently selected take, or 0 if the clip is not a take selector */
@@ -3145,6 +3238,14 @@ export interface TimelineItem {
 	FinalizeTake(): P<boolean>;
 	/** Copies the current node stack layer grade to the same layer for each item in tgtTimelineItems. */
 	CopyGrades(tgtTimelineItems: TimelineItem[]): P<boolean>;
+	/** Analyses the clip and applies the automatic balance and grade to frame the playhead is on, or from the first frame of the clip when it is not the current one. Replaces the grade of a previous call and clears the legacy auto color values. */
+	ApplyAutoColor(): P<boolean>;
+	/** Enables or disables the grade a previous ApplyAutoColor() applied */
+	SetAutoColorEnabled(enabled: boolean): P<boolean>;
+	/** Returns whether auto color is applied and enabled, none if it has no auto color */
+	GetAutoColorEnabled(): P<boolean | null>;
+	/** Discards auto-color grades */
+	ClearAutoColor(): P<boolean>;
 	/** Pastes the selected attributes from this item onto each item in targetItems. Equivalent to the Edit page's "Paste Attributes". */
 	CopyAttributes(targetItems: TimelineItem[], options: Partial<CopyAttributesOptions>): P<boolean>;
 	/** Gets clip enabled status */
@@ -3386,10 +3487,12 @@ export interface Graph {
 	GetNodeColor(nodeIndex: number): P<NodeColor | "">;
 	/** Sets the color of the node at nodeIndex based on the colorName (string). An empty string clears the color. 1 <= nodeIndex <= GetNumNodes() */
 	SetNodeColor(nodeIndex: number, colorName: NodeColor | ""): P<boolean>;
-	/** Returns toolsList of the tools used in the node indicated by given nodeIndex */
+	/** Returns the list of tools the node at nodeIndex uses, as the node tooltip shows them: the applied LUT ('LUT: name'), the OFX plugin ('OFX: name') and every group of parameters moved off its default ('Primary Balance', 'Custom Curves', 'HSL Qualifier', ...) */
 	GetToolsInNode(nodeIndex: number): P<string[]>;
 	/** Sets the node at the given nodeIndex to isEnabled, 1 <= nodeIndex <= GetNumNodes() */
 	SetNodeEnabled(nodeIndex: number, isEnabled: boolean): P<boolean>;
+	/** Returns whether the node at the given nodeIndex is enabled, 1 <= nodeIndex <= GetNumNodes() */
+	GetNodeEnabled(nodeIndex: number): P<boolean>;
 	/** Applies ARRI CDL and LUT. */
 	ApplyArriCdlLut(): P<boolean>;
 	/** Loads a still from given file path and applies grade to graph with gradeMode (0=No keyframes, 1=Source Timecode aligned, 2=Start Frames aligned). If applyToAllLayers is True, the grade is applied to all node-stack layers instead of just the active layer. keyframeMode selects what is applied, one of the resolve.KEYFRAME_MODE_* constants (default KEYFRAME_MODE_ALL). */
@@ -3399,7 +3502,7 @@ export interface Graph {
 		applyToAllLayers?: boolean,
 		keyframeMode?: unknown,
 	): P<boolean>;
-	/** Resets all grades in the graph */
+	/** Resets all grades in the graph. Node labels are cleared too */
 	ResetAllGrades(): P<boolean>;
 }
 
@@ -3457,6 +3560,11 @@ export interface PhotoAlbum {
 	GetUniqueId(): P<string>;
 	/** Returns a list of photo album items in the photo album. */
 	GetPhotoList(): P<PhotoAlbumItem[]>;
+	/** Renders the photos at the given 1-based album positions into a single grid image, one cell per photo labelled with its position, 1 <= photoIndex <= GetPhotoList() size */
+	ExportThumbnails(
+		photoIndices: number[],
+		exportThumbnailsOptions?: Partial<ExportThumbnailsOptions>,
+	): P<ExportThumbnailsResult>;
 	/** Returns the current photo album item. */
 	GetCurrentItem(): Maybe<PhotoAlbumItem>;
 	/** Deletes specified PhotoAlbumItems from the photo album. */
@@ -3515,6 +3623,14 @@ export interface PhotoAlbumItem {
 	ClearClipColor(): P<boolean>;
 	/** Copies the current node stack layer grade to the same layer for each item in tgtPhotoAlbumItems. */
 	CopyGrades(tgtPhotoAlbumItems: PhotoAlbumItem[]): P<boolean>;
+	/** Analyses the photo and applies the automatic balance and grade. Replaces the grade of a previous call and clears the legacy auto color values. */
+	ApplyAutoColor(): P<boolean>;
+	/** Enables or disables the grade a previous ApplyAutoColor() applied */
+	SetAutoColorEnabled(enabled: boolean): P<boolean>;
+	/** Returns whether auto color is applied and enabled, none if it has no auto color */
+	GetAutoColorEnabled(): P<boolean | null>;
+	/** Discards auto-color grades */
+	ClearAutoColor(): P<boolean>;
 	/** Returns the current version of the photo. The returned value will have the keys versionName and versionType (always 1 - remote, as photo albums only support remote versions) */
 	GetCurrentVersion(): P<VersionInfo>;
 	/** Renames the color version identified by oldName. Photo albums only support remote versions */
@@ -3529,6 +3645,8 @@ export interface PhotoAlbumItem {
 	GetVersionNameList(): P<string[]>;
 	/** Sets CDL values on the node. Keys of map are: 'NodeIndex', 'Slope', 'Offset', 'Power', 'Saturation' */
 	SetCDL(CDL: Partial<CDL>): P<boolean>;
+	/** Returns the ASC CDL equivalent of the primaries of the node at nodeIndex, as the dict */
+	GetCDL(nodeIndex: number): P<CDL>;
 	/** Returns the photo's node graph object at layerIdx (int, optional). Returns the first layer if layerIdx is skipped. 1 <= layerIdx <= project.GetSetting('nodeStackLayers') */
 	GetNodeGraph(layerIdx?: number): Maybe<Graph>;
 	/** Resets node color for all nodes in the active version of the photo. */
