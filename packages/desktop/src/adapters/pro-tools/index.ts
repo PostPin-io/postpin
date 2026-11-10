@@ -2,7 +2,7 @@ import type { NleBridge } from "@postpin-io/plugin-core/bridge";
 import * as markers from "./markers";
 import { getMarkerPalette } from "./palette";
 import { renderPreview } from "./render";
-import { getSessionIds, getSessionTiming } from "./session";
+import { getSessionFolderName, getSessionIds, getSessionName, getSessionTiming } from "./session";
 import { buildTimelineSnapshot } from "./snapshot";
 
 export function createProToolsAdapter(): NleBridge {
@@ -18,12 +18,17 @@ export function createProToolsAdapter(): NleBridge {
 		// A session is both project and timeline; origin_id survives Save As
 		getProjectId: async () => (await getSessionIds()).originId,
 		getTimelineInfo: async () => {
-			const sessionIds = await getSessionIds();
+			const [{ originId }, name, folderName] = await Promise.all([
+				getSessionIds(),
+				getSessionName(),
+				getSessionFolderName(),
+			]);
 			return {
-				id: sessionIds.originId,
-				name: "ToDo",
-				projectId: sessionIds.originId,
-				projectName: "ToDo",
+				id: originId,
+				name,
+				projectId: originId,
+				// The session folder, which keeps its name when the session is saved under a new one
+				projectName: folderName ?? name,
 			};
 		},
 		getMarkers: async () =>

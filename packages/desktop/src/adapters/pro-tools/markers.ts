@@ -3,10 +3,11 @@ import {
 	MarkerLocation,
 	MemoryLocationReference,
 	TimeProperties,
+	type MemoryLocation,
 } from "../../third-party/protools-sdk/dist/PTSL";
 import { iterateAll } from "./pagination";
 import { colorIndexOf } from "./palette";
-import { send } from "./ptsl";
+import { send, type RequestOf } from "./ptsl";
 import type { SessionTiming } from "./session";
 import { frameToSamples, samplesToFrame } from "./time";
 
@@ -43,18 +44,45 @@ export async function getMarkers(timing: SessionTiming, originId: string): Promi
 	);
 }
 
-// Writes the markers to the main ruler and returns their memory location numbers. Markers whose
-// nleId is still in the session are edited in place, the others are created.
+// The ruler Pro Tools puts markers on in new sessions
+const DEFAULT_RULER = "Markers";
+
+interface Ruler {
+	location: MarkerLocation;
+	trackName: string;
+}
+
+// The ruler most markers are on. PTSL can't list rulers, and MarkerLocation_MainRuler puts markers
+// on a ruler of its own ("Markers 2"), which Pro Tools may not draw until the rulers change.
+function mostUsedRuler(locations: MemoryLocation[]): Ruler | null {
+	const counts = new Map<string, { ruler: Ruler; count: number }>();
+	for (const { location, trackName } of locations) {
+		if (location !== MarkerLocation.MarkerLocation_NamedRuler) continue;
+		const entry = counts.get(trackName) ?? { ruler: { location, trackName }, count: 0 };
+		entry.count += 1;
+		counts.set(trackName, entry);
+	}
+	return [...counts.values()].sort((a, b) => b.count - a.count)[0]?.ruler ?? null;
+}
+
+// Writes the markers and returns their memory location numbers. Markers whose nleId is still in
+// the session are edited in place and stay on their ruler, the others go on the most used ruler.
 export async function setMarkers(
 	timing: SessionTiming,
 	originId: string,
 	markers: NleMarker[],
 ): Promise<number[]> {
-	const existing = new Set(
-		(await listMarkerLocations()).map((location) => markerId(originId, location.number)),
+	const allLocations = await listMemoryLocations();
+	const markerLocations = allLocations.filter(
+		(location) => location.timeProperties === TimeProperties.TProperties_Marker,
 	);
+	const existing = new Map(
+		markerLocations.map((location) => [markerId(originId, location.number), location]),
+	);
+	// Without markers there is no ruler to copy, so try the default one
+	let ruler = mostUsedRuler(markerLocations);
 	// Numbers are shared by all memory locations, not just markers
-	let next = Math.max(0, ...(await listMemoryLocations()).map((location) => location.number));
+	let next = Math.max(0, ...allLocations.map((location) => location.number));
 
 	// One at a time, since each new marker takes the next number
 	const numbers: number[] = [];
@@ -67,25 +95,54 @@ export async function setMarkers(
 			endTime: samples,
 			timeProperties: TimeProperties.TProperties_Marker,
 			reference: MemoryLocationReference.MLReference_Absolute,
-			location: MarkerLocation.MarkerLocation_MainRuler,
 			colorIndex: colorIndexOf(marker.color),
 		};
-		const number = marker.nleId && existing.has(marker.nleId) ? numberOf(marker.nleId) : null;
-		if (number !== null) {
-			await send("EditMemoryLocation", { number, ...fields });
-			numbers.push(number);
+		const current = marker.nleId ? existing.get(marker.nleId) : undefined;
+		if (current) {
+			await send("EditMemoryLocation", {
+				number: current.number,
+				...fields,
+				location: current.location,
+				trackName: current.trackName,
+			});
+			numbers.push(current.number);
 		} else {
 			next += 1;
-			await send("CreateMemoryLocation", { number: next, ...fields });
+			ruler = await createMarker(next, fields, ruler);
 			numbers.push(next);
 		}
 	}
 	return numbers;
 }
 
-// The memory location number in a marker id
-function numberOf(nleId: string) {
-	return Number(nleId.slice(nleId.lastIndexOf(":") + 1));
+// Creates a marker on the ruler and returns the ruler for the next ones. Without a known ruler it
+// tries the default one; when that is missing, Pro Tools reports an error but still creates the
+// marker on a ruler of its own, which then serves the following markers.
+async function createMarker(
+	number: number,
+	fields: Omit<Partial<RequestOf<"CreateMemoryLocation">>, "number" | "location" | "trackName">,
+	ruler: Ruler | null,
+): Promise<Ruler> {
+	if (ruler) {
+		await send("CreateMemoryLocation", { number, ...fields, ...ruler });
+		return ruler;
+	}
+	const fallback = { location: MarkerLocation.MarkerLocation_NamedRuler, trackName: DEFAULT_RULER };
+	try {
+		await send("CreateMemoryLocation", { number, ...fields, ...fallback });
+		return fallback;
+	} catch (err) {
+		const created = (await listMemoryLocations()).find((location) => location.number === number);
+		if (created) return { location: created.location, trackName: created.trackName };
+		await send("CreateMemoryLocation", {
+			number,
+			...fields,
+			location: MarkerLocation.MarkerLocation_MainRuler,
+		});
+		const fromMainRuler = (await listMemoryLocations()).find((l) => l.number === number);
+		if (!fromMainRuler) throw err;
+		return { location: fromMainRuler.location, trackName: fromMainRuler.trackName };
+	}
 }
 
 // Deletes the markers only, unlike ClearAllMemoryLocations, which also takes the user's selections

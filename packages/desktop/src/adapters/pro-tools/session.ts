@@ -1,4 +1,5 @@
 import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
+import path from "node:path";
 import { SessionTimeCodeRate } from "../../third-party/protools-sdk/dist/PTSL";
 import { send } from "./ptsl";
 import { parseProToolsTimecode } from "./time";
@@ -17,6 +18,12 @@ export async function getSessionIds(): Promise<{ originId: string; instanceId: s
 }
 export async function getSessionName(): Promise<string> {
 	return (await send("GetSessionName")).sessionName;
+}
+// The folder the session file is in, which Pro Tools names after the session when creating it
+export async function getSessionFolderName(): Promise<string | null> {
+	const { sessionPath } = await send("GetSessionPath");
+	const folder = sessionPath?.path ? path.basename(path.dirname(sessionPath.path)) : "";
+	return folder || null;
 }
 export function toFrameRate(rate: SessionTimeCodeRate): FrameRate {
 	switch (rate) {
