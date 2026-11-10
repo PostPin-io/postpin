@@ -7,6 +7,7 @@
 	import ResponseMarker from "./ResponseMarker.svelte";
 	import CategoryBadge from "../../categories/CategoryBadge.svelte";
 	import { markerFilter } from "./marker-filter.svelte.ts";
+	import { defaultCategory } from "./default-category.svelte.ts";
 	import {
 		filterMarkers,
 		selectRange as selectRangeOf,
@@ -56,7 +57,6 @@
 	const currentExportId = $derived(exportId);
 	// Team only: the share page has no project in its URL, and guests don't pick categories
 	const projectId = $derived(page.params.project ?? "");
-	const defaultCategory = $derived(localStorage.getItem("DefaultCategory") ?? "");
 
 	let markers = $derived(await getMarkers(markersKey(currentExportId, shareToken)));
 
@@ -76,8 +76,8 @@
 		{ value: "timecode", label: "Timecode" },
 	];
 
-	let sortDirection: "asc" | "desc" = $state("desc");
-	let sortField: SortField = $state("updatedAt");
+	let sortDirection: "asc" | "desc" = $state("asc");
+	let sortField: SortField = $state("timecode");
 
 	const sortMarkers = <T extends (typeof markers)[number]>(list: T[]) =>
 		sortMarkersBy(list, sortField, sortDirection);
@@ -138,28 +138,18 @@
 	}
 
 	$effect(() => {
-		localStorage.setItem("DefaultCategory", defaultCategory);
-	});
-	$effect(() => {
 		localStorage.setItem("UpdateMarkerFocused", isUpdateMarkerFocused ? "true" : "false");
 	});
 	let creating = false;
 
 	async function resolveDefaultCategory() {
-		let categories = await getCategories(projectId);
+		// The guest category is reserved for share-link visitors: team markers can't use it
+		const categories = (await getCategories(projectId)).filter((c) => !c.isGuest);
 
-		let categoryId = categories[0]?.id;
+		let categoryId = categories.find((c) => c.id === defaultCategory.id)?.id ?? categories[0]?.id;
 		categoryId ??= (await createCategory({ name: "General", color: "#ffffff", projectId })).id;
 
-		let defaultCategoryId = localStorage.getItem("DefaultCategory");
-
-		if (defaultCategoryId) {
-			if (categories.find((c) => c.id === defaultCategoryId)) {
-				categoryId = defaultCategoryId;
-			} else {
-				localStorage.setItem("DefaultCategory", categoryId);
-			}
-		}
+		if (defaultCategory.id && defaultCategory.id !== categoryId) defaultCategory.set(categoryId);
 		return { categoryId, categoryIds: new Set(categories.map((c) => c.id)) };
 	}
 
@@ -301,6 +291,9 @@
 			await tick();
 			setTimeout(() => updateMarkerComponent?.focusTitleInputField(), 50);
 		}
+	}
+	export function createMarkerAtPlayhead() {
+		return addAndSelectMarker();
 	}
 	export function setSelectedMarkerId(id: string | null) {
 		selectedMarkerIds = id ? [id] : [];

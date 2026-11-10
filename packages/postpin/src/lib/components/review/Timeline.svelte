@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { tick } from "svelte";
+	import Diamond from "@lucide/svelte/icons/diamond";
 	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 	import { onMount } from "svelte";
 	import type { ThumbnailElement, ThumbnailImage } from "@videojs/html";
@@ -420,17 +421,24 @@
 					{#each visibleMarkers as marker (marker.id)}
 						<!-- svelte-ignore a11y_no_static_element_interactions -->
 						<div
-							class="absolute bottom-0 z-10 h-3 w-2 -translate-x-1/2 cursor-grab touch-none rounded-xs {markerDrag?.id ===
+							class="absolute bottom-0 z-10 -translate-x-1/2 cursor-grab touch-none {markerDrag?.id ===
 							marker.id
 								? 'cursor-grabbing'
 								: ''}"
-							style="left: {toX(markerFrame(marker)) + 1}px; background: {marker.category.color}"
+							style="left: {toX(markerFrame(marker)) + 1}px"
 							title={marker.name}
 							onpointerdown={(event) => startMarkerDrag(event, marker)}
 							onpointermove={moveMarkerDrag}
 							onpointerup={() => endMarkerDrag(marker)}
 							onpointercancel={() => (markerDrag = null)}
-						></div>
+						>
+							<Diamond
+								size={16}
+								fill={marker.category.color}
+								stroke="rgb(0 0 0 / 0.4)"
+								strokeWidth={1.5}
+							/>
+						</div>
 					{/each}
 
 					<div

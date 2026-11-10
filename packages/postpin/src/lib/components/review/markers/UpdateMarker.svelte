@@ -4,6 +4,7 @@
 
 	import { updateMarker, deleteMarker, getCategories } from "./markers.remote";
 	import { page } from "$app/state";
+	import { defaultCategory } from "./default-category.svelte.ts";
 	import ClipboardList from "@lucide/svelte/icons/clipboard-list";
 	import Trash from "@lucide/svelte/icons/trash";
 	import { onDestroy, onMount } from "svelte";
@@ -140,11 +141,11 @@
 	}
 </script>
 
-<section class="card mx-1 h-full border border-base-300 bg-base-200 shadow-sm">
+<section class="@container card mx-1 h-full border border-base-300 bg-base-200 shadow-sm">
 	<div class="card-body h-full min-h-0 w-full gap-3 p-4">
 		<div class="flex items-center justify-between gap-3">
-			<div class="flex-screen flex gap-2">
-				<h2 class="card-title text-base">
+			<div class="flex-screen flex min-w-0 items-center gap-2">
+				<h2 class="card-title text-base whitespace-nowrap">
 					{#if marker.canUpdate}
 						Edit Marker
 					{:else}
@@ -156,7 +157,7 @@
 						value={categoryId}
 						onselect={(id) => {
 							selectedCategoryId = id;
-							localStorage.setItem("DefaultCategory", id);
+							defaultCategory.set(id);
 							void persist();
 						}}
 						readonly={!marker.canUpdate}
@@ -178,7 +179,7 @@
 					Frame {marker.frame - startFrame}
 					</span> -->
 			</div>
-			<div class="flex flex-wrap gap-2">
+			<div class="flex shrink-0 gap-2">
 				<button
 					type="button"
 					class="btn btn-square btn-ghost"

@@ -26,7 +26,8 @@
 
 	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 	import { frameAtSeconds, secondsAtFrame } from "@postpin-io/shared/logic/timecode";
-	import { getMarkers } from "#lib/components/review/markers/markers.remote.ts";
+	import { getMarkers, getCategories } from "#lib/components/review/markers/markers.remote.ts";
+	import { defaultCategory } from "#lib/components/review/markers/default-category.svelte.ts";
 	import type { TimelineMode } from "#lib/components/review/video-player.ts";
 	import {
 		defaultLayout,
@@ -113,6 +114,14 @@
 		isMarkerVisible ? await getMarkers(markersKey(exportId, shareToken)) : [],
 	);
 	let markers = $derived(markerFilter.apply(allMarkers));
+	// Team only: guests have no categories. The guest category is reserved, so new markers never use it
+	const creatableCategories = $derived(
+		!share && projectId ? (await getCategories(projectId)).filter((c) => !c.isGuest) : [],
+	);
+	const newMarkerColor = $derived(
+		(creatableCategories.find((c) => c.id === defaultCategory.id) ?? creatableCategories[0])?.color,
+	);
+	let markerPanel = $state<MarkerPanel>();
 	let originalUrl = $state<string | undefined>(undefined);
 	let thumbnailUrl = $state<string | undefined>(undefined);
 
@@ -425,6 +434,10 @@
 											fullscreen={videoFullscreen}
 											onToggleMute={() => player?.toggleMute()}
 											onFullscreen={() => player?.toggleFullscreen()}
+											onCreateMarker={isMarkerVisible
+												? () => void markerPanel?.createMarkerAtPlayhead()
+												: undefined}
+											markerColor={newMarkerColor}
 											status={jobStatus}
 										/>
 									{/snippet}
@@ -526,6 +539,7 @@
 						{/if}
 					{/if}
 					<MarkerPanel
+						bind:this={markerPanel}
 						{exportId}
 						{currentFrame}
 						onseek={seekToFrame}

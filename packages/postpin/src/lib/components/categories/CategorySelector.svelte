@@ -26,9 +26,14 @@
 
 {#if !readonly}
 	<div class="dropdown dropdown-center">
-		<div tabindex="0" role="button" class="btn min-w-32 justify-start">
+		<div
+			tabindex="0"
+			role="button"
+			class="btn justify-start @max-md:min-w-0 @max-md:px-3 @md:min-w-32"
+			aria-label={selected ? `Category: ${selected.name}` : undefined}
+		>
 			{#if selected}
-				<CategoryBadge category={selected} />
+				<CategoryBadge category={selected} collapsible />
 			{:else}
 				<span class="opacity-60">Select category</span>
 			{/if}
@@ -61,7 +66,7 @@
 	</div>
 {:else}
 	{#if selected}
-		<CategoryBadge category={selected} />
+		<CategoryBadge category={selected} collapsible />
 	{:else}
 		<span class="opacity-60">No category</span>
 	{/if}

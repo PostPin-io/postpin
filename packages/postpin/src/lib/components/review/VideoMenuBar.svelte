@@ -13,6 +13,8 @@
 	import ChevronsUpDown from "@lucide/svelte/icons/chevrons-up-down";
 	import Timecode from "./Timecode.svelte";
 	import FoldVertical from "@lucide/svelte/icons/fold-vertical";
+	import DiamondPlus from "@lucide/svelte/icons/diamond-plus";
+	import { contrastColor } from "../categories/category-color.ts";
 	import {
 		nextPlaybackRate,
 		nextTimelineMode,
@@ -42,6 +44,8 @@
 		fullscreen = false,
 		onToggleMute,
 		onFullscreen,
+		onCreateMarker,
+		markerColor,
 		timelineControls = true,
 		status,
 	}: {
@@ -63,6 +67,10 @@
 		fullscreen?: boolean;
 		onToggleMute?: () => void;
 		onFullscreen?: () => void;
+		/** Shows the add-marker button */
+		onCreateMarker?: () => void;
+		/** Color of the add-marker button: the category new markers get */
+		markerColor?: string;
 		/** Timeline mode and shot-grid buttons; off when there is no timeline (share links) */
 		timelineControls?: boolean;
 		/** Shown first in the right-hand group, e.g. the processing jobs */
@@ -158,7 +166,22 @@
 				{playbackRate}×
 			</button>
 		</div>
-		<div class="flex items-center justify-center">
+		<!-- The add-marker button hangs off the left edge so play stays centered under the video -->
+		<div class="relative flex items-center justify-center">
+			{#if onCreateMarker}
+				<button
+					class="btn absolute right-full btn-square btn-ghost btn-xs {markerColor
+						? 'hover:border-(--marker-color) hover:bg-(--marker-color) hover:text-(--marker-contrast)'
+						: ''}"
+					style:--marker-color={markerColor}
+					style:--marker-contrast={markerColor ? contrastColor(markerColor) : undefined}
+					title="Add marker at playhead (M)"
+					aria-label="Add marker at playhead"
+					onclick={() => onCreateMarker()}
+				>
+					<DiamondPlus size={16} />
+				</button>
+			{/if}
 			<button
 				class="btn btn-square btn-ghost btn-xs"
 				title="Jump to previous Marker on the left"
