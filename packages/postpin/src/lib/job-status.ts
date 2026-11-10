@@ -36,3 +36,33 @@ export const jobStateBadges: Record<
 		icon: CircleQuestionMark,
 	},
 };
+/** One job of a media's processing flow, as `getProcessingJobs` returns it */
+export type ProcessingJob = {
+	id?: string;
+	label: string;
+	state: JobState | "unknown";
+	progress: number;
+	failedReason?: string;
+	weight: number;
+};
+
+/** Still queued or working; "unknown" (the job is gone) counts as finished so polling can stop */
+export function isJobRunning(job: Pick<ProcessingJob, "state">): boolean {
+	return job.state !== "completed" && job.state !== "failed" && job.state !== "unknown";
+}
+
+/** Weighted progress of all jobs, 0–100 */
+export function totalJobProgress(jobs: ProcessingJob[]): number {
+	const totalWeight = jobs.reduce((sum, job) => sum + job.weight, 0);
+	if (totalWeight === 0) return 100;
+	const done = jobs.reduce((sum, job) => {
+		const share =
+			job.state === "active" || job.state === "waiting"
+				? (job.progress ?? 0.5)
+				: job.state === "completed"
+					? 1
+					: 0;
+		return sum + share * job.weight;
+	}, 0);
+	return (done / totalWeight) * 100;
+}

@@ -38,9 +38,8 @@
 		type PaneLayout,
 	} from "#lib/components/review/export-view.ts";
 
-	import CheckCircle from "@lucide/svelte/icons/check-circle";
-
-	import { jobStateBadges } from "#lib/job-status.ts";
+	import ProcessingJobs from "#lib/components/review/ProcessingJobs.svelte";
+	import { isJobRunning } from "#lib/job-status.ts";
 
 	import { setShareContext, type ShareContext } from "./share-context.ts";
 	import { markersKey } from "./markers/marker-scope.ts";
@@ -179,10 +178,12 @@
 
 		const interval = setInterval(async () => {
 			try {
-				// The export carries the media status and proxies the player depends on, so it has to be refetched
-				// until processing is done; the job list only drives the progress display
+				// The export carries the media status, proxies, thumbnail, seek sprites and shot thumbnails, so it
+				// has to be refetched until processing is done. The media is marked COMPLETED as soon as it can play,
+				// while the sprite and thumbnail jobs still run, so keep going until every job has finished too.
 				const status = exportQuery.current?.media?.status;
-				if (status === "PENDING" || status === "PROCESSING") {
+				const jobsRunning = processingJobsQuery?.current?.some(isJobRunning);
+				if (status === "PENDING" || status === "PROCESSING" || jobsRunning) {
 					await Promise.all([exportQuery.refresh(), processingJobsQuery?.refresh()]);
 				}
 			} catch (error) {
@@ -372,58 +373,7 @@
 		{#if share}
 			{@render shareHeader(share)}
 		{:else}
-			<Header>
-				{@const totalProgress =
-					((processingJobsQuery?.current?.reduce(
-						(sum, job) =>
-							sum +
-							(job.state === "active" || job.state === "waiting"
-								? (job.progress ?? 0.5)
-								: job.state === "completed"
-									? 1
-									: 0) *
-								job.weight,
-						0,
-					) ?? 0) /
-						(processingJobsQuery?.current?.reduce((sum, job) => sum + job.weight, 0) ?? 1)) *
-					100}
-				{#if media}
-					<details class="dropdown">
-						<summary class="btn m-1">
-							{#if totalProgress < 100}
-								<div
-									class="radial-progress"
-									style="--value:{totalProgress}; --size:1.5rem; --thickness: 3px;"
-								>
-									<!-- <Hourglass size={12} /> -->
-								</div>
-							{:else}
-								<CheckCircle size={16} />
-							{/if}
-						</summary>
-						<ul class="list dropdown-content card z-1 w-60 rounded-box bg-base-100 p-2 shadow-sm">
-							{#each processingJobsQuery?.current as job (job.id)}
-								{@const Icon = jobStateBadges[job.state ?? "unknown"].icon}
-								<li class="list-row">
-									<div class="{jobStateBadges[job.state ?? 'unknown'].color} w-4">
-										{#if job.state === "active"}
-											<div
-												class="radial-progress"
-												style="--value:{job.progress * 100}; --size:1rem; --thickness: 2px;"
-											></div>
-										{:else}
-											<Icon size={16} />
-										{/if}
-									</div>
-									<div>
-										<span class="ml-2 font-semibold text-nowrap">{job.label}</span>
-									</div>
-								</li>
-							{/each}
-						</ul>
-					</details>
-				{/if}
-			</Header>
+			<Header />
 		{/if}
 
 		<Splitpanes
@@ -475,7 +425,13 @@
 											fullscreen={videoFullscreen}
 											onToggleMute={() => player?.toggleMute()}
 											onFullscreen={() => player?.toggleFullscreen()}
+											status={jobStatus}
 										/>
+									{/snippet}
+									{#snippet jobStatus()}
+										{#if processingJobsQuery?.current?.length}
+											<ProcessingJobs jobs={processingJobsQuery.current} variant="compact" />
+										{/if}
 									{/snippet}
 									{#snippet note()}
 										{#if share?.note && noteVisible}
@@ -510,13 +466,17 @@
 												/>
 											{/key}
 										{:else if viewMode !== "shot-grid" && media.status !== "FAILED"}
-											<div
-												class="flex h-full items-center justify-center"
-												role="status"
-												aria-live="polite"
-											>
-												<LoadingAnimation class="size-24" />
-											</div>
+											{#if processingJobsQuery?.current?.length}
+												<ProcessingJobs jobs={processingJobsQuery.current} variant="inline" />
+											{:else}
+												<div
+													class="flex h-full items-center justify-center"
+													role="status"
+													aria-live="polite"
+												>
+													<LoadingAnimation class="size-24" />
+												</div>
+											{/if}
 										{/if}
 									</div>
 									{#if snapshot}

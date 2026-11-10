@@ -24,6 +24,7 @@
 		secondsAtFrame,
 		type FrameTiming,
 	} from "@postpin-io/shared/logic/timecode";
+	import type { Snippet } from "svelte";
 
 	let {
 		markers,
@@ -42,6 +43,7 @@
 		onToggleMute,
 		onFullscreen,
 		timelineControls = true,
+		status,
 	}: {
 		markers: { frame: number }[];
 		timing: FrameTiming;
@@ -63,6 +65,8 @@
 		onFullscreen?: () => void;
 		/** Timeline mode and shot-grid buttons; off when there is no timeline (share links) */
 		timelineControls?: boolean;
+		/** Shown first in the right-hand group, e.g. the processing jobs */
+		status?: Snippet;
 	} = $props();
 
 	// Absolute timeline frame, like marker frames
@@ -194,6 +198,7 @@
 			</button>
 		</div>
 		<div class="flex items-center gap-1 justify-self-end">
+			{#if status && !fullscreen}{@render status()}{/if}
 			{#if !fullscreen && timelineControls}
 				<button
 					class="btn btn-square btn-ghost btn-xs"
