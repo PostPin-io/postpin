@@ -298,7 +298,7 @@ jobs:
         run: pnpm run dist
       - uses: actions/upload-artifact@v7
         with:
-          name: premiere
+          name: premiere-ccx
           path: packages/plugin-premiere/release/*.ccx
           if-no-files-found: error
           retention-days: 1
