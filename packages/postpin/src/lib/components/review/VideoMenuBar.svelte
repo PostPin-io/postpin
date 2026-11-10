@@ -18,7 +18,7 @@
 		nextTimelineMode,
 		seekToMarker,
 		type TimelineMode,
-	} from "./VideoPlayer";
+	} from "./video-player";
 	import {
 		frameAtSeconds,
 		secondsAtFrame,

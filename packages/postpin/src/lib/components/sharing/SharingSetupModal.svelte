@@ -5,7 +5,7 @@
 	import OrganizationInvite from "./OrganizationInvite.svelte";
 	import AccessGrants from "./AccessGrants.svelte";
 	import TargetInvite from "./TargetInvite.svelte";
-	import ShareLinks from "./ShareLinks.svelte";
+	import ShareLinks from "./share-links/ShareLinks.svelte";
 	import X from "@lucide/svelte/icons/x";
 
 	const session = authClient.useSession();

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { formatTimecode, parseTimecode } from "@postpin-io/shared/logic/timecode";
-	import { clampToTimeline, frameFromInput } from "./timecodeInput.ts";
+	import { clampToTimeline, frameFromInput } from "./timecode-input.ts";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 
 	interface Props {

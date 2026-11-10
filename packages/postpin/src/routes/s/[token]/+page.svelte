@@ -2,13 +2,13 @@
 	import { page } from "$app/state";
 	import { GUEST_NAME_MAX_LENGTH } from "@postpin-io/shared/logic/share-links";
 	import ExportReview from "#lib/components/review/ExportReview.svelte";
-	import PageMeta from "#lib/components/PageMeta.svelte";
-	import ShareLinkError from "#lib/components/sharing/ShareLinkError.svelte";
+	import PageMeta from "#lib/components/layout/PageMeta.svelte";
+	import ShareLinkError from "#lib/components/share-view/ShareLinkError.svelte";
 	import {
 		getShareInfo,
 		joinShare,
 		recordShareView,
-	} from "#lib/components/sharing/share-view.remote.ts";
+	} from "#lib/components/share-view/share-view.remote.ts";
 
 	const token = $derived(page.params.token!);
 	const infoQuery = $derived(getShareInfo(token));

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { handleReviewShortcut } from "#lib/components/review/reviewShortcuts.ts";
+import { handleReviewShortcut } from "#lib/components/review/review-shortcuts.ts";
 
 /** Element stand-in for isTypingTarget's instanceof check; inputs and dialogs match a selector */
 class FakeElement {

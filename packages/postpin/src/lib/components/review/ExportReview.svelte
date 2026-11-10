@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from "svelte";
-	import { handleReviewShortcut } from "#lib/components/review/reviewShortcuts.ts";
+	import { handleReviewShortcut } from "#lib/components/review/review-shortcuts.ts";
 	import {
 		getExport,
 		getMovieBarcode,
@@ -8,26 +8,26 @@
 		getSeekSprites,
 		getShotThumbnails,
 		getUrl,
-	} from "./export.remote.ts";
+	} from "./export-view.remote.ts";
 	import NoteOverlay from "./NoteOverlay.svelte";
-	import PageMeta from "#lib/components/PageMeta.svelte";
-	import ShareHeader from "#lib/components/sharing/ShareHeader.svelte";
+	import PageMeta from "#lib/components/layout/PageMeta.svelte";
+	import ShareHeader from "#lib/components/share-view/ShareHeader.svelte";
 	import Timeline from "#lib/components/review/Timeline.svelte";
 	import ShotGrid from "#lib/components/review/ShotGrid.svelte";
 	import MovieBarcode from "#lib/components/review/MovieBarcode.svelte";
 
-	import Header from "#lib/components/Header.svelte";
-	import LoadingAnimation from "#lib/components/LoadingAnimation.svelte";
-	import MarkerPanel from "#lib/components/review/MarkerPanel.svelte";
-	import { markerFilter } from "#lib/components/review/markerFilter.svelte.ts";
+	import Header from "#lib/components/layout/Header.svelte";
+	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
+	import MarkerPanel from "#lib/components/review/markers/MarkerPanel.svelte";
+	import { markerFilter } from "#lib/components/review/markers/marker-filter.svelte.ts";
 	import VideoMenuBar from "#lib/components/review/VideoMenuBar.svelte";
 	import VideoPlayer, { HLS, type VideoSource } from "#lib/components/review/VideoPlayer.svelte";
 	import { Pane, Splitpanes } from "svelte-splitpanes";
 
 	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 	import { frameAtSeconds, secondsAtFrame } from "@postpin-io/shared/logic/timecode";
-	import { getMarkers } from "#lib/components/review/MarkerPanel.remote.ts";
-	import type { TimelineMode } from "#lib/components/review/VideoPlayer.ts";
+	import { getMarkers } from "#lib/components/review/markers/markers.remote.ts";
+	import type { TimelineMode } from "#lib/components/review/video-player.ts";
 	import {
 		defaultLayout,
 		normalizeSizes,
@@ -36,14 +36,14 @@
 		parseTimelineMode,
 		seekThumbnailTiles,
 		type PaneLayout,
-	} from "#lib/components/review/exportView.ts";
+	} from "#lib/components/review/export-view.ts";
 
 	import CheckCircle from "@lucide/svelte/icons/check-circle";
 
 	import { jobStateBadges } from "#lib/job-status.ts";
 
-	import { setShareContext, type ShareContext } from "./shareContext.ts";
-	import { markersKey } from "./markerScope.ts";
+	import { setShareContext, type ShareContext } from "./share-context.ts";
+	import { markersKey } from "./markers/marker-scope.ts";
 
 	interface Props {
 		exportId: string;

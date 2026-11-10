@@ -1,12 +1,12 @@
 <script lang="ts">
-	import PageMeta from "#lib/components/PageMeta.svelte";
+	import PageMeta from "#lib/components/layout/PageMeta.svelte";
 	import { page } from "$app/state";
 	import { onMount } from "svelte";
 	import { getTimelines } from "./timeline.remote.ts";
-	import { getUrl } from "#lib/components/review/export.remote.ts";
-	import NewTimelineModal from "#lib/components/NewTimelineModal.svelte";
-	import RenameTimelineModal from "#lib/components/RenameTimelineModal.svelte";
-	import DeleteTimelineModal from "#lib/components/DeleteTimelineModal.svelte";
+	import { getUrl } from "#lib/components/review/export-view.remote.ts";
+	import NewTimelineModal from "#lib/components/timelines/NewTimelineModal.svelte";
+	import RenameTimelineModal from "#lib/components/timelines/RenameTimelineModal.svelte";
+	import DeleteTimelineModal from "#lib/components/timelines/DeleteTimelineModal.svelte";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";

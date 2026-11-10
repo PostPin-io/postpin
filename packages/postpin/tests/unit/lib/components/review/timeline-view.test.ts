@@ -8,7 +8,7 @@ import {
 	tickStep,
 	timelineCuts,
 	visibleTicks,
-} from "#lib/components/review/timelineView.ts";
+} from "#lib/components/review/timeline-view.ts";
 
 const clip = (id: string, start: number, duration: number): Clip => ({
 	id,

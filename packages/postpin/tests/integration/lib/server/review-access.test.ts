@@ -6,7 +6,7 @@ import {
 	getSeekSprites,
 	getShotThumbnails,
 	getUrl,
-} from "#lib/components/review/export.remote.ts";
+} from "#lib/components/review/export-view.remote.ts";
 import { createShareGuest } from "#lib/server/share-guests.ts";
 import { GET as masterGET } from "../../../../src/routes/media/[media]/master.m3u8/+server.ts";
 import { GET as renditionGET } from "../../../../src/routes/media/[media]/[file].m3u8/+server.ts";

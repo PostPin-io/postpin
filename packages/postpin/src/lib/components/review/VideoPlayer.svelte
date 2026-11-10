@@ -11,7 +11,7 @@
 
 <script lang="ts">
 	import { untrack, type Snippet } from "svelte";
-	import LoadingAnimation from "#lib/components/LoadingAnimation.svelte";
+	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
 	import type { HlsJsVideoElement } from "@videojs/html/media/hlsjs-video";
 	import type { FrameTiming } from "@postpin-io/shared/logic/timecode";
 

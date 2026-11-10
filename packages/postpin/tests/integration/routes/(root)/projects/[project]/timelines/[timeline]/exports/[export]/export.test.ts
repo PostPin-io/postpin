@@ -7,7 +7,7 @@ import {
 	getSeekSprites,
 	getShotThumbnails,
 	getUrl,
-} from "#lib/components/review/export.remote.ts";
+} from "#lib/components/review/export-view.remote.ts";
 import {
 	contentWorld,
 	signInAs,

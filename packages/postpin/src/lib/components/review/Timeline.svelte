@@ -3,7 +3,7 @@
 	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 	import { onMount } from "svelte";
 	import type { ThumbnailElement, ThumbnailImage } from "@videojs/html";
-	import { seekToMarker, type TimelineMode } from "#lib/components/review/VideoPlayer.ts";
+	import { seekToMarker, type TimelineMode } from "#lib/components/review/video-player.ts";
 	import {
 		adjacentCut,
 		buildLanes,
@@ -12,16 +12,16 @@
 		tickStep,
 		timelineCuts,
 		visibleTicks,
-	} from "./timelineView.ts";
-	import { getMarkers, updateMarker } from "#lib/components/review/MarkerPanel.remote.ts";
+	} from "./timeline-view.ts";
+	import { getMarkers, updateMarker } from "#lib/components/review/markers/markers.remote.ts";
 	import {
 		formatTimecode,
 		frameAtSeconds,
 		secondsAtFrame,
 	} from "@postpin-io/shared/logic/timecode";
-	import type { ReviewMarker } from "#lib/components/review/types.ts";
-	import { useShare } from "./shareContext.ts";
-	import { markersKey } from "./markerScope.ts";
+	import type { ReviewMarker } from "#lib/components/review/markers/types.ts";
+	import { useShare } from "./share-context.ts";
+	import { markersKey } from "./markers/marker-scope.ts";
 
 	interface Props {
 		snapshot: TimelineSnapshot;
