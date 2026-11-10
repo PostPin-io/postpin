@@ -1,5 +1,6 @@
 import esbuild from "esbuild";
 import fs from "node:fs/promises";
+import path from "node:path";
 
 const { version } = JSON.parse(await fs.readFile("package.json", "utf8"));
 const dev = process.argv.includes("--dev");
@@ -7,6 +8,19 @@ const watch = process.argv.includes("--watch");
 const install = process.argv.includes("--install");
 const PLUGIN_DIR =
 	"/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/io.postpin.plugin.resolve";
+
+// Resolve's native module differs per platform: darwin (universal), win32-x64 or win32-arm64
+const target =
+	process.argv.find((arg) => arg.startsWith("--target="))?.slice("--target=".length) ??
+	(process.platform === "darwin" ? "darwin" : `${process.platform}-${process.arch}`);
+const nativeModule = {
+	name: "native-module",
+	setup(build) {
+		build.onResolve({ filter: /WorkflowIntegration\.node$/ }, () => ({
+			path: path.resolve("native", target, "WorkflowIntegration.node"),
+		}));
+	},
+};
 
 if (install) {
 	try {
@@ -63,6 +77,7 @@ const builds = [
 		external: ["electron"],
 		minify: true,
 		sourcemap: true,
+		plugins: [nativeModule],
 		loader: {
 			".node": "copy",
 		},
@@ -87,7 +102,10 @@ const builds = [
 
 if (watch) {
 	for (const options of builds) {
-		const ctx = await esbuild.context({ ...options, plugins: [logRebuilds(options.outfile)] });
+		const ctx = await esbuild.context({
+			...options,
+			plugins: [...(options.plugins ?? []), logRebuilds(options.outfile)],
+		});
 		await ctx.watch();
 	}
 } else {
