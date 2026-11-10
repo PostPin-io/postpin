@@ -1,15 +1,15 @@
 <script lang="ts">
-	import PageMeta from "#lib/components/PageMeta.svelte";
+	import PageMeta from "#lib/components/layout/PageMeta.svelte";
 	import { onMount } from "svelte";
 	import { getProjects } from "./project.remote.ts";
 	import { getMemberships } from "../profile/profile.remote.ts";
-	import { getUrl } from "../projects/[project]/timelines/[timeline]/exports/[export]/export.remote.ts";
-	import NewProjectModal from "#lib/components/NewProjectModal.svelte";
-	import RenameProjectModal from "#lib/components/RenameProjectModal.svelte";
-	import NewOrgModal from "../../../lib/components/NewOrgModal.svelte";
-	import DeleteProjectModal from "#lib/components/DeleteProjectModal.svelte";
+	import { getUrl } from "#lib/components/review/export-view.remote.ts";
+	import NewProjectModal from "#lib/components/projects/NewProjectModal.svelte";
+	import RenameProjectModal from "#lib/components/projects/RenameProjectModal.svelte";
+	import NewOrgModal from "../../../lib/components/organizations/NewOrgModal.svelte";
+	import DeleteProjectModal from "#lib/components/projects/DeleteProjectModal.svelte";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
-	import LoadingAnimation from "#lib/components/LoadingAnimation.svelte";
+	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";

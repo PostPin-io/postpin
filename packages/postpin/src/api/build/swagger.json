@@ -141,6 +141,10 @@
 						"type": "string",
 						"nullable": true
 					},
+					"guestId": {
+						"type": "string",
+						"nullable": true
+					},
 					"authorId": {
 						"type": "string",
 						"nullable": true
@@ -176,6 +180,7 @@
 				},
 				"required": [
 					"nleId",
+					"guestId",
 					"authorId",
 					"categoryId",
 					"exportId",
@@ -195,6 +200,10 @@
 			"MarkerWithResponses": {
 				"properties": {
 					"nleId": {
+						"type": "string",
+						"nullable": true
+					},
+					"guestId": {
 						"type": "string",
 						"nullable": true
 					},
@@ -239,6 +248,7 @@
 				},
 				"required": [
 					"nleId",
+					"guestId",
 					"authorId",
 					"categoryId",
 					"exportId",

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import PageMeta from "#lib/components/PageMeta.svelte";
+	import PageMeta from "#lib/components/layout/PageMeta.svelte";
 	import { authClient } from "#lib/auth-client.ts";
 	let formMessage = $state<{ type: "success" | "error"; text: string } | null>(null);
 

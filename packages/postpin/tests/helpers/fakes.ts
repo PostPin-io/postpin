@@ -5,7 +5,7 @@ import { S3 } from "@aws-sdk/client-s3";
  * tests assert on `fakes.*` and the setup file clears them before each test.
  */
 
-export type SentEmail = { to: string; subject: string; text: string };
+export type SentEmail = { to: string; subject: string; text: string; replyTo?: string };
 export type S3Call = { command: string; input: Record<string, unknown> };
 export type QueueCall = { queue: string; method: string; args: unknown[] };
 
@@ -29,8 +29,14 @@ export const fakes = {
 };
 
 export const fakeEmailModule = {
-	sendEmail: async (to: string, subject: string, text: string) => {
-		fakes.emails.push({ to, subject, text });
+	sendEmail: async (
+		to: string,
+		subject: string,
+		text: string,
+		options: { replyTo?: string } = {},
+	) => {
+		// replyTo only when set, so the existing tests' toEqual(...) still match
+		fakes.emails.push({ to, subject, text, ...(options.replyTo && { replyTo: options.replyTo }) });
 		return { messageId: `fake-${fakes.emails.length}` };
 	},
 };

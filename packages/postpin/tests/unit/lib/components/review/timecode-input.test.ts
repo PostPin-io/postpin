@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampToTimeline, frameFromInput } from "#lib/components/review/timecodeInput.ts";
+import { clampToTimeline, frameFromInput } from "#lib/components/review/timecode-input.ts";
 
 describe("frameFromInput", () => {
 	it("adds the timeline start", () => {

@@ -98,7 +98,7 @@ export async function createCategory(
 export async function createMarker(
 	exp: { id: string },
 	category: { id: string },
-	data: { author?: { id: string }; frame?: number } = {},
+	data: { author?: { id: string }; guest?: { id: string }; frame?: number } = {},
 ) {
 	return prisma.marker.create({
 		data: {
@@ -107,16 +107,34 @@ export async function createMarker(
 			exportId: exp.id,
 			categoryId: category.id,
 			authorId: data.author?.id ?? null,
+			guestId: data.guest?.id ?? null,
 		},
 	});
 }
 
 export async function createShareLink(
 	exp: { id: string },
-	data: { creator?: { id: string } } = {},
+	data: { creator?: { id: string }; expiresAt?: Date; revokedAt?: Date } = {},
 ) {
 	return prisma.shareLink.create({
-		data: { exportId: exp.id, creatorId: data.creator?.id ?? null, markerPanelVisible: true },
+		data: {
+			exportId: exp.id,
+			creatorId: data.creator?.id ?? null,
+			token: `share-token-${next()}-${randomUUID()}`,
+			expiresAt: data.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+			revokedAt: data.revokedAt ?? null,
+		},
+	});
+}
+
+export async function createShareGuest(link: { id: string }, data: { name?: string } = {}) {
+	const i = next();
+	return prisma.shareGuest.create({
+		data: {
+			shareLinkId: link.id,
+			name: data.name ?? `Guest ${i}`,
+			sessionTokenHash: `hash-${i}-${randomUUID()}`,
+		},
 	});
 }
 

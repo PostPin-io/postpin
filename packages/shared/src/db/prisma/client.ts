@@ -144,3 +144,13 @@ export type Export = Prisma.ExportModel;
  *
  */
 export type ShareLink = Prisma.ShareLinkModel;
+/**
+ * Model ShareGuest
+ * A visitor who opened a share link and entered a name. One per browser (cookie).
+ */
+export type ShareGuest = Prisma.ShareGuestModel;
+/**
+ * Model ShareLinkMail
+ * One "send by e-mail" of a share link. Counts toward the sender's daily limit per link.
+ */
+export type ShareLinkMail = Prisma.ShareLinkMailModel;

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import PageMeta from "#lib/components/PageMeta.svelte";
+	import PageMeta from "#lib/components/layout/PageMeta.svelte";
 	import { onMount } from "svelte";
 	import { jobStateBadges } from "#lib/job-status.ts";
 	import {

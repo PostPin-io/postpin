@@ -197,6 +197,10 @@ export type CategoryWhereInput = {
 	createdById?: Prisma.StringNullableFilter<"Category"> | string | null;
 	markers?: Prisma.MarkerListRelationFilter;
 	project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>;
+	guestOfProject?: Prisma.XOR<
+		Prisma.ProjectNullableScalarRelationFilter,
+		Prisma.ProjectWhereInput
+	> | null;
 	createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null;
 };
 
@@ -210,6 +214,7 @@ export type CategoryOrderByWithRelationInput = {
 	createdById?: Prisma.SortOrderInput | Prisma.SortOrder;
 	markers?: Prisma.MarkerOrderByRelationAggregateInput;
 	project?: Prisma.ProjectOrderByWithRelationInput;
+	guestOfProject?: Prisma.ProjectOrderByWithRelationInput;
 	createdBy?: Prisma.UserOrderByWithRelationInput;
 };
 
@@ -228,6 +233,10 @@ export type CategoryWhereUniqueInput = Prisma.AtLeast<
 		createdById?: Prisma.StringNullableFilter<"Category"> | string | null;
 		markers?: Prisma.MarkerListRelationFilter;
 		project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>;
+		guestOfProject?: Prisma.XOR<
+			Prisma.ProjectNullableScalarRelationFilter,
+			Prisma.ProjectWhereInput
+		> | null;
 		createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null;
 	},
 	"id" | "projectId_name"
@@ -269,6 +278,7 @@ export type CategoryCreateInput = {
 	updatedAt?: Date | string;
 	markers?: Prisma.MarkerCreateNestedManyWithoutCategoryInput;
 	project: Prisma.ProjectCreateNestedOneWithoutCategoriesInput;
+	guestOfProject?: Prisma.ProjectCreateNestedOneWithoutGuestCategoryInput;
 	createdBy?: Prisma.UserCreateNestedOneWithoutCreatedCategoriesInput;
 };
 
@@ -281,6 +291,7 @@ export type CategoryUncheckedCreateInput = {
 	projectId: string;
 	createdById?: string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutCategoryInput;
+	guestOfProject?: Prisma.ProjectUncheckedCreateNestedOneWithoutGuestCategoryInput;
 };
 
 export type CategoryUpdateInput = {
@@ -291,6 +302,7 @@ export type CategoryUpdateInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	markers?: Prisma.MarkerUpdateManyWithoutCategoryNestedInput;
 	project?: Prisma.ProjectUpdateOneRequiredWithoutCategoriesNestedInput;
+	guestOfProject?: Prisma.ProjectUpdateOneWithoutGuestCategoryNestedInput;
 	createdBy?: Prisma.UserUpdateOneWithoutCreatedCategoriesNestedInput;
 };
 
@@ -303,6 +315,7 @@ export type CategoryUncheckedUpdateInput = {
 	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutCategoryNestedInput;
+	guestOfProject?: Prisma.ProjectUncheckedUpdateOneWithoutGuestCategoryNestedInput;
 };
 
 export type CategoryCreateManyInput = {
@@ -381,6 +394,11 @@ export type CategoryMinOrderByAggregateInput = {
 	updatedAt?: Prisma.SortOrder;
 	projectId?: Prisma.SortOrder;
 	createdById?: Prisma.SortOrder;
+};
+
+export type CategoryNullableScalarRelationFilter = {
+	is?: Prisma.CategoryWhereInput | null;
+	isNot?: Prisma.CategoryWhereInput | null;
 };
 
 export type CategoryCreateNestedManyWithoutCreatedByInput = {
@@ -510,6 +528,15 @@ export type CategoryCreateNestedManyWithoutProjectInput = {
 	connect?: Prisma.CategoryWhereUniqueInput | Prisma.CategoryWhereUniqueInput[];
 };
 
+export type CategoryCreateNestedOneWithoutGuestOfProjectInput = {
+	create?: Prisma.XOR<
+		Prisma.CategoryCreateWithoutGuestOfProjectInput,
+		Prisma.CategoryUncheckedCreateWithoutGuestOfProjectInput
+	>;
+	connectOrCreate?: Prisma.CategoryCreateOrConnectWithoutGuestOfProjectInput;
+	connect?: Prisma.CategoryWhereUniqueInput;
+};
+
 export type CategoryUncheckedCreateNestedManyWithoutProjectInput = {
 	create?:
 		| Prisma.XOR<
@@ -553,6 +580,25 @@ export type CategoryUpdateManyWithoutProjectNestedInput = {
 	deleteMany?: Prisma.CategoryScalarWhereInput | Prisma.CategoryScalarWhereInput[];
 };
 
+export type CategoryUpdateOneWithoutGuestOfProjectNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.CategoryCreateWithoutGuestOfProjectInput,
+		Prisma.CategoryUncheckedCreateWithoutGuestOfProjectInput
+	>;
+	connectOrCreate?: Prisma.CategoryCreateOrConnectWithoutGuestOfProjectInput;
+	upsert?: Prisma.CategoryUpsertWithoutGuestOfProjectInput;
+	disconnect?: Prisma.CategoryWhereInput | boolean;
+	delete?: Prisma.CategoryWhereInput | boolean;
+	connect?: Prisma.CategoryWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.CategoryUpdateToOneWithWhereWithoutGuestOfProjectInput,
+			Prisma.CategoryUpdateWithoutGuestOfProjectInput
+		>,
+		Prisma.CategoryUncheckedUpdateWithoutGuestOfProjectInput
+	>;
+};
+
 export type CategoryUncheckedUpdateManyWithoutProjectNestedInput = {
 	create?:
 		| Prisma.XOR<
@@ -589,6 +635,7 @@ export type CategoryCreateWithoutCreatedByInput = {
 	updatedAt?: Date | string;
 	markers?: Prisma.MarkerCreateNestedManyWithoutCategoryInput;
 	project: Prisma.ProjectCreateNestedOneWithoutCategoriesInput;
+	guestOfProject?: Prisma.ProjectCreateNestedOneWithoutGuestCategoryInput;
 };
 
 export type CategoryUncheckedCreateWithoutCreatedByInput = {
@@ -599,6 +646,7 @@ export type CategoryUncheckedCreateWithoutCreatedByInput = {
 	updatedAt?: Date | string;
 	projectId: string;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutCategoryInput;
+	guestOfProject?: Prisma.ProjectUncheckedCreateNestedOneWithoutGuestCategoryInput;
 };
 
 export type CategoryCreateOrConnectWithoutCreatedByInput = {
@@ -662,6 +710,7 @@ export type CategoryCreateWithoutMarkersInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	project: Prisma.ProjectCreateNestedOneWithoutCategoriesInput;
+	guestOfProject?: Prisma.ProjectCreateNestedOneWithoutGuestCategoryInput;
 	createdBy?: Prisma.UserCreateNestedOneWithoutCreatedCategoriesInput;
 };
 
@@ -673,6 +722,7 @@ export type CategoryUncheckedCreateWithoutMarkersInput = {
 	updatedAt?: Date | string;
 	projectId: string;
 	createdById?: string | null;
+	guestOfProject?: Prisma.ProjectUncheckedCreateNestedOneWithoutGuestCategoryInput;
 };
 
 export type CategoryCreateOrConnectWithoutMarkersInput = {
@@ -710,6 +760,7 @@ export type CategoryUpdateWithoutMarkersInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	project?: Prisma.ProjectUpdateOneRequiredWithoutCategoriesNestedInput;
+	guestOfProject?: Prisma.ProjectUpdateOneWithoutGuestCategoryNestedInput;
 	createdBy?: Prisma.UserUpdateOneWithoutCreatedCategoriesNestedInput;
 };
 
@@ -721,6 +772,7 @@ export type CategoryUncheckedUpdateWithoutMarkersInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	guestOfProject?: Prisma.ProjectUncheckedUpdateOneWithoutGuestCategoryNestedInput;
 };
 
 export type CategoryCreateWithoutProjectInput = {
@@ -730,6 +782,7 @@ export type CategoryCreateWithoutProjectInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	markers?: Prisma.MarkerCreateNestedManyWithoutCategoryInput;
+	guestOfProject?: Prisma.ProjectCreateNestedOneWithoutGuestCategoryInput;
 	createdBy?: Prisma.UserCreateNestedOneWithoutCreatedCategoriesInput;
 };
 
@@ -741,6 +794,7 @@ export type CategoryUncheckedCreateWithoutProjectInput = {
 	updatedAt?: Date | string;
 	createdById?: string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutCategoryInput;
+	guestOfProject?: Prisma.ProjectUncheckedCreateNestedOneWithoutGuestCategoryInput;
 };
 
 export type CategoryCreateOrConnectWithoutProjectInput = {
@@ -754,6 +808,36 @@ export type CategoryCreateOrConnectWithoutProjectInput = {
 export type CategoryCreateManyProjectInputEnvelope = {
 	data: Prisma.CategoryCreateManyProjectInput | Prisma.CategoryCreateManyProjectInput[];
 	skipDuplicates?: boolean;
+};
+
+export type CategoryCreateWithoutGuestOfProjectInput = {
+	id?: string;
+	name: string;
+	color: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	markers?: Prisma.MarkerCreateNestedManyWithoutCategoryInput;
+	project: Prisma.ProjectCreateNestedOneWithoutCategoriesInput;
+	createdBy?: Prisma.UserCreateNestedOneWithoutCreatedCategoriesInput;
+};
+
+export type CategoryUncheckedCreateWithoutGuestOfProjectInput = {
+	id?: string;
+	name: string;
+	color: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	projectId: string;
+	createdById?: string | null;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutCategoryInput;
+};
+
+export type CategoryCreateOrConnectWithoutGuestOfProjectInput = {
+	where: Prisma.CategoryWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.CategoryCreateWithoutGuestOfProjectInput,
+		Prisma.CategoryUncheckedCreateWithoutGuestOfProjectInput
+	>;
 };
 
 export type CategoryUpsertWithWhereUniqueWithoutProjectInput = {
@@ -784,6 +868,48 @@ export type CategoryUpdateManyWithWhereWithoutProjectInput = {
 	>;
 };
 
+export type CategoryUpsertWithoutGuestOfProjectInput = {
+	update: Prisma.XOR<
+		Prisma.CategoryUpdateWithoutGuestOfProjectInput,
+		Prisma.CategoryUncheckedUpdateWithoutGuestOfProjectInput
+	>;
+	create: Prisma.XOR<
+		Prisma.CategoryCreateWithoutGuestOfProjectInput,
+		Prisma.CategoryUncheckedCreateWithoutGuestOfProjectInput
+	>;
+	where?: Prisma.CategoryWhereInput;
+};
+
+export type CategoryUpdateToOneWithWhereWithoutGuestOfProjectInput = {
+	where?: Prisma.CategoryWhereInput;
+	data: Prisma.XOR<
+		Prisma.CategoryUpdateWithoutGuestOfProjectInput,
+		Prisma.CategoryUncheckedUpdateWithoutGuestOfProjectInput
+	>;
+};
+
+export type CategoryUpdateWithoutGuestOfProjectInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	color?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	markers?: Prisma.MarkerUpdateManyWithoutCategoryNestedInput;
+	project?: Prisma.ProjectUpdateOneRequiredWithoutCategoriesNestedInput;
+	createdBy?: Prisma.UserUpdateOneWithoutCreatedCategoriesNestedInput;
+};
+
+export type CategoryUncheckedUpdateWithoutGuestOfProjectInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	color?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutCategoryNestedInput;
+};
+
 export type CategoryCreateManyCreatedByInput = {
 	id?: string;
 	name: string;
@@ -801,6 +927,7 @@ export type CategoryUpdateWithoutCreatedByInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	markers?: Prisma.MarkerUpdateManyWithoutCategoryNestedInput;
 	project?: Prisma.ProjectUpdateOneRequiredWithoutCategoriesNestedInput;
+	guestOfProject?: Prisma.ProjectUpdateOneWithoutGuestCategoryNestedInput;
 };
 
 export type CategoryUncheckedUpdateWithoutCreatedByInput = {
@@ -811,6 +938,7 @@ export type CategoryUncheckedUpdateWithoutCreatedByInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutCategoryNestedInput;
+	guestOfProject?: Prisma.ProjectUncheckedUpdateOneWithoutGuestCategoryNestedInput;
 };
 
 export type CategoryUncheckedUpdateManyWithoutCreatedByInput = {
@@ -838,6 +966,7 @@ export type CategoryUpdateWithoutProjectInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	markers?: Prisma.MarkerUpdateManyWithoutCategoryNestedInput;
+	guestOfProject?: Prisma.ProjectUpdateOneWithoutGuestCategoryNestedInput;
 	createdBy?: Prisma.UserUpdateOneWithoutCreatedCategoriesNestedInput;
 };
 
@@ -849,6 +978,7 @@ export type CategoryUncheckedUpdateWithoutProjectInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutCategoryNestedInput;
+	guestOfProject?: Prisma.ProjectUncheckedUpdateOneWithoutGuestCategoryNestedInput;
 };
 
 export type CategoryUncheckedUpdateManyWithoutProjectInput = {
@@ -908,6 +1038,7 @@ export type CategorySelect<
 		createdById?: boolean;
 		markers?: boolean | Prisma.Category$markersArgs<ExtArgs>;
 		project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>;
+		guestOfProject?: boolean | Prisma.Category$guestOfProjectArgs<ExtArgs>;
 		createdBy?: boolean | Prisma.Category$createdByArgs<ExtArgs>;
 		_count?: boolean | Prisma.CategoryCountOutputTypeDefaultArgs<ExtArgs>;
 	},
@@ -969,6 +1100,7 @@ export type CategoryInclude<
 > = {
 	markers?: boolean | Prisma.Category$markersArgs<ExtArgs>;
 	project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>;
+	guestOfProject?: boolean | Prisma.Category$guestOfProjectArgs<ExtArgs>;
 	createdBy?: boolean | Prisma.Category$createdByArgs<ExtArgs>;
 	_count?: boolean | Prisma.CategoryCountOutputTypeDefaultArgs<ExtArgs>;
 };
@@ -992,6 +1124,10 @@ export type $CategoryPayload<
 	objects: {
 		markers: Prisma.$MarkerPayload<ExtArgs>[];
 		project: Prisma.$ProjectPayload<ExtArgs>;
+		/**
+		 * Back side of Project.guestCategory; set iff this is the project's guest category
+		 */
+		guestOfProject: Prisma.$ProjectPayload<ExtArgs> | null;
 		createdBy: Prisma.$UserPayload<ExtArgs> | null;
 	};
 	scalars: runtime.Types.Extensions.GetPayloadResult<
@@ -1563,6 +1699,19 @@ export interface Prisma__CategoryClient<
 		ExtArgs,
 		GlobalOmitOptions
 	>;
+	guestOfProject<T extends Prisma.Category$guestOfProjectArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.Category$guestOfProjectArgs<ExtArgs>>,
+	): Prisma.Prisma__ProjectClient<
+		runtime.Types.Result.GetResult<
+			Prisma.$ProjectPayload<ExtArgs>,
+			T,
+			"findUniqueOrThrow",
+			GlobalOmitOptions
+		> | null,
+		null,
+		ExtArgs,
+		GlobalOmitOptions
+	>;
 	createdBy<T extends Prisma.Category$createdByArgs<ExtArgs> = {}>(
 		args?: Prisma.Subset<T, Prisma.Category$createdByArgs<ExtArgs>>,
 	): Prisma.Prisma__UserClient<
@@ -2065,6 +2214,27 @@ export type Category$markersArgs<
 	take?: number;
 	skip?: number;
 	distinct?: Prisma.MarkerScalarFieldEnum | Prisma.MarkerScalarFieldEnum[];
+};
+
+/**
+ * Category.guestOfProject
+ */
+export type Category$guestOfProjectArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the Project
+	 */
+	select?: Prisma.ProjectSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the Project
+	 */
+	omit?: Prisma.ProjectOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.ProjectInclude<ExtArgs> | null;
+	where?: Prisma.ProjectWhereInput;
 };
 
 /**

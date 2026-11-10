@@ -79,7 +79,7 @@ describe("getSharingTarget", () => {
 				timelineId: w.tlA.id,
 				exportId: w.expA.id,
 			}),
-		).toEqual({ type: "export", id: w.expA.id, name: "Export A" });
+		).toEqual({ type: "export", id: w.expA.id, name: "Export A", timelineName: "Cut A" });
 	});
 
 	it("404 when the ids don't belong together", async () => {

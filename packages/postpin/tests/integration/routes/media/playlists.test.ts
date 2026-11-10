@@ -61,7 +61,8 @@ async function as(role: Role, grantOn?: { projectId: string } | { timelineId: st
 	return m;
 }
 
-const params = (p: Record<string, string>) => ({ params: p }) as never;
+const params = (p: Record<string, string>) =>
+	({ params: p, url: new URL("http://localhost/") }) as never;
 // the handlers return MaybePromise<Response>; always a promise here
 const master = async (event: never) => await masterGET(event);
 const rendition = async (event: never) => await renditionGET(event);

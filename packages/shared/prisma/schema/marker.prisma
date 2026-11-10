@@ -17,15 +17,20 @@ model Marker {
   /// Postgres checks this right after a cascade removes categories — NOT at the end of
   /// the outer statement. Deleting a project/org must delete markers first: see purgeExports().
 
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: NoAction)
+  category   Category    @relation(fields: [categoryId], references: [id], onDelete: NoAction)
   categoryId String
-  author     User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  author     User?       @relation(fields: [authorId], references: [id], onDelete: SetNull)
   authorId   String?
+  /// Set for markers written by a share-link visitor. At most one of authorId / guestId (CHECK).
+  guest      ShareGuest? @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  guestId    String?
+
   // id of the marker in the NLE, e.g. "<session origin id>:<memory location number>" in Pro Tools.
   // Unique per export, since every export of a timeline gets the same NLE markers.
-  nleId      String?
+  nleId String?
 
   @@unique([exportId, nleId])
+  @@index([guestId])
   @@index([exportId])
   @@index([categoryId])
   @@map("marker")
@@ -42,8 +47,10 @@ model Category {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId String
+  project        Project  @relation("ProjectCategories", fields: [projectId], references: [id], onDelete: Cascade)
+  projectId      String
+  /// Back side of Project.guestCategory; set iff this is the project's guest category
+  guestOfProject Project? @relation("ProjectGuestCategory")
 
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdById String?

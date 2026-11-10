@@ -18,7 +18,7 @@
 		nextTimelineMode,
 		seekToMarker,
 		type TimelineMode,
-	} from "./VideoPlayer";
+	} from "./video-player";
 	import {
 		frameAtSeconds,
 		secondsAtFrame,
@@ -41,6 +41,7 @@
 		fullscreen = false,
 		onToggleMute,
 		onFullscreen,
+		timelineControls = true,
 	}: {
 		markers: { frame: number }[];
 		timing: FrameTiming;
@@ -60,6 +61,8 @@
 		fullscreen?: boolean;
 		onToggleMute?: () => void;
 		onFullscreen?: () => void;
+		/** Timeline mode and shot-grid buttons; off when there is no timeline (share links) */
+		timelineControls?: boolean;
 	} = $props();
 
 	// Absolute timeline frame, like marker frames
@@ -191,7 +194,7 @@
 			</button>
 		</div>
 		<div class="flex items-center gap-1 justify-self-end">
-			{#if !fullscreen}
+			{#if !fullscreen && timelineControls}
 				<button
 					class="btn btn-square btn-ghost btn-xs"
 					title={timelineMode === "full"
@@ -229,7 +232,7 @@
 				</button>
 			{/if}
 
-			{#if !fullscreen}
+			{#if !fullscreen && timelineControls}
 				<button
 					class="btn btn-square btn-ghost btn-xs"
 					title={viewMode === "timeline" ? "Show Shot Grid" : "Show Video"}

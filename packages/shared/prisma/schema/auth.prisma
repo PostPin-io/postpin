@@ -13,11 +13,12 @@ model User {
   invitations     Invitation[]
 
   lastActiveOrganizationId String?
-  lastActiveOrganization   Organization? @relation("LastActiveOrganization", fields: [lastActiveOrganizationId], references: [id], onDelete: SetNull)
+  lastActiveOrganization   Organization?   @relation("LastActiveOrganization", fields: [lastActiveOrganizationId], references: [id], onDelete: SetNull)
   markers                  Marker[]
   responses                Response[]
   createdGrants            MemberGrant[]
   createdShareLinks        ShareLink[]
+  sentShareLinkMails       ShareLinkMail[]
   createdCategories        Category[]
   inviteLinks              InviteLink[]
 

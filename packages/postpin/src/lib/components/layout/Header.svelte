@@ -1,0 +1,185 @@
+<script lang="ts">
+	import { resolve } from "$app/paths";
+	import { page } from "$app/state";
+	import { authClient } from "#lib/auth-client.ts";
+	import { goto, refreshAll } from "$app/navigation";
+
+	import type { Snippet } from "svelte";
+	import Logo from "#lib/components/layout/Logo.svelte";
+	import Share from "@lucide/svelte/icons/share";
+	import { getShareLinks } from "#lib/components/sharing/share-links/share-links.remote.ts";
+
+	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
+
+	import { roleAllows, ORG_ROLES } from "#lib/roles.ts";
+	import type { Role } from "@postpin-io/shared/db/enums";
+
+	let sharingSetupModal: SharingSetupModal | null = null;
+	const session = authClient.useSession();
+	const organizations = authClient.useListOrganizations();
+	const activeMember = authClient.useActiveMember();
+
+	const activeRole = $derived.by(() => {
+		const role = $activeMember.data?.role;
+		return ORG_ROLES.includes(role as Role) ? (role as Role) : null;
+	});
+
+	const canEditSettings = $derived(
+		activeRole ? roleAllows(activeRole, "organization", "updateSettings") : false,
+	);
+	// On an export page: the number of active share links next to the share button
+	const exportId = $derived(page.params.export);
+	const mayShareLinks = $derived(
+		!!exportId && !!activeRole && roleAllows(activeRole, "shareLink", "create"),
+	);
+	const shareLinksQuery = $derived(mayShareLinks ? getShareLinks(exportId!) : undefined);
+	const shareLinkCount = $derived(
+		shareLinksQuery?.current?.filter((link) => link.status === "active").length ?? 0,
+	);
+
+	let activeOrganizationId = $derived($session.data?.session.activeOrganizationId);
+	let activeOrganization = $derived(
+		$organizations.data?.find((org) => org.id === activeOrganizationId),
+	);
+
+	async function switchOrganization(organizationId: string) {
+		(document.activeElement as HTMLElement | null)?.blur();
+		const { error } = await authClient.organization.setActive({ organizationId });
+		if (error) {
+			alert(`Could not switch organization: ${error.message}`);
+			return;
+		}
+		goto(resolve("/(root)/dashboard"), { replaceState: true });
+		refreshAll();
+	}
+
+	async function logout() {
+		await authClient.signOut();
+		await goto(resolve("/auth/login"));
+	}
+
+	interface Props {
+		children?: Snippet;
+	}
+
+	let { children }: Props = $props();
+</script>
+
+<header class="w-full rounded-md bg-base-200 shadow-sm max-lg:collapse">
+	<input id="navbar-1-toggle" class="peer hidden" type="checkbox" />
+	<label for="navbar-1-toggle" class="fixed inset-0 hidden max-lg:peer-checked:block"></label>
+
+	<nav class="collapse-title navbar">
+		<div class="navbar-start">
+			<label for="navbar-1-toggle" class="btn btn-ghost lg:hidden">
+				<svg
+					aria-label="Menu"
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-5 w-5"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+					><path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M4 6h16M4 12h8m-8 6h16"
+					/></svg
+				>
+			</label>
+			<a href={resolve("/(root)/dashboard")} class="btn btn-ghost text-xl">
+				<Logo class="h-6 w-auto" />
+				{#if activeOrganization}
+					{activeOrganization.name}
+					<span class="font-normal text-base-content/40">|</span>
+				{/if}
+				PostPin
+			</a>
+			{#if activeOrganization}
+				<a href={`/organizations/${activeOrganization.slug}/members`} class="btn btn-ghost btn-sm"
+					>Members</a
+				>
+				{#if canEditSettings}
+					<a
+						href={`/organizations/${activeOrganization.slug}/settings`}
+						class="btn btn-ghost btn-sm">Settings</a
+					>
+				{/if}
+			{/if}
+			<ul class="menu menu-horizontal px-1">
+				{#if page.params.project && page.params.timeline}
+					<li>
+						<a
+							href={resolve("/(root)/projects/[project]/timelines/[timeline]/exports", {
+								project: page.params.project,
+								timeline: page.params.timeline,
+							})}
+							class="btn btn-ghost btn-sm">Exports</a
+						>
+					</li>
+				{/if}
+				{#if page.data.isSystemAdmin}
+					<li><a href={resolve("/(root)/admin")}>System</a></li>
+				{/if}
+			</ul>
+		</div>
+		<div class="navbar-center hidden lg:flex"></div>
+		{#if children}
+			<div class="navbar-center hidden lg:flex">{@render children()}</div>
+		{/if}
+		<div class="navbar-end">
+			<button
+				class="btn btn-ghost {shareLinkCount ? 'gap-1.5 px-3' : 'btn-square'}"
+				title="Share"
+				aria-label={shareLinkCount ? `Share (${shareLinkCount} active links)` : "Share"}
+				onclick={() => sharingSetupModal?.open()}
+			>
+				<Share class="h-5 w-5" />
+				{#if shareLinkCount}<span class="text-sm">{shareLinkCount}</span>{/if}
+			</button>
+
+			<div class="dropdown dropdown-end ml-2">
+				<div tabindex="0" role="button" class="btn btn-ghost">
+					{$session.data?.user.name ?? "Account"}
+				</div>
+				<ul
+					tabindex="-1"
+					class="menu dropdown-content z-10 mt-2 w-56 rounded-box bg-base-100 p-2 shadow"
+				>
+					{#if $organizations.data?.length}
+						<li class="menu-title">Organizations</li>
+						{#each $organizations.data as org (org.id)}
+							<li>
+								<button
+									class:menu-active={org.id === activeOrganizationId}
+									onclick={() => switchOrganization(org.id)}
+								>
+									{org.name}
+								</button>
+							</li>
+						{/each}
+						<div class="divider my-1"></div>
+					{/if}
+					<li><a href={resolve("/(root)/profile")}>Profile</a></li>
+					<li><button onclick={logout}>Logout</button></li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+
+	<div class="collapse-content z-1 lg:hidden">
+		<ul class="menu">
+			<li><button>Item 1</button></li>
+			<li>
+				<button>Parent</button>
+				<ul>
+					<li><button>Submenu 1</button></li>
+					<li><button>Submenu 2</button></li>
+				</ul>
+			</li>
+			<li><button>Item 3</button></li>
+		</ul>
+	</div>
+</header>
+
+<SharingSetupModal bind:this={sharingSetupModal} />

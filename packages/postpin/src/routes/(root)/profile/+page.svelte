@@ -1,5 +1,5 @@
 <script lang="ts">
-	import PageMeta from "#lib/components/PageMeta.svelte";
+	import PageMeta from "#lib/components/layout/PageMeta.svelte";
 	import { untrack } from "svelte";
 	import { refreshAll } from "$app/navigation";
 	import { authClient } from "#lib/auth-client.ts";
@@ -10,7 +10,7 @@
 		leaveOrganization,
 		revokeSession,
 	} from "./profile.remote.ts";
-	import NewOrgModal from "../../../lib/components/NewOrgModal.svelte";
+	import NewOrgModal from "../../../lib/components/organizations/NewOrgModal.svelte";
 	import { roleLabel } from "#lib/roles.ts";
 
 	type Message = { type: "success" | "error"; text: string } | null;

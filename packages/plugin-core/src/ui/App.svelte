@@ -4,6 +4,7 @@
 	import { setBridges } from "./context";
 	import Login from "./Login.svelte";
 	import MainScreen from "./MainScreen.svelte";
+	import { errorMessage } from "../errors";
 
 	interface Props {
 		nle: NleBridge;
@@ -40,7 +41,14 @@
 		<span class="loading loading-lg loading-spinner"></span>
 	</main>
 {:else if loggedIn}
-	<MainScreen {header} />
+	<svelte:boundary>
+		{#snippet failed(error: unknown, reset: () => void)}
+			An error occurred:<br />
+			<pre class="whitespace-pre-wrap">{errorMessage(error)}</pre>
+			<button class="btn btn-sm" onclick={reset}>Restart</button>
+		{/snippet}
+		<MainScreen {header} />
+	</svelte:boundary>
 {:else}
 	<Login />
 {/if}

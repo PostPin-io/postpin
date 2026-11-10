@@ -5,7 +5,7 @@ import {
 	nextPlaybackRate,
 	nextTimelineMode,
 	seekToMarker,
-} from "#lib/components/review/VideoPlayer.ts";
+} from "#lib/components/review/video-player.ts";
 
 describe("nextPlaybackRate", () => {
 	it("steps through every rate and wraps to the slowest", () => {

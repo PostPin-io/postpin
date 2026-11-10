@@ -31,7 +31,11 @@ const sessionHandler: Handle = async ({ event, resolve }) => {
 		await syncActiveOrganization(event.locals.session, event.locals.user);
 	}
 
-	const publicPaths = ["/", /^\/auth\//, /^\/api\//];
+	// /s/<token>: share-link visitors without an account; access is checked per request there.
+	// /_app/remote/: share-link visitors call remote functions too. Every remote function checks
+	// access itself (authorize / readExport / requireShareGuest / …); a new one MUST do so as well.
+	// /media/: HLS playlists, for guests too (`?share=<token>`); each route checks via readMedia.
+	const publicPaths = ["/", /^\/auth\//, /^\/api\//, /^\/s\//, /^\/_app\/remote\//, /^\/media\//];
 
 	const isPublicPath = publicPaths.some((path) => {
 		if (typeof path === "string") {

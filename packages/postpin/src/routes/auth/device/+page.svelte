@@ -1,5 +1,5 @@
 <script lang="ts">
-	import PageMeta from "#lib/components/PageMeta.svelte";
+	import PageMeta from "#lib/components/layout/PageMeta.svelte";
 	import { authClient } from "#lib/auth-client.ts"; //import the auth client
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";

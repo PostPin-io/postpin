@@ -63,6 +63,7 @@ jobs:
       - run: pnpm --filter @postpin-io/postpin run generate:api
       - run: pnpm --filter @postpin-io/postpin run build:api-client
       - run: pnpm --filter @postpin-io/shared run db:generate
+      - run: pnpm --filter @postpin-io/desktop run generate:ipc
       - run: pnpm --filter @postpin-io/plugin-electron run generate:ipc
       - run: git diff --exit-code
       - run: |

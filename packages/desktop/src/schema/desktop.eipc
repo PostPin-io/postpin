@@ -1,0 +1,21 @@
+module PostPinDesktop
+
+validator App = AND(
+    is_main_frame is true
+)
+
+structure HostOption {
+  id: string
+  name: string
+}
+
+// Picks the program (NLE / DAW) the app talks to
+[RendererAPI]
+[ContextBridge]
+[Validator=App]
+interface DesktopAPI {
+  listHosts() -> HostOption[]
+  getSelectedHost() -> string
+  // throws while an action runs on the current host
+  selectHost(id: string) -> boolean
+}

@@ -23,11 +23,16 @@ export const getSharingTarget = query(
 		if (exportId && timelineId) {
 			const exp = await prisma.export.findFirst({
 				where: { id: exportId, timelineId, timeline: { projectId, project: projectWhere } },
-				select: { id: true, name: true },
+				select: { id: true, name: true, timeline: { select: { name: true } } },
 			});
 			if (!exp) error(404, "Export not found");
 			await authorize("export", "read", { type: "export", id: exportId });
-			return { type: "export" as const, ...exp };
+			return {
+				type: "export" as const,
+				id: exp.id,
+				name: exp.name,
+				timelineName: exp.timeline.name,
+			};
 		}
 
 		if (timelineId) {

@@ -26,12 +26,18 @@ try {
 	console.error("Verification failed:", err);
 }
 
-export function sendEmail(to: string, subject: string, text: string) {
+export function sendEmail(
+	to: string,
+	subject: string,
+	text: string,
+	options: { replyTo?: string } = {},
+) {
 	const mailOptions = {
 		from: SMTP_MAIL_FROM ?? SMTP_USER,
 		to,
 		subject,
 		text,
+		replyTo: options.replyTo,
 	};
 
 	return transporter.sendMail(mailOptions);
