@@ -1,21 +1,64 @@
 <script lang="ts">
 	import { untrack } from "svelte";
-	import { NOTE_MAX_LENGTH, SHARE_LINK_PRESET_IDS } from "@postpin-io/shared/logic/share-links";
-	import { PRESET_LABELS, type ShareLinkFormValues } from "./shareLinks.ts";
+	import Check from "@lucide/svelte/icons/check";
+	import Clock from "@lucide/svelte/icons/clock";
+	import X from "@lucide/svelte/icons/x";
+	import {
+		NOTE_MAX_LENGTH,
+		SHARE_LINK_PRESET_IDS,
+		type ShareLinkPreset,
+	} from "@postpin-io/shared/logic/share-links";
+	import PanelLayout from "./PanelLayout.svelte";
+	import { remainingTime, type ShareLinkFormValues } from "./shareLinks.ts";
 
 	interface Props {
 		initial: ShareLinkFormValues;
-		/** Offers "Keep current" for the expiry */
+		/** Offers "keep" for the expiry */
 		editing?: boolean;
+		/** Editing: the link's current expiry, shown on the "keep" option */
+		currentExpiresAt?: Date;
 		submitLabel: string;
 		busy?: boolean;
 		onsubmit: (values: ShareLinkFormValues) => void;
 		oncancel?: () => void;
 	}
-	let { initial, editing = false, submitLabel, busy = false, onsubmit, oncancel }: Props = $props();
+	let {
+		initial,
+		editing = false,
+		currentExpiresAt,
+		submitLabel,
+		busy = false,
+		onsubmit,
+		oncancel,
+	}: Props = $props();
 
 	// Copied once: the form edits its own copy until it is submitted
 	let values = $state(untrack(() => ({ ...initial })));
+
+	// null = keep the current expiry (editing only)
+	const presets = $derived<(ShareLinkPreset | null)[]>(
+		editing ? [null, ...SHARE_LINK_PRESET_IDS] : SHARE_LINK_PRESET_IDS,
+	);
+	const PRESET_TITLES: Record<ShareLinkPreset, string> = {
+		"24h": "24 hours from now",
+		"7d": "7 days from now",
+		"30d": "30 days from now",
+	};
+	const current = $derived(currentExpiresAt ? remainingTime(currentExpiresAt) : null);
+	// "keep" leaves the expiry as it is; the other options count from now
+	const keepLabel = $derived(
+		current ? (current.text === "expired" ? "expired" : `${current.text} left`) : "keep",
+	);
+	const keepTitle = $derived(
+		currentExpiresAt
+			? `Keep the current expiry (${currentExpiresAt.toLocaleString()}). The other options count from now.`
+			: "Keep the current expiry",
+	);
+
+	function toggle(part: "timeline" | "markers") {
+		if (part === "timeline") values.timelinePanelVisible = !values.timelinePanelVisible;
+		else values.markerPanelVisible = !values.markerPanelVisible;
+	}
 
 	function submit(event: SubmitEvent) {
 		event.preventDefault();
@@ -23,51 +66,72 @@
 	}
 </script>
 
-<form class="flex flex-col gap-3" onsubmit={submit}>
-	<div class="flex flex-wrap gap-6">
-		<label class="flex cursor-pointer items-center gap-2 text-sm">
-			<input type="checkbox" class="toggle toggle-sm" bind:checked={values.markerPanelVisible} />
-			Marker panel
-		</label>
-		<label class="flex cursor-pointer items-center gap-2 text-sm">
-			<input type="checkbox" class="toggle toggle-sm" bind:checked={values.timelinePanelVisible} />
-			Timeline panel
+<form
+	class="flex flex-col gap-2.5 rounded-box border-2 border-base-content/50 p-3"
+	onsubmit={submit}
+>
+	<!-- Panels on the left, the note right next to them at the same height -->
+	<div class="flex flex-wrap items-stretch gap-3">
+		<PanelLayout
+			timeline={values.timelinePanelVisible}
+			markers={values.markerPanelVisible}
+			ontoggle={toggle}
+		/>
+		<label class="flex min-w-50 flex-1">
+			<span class="sr-only">Note</span>
+			<textarea
+				class="textarea h-full min-h-24 w-full resize-none textarea-sm"
+				maxlength={NOTE_MAX_LENGTH}
+				placeholder="Note: shown in the player and added to the e-mail"
+				bind:value={values.note}
+				disabled={busy}></textarea>
 		</label>
 	</div>
 
-	<label class="flex flex-col gap-1 text-sm">
-		<span>Expires after</span>
-		<select class="select w-full select-sm" bind:value={values.preset} disabled={busy}>
-			{#if editing}<option value={null}>Keep current</option>{/if}
-			{#each SHARE_LINK_PRESET_IDS as id (id)}
-				<option value={id}>{PRESET_LABELS[id]}{editing ? " from now" : ""}</option>
-			{/each}
-		</select>
-	</label>
-
-	<label class="flex flex-col gap-1 text-sm">
-		<span>Note <span class="text-base-content/50">(optional)</span></span>
-		<textarea
-			class="textarea w-full textarea-sm"
-			rows="3"
-			maxlength={NOTE_MAX_LENGTH}
-			placeholder="Shown in the player and added to the e-mail"
-			bind:value={values.note}
-			disabled={busy}></textarea>
-		<span class="self-end text-xs text-base-content/50">
-			{values.note.length} / {NOTE_MAX_LENGTH}
+	<!-- Slim bar: expiry, note length, cancel and save -->
+	<div class="flex flex-wrap items-center gap-2 border-t border-base-300 pt-2.5">
+		<span title="Expires after{editing ? ' (from now)' : ''}">
+			<Clock size={14} class="text-base-content/60" />
 		</span>
-	</label>
+		<div class="join">
+			{#each presets as preset (preset ?? "keep")}
+				<button
+					type="button"
+					class="btn join-item btn-xs {values.preset === preset ? 'btn-neutral' : ''}"
+					aria-pressed={values.preset === preset}
+					title={preset ? PRESET_TITLES[preset] : keepTitle}
+					disabled={busy}
+					onclick={() => (values.preset = preset)}
+				>
+					{preset ?? keepLabel}
+				</button>
+			{/each}
+		</div>
 
-	<div class="flex justify-end gap-2">
+		<span class="ml-auto text-xs text-base-content/50">
+			{#if values.note.length}{values.note.length} / {NOTE_MAX_LENGTH}{/if}
+		</span>
 		{#if oncancel}
-			<button type="button" class="btn btn-ghost btn-sm" onclick={oncancel} disabled={busy}>
-				Cancel
+			<button
+				type="button"
+				class="btn btn-square btn-sm"
+				title="Cancel"
+				aria-label="Cancel"
+				disabled={busy}
+				onclick={oncancel}
+			>
+				<X size={16} />
 			</button>
 		{/if}
-		<button class="btn btn-primary btn-sm" disabled={busy}>
-			{submitLabel}
-			{#if busy}<span class="loading loading-xs loading-spinner"></span>{/if}
+		<button
+			class="btn btn-square btn-primary btn-sm"
+			title={submitLabel}
+			aria-label={submitLabel}
+			disabled={busy}
+		>
+			{#if busy}<span class="loading loading-xs loading-spinner"></span>{:else}<Check
+					size={16}
+				/>{/if}
 		</button>
 	</div>
 </form>

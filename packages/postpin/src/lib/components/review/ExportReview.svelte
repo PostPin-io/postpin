@@ -431,17 +431,25 @@
 			class="min-h-0 flex-1"
 			on:resized={(event) => saveLayout("main", event)}
 		>
-			<!-- Main content -->
-			<Pane size={layout.main[0]} minSize={isMarkerVisible ? 25 : 100} class="overflow-auto">
+			<!-- Main content; without the marker panel the video column takes the full width -->
+			<Pane
+				size={isMarkerVisible ? layout.main[0] : 100}
+				minSize={isMarkerVisible ? 25 : 100}
+				class="overflow-auto"
+			>
 				<div class="h-full" bind:clientHeight={leftPanesHeight}>
 					<Splitpanes
 						theme="daisy-theme"
 						horizontal
 						on:resized={(event) => saveLayout("left", event)}
 					>
-						<!-- Video and jobs -->
+						<!-- Video and jobs; without the timeline panel the video takes the full height -->
 						<Pane
-							size={collapsedPercent !== undefined ? 100 - collapsedPercent : layout.left[0]}
+							size={!isTimelineVisible
+								? 100
+								: collapsedPercent !== undefined
+									? 100 - collapsedPercent
+									: layout.left[0]}
 							minSize={isTimelineVisible ? 15 : 100}
 							class="overflow-auto"
 						>
