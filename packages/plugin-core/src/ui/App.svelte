@@ -11,9 +11,13 @@
 		host: HostBridge;
 		// host app content above the main screen, e.g. the connected NLE in PostPin Desktop
 		header?: Snippet;
+		// room for the window buttons of a hidden title bar, off in host panels like Premiere's
+		titleBarInset?: boolean;
+		// fetch for the API client, e.g. Premiere's webview, where macOS blocks http and CORS applies
+		fetch?: typeof globalThis.fetch;
 	}
 
-	let { nle, host, header }: Props = $props();
+	let { nle, host, header, titleBarInset = true, fetch }: Props = $props();
 
 	// The bridges don't change during the app's lifetime
 	// svelte-ignore state_referenced_locally
@@ -47,7 +51,7 @@
 			<pre class="whitespace-pre-wrap">{errorMessage(error)}</pre>
 			<button class="btn btn-sm" onclick={reset}>Restart</button>
 		{/snippet}
-		<MainScreen {header} />
+		<MainScreen {header} {titleBarInset} {fetch} />
 	</svelte:boundary>
 {:else}
 	<Login />

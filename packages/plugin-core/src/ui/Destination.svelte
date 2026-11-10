@@ -16,6 +16,8 @@
 		highlightChoose?: boolean;
 		browserUrl?: string;
 		children?: Snippet;
+		// false inside a box that holds several destinations and draws the frame itself
+		framed?: boolean;
 		projects: {
 			id: string;
 			name: string;
@@ -49,6 +51,7 @@
 		mode,
 		highlightChoose = false,
 		children,
+		framed = true,
 		projects,
 		selectedProjectId,
 		selectedTimelineId,
@@ -65,7 +68,12 @@
 	const { host } = getBridges();
 </script>
 
-<section class="flex min-w-0 flex-col gap-2 rounded-box border-2 border-base-content/50 p-4">
+<section
+	class={[
+		"flex min-w-0 flex-col gap-2",
+		framed && "rounded-box border-2 border-base-content/50 p-4",
+	]}
+>
 	<div class="flex items-center gap-2">
 		<PostPinLogo class="h-5 w-auto" />
 		<h2 class="text-xs tracking-widest text-base-content/60 uppercase">{title}</h2>
