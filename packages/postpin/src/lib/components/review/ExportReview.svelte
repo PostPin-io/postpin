@@ -94,13 +94,23 @@
 	const isTimelineVisible = $derived(share?.timelinePanelVisible ?? true);
 	// Phones and small tablets: video on top, marker panel below, no timeline
 	const isMobile = new MediaQuery("max-width: 1023px");
-	const isMobileLandscape = new MediaQuery("(max-width: 1023px) and (orientation: landscape)");
 	const showTimeline = $derived(isTimelineVisible && !isMobile.current);
-	let landscapeFullscreenDismissed = $state(false);
-	const landscapeFullscreen = $derived(isMobileLandscape.current && !landscapeFullscreenDismissed);
-	$effect(() => {
-		if (!isMobileLandscape.current) landscapeFullscreenDismissed = false;
-	});
+
+	// A phone turned sideways: not just narrow and wide, which a small desktop window is too
+	const isPhoneLandscape = new MediaQuery(
+		"(orientation: landscape) and (max-height: 500px) and (pointer: coarse)",
+	);
+	// Fullscreen in CSS: the iPhone has no Fullscreen API for elements, and turning the phone sideways
+	// is no user gesture, which the API needs. Sideways turns it on, upright off; in between the
+	// fullscreen button overrides it (a writable $derived keeps that until the orientation changes).
+	let cssFullscreen = $derived(isPhoneLandscape.current);
+
+	function toggleFullscreen() {
+		if (videoFullscreen) player?.toggleFullscreen();
+		else if (cssFullscreen) cssFullscreen = false;
+		else if (document.fullscreenEnabled) player?.toggleFullscreen();
+		else cssFullscreen = true;
+	}
 
 	const exportQuery = $derived(
 		getExport(share ? { exportId, shareToken } : { projectId, timelineId, exportId }),
@@ -379,12 +389,9 @@
 					qualities={videoQualities}
 					muted={videoMuted}
 					playerAvailable={viewMode === "timeline" && !!player}
-					fullscreen={videoFullscreen || landscapeFullscreen}
+					fullscreen={videoFullscreen || cssFullscreen}
 					onToggleMute={() => player?.toggleMute()}
-					onFullscreen={() => {
-						if (landscapeFullscreen && !videoFullscreen) landscapeFullscreenDismissed = true;
-						else player?.toggleFullscreen();
-					}}
+					onFullscreen={toggleFullscreen}
 					onCreateMarker={isMarkerVisible
 						? () => void markerPanel?.createMarkerAtPlayhead()
 						: undefined}
@@ -427,7 +434,7 @@
 							bind:qualities={videoQualities}
 							bind:muted={videoMuted}
 							bind:fullscreen={videoFullscreen}
-							mobileLandscapeFullscreen={landscapeFullscreen}
+							{cssFullscreen}
 							fullscreenControls={menuBar}
 							overlay={note}
 						/>
@@ -442,7 +449,7 @@
 					{/if}
 				{/if}
 			</div>
-			{#if snapshot && !landscapeFullscreen}
+			{#if snapshot && !cssFullscreen}
 				{@render menuBar()}
 			{/if}
 		{/if}

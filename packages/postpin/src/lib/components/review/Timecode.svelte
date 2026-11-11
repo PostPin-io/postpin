@@ -15,12 +15,12 @@
 		mobile?: boolean;
 	}
 
-	 
 	let {
 		frame = $bindable(),
 		frameRate,
 		startFrame,
 		frameCount,
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		editable,
 		mobile = false,
 	}: Props = $props();
@@ -34,6 +34,8 @@
 
 	let inputField_TC: HTMLInputElement | null = $state(null);
 	let inputField_Frame: HTMLInputElement | null = $state(null);
+	// Unique per instance: in fullscreen a second menu bar, and so a second Timecode, is rendered
+	const inputId = $props.id();
 	let mobileDialog: HTMLDialogElement | null = $state(null);
 	let mobileInput = $state("");
 	let mobileError = $state(false);
@@ -183,14 +185,13 @@
 	<dialog bind:this={mobileDialog} class="modal modal-bottom">
 		<form method="dialog" class="modal-box flex flex-col gap-3" onsubmit={submitMobileInput}>
 			<h2 class="text-lg font-semibold">Jump to time</h2>
-			<label class="text-sm" for="mobile-timecode-input">Enter frames or timecode</label>
+			<label class="text-sm" for={inputId}>Enter frames or timecode</label>
 			<input
-				id="mobile-timecode-input"
-				autofocus
+				id={inputId}
 				type="text"
 				bind:value={mobileInput}
 				placeholder="Frames or HH:MM:SS:FF"
-				class="input-bordered input w-full font-mono {mobileError ? 'input-error' : ''}"
+				class="input w-full font-mono {mobileError ? 'input-error' : ''}"
 				aria-invalid={mobileError}
 			/>
 			{#if mobileError}

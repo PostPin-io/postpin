@@ -27,7 +27,7 @@
 
 		muted = $bindable(false),
 		fullscreen = $bindable(false),
-		mobileLandscapeFullscreen = false,
+		cssFullscreen = false,
 		fullscreenControls,
 		overlay,
 	}: {
@@ -43,8 +43,8 @@
 		qualities?: number[];
 		muted?: boolean;
 		fullscreen?: boolean;
-		/** CSS fullscreen fallback for mobile landscape, which does not require user activation */
-		mobileLandscapeFullscreen?: boolean;
+		/** Covers the viewport with CSS: where the Fullscreen API is missing (iPhone) or on a phone turned sideways */
+		cssFullscreen?: boolean;
 		/** Control bar shown over the video while in fullscreen, where the page's own bar is out of view */
 		fullscreenControls?: Snippet;
 		/** Drawn over the video (also in fullscreen), e.g. the share-link note */
@@ -232,7 +232,7 @@
 
 	let controlsAwake = $state(false);
 	let controlsTimer: ReturnType<typeof setTimeout> | undefined;
-	const fullscreenView = $derived(fullscreen || mobileLandscapeFullscreen);
+	const fullscreenView = $derived(fullscreen || cssFullscreen);
 	const showControls = $derived(fullscreenView && (controlsAwake || paused));
 
 	function wakeControls() {
@@ -311,7 +311,7 @@
 	class="group relative flex h-full w-full flex-col"
 	class:bg-black={fullscreenView}
 	class:cursor-none={fullscreenView && !showControls}
-	class:mobile-landscape-fullscreen={mobileLandscapeFullscreen && !fullscreen}
+	class:css-fullscreen={cssFullscreen && !fullscreen}
 	onpointermove={wakeControls}
 	onfocusin={wakeControls}
 >
@@ -361,7 +361,7 @@
 </div>
 
 <style>
-	.mobile-landscape-fullscreen {
+	.css-fullscreen {
 		position: fixed;
 		inset: 0;
 		z-index: 50;

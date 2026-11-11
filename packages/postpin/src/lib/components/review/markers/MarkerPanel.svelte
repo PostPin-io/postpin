@@ -460,13 +460,16 @@
 
 				{#if markers.length === 0}
 					<div class="flex flex-col items-start gap-2 p-4">
+						<!-- Touch screens have no keyboard: only the button there -->
 						<p class="text-base-content/70">
-							No markers yet. Press <kbd class="kbd kbd-sm">M</kbd> to create a marker. Or click the
-							"Add <DiamondPlus class="inline size-3.5" /> Marker" button.
+							No markers yet.
+							<span class="pointer-coarse:hidden">
+								Press <kbd class="kbd kbd-sm">M</kbd> or click
+							</span>
+							<span class="pointer-fine:hidden">Tap</span>
+							<DiamondPlus class="inline size-3.5" /> under the video to add one.
 						</p>
 					</div>
-
-					<p class="p-4 text-base-content/70"></p>
 				{:else if visibleMarkers.length === 0 && hasActiveFilters}
 					<div class="flex flex-col items-start gap-2 p-4">
 						<p class="text-base-content/70">No markers match the active filters.</p>
