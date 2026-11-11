@@ -1,11 +1,17 @@
 <script lang="ts">
 	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
+	import ChevronRight from "@lucide/svelte/icons/chevron-right";
 	import UserGroup from "@lucide/svelte/icons/user-group";
 	import Link from "@lucide/svelte/icons/link";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
 	import { getShareLinks } from "#lib/components/sharing/share-links/share-links.remote.ts";
-	import { getBreadcrumbNames } from "./breadcrumbs.remote.ts";
+	import {
+		getBreadcrumbNames,
+		getExportSiblings,
+		getProjectSiblings,
+		getTimelineSiblings,
+	} from "./breadcrumbs.remote.ts";
 
 	let sharingModal: SharingSetupModal | null = null;
 
@@ -24,6 +30,20 @@
 	);
 	const shareLinkCount = $derived(
 		shareLinksQuery?.current?.filter((link) => link.status === "active").length ?? 0,
+	);
+
+	// Sibling lists load only once their dropdown has been opened
+	type Level = "project" | "timeline" | "export";
+	let opened = $state<Record<Level, boolean>>({ project: false, timeline: false, export: false });
+
+	const projectSiblings = $derived(
+		opened.project && projectId ? getProjectSiblings(projectId) : undefined,
+	);
+	const timelineSiblings = $derived(
+		opened.timeline && projectId ? getTimelineSiblings(projectId) : undefined,
+	);
+	const exportSiblings = $derived(
+		opened.export && timelineId ? getExportSiblings(timelineId) : undefined,
 	);
 </script>
 
@@ -44,14 +64,62 @@
 	</button>
 {/snippet}
 
+{#snippet siblingMenu(
+	level: Level,
+	label: string,
+	items: { id: string; name: string }[] | undefined,
+	currentId: string,
+	href: (id: string) => string,
+)}
+	<div class="group dropdown">
+		<div
+			tabindex="0"
+			role="button"
+			class="btn btn-square btn-ghost text-base-content/50 btn-xs"
+			title={label}
+			aria-label={label}
+			onfocus={() => (opened[level] = true)}
+		>
+			<ChevronRight class="size-3.5 transition-transform group-focus-within:rotate-90" />
+		</div>
+		<ul
+			tabindex="-1"
+			class="menu dropdown-content z-20 mt-1 max-h-80 w-64 flex-nowrap overflow-y-auto rounded-box bg-base-100 p-2 shadow"
+		>
+			{#if !items}
+				<li class="disabled"><span class="loading loading-xs loading-spinner"></span></li>
+			{:else}
+				{#each items as item (item.id)}
+					<li>
+						<a
+							href={href(item.id)}
+							class:menu-active={item.id === currentId}
+							aria-current={item.id === currentId ? "page" : undefined}
+						>
+							<span class="truncate" title={item.name}>{item.name}</span>
+						</a>
+					</li>
+				{/each}
+			{/if}
+		</ul>
+	</div>
+{/snippet}
+
 {#if projectId && names}
 	{@const { project, timeline, export: exp } = names}
-	<div class="breadcrumbs min-w-0 text-sm">
-		<ul>
-			<li class="min-w-0 gap-1">
+	<nav aria-label="Breadcrumb" class="min-w-0">
+		<ol class="flex min-w-0 items-center text-sm">
+			<li class="flex min-w-0 items-center gap-1">
+				{@render siblingMenu(
+					"project",
+					"Switch project",
+					projectSiblings?.current,
+					project.id,
+					(id) => resolve("/(root)/projects/[project]", { project: id }),
+				)}
 				<a
 					href={resolve("/(root)/projects/[project]", { project: project.id })}
-					class="block max-w-48 truncate"
+					class="block max-w-48 truncate hover:underline"
 					title={project.name}
 					aria-current={!timeline ? "page" : undefined}
 				>
@@ -64,13 +132,24 @@
 				{/if}
 			</li>
 			{#if timeline}
-				<li class="min-w-0 gap-1">
+				<li class="flex min-w-0 items-center gap-1">
+					{@render siblingMenu(
+						"timeline",
+						"Switch timeline",
+						timelineSiblings?.current,
+						timeline.id,
+						(id) =>
+							resolve("/(root)/projects/[project]/timelines/[timeline]/exports", {
+								project: project.id,
+								timeline: id,
+							}),
+					)}
 					<a
 						href={resolve("/(root)/projects/[project]/timelines/[timeline]/exports", {
 							project: project.id,
 							timeline: timeline.id,
 						})}
-						class="block max-w-48 truncate"
+						class="block max-w-48 truncate hover:underline"
 						title={timeline.name}
 						aria-current={!exp ? "page" : undefined}
 					>
@@ -83,14 +162,21 @@
 					{/if}
 				</li>
 				{#if exp}
-					<li class="min-w-0 gap-1">
+					<li class="flex min-w-0 items-center gap-1">
+						{@render siblingMenu("export", "Switch export", exportSiblings?.current, exp.id, (id) =>
+							resolve("/(root)/projects/[project]/timelines/[timeline]/exports/[export]", {
+								project: project.id,
+								timeline: timeline.id,
+								export: id,
+							}),
+						)}
 						<a
 							href={resolve("/(root)/projects/[project]/timelines/[timeline]/exports/[export]", {
 								project: project.id,
 								timeline: timeline.id,
 								export: exp.id,
 							})}
-							class="block max-w-48 truncate"
+							class="block max-w-48 truncate hover:underline"
 							title={exp.name}
 							aria-current="page"
 						>
@@ -112,8 +198,8 @@
 					</li>
 				{/if}
 			{/if}
-		</ul>
-	</div>
+		</ol>
+	</nav>
 {/if}
 
 <SharingSetupModal bind:this={sharingModal} />
