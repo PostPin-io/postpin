@@ -100,16 +100,15 @@
 	const isPhoneLandscape = new MediaQuery(
 		"(orientation: landscape) and (max-height: 500px) and (pointer: coarse)",
 	);
-	// Fullscreen in CSS: the iPhone has no Fullscreen API for elements, and turning the phone sideways
-	// is no user gesture, which the API needs. Sideways turns it on, upright off; in between the
-	// fullscreen button overrides it (a writable $derived keeps that until the orientation changes).
-	let cssFullscreen = $derived(isPhoneLandscape.current);
+	// A phone turned sideways: the video fills the visible page (Safari's bars stay)
+	const cssFullscreen = $derived(isPhoneLandscape.current);
 
 	function toggleFullscreen() {
-		if (videoFullscreen) player?.toggleFullscreen();
-		else if (cssFullscreen) cssFullscreen = false;
-		else if (document.fullscreenEnabled) player?.toggleFullscreen();
-		else cssFullscreen = true;
+		// Leave real fullscreen, or enter it where the page may: desktop and Android, with our controls
+		if (videoFullscreen || document.fullscreenEnabled) player?.toggleFullscreen();
+		// iPhone: no fullscreen for elements, only for the video. The system player takes the whole
+		// screen, without Safari's bars, but also without our controls and markers.
+		else player?.enterNativeFullscreen();
 	}
 
 	const exportQuery = $derived(
@@ -391,6 +390,7 @@
 					muted={videoMuted}
 					playerAvailable={viewMode === "timeline" && !!player}
 					fullscreen={videoFullscreen || cssFullscreen}
+					fullscreenActive={videoFullscreen}
 					onToggleMute={() => player?.toggleMute()}
 					onFullscreen={toggleFullscreen}
 					onCreateMarker={isMarkerVisible

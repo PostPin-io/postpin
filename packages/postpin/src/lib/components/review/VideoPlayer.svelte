@@ -230,6 +230,14 @@
 		else void container?.requestFullscreen();
 	}
 
+	// iPhone: Safari has fullscreen only for <video> itself, played by the system player.
+	// <hlsjs-video> keeps its <video> in its shadow root.
+	export function enterNativeFullscreen() {
+		type IosVideo = HTMLVideoElement & { webkitEnterFullscreen?: () => void };
+		const video = (element?.shadowRoot ?? element)?.querySelector<IosVideo>("video");
+		video?.webkitEnterFullscreen?.();
+	}
+
 	let controlsAwake = $state(false);
 	let controlsTimer: ReturnType<typeof setTimeout> | undefined;
 	const fullscreenView = $derived(fullscreen || cssFullscreen);

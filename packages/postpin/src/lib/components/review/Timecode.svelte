@@ -43,7 +43,7 @@
 	let mobileInput = $state("");
 	let mobileError = $state(false);
 	let isTC = $state(true);
-	const btnSize = $derived(mobile ? "btn-md" : "btn-xs");
+
 	function openMobileInput() {
 		mobileInput = String(frame - startFrame);
 		mobileError = false;
@@ -118,7 +118,7 @@
 <div class="flex gap-1 font-mono">
 	{#if mobile}
 		<button
-			class="btn btn-ghost {btnSize} {mobileLandscape ? '' : 'btn-square'}"
+			class="btn btn-ghost btn-md {mobileLandscape ? '' : 'btn-square'}"
 			title="Enter frames or timecode"
 			aria-label="Jump to time"
 			onclick={openMobileInput}

@@ -44,6 +44,7 @@
 		muted = false,
 		playerAvailable = false,
 		fullscreen = false,
+		fullscreenActive = false,
 		onToggleMute,
 		onFullscreen,
 		onCreateMarker,
@@ -70,6 +71,8 @@
 		playerAvailable?: boolean;
 		/** Fullscreen hides the buttons that would leave the video */
 		fullscreen?: boolean;
+		/** Whether the fullscreen button leaves fullscreen; differs from `fullscreen` while the phone is sideways */
+		fullscreenActive?: boolean;
 		onToggleMute?: () => void;
 		onFullscreen?: () => void;
 		/** Shows the add-marker button */
@@ -310,10 +313,10 @@
 				{/if}
 				<button
 					class="btn btn-square btn-ghost {btnSize}"
-					title={fullscreen ? "Exit Fullscreen (F)" : "Fullscreen (F)"}
+					title={fullscreenActive ? "Exit Fullscreen (F)" : "Fullscreen (F)"}
 					onclick={() => onFullscreen?.()}
 				>
-					{#if fullscreen}<Minimize size={iconSize} />{:else}<Maximize size={iconSize} />{/if}
+					{#if fullscreenActive}<Minimize size={iconSize} />{:else}<Maximize size={iconSize} />{/if}
 				</button>
 			{/if}
 
