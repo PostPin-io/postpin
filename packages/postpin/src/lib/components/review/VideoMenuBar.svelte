@@ -211,41 +211,43 @@
 				{mobile}
 				{mobileLandscape}
 			/>
-			<span class="font-mono">|</span>
-			<button
-				class="font-mono"
-				title="Change playback speed"
-				onclick={() => (playbackRate = nextPlaybackRate(playbackRate))}
-			>
-				{playbackRate}×
-			</button>
-		</div>
-		<!-- The add-marker button hangs off the left edge so play stays centered under the video -->
-		<div
-			class="relative flex items-center justify-center {twoRows ? 'col-span-2 row-start-2' : ''}"
-		>
-			{#if onCreateMarker}
+			{#if !mobile}
+				<span class="font-mono">|</span>
 				<button
-					class="btn absolute right-full btn-square btn-ghost {btnSize} {markerColor
-						? 'hover:border-(--marker-color) hover:bg-(--marker-color) hover:text-(--marker-contrast)'
-						: ''}"
-					style:--marker-color={markerColor}
-					style:--marker-contrast={markerColor ? contrastColor(markerColor) : undefined}
-					title="Add marker at playhead (M)"
-					aria-label="Add marker at playhead"
-					onclick={() => onCreateMarker()}
+					class="font-mono"
+					title="Change playback speed"
+					onclick={() => (playbackRate = nextPlaybackRate(playbackRate))}
 				>
-					<DiamondPlus size={iconSize} />
+					{playbackRate}×
 				</button>
 			{/if}
-			<button
-				class="btn btn-square btn-ghost {btnSize}"
-				title="Jump to previous Marker on the left"
-				onclick={() => seekToAdjacentMarker(-1)}
-			>
-				<ArrowLeft size={iconSize} />
-			</button>
-			{#if playerAvailable}
+		</div>
+		<!-- The add-marker button hangs off the left edge so play stays centered under the video -->
+		<div class="flex items-center justify-center {twoRows ? 'col-span-2 row-start-2' : ''}">
+			<div class="relative flex items-center justify-center">
+				{#if onCreateMarker}
+					<button
+						class="btn absolute right-full btn-square btn-ghost {btnSize} {markerColor
+							? 'hover:border-(--marker-color) hover:bg-(--marker-color) hover:text-(--marker-contrast)'
+							: ''}"
+						style:--marker-color={markerColor}
+						style:--marker-contrast={markerColor ? contrastColor(markerColor) : undefined}
+						title="Add marker at playhead (M)"
+						aria-label="Add marker at playhead"
+						onclick={() => onCreateMarker()}
+					>
+						<DiamondPlus size={iconSize} />
+					</button>
+				{/if}
+				{#if !mobile}
+					<button
+						class="btn btn-square btn-ghost {btnSize}"
+						title="Jump to previous Marker on the left"
+						onclick={() => seekToAdjacentMarker(-1)}
+					>
+						<ArrowLeft size={iconSize} />
+					</button>
+				{/if}
 				<button class="btn btn-square btn-ghost {btnSize}" onclick={togglePlayback}>
 					{#if paused}
 						<Play size={iconSize} />
@@ -253,28 +255,16 @@
 						<Pause size={iconSize} />
 					{/if}
 				</button>
-			{:else}
-				<button
-					class="btn btn-square btn-ghost {btnSize}"
-					onclick={() => {
-						viewMode = "timeline";
-						togglePlayback();
-					}}
-				>
-					{#if paused}
-						<Play size={iconSize} />
-					{:else}
-						<Pause size={iconSize} />
-					{/if}
-				</button>
-			{/if}
-			<button
-				class="btn btn-square btn-ghost {btnSize}"
-				title="Jump to next Marker on the right"
-				onclick={() => seekToAdjacentMarker(1)}
-			>
-				<ArrowRight size={iconSize} />
-			</button>
+				{#if !mobile}
+					<button
+						class="btn btn-square btn-ghost {btnSize}"
+						title="Jump to next Marker on the right"
+						onclick={() => seekToAdjacentMarker(1)}
+					>
+						<ArrowRight size={iconSize} />
+					</button>
+				{/if}
+			</div>
 		</div>
 		<div class="flex items-center gap-1 justify-self-end">
 			{#if status && !fullscreen}{@render status()}{/if}
@@ -320,9 +310,11 @@
 						</select>
 					{/if}
 				{/if}
-				<button class="btn btn-square btn-ghost {btnSize}" onclick={() => onToggleMute?.()}>
-					{#if muted}<VolumeX size={iconSize} />{:else}<Volume2 size={iconSize} />{/if}
-				</button>
+				{#if !mobile}
+					<button class="btn btn-square btn-ghost {btnSize}" onclick={() => onToggleMute?.()}>
+						{#if muted}<VolumeX size={iconSize} />{:else}<Volume2 size={iconSize} />{/if}
+					</button>
+				{/if}
 				<button
 					class="btn btn-square btn-ghost {btnSize}"
 					title={fullscreen ? "Exit Fullscreen (F)" : "Fullscreen (F)"}

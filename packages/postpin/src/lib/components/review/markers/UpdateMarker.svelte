@@ -7,14 +7,14 @@
 	import { defaultCategory } from "./default-category.svelte.ts";
 	import ClipboardList from "@lucide/svelte/icons/clipboard-list";
 	import Trash from "@lucide/svelte/icons/trash";
-	import { onDestroy, onMount } from "svelte";
+	import { onDestroy, onMount, type Snippet } from "svelte";
 	import X from "@lucide/svelte/icons/x";
 	import CircleArrowLeft from "@lucide/svelte/icons/circle-arrow-left";
 	import type { ReviewMarker } from "./types";
 	import { useShare } from "../share-context.ts";
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	let { marker, startFrame, onclose, mobile = false }: Props = $props();
+	let { marker, startFrame, onclose, mobile = false, mobileHeaderAction }: Props = $props();
 	let titleInputField: HTMLInputElement | null = null;
 	let titleFocusToggled = $state(false);
 
@@ -24,6 +24,7 @@
 		startFrame: number;
 		/** Inside the phone's marker modal: no card, no close button (the modal has one) */
 		mobile?: boolean;
+		mobileHeaderAction?: Snippet;
 	}
 	const getShare = useShare();
 	const share = $derived(getShare());
@@ -148,7 +149,7 @@
 	class="@container {mobile ? '' : 'card mx-1 h-full border border-base-300 bg-base-200 shadow-sm'}"
 >
 	<div class="card-body h-full min-h-0 w-full gap-3 p-4">
-		<div class="flex items-center justify-between gap-3">
+		<div class="flex items-center justify-between gap-3 {mobile ? 'flex-wrap' : ''}">
 			<div class="flex-screen flex min-w-0 items-center gap-2">
 				<h2 class="card-title text-base whitespace-nowrap">
 					{#if marker.canUpdate}
@@ -184,7 +185,10 @@
 					Frame {marker.frame - startFrame}
 					</span> -->
 			</div>
-			<div class="flex shrink-0 gap-2">
+			<div class="flex shrink-0 gap-2 {mobile ? 'ml-auto' : ''}">
+				{#if mobile && mobileHeaderAction}
+					{@render mobileHeaderAction()}
+				{/if}
 				{#if !mobile}
 					<button
 						type="button"
@@ -196,7 +200,8 @@
 						<X />
 					</button>
 				{/if}
-				{#if marker.canDelete}
+
+				{#if marker.canDelete && !mobile}
 					<button
 						type="button"
 						class="btn btn-square btn-error"

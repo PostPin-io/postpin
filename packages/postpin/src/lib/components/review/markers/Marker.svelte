@@ -63,6 +63,19 @@
 	});
 	const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "short" });
 
+	function getInitials(name?: string | null) {
+		const value = name?.trim();
+		if (!value) return "D.U.";
+
+		const parts = value.split(/\s+/).filter(Boolean);
+		if (parts.length === 0) return "D.U.";
+		if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase().split("").join(".") + ".";
+		return parts
+			.slice(0, 2)
+			.map((part) => part[0]?.toUpperCase() ?? "")
+			.join(".");
+	}
+
 	export function toggleCollapse() {
 		isOpen = !isOpen;
 	}
@@ -149,16 +162,19 @@
 			{:else}
 				{@render categoryBadge("badge-md px-3 font-semibold")}
 			{/if}
-			<span class="flex w-full items-center gap-2 text-xs text-base-content/60">
-				<span class="truncate">{marker.guest?.name ?? marker.author?.name ?? "Deleted User"}</span>
-				{#if marker.responses.length}
-					<span class="flex items-center gap-0.5">
-						<MessageSquare size={12} />{marker.responses.length}
-					</span>
-				{/if}
-				<span class="ml-auto font-mono">F {marker.frame - startFrame}</span>
-			</span>
 		</button>
+
+		<div class="flex shrink-0 items-center gap-2 pr-1 text-xs font-medium text-base-content/70">
+			<span class="truncate">
+				{getInitials(marker.guest?.name ?? marker.author?.name) ?? "Deleted User"}
+			</span>
+			{#if marker.responses.length}
+				<span class="flex items-center gap-0.5">
+					<MessageSquare size={11} />{marker.responses.length}
+				</span>
+			{/if}
+		</div>
+
 		<button
 			type="button"
 			class="btn btn-square btn-ghost btn-lg"

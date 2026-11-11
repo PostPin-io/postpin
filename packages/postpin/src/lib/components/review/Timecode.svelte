@@ -2,6 +2,7 @@
 	import { formatTimecode, parseTimecode } from "@postpin-io/shared/logic/timecode";
 	import { clampToTimeline, frameFromInput } from "./timecode-input.ts";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
+	import Clock from "@lucide/svelte/icons/clock.svelte";
 
 	interface Props {
 		/** Absolute timeline frame */
@@ -120,7 +121,7 @@
 			{#if mobileLandscape}
 				{formatTimecode(frame, frameRate)}
 			{:else}
-				F {frame - startFrame}
+				<Clock size={16} />
 			{/if}
 		</button>
 	{:else if isTC}

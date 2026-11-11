@@ -1,7 +1,7 @@
 <script lang="ts">
-	import X from "@lucide/svelte/icons/x";
 	import Send from "@lucide/svelte/icons/send";
 	import LocateFixed from "@lucide/svelte/icons/locate-fixed";
+	import Trash from "@lucide/svelte/icons/trash";
 	import UpdateMarker from "./UpdateMarker.svelte";
 	import { createResponse, getResponses } from "./markers.remote";
 	import { useShare } from "../share-context.ts";
@@ -18,6 +18,8 @@
 		onseek: (frame: number) => void;
 	}
 	let { marker, startFrame, frameRate, onclose, onseek }: Props = $props();
+	let updateMarkerComponent: UpdateMarker | null = $state(null);
+	let deleting = $state(false);
 
 	const getShare = useShare();
 	const share = $derived(getShare());
@@ -47,6 +49,16 @@
 		}
 	}
 
+	async function deleteCurrentMarker() {
+		if (!updateMarkerComponent || deleting) return;
+		deleting = true;
+		try {
+			await updateMarkerComponent.remove();
+		} finally {
+			deleting = false;
+		}
+	}
+
 	const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
 		dateStyle: "medium",
 		timeStyle: "short",
@@ -60,35 +72,55 @@
 			<header
 				class="flex shrink-0 items-center gap-1 border-b border-base-300 px-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2"
 			>
+				{#if marker.canDelete}
+					<button
+						type="button"
+						class="btn btn-square btn-error"
+						title="Delete marker"
+						aria-label="Delete marker"
+						disabled={deleting}
+						onclick={() => void deleteCurrentMarker()}
+					>
+						<Trash size={20} />
+					</button>
+				{/if}
+				<h2 class="min-w-0 flex-1 truncate text-center text-lg font-semibold">
+					{marker.name?.trim() || "Marker"}
+				</h2>
 				<button
 					type="button"
 					class="btn btn-square btn-ghost"
 					aria-label="Close"
 					onclick={() => dialog?.close()}
 				>
-					<X size={22} />
-				</button>
-				<h2 class="min-w-0 flex-1 truncate text-lg font-semibold">
-					{marker.name?.trim() || "Marker"}
-				</h2>
-				<!-- Jumps the video to the marker and goes back to it -->
-				<button
-					type="button"
-					class="btn btn-ghost"
-					aria-label="Go to marker in the video"
-					onclick={() => {
-						onseek(marker!.frame);
-						dialog?.close();
-					}}
-				>
-					<LocateFixed size={20} />
-					<span class="font-mono">{formatTimecode(marker.frame, frameRate)}</span>
+					<Send size={22} />
 				</button>
 			</header>
 
 			<div class="min-h-0 flex-1 overflow-y-auto">
 				{#key marker.id}
-					<UpdateMarker {marker} {startFrame} mobile onclose={() => dialog?.close()} />
+					<UpdateMarker
+						bind:this={updateMarkerComponent}
+						{marker}
+						{startFrame}
+						mobile
+						onclose={() => dialog?.close()}
+					>
+						{#snippet mobileHeaderAction()}
+							<button
+								type="button"
+								class="btn btn-ghost"
+								aria-label="Go to marker in the video"
+								onclick={() => {
+									onseek(marker!.frame);
+									dialog?.close();
+								}}
+							>
+								<LocateFixed size={20} />
+								<span class="font-mono">{formatTimecode(marker!.frame, frameRate)}</span>
+							</button>
+						{/snippet}
+					</UpdateMarker>
 				{/key}
 
 				{#if !share}
