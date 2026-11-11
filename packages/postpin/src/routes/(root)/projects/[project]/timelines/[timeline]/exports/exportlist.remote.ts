@@ -36,5 +36,6 @@ export const getExportList = query(valibot.string(), async (timelineId) => {
 		...e,
 		canRename: allowed("export", "rename", { projectId: target.projectId, timelineId }),
 		canDelete: allowed("export", "delete", { projectId: target.projectId, timelineId }),
+		canShare: allowed("shareLink", "create", { projectId: target.projectId, timelineId }),
 	}));
 });

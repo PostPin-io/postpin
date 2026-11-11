@@ -8,11 +8,14 @@
 	import NewTimelineModal from "#lib/components/timelines/NewTimelineModal.svelte";
 	import RenameTimelineModal from "#lib/components/timelines/RenameTimelineModal.svelte";
 	import DeleteTimelineModal from "#lib/components/timelines/DeleteTimelineModal.svelte";
+	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
 	import FileDown from "@lucide/svelte/icons/file-down";
 	import List from "@lucide/svelte/icons/list";
+	import Link from "@lucide/svelte/icons/link";
+	import UserGroup from "@lucide/svelte/icons/user-group";
 	import Pencil from "@lucide/svelte/icons/pencil";
 	import Trash from "@lucide/svelte/icons/trash";
 	import Plus from "@lucide/svelte/icons/plus";
@@ -37,6 +40,7 @@
 	let delTimelineDialog: DeleteTimelineModal | null = null;
 	let renameTimelineDialog: RenameTimelineModal | null = null;
 	let timelineDialog: NewTimelineModal | null = null;
+	let sharingDialog: SharingSetupModal | null = null;
 
 	let data = $derived(await getTimelines(page.params.project || ""));
 
@@ -65,6 +69,20 @@
 	function renameTimeline(timeline: (typeof data.timelines)[number]) {
 		closeMenu(timeline);
 		renameTimelineDialog?.open(timeline);
+	}
+
+	function shareTimeline(timeline: (typeof data.timelines)[number]) {
+		closeMenu(timeline);
+		sharingDialog?.open({ projectId: page.params.project!, timelineId: timeline.id });
+	}
+
+	function shareLatestExport(timeline: (typeof data.timelines)[number], exportId: string) {
+		closeMenu(timeline);
+		sharingDialog?.open({
+			projectId: page.params.project!,
+			timelineId: timeline.id,
+			exportId,
+		});
 	}
 
 	function deleteTimeline(timeline: (typeof data.timelines)[number]) {
@@ -138,6 +156,24 @@
 			</li>
 		{:else}
 			<li class="menu-disabled"><span>No exports yet</span></li>
+		{/if}
+
+		{#if timeline.canShare}
+			<li class="mt-1 border-t border-base-300 pt-1">
+				<button type="button" onclick={() => shareTimeline(timeline)}>
+					<UserGroup class="size-4" />
+					Share timeline
+				</button>
+			</li>
+		{/if}
+
+		{#if timeline.canShareLink && timeline.exports[0]}
+			<li class:mt-1={!timeline.canShare} class:border-t={!timeline.canShare}>
+				<button type="button" onclick={() => shareLatestExport(timeline, timeline.exports[0].id)}>
+					<Link class="size-4" />
+					Share links of latest export
+				</button>
+			</li>
 		{/if}
 
 		{#if timeline.canRename}
@@ -442,3 +478,4 @@
 <NewTimelineModal bind:this={timelineDialog} projectId={page.params.project!} />
 <RenameTimelineModal bind:this={renameTimelineDialog} projectId={page.params.project!} />
 <DeleteTimelineModal bind:this={delTimelineDialog} />
+<SharingSetupModal bind:this={sharingDialog} />

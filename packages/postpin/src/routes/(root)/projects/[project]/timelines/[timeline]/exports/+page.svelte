@@ -7,6 +7,7 @@
 	import { getUrl } from "#lib/components/review/export-view.remote.ts";
 	import RenameExportModal from "#lib/components/exports/RenameExportModal.svelte";
 	import DeleteExportModal from "#lib/components/exports/DeleteExportModal.svelte";
+	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
@@ -34,6 +35,7 @@
 
 	let renameExportDialog: RenameExportModal | null = null;
 	let deleteExportDialog: DeleteExportModal | null = null;
+	let sharingDialog: SharingSetupModal | null = null;
 
 	let exports = $derived(await getExportList(page.params.timeline || ""));
 	let timelineName = $derived(await getTimelineName(page.params.timeline || ""));
@@ -54,13 +56,13 @@
 		document.getElementById(`export-menu-${id}`)?.hidePopover();
 	}
 
-	async function copyLink(id: string) {
+	function shareExport(id: string) {
 		closeMenu(id);
-		try {
-			await navigator.clipboard.writeText(location.origin + exportUrl(id));
-		} catch (err) {
-			console.error("Could not copy link", err);
-		}
+		sharingDialog?.open({
+			projectId: page.params.project!,
+			timelineId: page.params.timeline!,
+			exportId: id,
+		});
 	}
 
 	function renameExport(singleExport: (typeof exports)[number]) {
@@ -104,7 +106,7 @@
 <PageMeta title="{timelineName} exports" description="The exports of {timelineName}." />
 
 <!--
-	Ein Dropdown für alle Aktionen eines Exports (Öffnen, Link kopieren, Umbenennen, Löschen).
+	Ein Dropdown für alle Aktionen eines Exports (Öffnen, Share-Links, Umbenennen, Löschen).
 	Nutzt das Popover-API von daisyUI 5: Das Menü liegt im Top-Layer des Browsers
 	und wird deshalb nicht von overflow-Containern (Tabelle, Card) abgeschnitten.
 -->
@@ -131,12 +133,14 @@
 				Open export
 			</a>
 		</li>
-		<li>
-			<button type="button" onclick={() => copyLink(singleExport.id)}>
-				<Link class="size-4" />
-				Copy link
-			</button>
-		</li>
+		{#if singleExport.canShare}
+			<li>
+				<button type="button" onclick={() => shareExport(singleExport.id)}>
+					<Link class="size-4" />
+					Share links
+				</button>
+			</li>
+		{/if}
 		{#if singleExport.canRename}
 			<li class="mt-1 border-t border-base-300 pt-1">
 				<button type="button" onclick={() => renameExport(singleExport)}>
@@ -426,3 +430,4 @@
 
 <RenameExportModal bind:this={renameExportDialog} />
 <DeleteExportModal bind:this={deleteExportDialog} />
+<SharingSetupModal bind:this={sharingDialog} />
