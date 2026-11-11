@@ -7,6 +7,8 @@
 	import Timecode from "../Timecode.svelte";
 	import CategoryBadge from "../../categories/CategoryBadge.svelte";
 	import type { ReviewMarker } from "./types";
+	import Pencil from "@lucide/svelte/icons/pencil";
+	import MessageSquare from "@lucide/svelte/icons/message-square";
 
 	interface Props {
 		active?: boolean;
@@ -22,6 +24,10 @@
 		startFrame: number;
 		/** Timeline length in frames */
 		frameCount: number;
+		/** Phones: a flat row with an edit button instead of the expandable card */
+		mobile?: boolean;
+		/** Phones: opens the marker modal */
+		onedit?: () => void;
 	}
 
 	let {
@@ -36,6 +42,8 @@
 		onrange,
 		onreposition,
 		onrespond,
+		mobile = false,
+		onedit,
 	}: Props = $props();
 
 	import { useShare } from "../share-context.ts";
@@ -120,6 +128,50 @@
 		/>
 	</svg>
 {/snippet}
+{#if mobile}
+	<!-- Tap the row to jump there, the pencil to edit and respond -->
+	<article
+		class="mx-1 flex items-center rounded-box border border-l-4 bg-base-100 shadow-sm {active
+			? 'border-primary ring-1 ring-primary'
+			: 'border-base-300'}"
+		style:border-left-color={marker.category.color}
+	>
+		<button
+			type="button"
+			class="flex min-w-0 flex-1 flex-col items-start gap-1 px-3 py-3 text-left"
+			onclick={() => {
+				onchoose?.();
+				onselect?.(marker.frame);
+			}}
+		>
+			{#if marker.name?.trim()}
+				<span class="w-full truncate font-semibold">{marker.name}</span>
+			{:else}
+				{@render categoryBadge("badge-md px-3 font-semibold")}
+			{/if}
+			<span class="flex w-full items-center gap-2 text-xs text-base-content/60">
+				<span class="truncate">{marker.guest?.name ?? marker.author?.name ?? "Deleted User"}</span>
+				{#if marker.responses.length}
+					<span class="flex items-center gap-0.5">
+						<MessageSquare size={12} />{marker.responses.length}
+					</span>
+				{/if}
+				<span class="ml-auto font-mono">F {marker.frame - startFrame}</span>
+			</span>
+		</button>
+		<button
+			type="button"
+			class="btn btn-square btn-ghost btn-lg"
+			aria-label="Edit marker"
+			onclick={() => onedit?.()}
+		>
+			<Pencil size={20} />
+		</button>
+	</article>
+{:else}
+	<!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
+	<article … (bestehende Desktop-Karte, unverändert) … </article>
+{/if}
 
 <!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
 <article

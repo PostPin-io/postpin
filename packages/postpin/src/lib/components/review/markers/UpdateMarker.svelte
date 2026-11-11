@@ -13,14 +13,15 @@
 	import type { ReviewMarker } from "./types";
 	import { useShare } from "../share-context.ts";
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	let { marker, startFrame, onclose }: Props = $props();
+	let { marker, startFrame, onclose, mobile = false }: Props = $props();
 	let titleInputField: HTMLInputElement | null = null;
 	let titleFocusToggled = $state(false);
+
 	interface Props {
 		onclose?: () => void;
 		marker: ReviewMarker;
 		startFrame: number;
+		mobile?: boolean;
 	}
 	const getShare = useShare();
 	const share = $derived(getShare());
@@ -141,7 +142,9 @@
 	}
 </script>
 
-<section class="@container card mx-1 h-full border border-base-300 bg-base-200 shadow-sm">
+<section
+	class="@container {mobile ? '' : 'card mx-1 h-full border border-base-300 bg-base-200 shadow-sm'}"
+>
 	<div class="card-body h-full min-h-0 w-full gap-3 p-4">
 		<div class="flex items-center justify-between gap-3">
 			<div class="flex-screen flex min-w-0 items-center gap-2">
@@ -222,17 +225,19 @@
 					oninput={() => schedule()}
 					readonly={!marker.canUpdate}
 				/>
-				<button
-					type="button"
-					class="btn btn-square btn-ghost"
-					tabindex="-1"
-					class:btn-active={titleFocusToggled}
-					class:text-accent={titleFocusToggled}
-					title="When creating a new marker, you can immediately start typing the title"
-					onclick={() => toggleFocusTitleInputField()}
-				>
-					<CircleArrowLeft />
-				</button>
+				{#if mobile!}
+					<button
+						type="button"
+						class="btn btn-square btn-ghost"
+						tabindex="-1"
+						class:btn-active={titleFocusToggled}
+						class:text-accent={titleFocusToggled}
+						title="When creating a new marker, you can immediately start typing the title"
+						onclick={() => toggleFocusTitleInputField()}
+					>
+						<CircleArrowLeft />
+					</button>
+				{/if}
 			</div>
 
 			<textarea
