@@ -1,22 +1,27 @@
 <script lang="ts">
-	import { page } from "$app/state";
 	import { getSharingTarget } from "./sharing.remote";
-	import { authClient } from "#lib/auth-client.ts";
-	import OrganizationInvite from "./OrganizationInvite.svelte";
+
 	import AccessGrants from "./AccessGrants.svelte";
 	import TargetInvite from "./TargetInvite.svelte";
 	import ShareLinks from "./share-links/ShareLinks.svelte";
 	import X from "@lucide/svelte/icons/x";
 
-	const session = authClient.useSession();
+	type Target = { projectId: string; timelineId?: string; exportId?: string };
+	let target = $state<Target | undefined>();
+
+	export function open(next: Target) {
+		target = next;
+		isOpen = true;
+		dialog?.showModal();
+	}
+
+	const targetQuery = $derived(isOpen && target ? getSharingTarget(target) : undefined);
 	const organizationId = $derived($session.data?.session.activeOrganizationId);
 
 	let dialog: HTMLDialogElement | null = null;
 	let isOpen = $state(false);
 
 	type Target = { projectId: string; timelineId?: string; exportId?: string };
-	// Lets pages outside a project route (e.g. the dashboard) share a specific project
-	let explicitTarget = $state<Target | undefined>();
 
 	export function open(target?: Target) {
 		explicitTarget = target;
@@ -24,17 +29,6 @@
 		dialog?.showModal();
 	}
 
-	// Detected from the current route unless the caller passed a target
-	const target = $derived<Target | undefined>(
-		explicitTarget ??
-			(page.params.project
-				? {
-						projectId: page.params.project,
-						timelineId: page.params.timeline,
-						exportId: page.params.export,
-					}
-				: undefined),
-	);
 	const targetQuery = $derived(isOpen && target ? getSharingTarget(target) : undefined);
 </script>
 
@@ -60,11 +54,7 @@
 			</button>
 		</div>
 
-		{#if !target}
-			{#if isOpen && organizationId}
-				<OrganizationInvite {organizationId} />
-			{/if}
-		{:else if targetQuery?.error}
+		{#if targetQuery?.error}
 			<p class="mt-2 text-sm text-error">Could not load what you are sharing.</p>
 		{:else if targetQuery?.current}
 			{#if targetQuery.current.type !== "export"}

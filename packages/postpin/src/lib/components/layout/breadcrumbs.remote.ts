@@ -2,12 +2,12 @@ import { error } from "@sveltejs/kit";
 import { query } from "$app/server";
 import * as v from "valibot";
 import { prisma } from "#lib/server/database.ts";
-import { authorize } from "#lib/server/org-access.ts";
+import { accessChecker, authorize } from "#lib/server/org-access.ts";
 
 export type BreadcrumbNames = {
-	project: { id: string; name: string };
-	timeline?: { id: string; name: string };
-	export?: { id: string; name: string };
+	project: { id: string; name: string; canShare: boolean };
+	timeline?: { id: string; name: string; canShare: boolean };
+	export?: { id: string; name: string; canShare: boolean };
 };
 
 export const getBreadcrumbNames = query(
@@ -18,22 +18,30 @@ export const getBreadcrumbNames = query(
 	}),
 	async ({ projectId, timelineId, exportId }): Promise<BreadcrumbNames> => {
 		if (exportId && timelineId) {
-			await authorize("export", "read", { type: "export", id: exportId });
-			const exp = await prisma.export.findFirst({
-				where: { id: exportId, timelineId, timeline: { projectId } },
-				select: {
-					id: true,
-					name: true,
-					timeline: {
-						select: { id: true, name: true, project: { select: { id: true, name: true } } },
-					},
-				},
-			});
+			const { member } = await authorize("export", "read", { type: "export", id: exportId });
+			const allowed = await accessChecker(member);
+			const exp = await prisma.export.findFirst({/* unverändert */});
 			if (!exp) error(404, "Not found");
+			const project = exp.timeline.project;
+			const timeline = exp.timeline;
 			return {
-				project: exp.timeline.project,
-				timeline: { id: exp.timeline.id, name: exp.timeline.name },
-				export: { id: exp.id, name: exp.name },
+				project: {
+					...project,
+					canShare: allowed("grant", "create", { projectId: project.id }),
+				},
+				timeline: {
+					id: timeline.id,
+					name: timeline.name,
+					canShare: allowed("grant", "create", { projectId: project.id, timelineId: timeline.id }),
+				},
+				export: {
+					id: exp.id,
+					name: exp.name,
+					canShare: allowed("shareLink", "create", {
+						projectId: project.id,
+						timelineId: timeline.id,
+					}),
+				},
 			};
 		}
 
