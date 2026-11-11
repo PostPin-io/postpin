@@ -14,6 +14,7 @@ import { Body, Controller, Get, Path, Post, Response, Route, Security } from "@t
 import { HttpError } from "../HttpError.ts";
 import type { Prisma } from "@postpin-io/shared/db";
 import { apiAuthorize } from "../access.ts";
+import { assertQuota, QuotaExceededError } from "#lib/server/storage-usage.ts";
 
 interface InitUploadResponse extends MultipartUpload {
 	mediaId: string;
@@ -100,11 +101,10 @@ export class ExportController extends Controller {
 			return tx.export.create({
 				data: {
 					timelineId,
+					uploadedById: member.userId,
 					name: `Export ${new Date().toISOString()}`,
 				},
-				select: {
-					id: true,
-				},
+				select: { id: true },
 			});
 		});
 	}
@@ -117,6 +117,7 @@ export class ExportController extends Controller {
 	@Response(400, "Invalid file size")
 	@Response(404, "Export not found")
 	@Response(409, "Export media was already uploaded")
+	@Response(413, "Storage quota exceeded")
 	public async initUpload(
 		@Path() projectId: string,
 		@Path() timelineId: string,
@@ -126,7 +127,7 @@ export class ExportController extends Controller {
 		if (!Number.isInteger(body.fileSize) || body.fileSize <= 0) {
 			throw new HttpError(400, "fileSize must be a positive integer");
 		}
-		await apiAuthorize("export", "upload", { type: "export", id: exportId });
+		const { member } = await apiAuthorize("export", "upload", { type: "export", id: exportId });
 
 		const exp = await prisma.export.findFirst({
 			where: { id: exportId, timelineId, timeline: { projectId } },
@@ -136,15 +137,45 @@ export class ExportController extends Controller {
 			throw new HttpError(404, "Export not found");
 		}
 
+		if (exp.media && exp.media.status !== "PENDING") {
+			throw new HttpError(409, "Export media was already uploaded");
+		}
+
+		try {
+			await assertQuota({
+				orgId: member.organizationId,
+				// whoever started the export pays for it, even if someone else retries the upload
+				userId: exp.uploadedById ?? member.userId,
+				additional: BigInt(body.fileSize),
+				// a retry replaces its own reservation
+				excludeMediaId: exp.media?.id,
+			});
+		} catch (e) {
+			if (e instanceof QuotaExceededError) throw new HttpError(413, e.message);
+			throw e;
+		}
+
 		let media = exp.media;
 		if (!media) {
 			({ media } = await prisma.export.update({
 				where: { id: exportId },
-				data: { media: { create: { status: "PENDING", original: { create: {} } } } },
+				data: {
+					media: {
+						create: {
+							status: "PENDING",
+							// reserves the space until probe stores the real size
+							original: { create: { size: BigInt(body.fileSize) } },
+						},
+					},
+				},
 				include: { media: true },
 			}));
-		} else if (media.status !== "PENDING") {
-			throw new HttpError(409, "Export media was already uploaded");
+		} else {
+			// retry, possibly with a different file
+			await prisma.mediaFile.update({
+				where: { id: media.originalId },
+				data: { size: BigInt(body.fileSize) },
+			});
 		}
 
 		const upload = await createMultipartUpload(
@@ -213,6 +244,7 @@ export class ExportController extends Controller {
 			{ mediaId: media.id, type: "original" },
 			body.uploadId,
 		);
+		await prisma.mediaFile.update({ where: { id: media.originalId }, data: { size: 0n } });
 	}
 
 	private async getPendingMedia(projectId: string, timelineId: string, exportId: string) {

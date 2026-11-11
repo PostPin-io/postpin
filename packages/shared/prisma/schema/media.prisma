@@ -1,16 +1,20 @@
 model Media {
-  id             String      @id @default(cuid())
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  status         MediaStatus @default(PENDING)
-  original       MediaFile   @relation("MediaOriginal", fields: [originalId], references: [id], onDelete: Cascade)
-  originalId     String      @unique
-  proxies        MediaFile[] @relation("MediaProxies")
-  thumbnail      Thumbnail?
-  export         Export?
-  seekSprites    Json?
-  shotThumbnails Json?
-  movieBarcode   Json?
+  id                 String      @id @default(cuid())
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  status             MediaStatus @default(PENDING)
+  original           MediaFile   @relation("MediaOriginal", fields: [originalId], references: [id], onDelete: Cascade)
+  originalId         String      @unique
+  proxies            MediaFile[] @relation("MediaProxies")
+  thumbnail          Thumbnail?
+  export             Export?
+  seekSprites        Json?
+  shotThumbnails     Json?
+  movieBarcode       Json?
+  // bytes of the generated images in the bucket, measured once processing ends
+  thumbnailSize      BigInt?
+  seekSpritesSize    BigInt?
+  shotThumbnailsSize BigInt?
 
   @@map("media")
 }

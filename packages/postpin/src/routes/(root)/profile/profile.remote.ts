@@ -3,10 +3,18 @@ import { error } from "@sveltejs/kit";
 import { command, getRequestEvent, query } from "$app/server";
 import * as v from "valibot";
 import { DEVICE_CLIENTS } from "#lib/device-clients.ts";
-import { canLeave } from "#lib/roles.ts";
+import { canLeave, roleAllows } from "#lib/roles.ts";
 import { requireOrgRole } from "#lib/server/org-access.ts";
 import { Role } from "@postpin-io/shared/db";
 import { revokeInvitesOf } from "#lib/server/invite-links.ts";
+import {
+	getOrgUsage,
+	orgQuota,
+	storageUsageRows,
+	sumBy,
+	totalUsed,
+	userQuota,
+} from "#lib/server/storage-usage.ts";
 
 export const getProfile = query(async () => {
 	const id = getRequestEvent().locals.user?.id;
@@ -31,6 +39,61 @@ export const getMemberships = query(async () => {
 
 	return memberships.map((m) => ({ role: m.role, ...m.organization }));
 });
+
+/**
+ * Storage of the exports this user uploaded, across all organizations, and how much they can still
+ * upload to each organization they may upload to: the user's and the org's quota both apply.
+ */
+export const getMyStorage = query(async () => {
+	const { user } = getRequestEvent().locals;
+	if (!user) error(401, "Not signed in");
+
+	const [rows, me, memberships] = await Promise.all([
+		storageUsageRows({ userId: user.id }),
+		prisma.user.findUniqueOrThrow({ where: { id: user.id }, select: { storageQuota: true } }),
+		prisma.member.findMany({
+			where: { userId: user.id },
+			select: {
+				role: true,
+				organization: { select: { id: true, name: true, storageQuota: true } },
+			},
+			orderBy: { organization: { name: "asc" } },
+		}),
+	]);
+	const used = totalUsed(rows);
+	const quota = userQuota(me.storageQuota);
+	const userLeft = quota === null ? null : max0(quota - used);
+	const byOrg = sumBy(rows, "orgId");
+
+	const organizations = await Promise.all(
+		memberships
+			.filter((m) => roleAllows(m.role, "export", "upload"))
+			.map(async ({ organization: org }) => {
+				const orgQuotaBytes = orgQuota(org.storageQuota);
+				const orgLeft =
+					orgQuotaBytes === null ? null : max0(orgQuotaBytes - (await getOrgUsage(org.id)));
+				return {
+					id: org.id,
+					name: org.name,
+					used: byOrg.get(org.id) ?? 0n,
+					// null = unlimited
+					left: minQuota(userLeft, orgLeft),
+					limitedBy:
+						orgLeft !== null && (userLeft === null || orgLeft < userLeft)
+							? ("organization" as const)
+							: userLeft !== null
+								? ("user" as const)
+								: null,
+				};
+			}),
+	);
+	return { used, quota, organizations };
+});
+
+const max0 = (n: bigint) => (n > 0n ? n : 0n);
+/** The smaller of two limits, where null is unlimited */
+const minQuota = (a: bigint | null, b: bigint | null) =>
+	a === null ? b : b === null ? a : a < b ? a : b;
 
 // rough "Browser on OS" label; good enough to tell sessions apart
 function describeUserAgent(userAgent: string | null) {

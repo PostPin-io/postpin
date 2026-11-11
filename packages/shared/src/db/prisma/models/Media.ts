@@ -19,8 +19,22 @@ export type MediaModel = runtime.Types.Result.DefaultSelection<Prisma.$MediaPayl
 
 export type AggregateMedia = {
 	_count: MediaCountAggregateOutputType | null;
+	_avg: MediaAvgAggregateOutputType | null;
+	_sum: MediaSumAggregateOutputType | null;
 	_min: MediaMinAggregateOutputType | null;
 	_max: MediaMaxAggregateOutputType | null;
+};
+
+export type MediaAvgAggregateOutputType = {
+	thumbnailSize: number | null;
+	seekSpritesSize: number | null;
+	shotThumbnailsSize: number | null;
+};
+
+export type MediaSumAggregateOutputType = {
+	thumbnailSize: bigint | null;
+	seekSpritesSize: bigint | null;
+	shotThumbnailsSize: bigint | null;
 };
 
 export type MediaMinAggregateOutputType = {
@@ -29,6 +43,9 @@ export type MediaMinAggregateOutputType = {
 	updatedAt: Date | null;
 	status: $Enums.MediaStatus | null;
 	originalId: string | null;
+	thumbnailSize: bigint | null;
+	seekSpritesSize: bigint | null;
+	shotThumbnailsSize: bigint | null;
 };
 
 export type MediaMaxAggregateOutputType = {
@@ -37,6 +54,9 @@ export type MediaMaxAggregateOutputType = {
 	updatedAt: Date | null;
 	status: $Enums.MediaStatus | null;
 	originalId: string | null;
+	thumbnailSize: bigint | null;
+	seekSpritesSize: bigint | null;
+	shotThumbnailsSize: bigint | null;
 };
 
 export type MediaCountAggregateOutputType = {
@@ -48,7 +68,22 @@ export type MediaCountAggregateOutputType = {
 	seekSprites: number;
 	shotThumbnails: number;
 	movieBarcode: number;
+	thumbnailSize: number;
+	seekSpritesSize: number;
+	shotThumbnailsSize: number;
 	_all: number;
+};
+
+export type MediaAvgAggregateInputType = {
+	thumbnailSize?: true;
+	seekSpritesSize?: true;
+	shotThumbnailsSize?: true;
+};
+
+export type MediaSumAggregateInputType = {
+	thumbnailSize?: true;
+	seekSpritesSize?: true;
+	shotThumbnailsSize?: true;
 };
 
 export type MediaMinAggregateInputType = {
@@ -57,6 +92,9 @@ export type MediaMinAggregateInputType = {
 	updatedAt?: true;
 	status?: true;
 	originalId?: true;
+	thumbnailSize?: true;
+	seekSpritesSize?: true;
+	shotThumbnailsSize?: true;
 };
 
 export type MediaMaxAggregateInputType = {
@@ -65,6 +103,9 @@ export type MediaMaxAggregateInputType = {
 	updatedAt?: true;
 	status?: true;
 	originalId?: true;
+	thumbnailSize?: true;
+	seekSpritesSize?: true;
+	shotThumbnailsSize?: true;
 };
 
 export type MediaCountAggregateInputType = {
@@ -76,6 +117,9 @@ export type MediaCountAggregateInputType = {
 	seekSprites?: true;
 	shotThumbnails?: true;
 	movieBarcode?: true;
+	thumbnailSize?: true;
+	seekSpritesSize?: true;
+	shotThumbnailsSize?: true;
 	_all?: true;
 };
 
@@ -119,6 +163,18 @@ export type MediaAggregateArgs<
 	/**
 	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
 	 *
+	 * Select which fields to average
+	 **/
+	_avg?: MediaAvgAggregateInputType;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+	 *
+	 * Select which fields to sum
+	 **/
+	_sum?: MediaSumAggregateInputType;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+	 *
 	 * Select which fields to find the minimum value
 	 **/
 	_min?: MediaMinAggregateInputType;
@@ -148,6 +204,8 @@ export type MediaGroupByArgs<
 	take?: number;
 	skip?: number;
 	_count?: MediaCountAggregateInputType | true;
+	_avg?: MediaAvgAggregateInputType;
+	_sum?: MediaSumAggregateInputType;
 	_min?: MediaMinAggregateInputType;
 	_max?: MediaMaxAggregateInputType;
 };
@@ -161,7 +219,12 @@ export type MediaGroupByOutputType = {
 	seekSprites: runtime.JsonValue | null;
 	shotThumbnails: runtime.JsonValue | null;
 	movieBarcode: runtime.JsonValue | null;
+	thumbnailSize: bigint | null;
+	seekSpritesSize: bigint | null;
+	shotThumbnailsSize: bigint | null;
 	_count: MediaCountAggregateOutputType | null;
+	_avg: MediaAvgAggregateOutputType | null;
+	_sum: MediaSumAggregateOutputType | null;
 	_min: MediaMinAggregateOutputType | null;
 	_max: MediaMaxAggregateOutputType | null;
 };
@@ -190,6 +253,9 @@ export type MediaWhereInput = {
 	seekSprites?: Prisma.JsonNullableFilter<"Media">;
 	shotThumbnails?: Prisma.JsonNullableFilter<"Media">;
 	movieBarcode?: Prisma.JsonNullableFilter<"Media">;
+	thumbnailSize?: Prisma.BigIntNullableFilter<"Media"> | bigint | number | null;
+	seekSpritesSize?: Prisma.BigIntNullableFilter<"Media"> | bigint | number | null;
+	shotThumbnailsSize?: Prisma.BigIntNullableFilter<"Media"> | bigint | number | null;
 	original?: Prisma.XOR<Prisma.MediaFileScalarRelationFilter, Prisma.MediaFileWhereInput>;
 	proxies?: Prisma.MediaFileListRelationFilter;
 	thumbnail?: Prisma.XOR<
@@ -208,6 +274,9 @@ export type MediaOrderByWithRelationInput = {
 	seekSprites?: Prisma.SortOrderInput | Prisma.SortOrder;
 	shotThumbnails?: Prisma.SortOrderInput | Prisma.SortOrder;
 	movieBarcode?: Prisma.SortOrderInput | Prisma.SortOrder;
+	thumbnailSize?: Prisma.SortOrderInput | Prisma.SortOrder;
+	seekSpritesSize?: Prisma.SortOrderInput | Prisma.SortOrder;
+	shotThumbnailsSize?: Prisma.SortOrderInput | Prisma.SortOrder;
 	original?: Prisma.MediaFileOrderByWithRelationInput;
 	proxies?: Prisma.MediaFileOrderByRelationAggregateInput;
 	thumbnail?: Prisma.ThumbnailOrderByWithRelationInput;
@@ -227,6 +296,9 @@ export type MediaWhereUniqueInput = Prisma.AtLeast<
 		seekSprites?: Prisma.JsonNullableFilter<"Media">;
 		shotThumbnails?: Prisma.JsonNullableFilter<"Media">;
 		movieBarcode?: Prisma.JsonNullableFilter<"Media">;
+		thumbnailSize?: Prisma.BigIntNullableFilter<"Media"> | bigint | number | null;
+		seekSpritesSize?: Prisma.BigIntNullableFilter<"Media"> | bigint | number | null;
+		shotThumbnailsSize?: Prisma.BigIntNullableFilter<"Media"> | bigint | number | null;
 		original?: Prisma.XOR<Prisma.MediaFileScalarRelationFilter, Prisma.MediaFileWhereInput>;
 		proxies?: Prisma.MediaFileListRelationFilter;
 		thumbnail?: Prisma.XOR<
@@ -247,9 +319,14 @@ export type MediaOrderByWithAggregationInput = {
 	seekSprites?: Prisma.SortOrderInput | Prisma.SortOrder;
 	shotThumbnails?: Prisma.SortOrderInput | Prisma.SortOrder;
 	movieBarcode?: Prisma.SortOrderInput | Prisma.SortOrder;
+	thumbnailSize?: Prisma.SortOrderInput | Prisma.SortOrder;
+	seekSpritesSize?: Prisma.SortOrderInput | Prisma.SortOrder;
+	shotThumbnailsSize?: Prisma.SortOrderInput | Prisma.SortOrder;
 	_count?: Prisma.MediaCountOrderByAggregateInput;
+	_avg?: Prisma.MediaAvgOrderByAggregateInput;
 	_max?: Prisma.MediaMaxOrderByAggregateInput;
 	_min?: Prisma.MediaMinOrderByAggregateInput;
+	_sum?: Prisma.MediaSumOrderByAggregateInput;
 };
 
 export type MediaScalarWhereWithAggregatesInput = {
@@ -264,6 +341,9 @@ export type MediaScalarWhereWithAggregatesInput = {
 	seekSprites?: Prisma.JsonNullableWithAggregatesFilter<"Media">;
 	shotThumbnails?: Prisma.JsonNullableWithAggregatesFilter<"Media">;
 	movieBarcode?: Prisma.JsonNullableWithAggregatesFilter<"Media">;
+	thumbnailSize?: Prisma.BigIntNullableWithAggregatesFilter<"Media"> | bigint | number | null;
+	seekSpritesSize?: Prisma.BigIntNullableWithAggregatesFilter<"Media"> | bigint | number | null;
+	shotThumbnailsSize?: Prisma.BigIntNullableWithAggregatesFilter<"Media"> | bigint | number | null;
 };
 
 export type MediaCreateInput = {
@@ -274,6 +354,9 @@ export type MediaCreateInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: bigint | number | null;
+	seekSpritesSize?: bigint | number | null;
+	shotThumbnailsSize?: bigint | number | null;
 	original: Prisma.MediaFileCreateNestedOneWithoutOriginalOfInput;
 	proxies?: Prisma.MediaFileCreateNestedManyWithoutProxyOfInput;
 	thumbnail?: Prisma.ThumbnailCreateNestedOneWithoutMediaInput;
@@ -289,6 +372,9 @@ export type MediaUncheckedCreateInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: bigint | number | null;
+	seekSpritesSize?: bigint | number | null;
+	shotThumbnailsSize?: bigint | number | null;
 	proxies?: Prisma.MediaFileUncheckedCreateNestedManyWithoutProxyOfInput;
 	thumbnail?: Prisma.ThumbnailUncheckedCreateNestedOneWithoutMediaInput;
 	export?: Prisma.ExportUncheckedCreateNestedOneWithoutMediaInput;
@@ -302,6 +388,9 @@ export type MediaUpdateInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	seekSpritesSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	shotThumbnailsSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
 	original?: Prisma.MediaFileUpdateOneRequiredWithoutOriginalOfNestedInput;
 	proxies?: Prisma.MediaFileUpdateManyWithoutProxyOfNestedInput;
 	thumbnail?: Prisma.ThumbnailUpdateOneWithoutMediaNestedInput;
@@ -317,6 +406,9 @@ export type MediaUncheckedUpdateInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	seekSpritesSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	shotThumbnailsSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
 	proxies?: Prisma.MediaFileUncheckedUpdateManyWithoutProxyOfNestedInput;
 	thumbnail?: Prisma.ThumbnailUncheckedUpdateOneWithoutMediaNestedInput;
 	export?: Prisma.ExportUncheckedUpdateOneWithoutMediaNestedInput;
@@ -331,6 +423,9 @@ export type MediaCreateManyInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: bigint | number | null;
+	seekSpritesSize?: bigint | number | null;
+	shotThumbnailsSize?: bigint | number | null;
 };
 
 export type MediaUpdateManyMutationInput = {
@@ -341,6 +436,9 @@ export type MediaUpdateManyMutationInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	seekSpritesSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	shotThumbnailsSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
 };
 
 export type MediaUncheckedUpdateManyInput = {
@@ -352,6 +450,9 @@ export type MediaUncheckedUpdateManyInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	seekSpritesSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	shotThumbnailsSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
 };
 
 export type MediaCountOrderByAggregateInput = {
@@ -363,6 +464,15 @@ export type MediaCountOrderByAggregateInput = {
 	seekSprites?: Prisma.SortOrder;
 	shotThumbnails?: Prisma.SortOrder;
 	movieBarcode?: Prisma.SortOrder;
+	thumbnailSize?: Prisma.SortOrder;
+	seekSpritesSize?: Prisma.SortOrder;
+	shotThumbnailsSize?: Prisma.SortOrder;
+};
+
+export type MediaAvgOrderByAggregateInput = {
+	thumbnailSize?: Prisma.SortOrder;
+	seekSpritesSize?: Prisma.SortOrder;
+	shotThumbnailsSize?: Prisma.SortOrder;
 };
 
 export type MediaMaxOrderByAggregateInput = {
@@ -371,6 +481,9 @@ export type MediaMaxOrderByAggregateInput = {
 	updatedAt?: Prisma.SortOrder;
 	status?: Prisma.SortOrder;
 	originalId?: Prisma.SortOrder;
+	thumbnailSize?: Prisma.SortOrder;
+	seekSpritesSize?: Prisma.SortOrder;
+	shotThumbnailsSize?: Prisma.SortOrder;
 };
 
 export type MediaMinOrderByAggregateInput = {
@@ -379,6 +492,15 @@ export type MediaMinOrderByAggregateInput = {
 	updatedAt?: Prisma.SortOrder;
 	status?: Prisma.SortOrder;
 	originalId?: Prisma.SortOrder;
+	thumbnailSize?: Prisma.SortOrder;
+	seekSpritesSize?: Prisma.SortOrder;
+	shotThumbnailsSize?: Prisma.SortOrder;
+};
+
+export type MediaSumOrderByAggregateInput = {
+	thumbnailSize?: Prisma.SortOrder;
+	seekSpritesSize?: Prisma.SortOrder;
+	shotThumbnailsSize?: Prisma.SortOrder;
 };
 
 export type MediaNullableScalarRelationFilter = {
@@ -541,6 +663,9 @@ export type MediaCreateWithoutOriginalInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: bigint | number | null;
+	seekSpritesSize?: bigint | number | null;
+	shotThumbnailsSize?: bigint | number | null;
 	proxies?: Prisma.MediaFileCreateNestedManyWithoutProxyOfInput;
 	thumbnail?: Prisma.ThumbnailCreateNestedOneWithoutMediaInput;
 	export?: Prisma.ExportCreateNestedOneWithoutMediaInput;
@@ -554,6 +679,9 @@ export type MediaUncheckedCreateWithoutOriginalInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: bigint | number | null;
+	seekSpritesSize?: bigint | number | null;
+	shotThumbnailsSize?: bigint | number | null;
 	proxies?: Prisma.MediaFileUncheckedCreateNestedManyWithoutProxyOfInput;
 	thumbnail?: Prisma.ThumbnailUncheckedCreateNestedOneWithoutMediaInput;
 	export?: Prisma.ExportUncheckedCreateNestedOneWithoutMediaInput;
@@ -575,6 +703,9 @@ export type MediaCreateWithoutProxiesInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: bigint | number | null;
+	seekSpritesSize?: bigint | number | null;
+	shotThumbnailsSize?: bigint | number | null;
 	original: Prisma.MediaFileCreateNestedOneWithoutOriginalOfInput;
 	thumbnail?: Prisma.ThumbnailCreateNestedOneWithoutMediaInput;
 	export?: Prisma.ExportCreateNestedOneWithoutMediaInput;
@@ -589,6 +720,9 @@ export type MediaUncheckedCreateWithoutProxiesInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: bigint | number | null;
+	seekSpritesSize?: bigint | number | null;
+	shotThumbnailsSize?: bigint | number | null;
 	thumbnail?: Prisma.ThumbnailUncheckedCreateNestedOneWithoutMediaInput;
 	export?: Prisma.ExportUncheckedCreateNestedOneWithoutMediaInput;
 };
@@ -629,6 +763,9 @@ export type MediaUpdateWithoutOriginalInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	seekSpritesSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	shotThumbnailsSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
 	proxies?: Prisma.MediaFileUpdateManyWithoutProxyOfNestedInput;
 	thumbnail?: Prisma.ThumbnailUpdateOneWithoutMediaNestedInput;
 	export?: Prisma.ExportUpdateOneWithoutMediaNestedInput;
@@ -642,6 +779,9 @@ export type MediaUncheckedUpdateWithoutOriginalInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	seekSpritesSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	shotThumbnailsSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
 	proxies?: Prisma.MediaFileUncheckedUpdateManyWithoutProxyOfNestedInput;
 	thumbnail?: Prisma.ThumbnailUncheckedUpdateOneWithoutMediaNestedInput;
 	export?: Prisma.ExportUncheckedUpdateOneWithoutMediaNestedInput;
@@ -675,6 +815,9 @@ export type MediaUpdateWithoutProxiesInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	seekSpritesSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	shotThumbnailsSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
 	original?: Prisma.MediaFileUpdateOneRequiredWithoutOriginalOfNestedInput;
 	thumbnail?: Prisma.ThumbnailUpdateOneWithoutMediaNestedInput;
 	export?: Prisma.ExportUpdateOneWithoutMediaNestedInput;
@@ -689,6 +832,9 @@ export type MediaUncheckedUpdateWithoutProxiesInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	seekSpritesSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	shotThumbnailsSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
 	thumbnail?: Prisma.ThumbnailUncheckedUpdateOneWithoutMediaNestedInput;
 	export?: Prisma.ExportUncheckedUpdateOneWithoutMediaNestedInput;
 };
@@ -701,6 +847,9 @@ export type MediaCreateWithoutThumbnailInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: bigint | number | null;
+	seekSpritesSize?: bigint | number | null;
+	shotThumbnailsSize?: bigint | number | null;
 	original: Prisma.MediaFileCreateNestedOneWithoutOriginalOfInput;
 	proxies?: Prisma.MediaFileCreateNestedManyWithoutProxyOfInput;
 	export?: Prisma.ExportCreateNestedOneWithoutMediaInput;
@@ -715,6 +864,9 @@ export type MediaUncheckedCreateWithoutThumbnailInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: bigint | number | null;
+	seekSpritesSize?: bigint | number | null;
+	shotThumbnailsSize?: bigint | number | null;
 	proxies?: Prisma.MediaFileUncheckedCreateNestedManyWithoutProxyOfInput;
 	export?: Prisma.ExportUncheckedCreateNestedOneWithoutMediaInput;
 };
@@ -755,6 +907,9 @@ export type MediaUpdateWithoutThumbnailInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	seekSpritesSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	shotThumbnailsSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
 	original?: Prisma.MediaFileUpdateOneRequiredWithoutOriginalOfNestedInput;
 	proxies?: Prisma.MediaFileUpdateManyWithoutProxyOfNestedInput;
 	export?: Prisma.ExportUpdateOneWithoutMediaNestedInput;
@@ -769,6 +924,9 @@ export type MediaUncheckedUpdateWithoutThumbnailInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	seekSpritesSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	shotThumbnailsSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
 	proxies?: Prisma.MediaFileUncheckedUpdateManyWithoutProxyOfNestedInput;
 	export?: Prisma.ExportUncheckedUpdateOneWithoutMediaNestedInput;
 };
@@ -781,6 +939,9 @@ export type MediaCreateWithoutExportInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: bigint | number | null;
+	seekSpritesSize?: bigint | number | null;
+	shotThumbnailsSize?: bigint | number | null;
 	original: Prisma.MediaFileCreateNestedOneWithoutOriginalOfInput;
 	proxies?: Prisma.MediaFileCreateNestedManyWithoutProxyOfInput;
 	thumbnail?: Prisma.ThumbnailCreateNestedOneWithoutMediaInput;
@@ -795,6 +956,9 @@ export type MediaUncheckedCreateWithoutExportInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: bigint | number | null;
+	seekSpritesSize?: bigint | number | null;
+	shotThumbnailsSize?: bigint | number | null;
 	proxies?: Prisma.MediaFileUncheckedCreateNestedManyWithoutProxyOfInput;
 	thumbnail?: Prisma.ThumbnailUncheckedCreateNestedOneWithoutMediaInput;
 };
@@ -835,6 +999,9 @@ export type MediaUpdateWithoutExportInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	seekSpritesSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	shotThumbnailsSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
 	original?: Prisma.MediaFileUpdateOneRequiredWithoutOriginalOfNestedInput;
 	proxies?: Prisma.MediaFileUpdateManyWithoutProxyOfNestedInput;
 	thumbnail?: Prisma.ThumbnailUpdateOneWithoutMediaNestedInput;
@@ -849,6 +1016,9 @@ export type MediaUncheckedUpdateWithoutExportInput = {
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	seekSpritesSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	shotThumbnailsSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
 	proxies?: Prisma.MediaFileUncheckedUpdateManyWithoutProxyOfNestedInput;
 	thumbnail?: Prisma.ThumbnailUncheckedUpdateOneWithoutMediaNestedInput;
 };
@@ -900,6 +1070,9 @@ export type MediaSelect<
 		seekSprites?: boolean;
 		shotThumbnails?: boolean;
 		movieBarcode?: boolean;
+		thumbnailSize?: boolean;
+		seekSpritesSize?: boolean;
+		shotThumbnailsSize?: boolean;
 		original?: boolean | Prisma.MediaFileDefaultArgs<ExtArgs>;
 		proxies?: boolean | Prisma.Media$proxiesArgs<ExtArgs>;
 		thumbnail?: boolean | Prisma.Media$thumbnailArgs<ExtArgs>;
@@ -921,6 +1094,9 @@ export type MediaSelectCreateManyAndReturn<
 		seekSprites?: boolean;
 		shotThumbnails?: boolean;
 		movieBarcode?: boolean;
+		thumbnailSize?: boolean;
+		seekSpritesSize?: boolean;
+		shotThumbnailsSize?: boolean;
 		original?: boolean | Prisma.MediaFileDefaultArgs<ExtArgs>;
 	},
 	ExtArgs["result"]["media"]
@@ -938,6 +1114,9 @@ export type MediaSelectUpdateManyAndReturn<
 		seekSprites?: boolean;
 		shotThumbnails?: boolean;
 		movieBarcode?: boolean;
+		thumbnailSize?: boolean;
+		seekSpritesSize?: boolean;
+		shotThumbnailsSize?: boolean;
 		original?: boolean | Prisma.MediaFileDefaultArgs<ExtArgs>;
 	},
 	ExtArgs["result"]["media"]
@@ -952,6 +1131,9 @@ export type MediaSelectScalar = {
 	seekSprites?: boolean;
 	shotThumbnails?: boolean;
 	movieBarcode?: boolean;
+	thumbnailSize?: boolean;
+	seekSpritesSize?: boolean;
+	shotThumbnailsSize?: boolean;
 };
 
 export type MediaOmit<
@@ -964,7 +1146,10 @@ export type MediaOmit<
 	| "originalId"
 	| "seekSprites"
 	| "shotThumbnails"
-	| "movieBarcode",
+	| "movieBarcode"
+	| "thumbnailSize"
+	| "seekSpritesSize"
+	| "shotThumbnailsSize",
 	ExtArgs["result"]["media"]
 >;
 export type MediaInclude<
@@ -1007,6 +1192,9 @@ export type $MediaPayload<
 			seekSprites: runtime.JsonValue | null;
 			shotThumbnails: runtime.JsonValue | null;
 			movieBarcode: runtime.JsonValue | null;
+			thumbnailSize: bigint | null;
+			seekSpritesSize: bigint | null;
+			shotThumbnailsSize: bigint | null;
 		},
 		ExtArgs["result"]["media"]
 	>;
@@ -1607,6 +1795,9 @@ export interface MediaFieldRefs {
 	readonly seekSprites: Prisma.FieldRef<"Media", "Json">;
 	readonly shotThumbnails: Prisma.FieldRef<"Media", "Json">;
 	readonly movieBarcode: Prisma.FieldRef<"Media", "Json">;
+	readonly thumbnailSize: Prisma.FieldRef<"Media", "BigInt">;
+	readonly seekSpritesSize: Prisma.FieldRef<"Media", "BigInt">;
+	readonly shotThumbnailsSize: Prisma.FieldRef<"Media", "BigInt">;
 }
 
 // Custom InputTypes

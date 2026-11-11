@@ -9,6 +9,7 @@ import {
 import { prisma } from "../../../../../../../../helpers/db.ts";
 import { expectStatus } from "../../../../../../../../helpers/expect.ts";
 import { signIn, signOut } from "../../../../../../../../helpers/request-event.ts";
+import { storedExport } from "../../../../../../../../helpers/storage.ts";
 
 const { OWNER, ADMIN, MEMBER, REVIEWER } = Role;
 
@@ -44,6 +45,27 @@ describe("getExportList", () => {
 		expect(list.map((e) => e.id)).toEqual([w.exp1b.id, w.exp1.id]);
 		expect(list[1]!.media?.id).toBe(w.exp1.mediaId);
 		expect(list[0]!.media).toBeNull();
+		expect(list[0]!.storage).toBeNull();
+	});
+
+	it("storage size per file of the export's media", async () => {
+		const exp = await storedExport(w.tl2, {
+			original: 1000,
+			proxies: [300, 100],
+			images: { thumbnail: 5, seekSprites: 20, shotThumbnails: 25 },
+		});
+		signIn(w.owner.user, w.org.id);
+
+		const list = await getExportList(w.tl2.id);
+		expect(list.find((e) => e.id === exp.id)!.storage).toEqual({
+			files: [
+				{ label: "Original", size: 1000n },
+				{ label: "Proxy 1080p", size: 300n },
+				{ label: "Proxy 720p", size: 100n },
+				{ label: "Images", size: 50n },
+			],
+			total: 1450n,
+		});
 	});
 
 	it.each([

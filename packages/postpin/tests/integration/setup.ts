@@ -21,6 +21,12 @@ vi.mock("$app/env/private", () => ({
 	REDIS_HOST: "localhost",
 	REDIS_PORT: 6389,
 	REDIS_USE_SSL: false,
+	ADMIN_EMAILS: ["admin@test.local"],
+	// quota tests set overrides on the rows; the ENV fallback is unit-tested
+	STORAGE_DEFAULT_ORG_QUOTA: undefined,
+	STORAGE_DEFAULT_USER_QUOTA: undefined,
+	STORAGE_CAPACITY: 1_000_000_000n,
+	STORAGE_DISK_PATH: undefined,
 }));
 
 vi.mock("$app/env", () => ({ building: false, dev: true, browser: false, version: "test" }));

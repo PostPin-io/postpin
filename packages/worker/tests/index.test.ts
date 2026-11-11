@@ -16,6 +16,8 @@ vi.mock("../src/lib/queue.ts", () => ({
 }));
 vi.mock("../src/lib/database.ts", async () => (await import("./handlers/mocks.ts")).database);
 vi.mock("../src/lib/env.ts", async () => (await import("./handlers/mocks.ts")).env);
+const storeImageSizes = vi.hoisted(() => vi.fn(async () => {}));
+vi.mock("../src/lib/image-sizes.ts", () => ({ storeImageSizes }));
 // Keep the real signal handlers out of the test process
 vi.mock("../src/lib/shutdown.ts", () => ({
 	registerShutdown: vi.fn(),
@@ -58,12 +60,14 @@ describe("worker entry", () => {
 			where: { id: "m1" },
 			data: { status: "FAILED" },
 		});
+		expect(storeImageSizes).toHaveBeenCalledWith("m1");
 	});
 
 	it("ignores failures of other jobs and failures without a job", async () => {
 		await fail({ name: "probe", data: { mediaId: "m1" } });
 		await fail(undefined);
 		expect(prisma.media.update).not.toHaveBeenCalled();
+		expect(storeImageSizes).not.toHaveBeenCalled();
 	});
 
 	it("shuts both workers down gracefully on SIGTERM", () => {

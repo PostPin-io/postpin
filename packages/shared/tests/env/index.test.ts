@@ -3,6 +3,7 @@ import * as v from "valibot";
 import {
 	databaseEnvVars,
 	envBoolean,
+	envByteSize,
 	envNumber,
 	parseEnv,
 	redisEnvVars,
@@ -106,5 +107,21 @@ describe("parseEnv", () => {
 		for (const key of ["REDIS_HOST", "REDIS_PORT", "REDIS_USE_SSL", "DATABASE_URL"]) {
 			expect(error?.message).toContain(`  ${key}: `);
 		}
+	});
+});
+
+describe("envByteSize", () => {
+	it("parses sizes", () => {
+		expect(v.parse(envByteSize, "50 GB")).toBe(50_000_000_000n);
+	});
+
+	it.each([undefined, "", "  "])("treats %j as unset", (value) => {
+		expect(v.parse(envByteSize, value)).toBeUndefined();
+	});
+
+	it("rejects invalid sizes", () => {
+		const result = v.safeParse(envByteSize, "50 GBB");
+		expect(result.success).toBe(false);
+		expect(result.issues?.[0]?.message).toMatch(/Invalid byte size/);
 	});
 });

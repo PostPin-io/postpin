@@ -25,16 +25,43 @@ export const getExportList = query(valibot.string(), async (timelineId) => {
 			...accessibleExports(member),
 		},
 		include: {
-			media: true,
+			media: {
+				include: {
+					original: { select: { size: true } },
+					proxies: { select: { height: true, size: true }, orderBy: { height: "desc" } },
+				},
+			},
 		},
 		orderBy: {
 			createdAt: "desc",
 		},
 	});
 
-	return exports.map((e) => ({
+	return exports.map(({ media, ...e }) => ({
 		...e,
+		media: media && { id: media.id, status: media.status },
+		storage: media && storageOf(media),
 		canRename: allowed("export", "rename", { projectId: target.projectId, timelineId }),
 		canDelete: allowed("export", "delete", { projectId: target.projectId, timelineId }),
 	}));
 });
+
+type StoredMedia = {
+	original: { size: bigint | null };
+	proxies: { height: number | null; size: bigint | null }[];
+	thumbnailSize: bigint | null;
+	seekSpritesSize: bigint | null;
+	shotThumbnailsSize: bigint | null;
+};
+
+/** Bytes per file of an export's media, for the size info in the list. */
+function storageOf(media: StoredMedia) {
+	const images =
+		(media.thumbnailSize ?? 0n) + (media.seekSpritesSize ?? 0n) + (media.shotThumbnailsSize ?? 0n);
+	const files = [
+		{ label: "Original", size: media.original.size ?? 0n },
+		...media.proxies.map((p) => ({ label: `Proxy ${p.height ?? "?"}p`, size: p.size ?? 0n })),
+		{ label: "Images", size: images },
+	];
+	return { files, total: files.reduce((sum, f) => sum + f.size, 0n) };
+}

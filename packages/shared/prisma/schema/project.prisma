@@ -54,7 +54,10 @@ model Export {
   timelineSnapshotHash String?
   markers              Marker[]
   shareLinks           ShareLink[]
+  uploadedBy           User?       @relation("ExportUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedById         String?
 
+  @@index([uploadedById])
   @@index([timelineId])
   @@map("export")
 }

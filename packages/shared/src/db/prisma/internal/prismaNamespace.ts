@@ -2109,6 +2109,10 @@ export type TypeMap<
 				args: [query: string, ...values: any[]];
 				result: any;
 			};
+			$queryRawTyped: {
+				args: runtime.UnknownTypedSql;
+				result: JsonObject;
+			};
 		};
 	};
 };
@@ -2135,6 +2139,7 @@ export const UserScalarFieldEnum = {
 	email: "email",
 	emailVerified: "emailVerified",
 	image: "image",
+	storageQuota: "storageQuota",
 	lastActiveOrganizationId: "lastActiveOrganizationId",
 } as const;
 
@@ -2256,6 +2261,9 @@ export const MediaScalarFieldEnum = {
 	seekSprites: "seekSprites",
 	shotThumbnails: "shotThumbnails",
 	movieBarcode: "movieBarcode",
+	thumbnailSize: "thumbnailSize",
+	seekSpritesSize: "seekSpritesSize",
+	shotThumbnailsSize: "shotThumbnailsSize",
 } as const;
 
 export type MediaScalarFieldEnum = (typeof MediaScalarFieldEnum)[keyof typeof MediaScalarFieldEnum];
@@ -2304,6 +2312,7 @@ export const OrganizationScalarFieldEnum = {
 	logo: "logo",
 	createdAt: "createdAt",
 	metadata: "metadata",
+	storageQuota: "storageQuota",
 } as const;
 
 export type OrganizationScalarFieldEnum =
@@ -2399,6 +2408,7 @@ export const ExportScalarFieldEnum = {
 	mediaId: "mediaId",
 	timelineSnapshot: "timelineSnapshot",
 	timelineSnapshotHash: "timelineSnapshotHash",
+	uploadedById: "uploadedById",
 } as const;
 
 export type ExportScalarFieldEnum =
@@ -2513,6 +2523,16 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Boolean">;
 
 /**
+ * Reference to a field of type 'BigInt'
+ */
+export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "BigInt">;
+
+/**
+ * Reference to a field of type 'BigInt[]'
+ */
+export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "BigInt[]">;
+
+/**
  * Reference to a field of type 'Int'
  */
 export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Int">;
@@ -2547,16 +2567,6 @@ export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "J
  * Reference to a field of type 'QueryMode'
  */
 export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "QueryMode">;
-
-/**
- * Reference to a field of type 'BigInt'
- */
-export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "BigInt">;
-
-/**
- * Reference to a field of type 'BigInt[]'
- */
-export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "BigInt[]">;
 
 /**
  * Reference to a field of type 'Float'

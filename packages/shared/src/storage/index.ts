@@ -2,6 +2,7 @@ import { S3 } from "@aws-sdk/client-s3";
 import type { S3Env } from "../env/index.ts";
 export * from "./paths.ts";
 export * from "./multipart.ts";
+export * from "./measure.ts";
 
 function buildClient(env: S3Env, endpoint: string | undefined): S3 {
 	return new S3({

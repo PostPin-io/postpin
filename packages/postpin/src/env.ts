@@ -3,6 +3,7 @@ import { building } from "$app/env";
 import {
 	databaseEnvVars,
 	envBoolean,
+	envByteSize,
 	envNumber,
 	redisEnvVars,
 	s3EnvVars,
@@ -46,6 +47,15 @@ export const variables = defineEnvVars(
 				),
 			),
 		},
+		STORAGE_DEFAULT_ORG_QUOTA: { schema: envByteSize }, // empty = unlimited
+		STORAGE_DEFAULT_USER_QUOTA: { schema: envByteSize }, // empty = unlimited
+		STORAGE_CAPACITY: { schema: envByteSize }, // empty = unlimited
+		STORAGE_DISK_PATH: {
+			schema: v.pipe(
+				v.optional(v.string()),
+				v.transform((s) => s?.trim() || undefined),
+			),
+		}, // empty = disabled
 		...databaseEnvVars,
 		...s3EnvVars,
 		...redisEnvVars,

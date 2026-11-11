@@ -8,6 +8,7 @@ import { fakes } from "../../../helpers/fakes.ts";
 import { expectHttpError, signInApi } from "../../../helpers/api.ts";
 import { apiWorld, signInAs, type ApiWorld } from "../../../helpers/api-world.ts";
 import { signOut } from "../../../helpers/request-event.ts";
+import { storedExport } from "../../../helpers/storage.ts";
 
 const { OWNER, ADMIN, MEMBER, REVIEWER } = Role;
 const MiB = 1024 * 1024;
@@ -81,6 +82,13 @@ describe("createExport", () => {
 		const exp = await prisma.export.findUniqueOrThrow({ where: { id } });
 		expect(exp).toMatchObject({ timelineId: w.tl1.id, mediaId: null });
 		expect(exp.name).toMatch(/^Export \d{4}-\d\d-\d\dT/);
+	});
+
+	it("remembers who created the export, for the user's storage quota", async () => {
+		const member = await signInAs(w, MEMBER, { timelineId: w.tl1.id });
+		const { id } = await controller.createExport(w.projectA.id, w.tl1.id, noNle);
+		const exp = await prisma.export.findUniqueOrThrow({ where: { id } });
+		expect(exp.uploadedById).toBe(member.user.id);
 	});
 
 	it("member with a grant creates an export", async () => {
@@ -405,13 +413,102 @@ describe("completeUpload", () => {
 	});
 });
 
+// ─── storage quota ──────────────────────────────────────────────────────────
+
+describe("initUpload storage quota", () => {
+	const init = (exportId: string, fileSize: number) =>
+		controller.initUpload(w.projectA.id, w.tl1.id, exportId, { fileSize });
+
+	it("reserves the file size on the original", async () => {
+		await signInApi(w.owner.user, w.org.id);
+		const res = await init(w.exp1.id, 42);
+		const media = await prisma.media.findUniqueOrThrow({
+			where: { id: res.mediaId },
+			include: { original: true },
+		});
+		expect(media.original.size).toBe(42n);
+	});
+
+	it("413 when the organization is full, without creating media or an upload", async () => {
+		await prisma.organization.update({ where: { id: w.org.id }, data: { storageQuota: 1000n } });
+		await storedExport(w.tl2, { original: 900 });
+		await signInApi(w.owner.user, w.org.id);
+
+		const err = await expectHttpError(init(w.exp1.id, 200), 413);
+		expect((err as Error).message).toMatch(/^Organization storage is full/);
+		expect(await prisma.export.findUniqueOrThrow({ where: { id: w.exp1.id } })).toMatchObject({
+			mediaId: null,
+		});
+		expect(fakes.s3).toEqual([]);
+
+		await expect(init(w.exp1.id, 100)).resolves.toMatchObject({ uploadId: "upload-1" });
+	});
+
+	it("413 when the uploader is full, counting other organizations", async () => {
+		const member = await signInAs(w, MEMBER, { timelineId: w.tl1.id });
+		await prisma.user.update({ where: { id: member.user.id }, data: { storageQuota: 100n } });
+		await f.createMember(w.other, MEMBER, member.user);
+		await storedExport(w.otherTimeline, { original: 60, uploadedBy: member.user });
+		const { id } = await controller.createExport(w.projectA.id, w.tl1.id, {
+			nleTimelineId: null,
+			nleProjectId: null,
+		});
+
+		const err = await expectHttpError(init(id, 50), 413);
+		expect((err as Error).message).toMatch(/^Your storage is full/);
+	});
+
+	it("charges the export's creator, not whoever retries the upload", async () => {
+		const creator = await f.createMember(w.org, MEMBER);
+		await prisma.user.update({ where: { id: creator.user.id }, data: { storageQuota: 10n } });
+		await prisma.export.update({
+			where: { id: w.exp1.id },
+			data: { uploadedById: creator.user.id },
+		});
+		await signInApi(w.owner.user, w.org.id);
+		await expectHttpError(init(w.exp1.id, 11), 413);
+	});
+
+	it("a retry doesn't count its own reservation twice", async () => {
+		await prisma.organization.update({ where: { id: w.org.id }, data: { storageQuota: 1000n } });
+		await signInApi(w.owner.user, w.org.id);
+		const first = await init(w.exp1.id, 800);
+		const second = await init(w.exp1.id, 700);
+		expect(second.mediaId).toBe(first.mediaId);
+		const media = await prisma.media.findUniqueOrThrow({
+			where: { id: first.mediaId },
+			include: { original: true },
+		});
+		expect(media.original.size).toBe(700n);
+	});
+
+	it("409 for uploaded media comes before the quota check", async () => {
+		await prisma.organization.update({ where: { id: w.org.id }, data: { storageQuota: 1n } });
+		const exp = await exportWithMedia("COMPLETED");
+		await signInApi(w.owner.user, w.org.id);
+		await expectHttpError(init(exp.id, 100), 409);
+	});
+});
+
 // ─── abortUpload ────────────────────────────────────────────────────────────
 
 describe("abortUpload", () => {
 	it("aborts the multipart upload in S3", async () => {
 		const exp = await exportWithMedia("PENDING");
 		await signInAs(w, MEMBER, { projectId: w.projectA.id });
+		await prisma.mediaFile.update({
+			where: {
+				id: (await prisma.media.findUniqueOrThrow({ where: { id: exp.mediaId! } })).originalId,
+			},
+			data: { size: 500n },
+		});
 		await controller.abortUpload(w.projectA.id, w.tl1.id, exp.id, { uploadId: "upload-1" });
+		// frees the reservation from initUpload
+		const media = await prisma.media.findUniqueOrThrow({
+			where: { id: exp.mediaId! },
+			include: { original: true },
+		});
+		expect(media.original.size).toBe(0n);
 		expect(fakes.s3).toEqual([
 			{
 				command: "AbortMultipartUploadCommand",

@@ -18,7 +18,6 @@ export async function probe(job: TypedJob<typeof Queues.light, "probe">) {
 				update: {
 					status: "COMPLETED",
 					contentType: metadata.format.format_name,
-					size: metadata.format.size != null ? BigInt(metadata.format.size) : null,
 					duration: metadata.format.duration ?? null,
 					bitrate: metadata.format.bit_rate ?? null,
 					videoCodec: videoStream?.codec_name ?? null,
@@ -28,6 +27,8 @@ export async function probe(job: TypedJob<typeof Queues.light, "probe">) {
 					audioCodec: audioStream?.codec_name ?? null,
 					sampleRate: audioStream?.sample_rate ?? null,
 					channels: audioStream?.channels ?? null,
+					// keep the reservation from init-upload if ffprobe can't tell
+					size: metadata.format.size != null ? BigInt(metadata.format.size) : undefined,
 				},
 			},
 		},

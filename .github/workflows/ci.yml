@@ -54,12 +54,25 @@ jobs:
         run: pnpm -r --filter '!@postpin-io/desktop' run check
   codegen:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postpin
+          POSTGRES_PASSWORD: postpin
+          POSTGRES_DB: postpin_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postpin"
+          --health-interval 2s
+          --health-retries 20
     env:
-      # Dummy
       DATABASE_URL: postgresql://postpin:postpin@localhost:5432/postpin_test?schema=public
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
+      - run: pnpm --filter @postpin-io/shared exec prisma migrate deploy --config prisma7.config.ts
       - run: pnpm --filter @postpin-io/postpin run generate:api
       - run: pnpm --filter @postpin-io/postpin run build:api-client
       - run: pnpm --filter @postpin-io/shared run db:generate

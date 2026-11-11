@@ -67,6 +67,7 @@ describe("probe", () => {
 	});
 
 	it("stores nulls for missing streams and format fields, and a 0 frame rate as null", async () => {
+		// size stays undefined: Prisma then keeps the reservation init-upload stored
 		ffmpegLib.ffprobe.mockResolvedValue({
 			streams: [{ index: 0, codec_type: "video", width: 100, height: 100, avg_frame_rate: 0 }],
 			format: { format_name: "png_pipe" },
@@ -75,7 +76,7 @@ describe("probe", () => {
 		expect(prisma.media.update.mock.calls[0]![0].data.original.update).toEqual({
 			status: "COMPLETED",
 			contentType: "png_pipe",
-			size: null,
+			size: undefined,
 			duration: null,
 			bitrate: null,
 			videoCodec: null,

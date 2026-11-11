@@ -1,4 +1,5 @@
 import * as v from "valibot";
+import { isByteSize, parseByteSize } from "../logic/bytes.ts";
 
 /** `"true"` / `"false"`, defaulting to `false` when unset. */
 export const envBoolean = v.optional(
@@ -10,6 +11,18 @@ export const envBoolean = v.optional(
 );
 
 export const envNumber = v.pipe(v.string(), v.trim(), v.nonEmpty(), v.toNumber());
+
+export const envByteSize = v.pipe(
+	v.optional(v.string()),
+	v.transform((value) => value?.trim() || undefined),
+	v.optional(
+		v.pipe(
+			v.string(),
+			v.check(isByteSize, "Invalid byte size, e.g. 50 GB"),
+			v.transform(parseByteSize),
+		),
+	),
+);
 
 /** An optional URL; an empty string counts as unset (compose writes `VAR=` for unset vars). */
 const envOptionalUrl = v.pipe(

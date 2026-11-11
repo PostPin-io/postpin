@@ -6,11 +6,13 @@
 	import { getUrl } from "#lib/components/review/export-view.remote.ts";
 	import RenameExportModal from "#lib/components/exports/RenameExportModal.svelte";
 	import DeleteExportModal from "#lib/components/exports/DeleteExportModal.svelte";
+	import { formatByteSize } from "@postpin-io/shared/logic/bytes";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
 	import Apeture from "@lucide/svelte/icons/aperture";
 	import Ellipsis from "@lucide/svelte/icons/ellipsis";
+	import Info from "@lucide/svelte/icons/info";
 	import FileDown from "@lucide/svelte/icons/file-down";
 	import Link from "@lucide/svelte/icons/link";
 	import Pencil from "@lucide/svelte/icons/pencil";
@@ -150,6 +152,41 @@
 			</li>
 		{/if}
 	</ul>
+{/snippet}
+
+<!-- Size of the export's files, tucked away behind a faint "i" -->
+{#snippet sizeInfo(singleExport: (typeof exports)[number])}
+	{@const storage = singleExport.storage}
+	{#if storage}
+		<button
+			type="button"
+			class="btn btn-circle shrink-0 btn-ghost opacity-40 btn-xs hover:opacity-100"
+			aria-label="Storage size of {singleExport.name}"
+			popovertarget="export-size-{singleExport.id}"
+			style="anchor-name: --export-size-{singleExport.id}"
+		>
+			<Info class="size-3.5" />
+		</button>
+		<div
+			id="export-size-{singleExport.id}"
+			popover
+			class="dropdown z-50 w-56 rounded-box bg-base-100 p-3 text-sm shadow-lg"
+			style="position-anchor: --export-size-{singleExport.id}"
+		>
+			<dl class="space-y-1 tabular-nums">
+				{#each storage.files as file (file.label)}
+					<div class="flex justify-between gap-4 text-base-content/70">
+						<dt>{file.label}</dt>
+						<dd>{formatByteSize(file.size)}</dd>
+					</div>
+				{/each}
+				<div class="flex justify-between gap-4 border-t border-base-300 pt-1 font-medium">
+					<dt>Total</dt>
+					<dd>{formatByteSize(storage.total)}</dd>
+				</div>
+			</dl>
+		</div>
+	{/if}
 {/snippet}
 
 {#snippet chevronToggle(field: typeof sortField)}
@@ -351,6 +388,7 @@
 
 								<td class="text-right whitespace-nowrap">
 									<div class="flex items-center justify-end gap-2">
+										{@render sizeInfo(singleExport)}
 										<a href={exportHref} class="btn btn-primary btn-sm">Open export</a>
 										{@render actionsMenu(singleExport, exportHref)}
 									</div>
@@ -405,8 +443,9 @@
 								</div>
 							</dl>
 
-							<div class="mt-2 card-actions items-center justify-end">
-								<a href={exportHref} class="btn btn-primary btn-sm">Open export</a>
+							<div class="mt-2 card-actions items-center justify-between">
+								{@render sizeInfo(singleExport)}
+								<a href={exportHref} class="btn ms-auto btn-primary btn-sm">Open export</a>
 							</div>
 						</div>
 					</article>

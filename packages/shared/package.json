@@ -11,11 +11,12 @@
 		"./storage": "./src/storage/index.ts",
 		"./db": "./src/db/index.ts",
 		"./db/enums": "./src/db/prisma/enums.ts",
+		"./db/sql": "./src/db/prisma/sql.ts",
 		"./types/*": "./src/types/*.ts",
 		"./logic/*": "./src/logic/*.ts"
 	},
 	"scripts": {
-		"db:generate": "prisma generate --config prisma7.config.ts && prettier --write src/db/prisma",
+		"db:generate": "prisma generate --config prisma7.config.ts --sql && prettier --write src/db/prisma",
 		"db:migrate": "prisma migrate dev --config prisma7.config.ts && prettier --write src/db/prisma",
 		"typecheck": "tsc --noEmit",
 		"lint": "tsc --noEmit",

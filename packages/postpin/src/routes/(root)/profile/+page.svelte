@@ -5,6 +5,7 @@
 	import { authClient } from "#lib/auth-client.ts";
 	import {
 		getMemberships,
+		getMyStorage,
 		getProfile,
 		getSessions,
 		leaveOrganization,
@@ -12,12 +13,15 @@
 	} from "./profile.remote.ts";
 	import NewOrgModal from "../../../lib/components/organizations/NewOrgModal.svelte";
 	import { roleLabel } from "#lib/roles.ts";
+	import UsageBar from "#lib/components/storage/UsageBar.svelte";
+	import { formatByteSize } from "@postpin-io/shared/logic/bytes";
 
 	type Message = { type: "success" | "error"; text: string } | null;
 
 	const profile = $derived(await getProfile());
 	const memberships = $derived(await getMemberships());
 	const sessions = $derived(await getSessions());
+	const storage = $derived(await getMyStorage());
 
 	let name = $state(untrack(() => profile.name));
 	let savingName = $state(false);
@@ -378,6 +382,37 @@
 		<div>
 			<button class="btn btn-sm" onclick={() => dialog?.open()}> Create new organization </button>
 		</div>
+	</fieldset>
+
+	<fieldset class="fieldset rounded-box border border-base-300 bg-base-100 p-4">
+		<legend class="fieldset-legend">Storage</legend>
+		<UsageBar used={storage.used} quota={storage.quota} />
+		<p class="label">Exports you uploaded, with their proxies and images, in all organizations.</p>
+		{#if storage.organizations.length > 0}
+			<table class="table table-sm">
+				<thead>
+					<tr>
+						<th>Organization</th>
+						<th class="text-right">Your uploads</th>
+						<th class="text-right">You can still upload</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each storage.organizations as org (org.id)}
+						<tr>
+							<td>{org.name}</td>
+							<td class="text-right tabular-nums">{formatByteSize(org.used)}</td>
+							<td class="text-right tabular-nums">
+								{org.left === null ? "Unlimited" : formatByteSize(org.left)}
+								{#if org.limitedBy === "organization"}
+									<div class="text-xs opacity-60">limited by the organization</div>
+								{/if}
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		{/if}
 	</fieldset>
 </div>
 

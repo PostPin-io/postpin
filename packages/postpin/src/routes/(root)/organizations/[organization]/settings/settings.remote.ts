@@ -6,6 +6,8 @@ import { roleAllows } from "#lib/roles.ts";
 import { authorize } from "#lib/server/org-access.ts";
 import { deleteMediaFolders, purgeExports } from "#lib/server/media.ts";
 import { Prisma } from "@postpin-io/shared/db";
+import { getProjectStorageUsage } from "@postpin-io/shared/db/sql";
+import { orgQuota, storageUsageRows, sumBy, totalUsed } from "#lib/server/storage-usage.ts";
 
 export const getOrganizationSettings = query(v.string(), async (slug) => {
 	const { user } = getRequestEvent().locals;
@@ -80,3 +82,30 @@ export const deleteOrganization = command(
 		await deleteMediaFolders(mediaIds, `deleteOrganization ${organizationId}`);
 	},
 );
+
+export const getOrganizationStorage = query(v.string(), async (organizationId) => {
+	await authorize("organization", "updateSettings", { type: "organization", id: organizationId });
+	const [org, rows, projects] = await Promise.all([
+		prisma.organization.findUniqueOrThrow({
+			where: { id: organizationId },
+			select: { storageQuota: true },
+		}),
+		storageUsageRows({ orgId: organizationId }),
+		prisma.$queryRawTyped(getProjectStorageUsage(organizationId)),
+	]);
+	const byUser = sumBy(rows, "userId");
+	const users = await prisma.user.findMany({
+		where: { id: { in: [...byUser.keys()] } },
+		select: { id: true, name: true },
+	});
+	return {
+		used: totalUsed(rows),
+		quota: orgQuota(org.storageQuota),
+		projects: projects.map((p) => ({ ...p, used: p.used ?? 0n })),
+		uploaders: users
+			.map((u) => ({ ...u, used: byUser.get(u.id) ?? 0n }))
+			.sort((a, b) => (b.used > a.used ? 1 : b.used < a.used ? -1 : 0)),
+		// exports from before uploads were attributed, or whose uploader was deleted
+		unattributed: totalUsed(rows.filter((r) => !r.userId)),
+	};
+});

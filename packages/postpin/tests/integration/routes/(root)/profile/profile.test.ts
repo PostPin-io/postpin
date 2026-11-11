@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { Role } from "@postpin-io/shared/db/enums";
 import {
 	getMemberships,
+	getMyStorage,
 	getProfile,
 	getSessions,
 	leaveOrganization,
@@ -12,6 +13,7 @@ import { prisma } from "../../../../helpers/db.ts";
 import { expectStatus } from "../../../../helpers/expect.ts";
 import * as f from "../../../../helpers/factories.ts";
 import { signIn, signOut } from "../../../../helpers/request-event.ts";
+import { storedExport } from "../../../../helpers/storage.ts";
 
 const { OWNER, ADMIN, MEMBER, REVIEWER } = Role;
 
@@ -202,5 +204,52 @@ describe("leaveOrganization", () => {
 		signIn(me, org.id);
 		await leaveOrganization(org.id);
 		expect(await prisma.member.count({ where: { id: m.id } })).toBe(0);
+	});
+});
+
+describe("getMyStorage", () => {
+	it("401 when signed out", async () => {
+		signOut();
+		await expectStatus(getMyStorage(), 401);
+	});
+
+	it("shows the own uploads and what's left per organization, by the tighter limit", async () => {
+		const roomy = await f.createOrg({ name: "Roomy" });
+		const tight = await f.createOrg({ name: "Tight" });
+		const reviewOnly = await f.createOrg({ name: "Review only" });
+		await f.createMember(roomy, MEMBER, me);
+		await f.createMember(tight, MEMBER, me);
+		await f.createMember(reviewOnly, REVIEWER, me);
+		await prisma.user.update({ where: { id: me.id }, data: { storageQuota: 1000n } });
+		await prisma.organization.update({ where: { id: tight.id }, data: { storageQuota: 500n } });
+
+		const other = await f.createUser();
+		await storedExport(await f.createTimeline(await f.createProject(roomy)), {
+			original: 100,
+			uploadedBy: me,
+		});
+		// someone else fills the tight org
+		await storedExport(await f.createTimeline(await f.createProject(tight)), {
+			original: 450,
+			uploadedBy: other,
+		});
+		signIn(me);
+
+		const storage = await getMyStorage();
+		expect(storage).toMatchObject({ used: 100n, quota: 1000n });
+		// reviewers can't upload, so their orgs aren't listed
+		expect(storage.organizations).toEqual([
+			{ id: roomy.id, name: "Roomy", used: 100n, left: 900n, limitedBy: "user" },
+			{ id: tight.id, name: "Tight", used: 0n, left: 50n, limitedBy: "organization" },
+		]);
+	});
+
+	it("is unlimited without any quota", async () => {
+		const org = await f.createOrg();
+		await f.createMember(org, OWNER, me);
+		signIn(me);
+		expect((await getMyStorage()).organizations).toEqual([
+			{ id: org.id, name: org.name, used: 0n, left: null, limitedBy: null },
+		]);
 	});
 });

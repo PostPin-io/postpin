@@ -33,6 +33,10 @@ services:
       <<: *postpin-env
       # adapter-node checks form submissions against this origin
       ORIGIN: ${BETTER_AUTH_URL}
+      # disk size and free space for the storage chart in /admin; STORAGE_CAPACITY in .env wins
+      STORAGE_DISK_PATH: /storage
+    volumes:
+      - ./data/s3:/storage:ro
     depends_on: *postpin-depends-on
     ports:
       - 127.0.0.1:${APP_PORT:-3000}:3000

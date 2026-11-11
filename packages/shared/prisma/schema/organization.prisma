@@ -1,15 +1,16 @@
 model Organization {
-  id          String       @id
-  name        String
-  slug        String
-  logo        String?
-  createdAt   DateTime
-  metadata    String?
-  members     Member[]
-  invitations Invitation[]
-  inviteLinks InviteLink[]
-  sessions    Session[]
-  projects    Project[]
+  id           String       @id
+  name         String
+  slug         String
+  logo         String?
+  createdAt    DateTime
+  metadata     String?
+  storageQuota BigInt? // null = STORAGE_DEFAULT_ORG_QUOTA
+  members      Member[]
+  invitations  Invitation[]
+  inviteLinks  InviteLink[]
+  sessions     Session[]
+  projects     Project[]
 
   lastActiveUsers User[] @relation("LastActiveOrganization")
 

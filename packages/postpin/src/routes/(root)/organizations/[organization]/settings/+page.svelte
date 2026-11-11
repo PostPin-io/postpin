@@ -7,6 +7,7 @@
 	import { getOrganizationSettings, renameOrganization } from "./settings.remote.ts";
 	import { authClient } from "#lib/auth-client.ts";
 	import { deleteOrganization } from "./settings.remote.ts";
+	import OrgStorage from "./OrgStorage.svelte";
 
 	let deleteDialog: HTMLDialogElement | null = null;
 	let confirmName = $state("");
@@ -127,6 +128,7 @@
 			<p class="label">Only owners can rename the organization.</p>
 		{/if}
 	</fieldset>
+	<OrgStorage organizationId={organization.id} />
 	{#if organization.canDelete}
 		<fieldset class="fieldset rounded-box border border-error/40 bg-base-100 p-4">
 			<legend class="fieldset-legend text-error">Danger zone</legend>

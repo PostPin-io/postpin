@@ -481,6 +481,10 @@ export type InitUploadErrors = {
 	 * Export media was already uploaded
 	 */
 	409: unknown;
+	/**
+	 * Storage quota exceeded
+	 */
+	413: unknown;
 };
 
 export type InitUploadResponses = {

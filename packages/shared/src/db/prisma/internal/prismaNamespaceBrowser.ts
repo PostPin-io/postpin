@@ -96,6 +96,7 @@ export const UserScalarFieldEnum = {
 	email: "email",
 	emailVerified: "emailVerified",
 	image: "image",
+	storageQuota: "storageQuota",
 	lastActiveOrganizationId: "lastActiveOrganizationId",
 } as const;
 
@@ -217,6 +218,9 @@ export const MediaScalarFieldEnum = {
 	seekSprites: "seekSprites",
 	shotThumbnails: "shotThumbnails",
 	movieBarcode: "movieBarcode",
+	thumbnailSize: "thumbnailSize",
+	seekSpritesSize: "seekSpritesSize",
+	shotThumbnailsSize: "shotThumbnailsSize",
 } as const;
 
 export type MediaScalarFieldEnum = (typeof MediaScalarFieldEnum)[keyof typeof MediaScalarFieldEnum];
@@ -265,6 +269,7 @@ export const OrganizationScalarFieldEnum = {
 	logo: "logo",
 	createdAt: "createdAt",
 	metadata: "metadata",
+	storageQuota: "storageQuota",
 } as const;
 
 export type OrganizationScalarFieldEnum =
@@ -360,6 +365,7 @@ export const ExportScalarFieldEnum = {
 	mediaId: "mediaId",
 	timelineSnapshot: "timelineSnapshot",
 	timelineSnapshotHash: "timelineSnapshotHash",
+	uploadedById: "uploadedById",
 } as const;
 
 export type ExportScalarFieldEnum =
