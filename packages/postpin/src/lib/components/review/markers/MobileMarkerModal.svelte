@@ -88,14 +88,9 @@
 				<h2 class="min-w-0 flex-1 truncate text-center text-lg font-semibold">
 					{marker.name?.trim() || "Marker"}
 				</h2>
-				<button
-					type="button"
-					class="btn btn-square btn-ghost"
-					aria-label="Close"
-					onclick={() => dialog?.close()}
-				>
-					<X size={22} />
-				</button>
+				{#if marker.canDelete}
+					<span class="w-12 shrink-0" aria-hidden="true"></span>
+				{/if}
 			</header>
 
 			<div class="min-h-0 flex-1 overflow-y-auto">
@@ -125,6 +120,31 @@
 				{/key}
 
 				{#if !share}
+					<form
+						class="flex items-end gap-2 px-4 pb-4"
+						onsubmit={(event) => {
+							event.preventDefault();
+							void send();
+						}}
+					>
+						<textarea
+							class="textarea min-h-11 flex-1 resize-none"
+							rows="1"
+							placeholder="Write a response…"
+							aria-label="Response"
+							bind:value={reply}></textarea>
+						<button
+							type="submit"
+							class="btn btn-square btn-primary"
+							aria-label="Send response"
+							disabled={sending || !reply.trim()}
+						>
+							{#if sending}<span class="loading loading-sm loading-spinner"></span>{:else}<Send
+									size={20}
+								/>{/if}
+						</button>
+					</form>
+
 					<section class="flex flex-col gap-3 px-4 pb-4" aria-label="Responses">
 						<h3 class="font-semibold">Responses ({responses.length})</h3>
 						{#each responses as response (response.id)}
@@ -143,32 +163,18 @@
 				{/if}
 			</div>
 
-			{#if !share}
-				<form
-					class="flex shrink-0 items-end gap-2 border-t border-base-300 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
-					onsubmit={(event) => {
-						event.preventDefault();
-						void send();
-					}}
+			<footer
+				class="flex shrink-0 justify-end border-t border-base-300 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+			>
+				<button
+					type="button"
+					class="btn btn-square btn-ghost"
+					aria-label="Close"
+					onclick={() => dialog?.close()}
 				>
-					<textarea
-						class="textarea min-h-11 flex-1 resize-none"
-						rows="1"
-						placeholder="Write a response…"
-						aria-label="Response"
-						bind:value={reply}></textarea>
-					<button
-						type="submit"
-						class="btn btn-square btn-primary"
-						aria-label="Send response"
-						disabled={sending || !reply.trim()}
-					>
-						{#if sending}<span class="loading loading-sm loading-spinner"></span>{:else}<Send
-								size={20}
-							/>{/if}
-					</button>
-				</form>
-			{/if}
+					<X size={22} />
+				</button>
+			</footer>
 		{/if}
 	</div>
 </dialog>
