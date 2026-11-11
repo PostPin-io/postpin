@@ -1,4 +1,5 @@
 <script lang="ts">
+	import X from "@lucide/svelte/icons/x";
 	import Send from "@lucide/svelte/icons/send";
 	import LocateFixed from "@lucide/svelte/icons/locate-fixed";
 	import Trash from "@lucide/svelte/icons/trash";
@@ -93,7 +94,7 @@
 					aria-label="Close"
 					onclick={() => dialog?.close()}
 				>
-					<Send size={22} />
+					<X size={22} />
 				</button>
 			</header>
 

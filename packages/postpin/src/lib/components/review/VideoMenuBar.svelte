@@ -84,10 +84,10 @@
 		mobileLandscape?: boolean;
 	} = $props();
 
-	// Phones: finger-sized buttons (40px instead of 24px), upright in two rows
+	// Phones: finger-sized buttons (40px instead of 24px). Speed, previous/next marker and mute
+	// are left out there, so everything fits in one row
 	const btnSize = $derived(mobile ? "btn-md" : "btn-xs");
 	const iconSize = $derived(mobile ? 22 : 16);
-	const twoRows = $derived(mobile && !mobileLandscape);
 
 	// Absolute timeline frame, like marker frames
 	const frame = $derived(frameAtSeconds(currentTime, timing));
@@ -195,12 +195,7 @@
 			{/if}
 		</div>
 	</div>
-	<!-- Phones held upright: the transport buttons get a row of their own, so every button can be big -->
-	<div
-		class="grid w-full items-center gap-1 p-1 {twoRows
-			? 'grid-cols-2'
-			: 'grid-cols-[1fr_auto_1fr]'}"
-	>
+	<div class="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-1 p-1">
 		<div class="flex items-center gap-2 justify-self-start">
 			<Timecode
 				bind:frame={() => frame, (f) => (currentTime = secondsAtFrame(f, timing))}
@@ -223,48 +218,46 @@
 			{/if}
 		</div>
 		<!-- The add-marker button hangs off the left edge so play stays centered under the video -->
-		<div class="flex items-center justify-center {twoRows ? 'col-span-2 row-start-2' : ''}">
-			<div class="relative flex items-center justify-center">
-				{#if onCreateMarker}
-					<button
-						class="btn absolute right-full btn-square btn-ghost {btnSize} {markerColor
-							? 'hover:border-(--marker-color) hover:bg-(--marker-color) hover:text-(--marker-contrast)'
-							: ''}"
-						style:--marker-color={markerColor}
-						style:--marker-contrast={markerColor ? contrastColor(markerColor) : undefined}
-						title="Add marker at playhead (M)"
-						aria-label="Add marker at playhead"
-						onclick={() => onCreateMarker()}
-					>
-						<DiamondPlus size={iconSize} />
-					</button>
-				{/if}
-				{#if !mobile}
-					<button
-						class="btn btn-square btn-ghost {btnSize}"
-						title="Jump to previous Marker on the left"
-						onclick={() => seekToAdjacentMarker(-1)}
-					>
-						<ArrowLeft size={iconSize} />
-					</button>
-				{/if}
-				<button class="btn btn-square btn-ghost {btnSize}" onclick={togglePlayback}>
-					{#if paused}
-						<Play size={iconSize} />
-					{:else}
-						<Pause size={iconSize} />
-					{/if}
+		<div class="relative flex items-center justify-center">
+			{#if onCreateMarker}
+				<button
+					class="btn absolute right-full btn-square btn-ghost {btnSize} {markerColor
+						? 'hover:border-(--marker-color) hover:bg-(--marker-color) hover:text-(--marker-contrast)'
+						: ''}"
+					style:--marker-color={markerColor}
+					style:--marker-contrast={markerColor ? contrastColor(markerColor) : undefined}
+					title="Add marker at playhead (M)"
+					aria-label="Add marker at playhead"
+					onclick={() => onCreateMarker()}
+				>
+					<DiamondPlus size={iconSize} />
 				</button>
-				{#if !mobile}
-					<button
-						class="btn btn-square btn-ghost {btnSize}"
-						title="Jump to next Marker on the right"
-						onclick={() => seekToAdjacentMarker(1)}
-					>
-						<ArrowRight size={iconSize} />
-					</button>
+			{/if}
+			{#if !mobile}
+				<button
+					class="btn btn-square btn-ghost {btnSize}"
+					title="Jump to previous Marker on the left"
+					onclick={() => seekToAdjacentMarker(-1)}
+				>
+					<ArrowLeft size={iconSize} />
+				</button>
+			{/if}
+			<button class="btn btn-square btn-ghost {btnSize}" onclick={togglePlayback}>
+				{#if paused}
+					<Play size={iconSize} />
+				{:else}
+					<Pause size={iconSize} />
 				{/if}
-			</div>
+			</button>
+			{#if !mobile}
+				<button
+					class="btn btn-square btn-ghost {btnSize}"
+					title="Jump to next Marker on the right"
+					onclick={() => seekToAdjacentMarker(1)}
+				>
+					<ArrowRight size={iconSize} />
+				</button>
+			{/if}
 		</div>
 		<div class="flex items-center gap-1 justify-self-end">
 			{#if status && !fullscreen}{@render status()}{/if}

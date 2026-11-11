@@ -2,7 +2,7 @@
 	import { formatTimecode, parseTimecode } from "@postpin-io/shared/logic/timecode";
 	import { clampToTimeline, frameFromInput } from "./timecode-input.ts";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
-	import Clock from "@lucide/svelte/icons/clock.svelte";
+	import Clock from "@lucide/svelte/icons/clock";
 
 	interface Props {
 		/** Absolute timeline frame */
@@ -117,7 +117,12 @@
 
 <div class="flex gap-1 font-mono">
 	{#if mobile}
-		<button class="cursor-pointer" title="Enter frames or timecode" onclick={openMobileInput}>
+		<button
+			class="cursor-pointer"
+			title="Enter frames or timecode"
+			aria-label="Jump to time"
+			onclick={openMobileInput}
+		>
 			{#if mobileLandscape}
 				{formatTimecode(frame, frameRate)}
 			{:else}

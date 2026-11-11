@@ -63,18 +63,13 @@
 	});
 	const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "short" });
 
-	function getInitials(name?: string | null) {
-		const value = name?.trim();
-		if (!value) return "D.U.";
-
-		const parts = value.split(/\s+/).filter(Boolean);
-		if (parts.length === 0) return "D.U.";
-		if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase().split("").join(".") + ".";
-		return parts
-			.slice(0, 2)
-			.map((part) => part[0]?.toUpperCase() ?? "")
-			.join(".");
-	}
+	// Phones: the author as initials ("Laurenz Jänsch" → "LJ", "Laurenz" → "LA"), full name as tooltip
+	const authorName = $derived(marker.guest?.name ?? marker.author?.name ?? "Deleted User");
+	const authorInitials = $derived.by(() => {
+		const parts = authorName.trim().split(/\s+/);
+		const letters = parts.length > 1 ? parts[0][0] + parts[1][0] : parts[0].slice(0, 2);
+		return letters.toUpperCase();
+	});
 
 	export function toggleCollapse() {
 		isOpen = !isOpen;
@@ -165,9 +160,7 @@
 		</button>
 
 		<div class="flex shrink-0 items-center gap-2 pr-1 text-xs font-medium text-base-content/70">
-			<span class="truncate">
-				{getInitials(marker.guest?.name ?? marker.author?.name) ?? "Deleted User"}
-			</span>
+			<span title={authorName}>{authorInitials}</span>
 			{#if marker.responses.length}
 				<span class="flex items-center gap-0.5">
 					<MessageSquare size={11} />{marker.responses.length}
