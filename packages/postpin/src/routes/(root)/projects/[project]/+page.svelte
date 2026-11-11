@@ -168,7 +168,7 @@
 		{/if}
 
 		{#if timeline.canShareLink && timeline.exports[0]}
-			<li class:mt-1={!timeline.canShare} class:border-t={!timeline.canShare}>
+			<li class={timeline.canShare ? "" : "mt-1 border-t border-base-300 pt-1"}>
 				<button type="button" onclick={() => shareLatestExport(timeline, timeline.exports[0].id)}>
 					<Link class="size-4" />
 					Share links of latest export
