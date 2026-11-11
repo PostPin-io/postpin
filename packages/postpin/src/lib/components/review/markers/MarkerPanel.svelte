@@ -120,6 +120,13 @@
 	let editingMarkerId = $state<string | null>(null);
 	let editingMarker = $derived(markers.find((marker) => marker.id === editingMarkerId));
 
+	// Stops at the first and last marker of the list
+	function navigateEditingMarker(direction: -1 | 1) {
+		const index = visibleMarkers.findIndex((marker) => marker.id === editingMarkerId);
+		const target = visibleMarkers[index + direction];
+		if (index !== -1 && target) editingMarkerId = target.id;
+	}
+
 	let isUpdateMarkerFocused = $state(false);
 
 	// The response window replaces the editor for the marker being responded to
@@ -533,6 +540,7 @@
 		{startFrame}
 		{frameRate}
 		{onseek}
+		onnavigate={navigateEditingMarker}
 		onclose={() => (editingMarkerId = null)}
 	/>
 {/if}
