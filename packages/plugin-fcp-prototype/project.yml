@@ -1,0 +1,57 @@
+# PROTOTYPE: generated with xcodegen by run.sh, the .xcodeproj is not committed.
+name: PostPinFCPLab
+options:
+  bundleIdPrefix: io.postpin.prototype
+  deploymentTarget:
+    macOS: "14.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "$(FCP_LAB_SIGN_IDENTITY)"
+    ENABLE_HARDENED_RUNTIME: NO
+    GENERATE_INFOPLIST_FILE: NO
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    # one binary per target: the extension has its own entry point (_ProExtensionMain)
+    ENABLE_DEBUG_DYLIB: NO
+    ENABLE_PREVIEWS: NO
+targets:
+  PostPinFCPLab:
+    type: application
+    platform: macOS
+    sources:
+      - App
+      - Shared
+    settings:
+      base:
+        PRODUCT_NAME: "PostPin FCP Lab"
+        PRODUCT_BUNDLE_IDENTIFIER: io.postpin.prototype.fcplab
+        INFOPLIST_FILE: App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/App.entitlements
+    dependencies:
+      - target: PostPinFCPLabExtension
+        embed: true
+  PostPinFCPLabExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - Extension
+      - Shared
+    settings:
+      base:
+        PRODUCT_NAME: "PostPin Lab"
+        PRODUCT_BUNDLE_IDENTIFIER: io.postpin.prototype.fcplab.extension
+        INFOPLIST_FILE: Extension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Extension/Extension.entitlements
+        SWIFT_OBJC_BRIDGING_HEADER: Extension/Bridging-Header.h
+        APPLICATION_EXTENSION_API_ONLY: YES
+        # Workflow Extensions SDK, unpacked by scripts/vendor-sdk.sh
+        HEADER_SEARCH_PATHS: "$(PROJECT_DIR)/vendor/WorkflowExtensionSDK.sdk/usr/include"
+        LIBRARY_SEARCH_PATHS: "$(PROJECT_DIR)/vendor/WorkflowExtensionSDK.sdk/usr/lib"
+        FRAMEWORK_SEARCH_PATHS: "$(PROJECT_DIR)/vendor/WorkflowExtensionSDK.sdk/Library/Frameworks"
+        OTHER_LDFLAGS: "-fapplication-extension -lProExtension"
+        LD_ENTRY_POINT: _ProExtensionMain
+        MACH_O_TYPE: mh_execute
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks"
