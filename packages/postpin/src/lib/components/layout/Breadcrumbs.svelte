@@ -181,29 +181,24 @@
 {#if crumbs.length}
 	<nav aria-label="Breadcrumb" class="min-w-0">
 		<ol class="flex min-w-0 items-center text-sm">
-       
-	<!-- Mobile: only the current segment, plus a back link to its parent -->
-	<li class="lg:hidden">
-		<a
-			href={crumbs.at(-2)?.href ?? resolve("/(root)/dashboard")}
-			class="btn btn-square btn-ghost btn-xs"
-			aria-label="Back"
-			title="Back"
-		>
-			<ChevronLeft class="size-4" />
-		</a>
-	</li>
-	{#each crumbs as crumb, i (crumb.level)}
-		{@const isCurrent = i === crumbs.length - 1}
-		<li class="flex min-w-0 items-center gap-1 {isCurrent ? '' : 'max-lg:hidden'}">
-
+			<!-- Mobile: only the current segment, plus a back link to its parent -->
+			<li class="lg:hidden">
+				<a
+					href={crumbs.at(-2)?.href ?? resolve("/(root)/dashboard")}
+					class="btn btn-square btn-ghost btn-xs"
+					aria-label="Back"
+					title="Back"
+				>
+					<ChevronLeft class="size-4" />
+				</a>
+			</li>
 			{#each crumbs as crumb, i (crumb.level)}
 				{@const isCurrent = i === crumbs.length - 1}
-				<li class="flex min-w-0 items-center gap-1">
+				<li class="flex min-w-0 items-center gap-1 {isCurrent ? '' : 'max-lg:hidden'}">
 					{@render siblingMenu(crumb)}
 					<a
 						href={crumb.href}
-						class="block max-w-48 truncate hover:underline"
+						class="block max-w-[45vw] truncate hover:underline lg:max-w-48"
 						title={crumb.name}
 						aria-current={isCurrent ? "page" : undefined}
 					>
