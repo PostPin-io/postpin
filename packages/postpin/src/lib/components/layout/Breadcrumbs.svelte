@@ -1,6 +1,8 @@
 <script lang="ts">
+	import type { Component } from "svelte";
 	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
+	import { afterNavigate } from "$app/navigation";
 	import ChevronRight from "@lucide/svelte/icons/chevron-right";
 	import UserGroup from "@lucide/svelte/icons/user-group";
 	import Link from "@lucide/svelte/icons/link";
@@ -13,6 +15,17 @@
 		getTimelineSiblings,
 	} from "./breadcrumbs.remote.ts";
 
+	type Level = "project" | "timeline" | "export";
+	type Item = { id: string; name: string };
+	type Crumb = Item & {
+		level: Level;
+		href: string;
+		/** The other items on this level, for the dropdown behind the chevron */
+		siblings: Item[] | undefined;
+		siblingHref: (id: string) => string;
+		share?: { label: string; icon: Component; count?: number; open: () => void };
+	};
+
 	let sharingModal: SharingSetupModal | null = null;
 
 	const projectId = $derived(page.params.project);
@@ -24,6 +37,15 @@
 	);
 	const names = $derived(namesQuery?.current);
 
+	// A failed query leaves `.current` empty and stays cached for these params,
+	// so the breadcrumbs would silently stay hidden. Log it and retry on the next navigation.
+	$effect(() => {
+		if (namesQuery?.error) console.error("Could not load breadcrumbs", namesQuery.error);
+	});
+	afterNavigate(() => {
+		if (namesQuery?.error) void namesQuery.refresh();
+	});
+
 	// Number of active share links next to the export's share button
 	const shareLinksQuery = $derived(
 		names?.export?.canShare ? getShareLinks(names.export.id) : undefined,
@@ -33,7 +55,6 @@
 	);
 
 	// Sibling lists load only once their dropdown has been opened
-	type Level = "project" | "timeline" | "export";
 	let opened = $state<Record<Level, boolean>>({ project: false, timeline: false, export: false });
 
 	const projectSiblings = $derived(
@@ -45,40 +66,91 @@
 	const exportSiblings = $derived(
 		opened.export && timelineId ? getExportSiblings(timelineId) : undefined,
 	);
+
+	const projectHref = (project: string) => resolve("/(root)/projects/[project]", { project });
+	const timelineHref = (project: string, timeline: string) =>
+		resolve("/(root)/projects/[project]/timelines/[timeline]/exports", { project, timeline });
+	const exportHref = (project: string, timeline: string, exp: string) =>
+		resolve("/(root)/projects/[project]/timelines/[timeline]/exports/[export]", {
+			project,
+			timeline,
+			export: exp,
+		});
+
+	const crumbs = $derived.by((): Crumb[] => {
+		if (!names) return [];
+		const { project, timeline, export: exp } = names;
+
+		const result: Crumb[] = [
+			{
+				level: "project",
+				id: project.id,
+				name: project.name,
+				href: projectHref(project.id),
+				siblings: projectSiblings?.current,
+				siblingHref: projectHref,
+				share: project.canShare
+					? {
+							label: "Share project",
+							icon: UserGroup,
+							open: () => sharingModal?.open({ projectId: project.id }),
+						}
+					: undefined,
+			},
+		];
+		if (!timeline) return result;
+
+		result.push({
+			level: "timeline",
+			id: timeline.id,
+			name: timeline.name,
+			href: timelineHref(project.id, timeline.id),
+			siblings: timelineSiblings?.current,
+			siblingHref: (id) => timelineHref(project.id, id),
+			share: timeline.canShare
+				? {
+						label: "Share timeline",
+						icon: UserGroup,
+						open: () => sharingModal?.open({ projectId: project.id, timelineId: timeline.id }),
+					}
+				: undefined,
+		});
+		if (!exp) return result;
+
+		result.push({
+			level: "export",
+			id: exp.id,
+			name: exp.name,
+			href: exportHref(project.id, timeline.id, exp.id),
+			siblings: exportSiblings?.current,
+			siblingHref: (id) => exportHref(project.id, timeline.id, id),
+			share: exp.canShare
+				? {
+						label: "Share links",
+						icon: Link,
+						count: shareLinkCount,
+						open: () =>
+							sharingModal?.open({
+								projectId: project.id,
+								timelineId: timeline.id,
+								exportId: exp.id,
+							}),
+					}
+				: undefined,
+		});
+		return result;
+	});
 </script>
 
-{#snippet shareButton(label: string, onclick: () => void, count = 0, linkIcon = false)}
-	<button
-		type="button"
-		class="btn btn-ghost btn-xs {count ? 'gap-1 px-1.5' : 'btn-square'}"
-		title={label}
-		aria-label={count ? `${label} (${count} active links)` : label}
-		{onclick}
-	>
-		{#if linkIcon}
-			<Link class="size-3.5" />
-		{:else}
-			<UserGroup class="size-3.5" />
-		{/if}
-		{#if count}<span>{count}</span>{/if}
-	</button>
-{/snippet}
-
-{#snippet siblingMenu(
-	level: Level,
-	label: string,
-	items: { id: string; name: string }[] | undefined,
-	currentId: string,
-	href: (id: string) => string,
-)}
+{#snippet siblingMenu(crumb: Crumb)}
 	<div class="group dropdown">
 		<div
 			tabindex="0"
 			role="button"
 			class="btn btn-square btn-ghost text-base-content/50 btn-xs"
-			title={label}
-			aria-label={label}
-			onfocus={() => (opened[level] = true)}
+			title="Switch {crumb.level}"
+			aria-label="Switch {crumb.level}"
+			onfocus={() => (opened[crumb.level] = true)}
 		>
 			<ChevronRight class="size-3.5 transition-transform group-focus-within:rotate-90" />
 		</div>
@@ -86,15 +158,15 @@
 			tabindex="-1"
 			class="menu dropdown-content z-20 mt-1 max-h-80 w-64 flex-nowrap overflow-y-auto rounded-box bg-base-100 p-2 shadow"
 		>
-			{#if !items}
+			{#if !crumb.siblings}
 				<li class="disabled"><span class="loading loading-xs loading-spinner"></span></li>
 			{:else}
-				{#each items as item (item.id)}
+				{#each crumb.siblings as item (item.id)}
 					<li>
 						<a
-							href={href(item.id)}
-							class:menu-active={item.id === currentId}
-							aria-current={item.id === currentId ? "page" : undefined}
+							href={crumb.siblingHref(item.id)}
+							class:menu-active={item.id === crumb.id}
+							aria-current={item.id === crumb.id ? "page" : undefined}
 						>
 							<span class="truncate" title={item.name}>{item.name}</span>
 						</a>
@@ -105,99 +177,36 @@
 	</div>
 {/snippet}
 
-{#if projectId && names}
-	{@const { project, timeline, export: exp } = names}
+{#if crumbs.length}
 	<nav aria-label="Breadcrumb" class="min-w-0">
 		<ol class="flex min-w-0 items-center text-sm">
-			<li class="flex min-w-0 items-center gap-1">
-				{@render siblingMenu(
-					"project",
-					"Switch project",
-					projectSiblings?.current,
-					project.id,
-					(id) => resolve("/(root)/projects/[project]", { project: id }),
-				)}
-				<a
-					href={resolve("/(root)/projects/[project]", { project: project.id })}
-					class="block max-w-48 truncate hover:underline"
-					title={project.name}
-					aria-current={!timeline ? "page" : undefined}
-				>
-					{project.name}
-				</a>
-				{#if project.canShare}
-					{@render shareButton("Share project", () =>
-						sharingModal?.open({ projectId: project.id }),
-					)}
-				{/if}
-			</li>
-			{#if timeline}
+			{#each crumbs as crumb, i (crumb.level)}
+				{@const isCurrent = i === crumbs.length - 1}
 				<li class="flex min-w-0 items-center gap-1">
-					{@render siblingMenu(
-						"timeline",
-						"Switch timeline",
-						timelineSiblings?.current,
-						timeline.id,
-						(id) =>
-							resolve("/(root)/projects/[project]/timelines/[timeline]/exports", {
-								project: project.id,
-								timeline: id,
-							}),
-					)}
+					{@render siblingMenu(crumb)}
 					<a
-						href={resolve("/(root)/projects/[project]/timelines/[timeline]/exports", {
-							project: project.id,
-							timeline: timeline.id,
-						})}
+						href={crumb.href}
 						class="block max-w-48 truncate hover:underline"
-						title={timeline.name}
-						aria-current={!exp ? "page" : undefined}
+						title={crumb.name}
+						aria-current={isCurrent ? "page" : undefined}
 					>
-						{timeline.name}
+						{crumb.name}
 					</a>
-					{#if timeline.canShare}
-						{@render shareButton("Share timeline", () =>
-							sharingModal?.open({ projectId: project.id, timelineId: timeline.id }),
-						)}
+					{#if crumb.share}
+						{@const { label, icon: Icon, count, open } = crumb.share}
+						<button
+							type="button"
+							class="btn btn-ghost btn-xs {count ? 'gap-1 px-1.5' : 'btn-square'}"
+							title={label}
+							aria-label={count ? `${label} (${count} active links)` : label}
+							onclick={open}
+						>
+							<Icon class="size-3.5" />
+							{#if count}<span>{count}</span>{/if}
+						</button>
 					{/if}
 				</li>
-				{#if exp}
-					<li class="flex min-w-0 items-center gap-1">
-						{@render siblingMenu("export", "Switch export", exportSiblings?.current, exp.id, (id) =>
-							resolve("/(root)/projects/[project]/timelines/[timeline]/exports/[export]", {
-								project: project.id,
-								timeline: timeline.id,
-								export: id,
-							}),
-						)}
-						<a
-							href={resolve("/(root)/projects/[project]/timelines/[timeline]/exports/[export]", {
-								project: project.id,
-								timeline: timeline.id,
-								export: exp.id,
-							})}
-							class="block max-w-48 truncate hover:underline"
-							title={exp.name}
-							aria-current="page"
-						>
-							{exp.name}
-						</a>
-						{#if exp.canShare}
-							{@render shareButton(
-								"Share links",
-								() =>
-									sharingModal?.open({
-										projectId: project.id,
-										timelineId: timeline.id,
-										exportId: exp.id,
-									}),
-								shareLinkCount,
-								true,
-							)}
-						{/if}
-					</li>
-				{/if}
-			{/if}
+			{/each}
 		</ol>
 	</nav>
 {/if}
