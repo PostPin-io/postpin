@@ -147,7 +147,8 @@
 
 					<section class="flex flex-col gap-3 px-4 pb-4" aria-label="Responses">
 						<h3 class="font-semibold">Responses ({responses.length})</h3>
-						{#each responses as response (response.id)}
+						<!-- Newest first: right below the reply field, where a sent response shows up -->
+						{#each [...responses].reverse() as response (response.id)}
 							<div class="rounded-box border border-base-300 bg-base-200/40 px-3 py-2">
 								<p class="break-words whitespace-pre-wrap">{response.content}</p>
 								<p class="mt-1 text-xs text-base-content/60">
