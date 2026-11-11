@@ -1,30 +1,18 @@
 <script lang="ts">
 	import { getSharingTarget } from "./sharing.remote";
-
 	import AccessGrants from "./AccessGrants.svelte";
 	import TargetInvite from "./TargetInvite.svelte";
 	import ShareLinks from "./share-links/ShareLinks.svelte";
 	import X from "@lucide/svelte/icons/x";
 
 	type Target = { projectId: string; timelineId?: string; exportId?: string };
+
+	let dialog: HTMLDialogElement | null = null;
+	let isOpen = $state(false);
 	let target = $state<Target | undefined>();
 
 	export function open(next: Target) {
 		target = next;
-		isOpen = true;
-		dialog?.showModal();
-	}
-
-	const targetQuery = $derived(isOpen && target ? getSharingTarget(target) : undefined);
-	const organizationId = $derived($session.data?.session.activeOrganizationId);
-
-	let dialog: HTMLDialogElement | null = null;
-	let isOpen = $state(false);
-
-	type Target = { projectId: string; timelineId?: string; exportId?: string };
-
-	export function open(target?: Target) {
-		explicitTarget = target;
 		isOpen = true;
 		dialog?.showModal();
 	}

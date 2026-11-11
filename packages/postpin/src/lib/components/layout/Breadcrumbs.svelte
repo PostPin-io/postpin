@@ -1,20 +1,12 @@
 <script lang="ts">
 	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
-	import { getBreadcrumbNames } from "./breadcrumbs.remote.ts";
 	import Share from "@lucide/svelte/icons/share";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
 	import { getShareLinks } from "#lib/components/sharing/share-links/share-links.remote.ts";
+	import { getBreadcrumbNames } from "./breadcrumbs.remote.ts";
 
 	let sharingModal: SharingSetupModal | null = null;
-
-	// Anzahl aktiver Share-Links neben dem Export-Button (aus Header.svelte übernommen)
-	const shareLinksQuery = $derived(
-		names?.export?.canShare ? getShareLinks(names.export.id) : undefined,
-	);
-	const shareLinkCount = $derived(
-		shareLinksQuery?.current?.filter((link) => link.status === "active").length ?? 0,
-	);
 
 	const projectId = $derived(page.params.project);
 	const timelineId = $derived(page.params.timeline);
@@ -24,6 +16,14 @@
 		projectId ? getBreadcrumbNames({ projectId, timelineId, exportId }) : undefined,
 	);
 	const names = $derived(namesQuery?.current);
+
+	// Number of active share links next to the export's share button
+	const shareLinksQuery = $derived(
+		names?.export?.canShare ? getShareLinks(names.export.id) : undefined,
+	);
+	const shareLinkCount = $derived(
+		shareLinksQuery?.current?.filter((link) => link.status === "active").length ?? 0,
+	);
 </script>
 
 {#snippet shareButton(label: string, onclick: () => void, count = 0)}
@@ -40,78 +40,74 @@
 {/snippet}
 
 {#if projectId && names}
+	{@const { project, timeline, export: exp } = names}
 	<div class="breadcrumbs min-w-0 text-sm">
 		<ul>
-			<li class="min-w-0">
+			<li class="min-w-0 gap-1">
 				<a
-                
-					href={resolve("/(root)/projects/[project]", { project: names.project.id })}
+					href={resolve("/(root)/projects/[project]", { project: project.id })}
 					class="block max-w-48 truncate"
-					title={names.project.name}
-					aria-current={!names.timeline ? "page" : undefined}
+					title={project.name}
+					aria-current={!timeline ? "page" : undefined}
 				>
-					{names.project.name}
-				</a><li class="min-w-0 gap-1">
-	<a ...>{names.project.name}</a>
-	{#if names.project.canShare}
-		{@render shareButton("Share project", () =>
-			sharingModal?.open({ projectId: names.project.id }),
-		)}
-	{/if}
-</li>
-
-                
+					{project.name}
+				</a>
+				{#if project.canShare}
+					{@render shareButton("Share project", () =>
+						sharingModal?.open({ projectId: project.id }),
+					)}
+				{/if}
 			</li>
-			{#if names.timeline}
-				<li class="min-w-0">
+			{#if timeline}
+				<li class="min-w-0 gap-1">
 					<a
 						href={resolve("/(root)/projects/[project]/timelines/[timeline]/exports", {
-							project: names.project.id,
-							timeline: names.timeline.id,
+							project: project.id,
+							timeline: timeline.id,
 						})}
 						class="block max-w-48 truncate"
-						title={names.timeline.name}
-						aria-current={!names.export ? "page" : undefined}
+						title={timeline.name}
+						aria-current={!exp ? "page" : undefined}
 					>
-						{names.timeline.name}
-					</a>{#if names.timeline.canShare}
-	{@render shareButton("Share timeline", () =>
-		sharingModal?.open({ projectId: names.project.id, timelineId: names.timeline!.id }),
-	)}
-{/if}
-
+						{timeline.name}
+					</a>
+					{#if timeline.canShare}
+						{@render shareButton("Share timeline", () =>
+							sharingModal?.open({ projectId: project.id, timelineId: timeline.id }),
+						)}
+					{/if}
 				</li>
+				{#if exp}
+					<li class="min-w-0 gap-1">
+						<a
+							href={resolve("/(root)/projects/[project]/timelines/[timeline]/exports/[export]", {
+								project: project.id,
+								timeline: timeline.id,
+								export: exp.id,
+							})}
+							class="block max-w-48 truncate"
+							title={exp.name}
+							aria-current="page"
+						>
+							{exp.name}
+						</a>
+						{#if exp.canShare}
+							{@render shareButton(
+								"Share links",
+								() =>
+									sharingModal?.open({
+										projectId: project.id,
+										timelineId: timeline.id,
+										exportId: exp.id,
+									}),
+								shareLinkCount,
+							)}
+						{/if}
+					</li>
+				{/if}
 			{/if}
-			{#if names.timeline && names.export}
-				<li class="min-w-0">
-					<a
-						href={resolve("/(root)/projects/[project]/timelines/[timeline]/exports/[export]", {
-							project: names.project.id,
-							timeline: names.timeline.id,
-							export: names.export.id,
-						})}
-						class="block max-w-48 truncate"
-						title={names.export.name}
-						aria-current="page"
-					>
-						{names.export.name}
-					</a>{#if names.export.canShare}
-	{@render shareButton(
-		"Share links",
-		() =>
-			sharingModal?.open({
-				projectId: names.project.id,
-				timelineId: names.timeline!.id,
-				exportId: names.export!.id,
-			}),
-		shareLinkCount,
-	)}
-{/if}
-
-				</li>
-			{/if}
-
 		</ul>
 	</div>
 {/if}
+
 <SharingSetupModal bind:this={sharingModal} />

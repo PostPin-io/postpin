@@ -6,35 +6,11 @@
 
 	import type { Snippet } from "svelte";
 	import Logo from "#lib/components/layout/Logo.svelte";
-	import Share from "@lucide/svelte/icons/share";
-	import { getShareLinks } from "#lib/components/sharing/share-links/share-links.remote.ts";
 
-	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
 	import Breadcrumbs from "#lib/components/layout/Breadcrumbs.svelte";
 
-	import { roleAllows, ORG_ROLES } from "#lib/roles.ts";
-	import type { Role } from "@postpin-io/shared/db/enums";
-
-	let sharingSetupModal: SharingSetupModal | null = null;
 	const session = authClient.useSession();
 	const organizations = authClient.useListOrganizations();
-	const activeMember = authClient.useActiveMember();
-
-	const activeRole = $derived.by(() => {
-		const role = $activeMember.data?.role;
-		return ORG_ROLES.includes(role as Role) ? (role as Role) : null;
-	});
-
-	// On an export page: the number of active share links next to the share button
-	const exportId = $derived(page.params.export);
-	const mayShareLinks = $derived(
-		!!exportId && !!activeRole && roleAllows(activeRole, "shareLink", "create"),
-	);
-	const shareLinksQuery = $derived(mayShareLinks ? getShareLinks(exportId!) : undefined);
-	const shareLinkCount = $derived(
-		shareLinksQuery?.current?.filter((link) => link.status === "active").length ?? 0,
-	);
-
 	let activeOrganizationId = $derived($session.data?.session.activeOrganizationId);
 	let activeOrganization = $derived(
 		$organizations.data?.find((org) => org.id === activeOrganizationId),
@@ -105,17 +81,7 @@
 			<div class="navbar-center hidden lg:flex">{@render children()}</div>
 		{/if}
 		<div class="navbar-end">
-			<button
-				class="btn btn-ghost {shareLinkCount ? 'gap-1.5 px-3' : 'btn-square'}"
-				title="Share"
-				aria-label={shareLinkCount ? `Share (${shareLinkCount} active links)` : "Share"}
-				onclick={() => sharingSetupModal?.open()}
-			>
-				<Share class="h-5 w-5" />
-				{#if shareLinkCount}<span class="text-sm">{shareLinkCount}</span>{/if}
-			</button>
-
-			<div class="dropdown dropdown-end ml-2">
+			<div class="dropdown dropdown-end">
 				<div tabindex="0" role="button" class="btn btn-ghost">
 					{$session.data?.user.name ?? "Account"}
 				</div>
@@ -167,5 +133,3 @@
 		</ul>
 	</div>
 </header>
-
-<SharingSetupModal bind:this={sharingSetupModal} />
