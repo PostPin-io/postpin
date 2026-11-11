@@ -18,7 +18,7 @@
 	import { Pane, Splitpanes } from "svelte-splitpanes";
 	import { useShare } from "../share-context.ts";
 	import { markersKey } from "./marker-scope.ts";
-
+	import DiamondPlus from "@lucide/svelte/icons/diamond-plus";
 	import {
 		getMarkers,
 		getCategories,
@@ -461,7 +461,8 @@
 				{#if markers.length === 0}
 					<div class="flex flex-col items-start gap-2 p-4">
 						<p class="text-base-content/70">
-							No markers yet. Press <kbd class="kbd kbd-sm">M</kbd> to create a marker.
+							No markers yet. Press <kbd class="kbd kbd-sm">M</kbd> to create a marker. Or click the
+							"Add <DiamondPlus class="inline size-3.5" /> Marker" button.
 						</p>
 					</div>
 
