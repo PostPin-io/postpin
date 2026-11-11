@@ -73,3 +73,12 @@ select {
 	padding-top: 0;
 	padding-bottom: 0;
 }
+
+/* iOS zooms into any field with a font smaller than 16px when it gets focus */
+@media (pointer: coarse) {
+	input,
+	textarea,
+	select {
+		font-size: max(16px, 1em);
+	}
+}

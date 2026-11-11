@@ -70,7 +70,9 @@
 				bind:value={content}
 				{onkeydown}></textarea>
 			<div class="flex items-center justify-between gap-2">
-				<span class="text-xs text-base-content/60">⌘/Ctrl + Enter to send</span>
+				<span class="text-xs text-base-content/60 pointer-coarse:invisible"
+					>⌘/Ctrl + Enter to send</span
+				>
 				<button type="submit" class="btn btn-primary btn-sm" disabled={sending || !content.trim()}>
 					{#if sending}<span class="loading loading-xs loading-spinner"></span>{:else}<Send
 							size={16}

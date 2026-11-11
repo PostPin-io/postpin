@@ -84,6 +84,11 @@
 		mobileLandscape?: boolean;
 	} = $props();
 
+	// Phones: finger-sized buttons (40px instead of 24px), upright in two rows
+	const btnSize = $derived(mobile ? "btn-md" : "btn-xs");
+	const iconSize = $derived(mobile ? 22 : 16);
+	const twoRows = $derived(mobile && !mobileLandscape);
+
 	// Absolute timeline frame, like marker frames
 	const frame = $derived(frameAtSeconds(currentTime, timing));
 
@@ -190,7 +195,12 @@
 			{/if}
 		</div>
 	</div>
-	<div class="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-1 p-1">
+	<!-- Phones held upright: the transport buttons get a row of their own, so every button can be big -->
+	<div
+		class="grid w-full items-center gap-1 p-1 {twoRows
+			? 'grid-cols-2'
+			: 'grid-cols-[1fr_auto_1fr]'}"
+	>
 		<div class="flex items-center gap-2 justify-self-start">
 			<Timecode
 				bind:frame={() => frame, (f) => (currentTime = secondsAtFrame(f, timing))}
@@ -211,10 +221,12 @@
 			</button>
 		</div>
 		<!-- The add-marker button hangs off the left edge so play stays centered under the video -->
-		<div class="relative flex items-center justify-center">
+		<div
+			class="relative flex items-center justify-center {twoRows ? 'col-span-2 row-start-2' : ''}"
+		>
 			{#if onCreateMarker}
 				<button
-					class="btn absolute right-full btn-square btn-ghost btn-xs {markerColor
+					class="btn absolute right-full btn-square btn-ghost {btnSize} {markerColor
 						? 'hover:border-(--marker-color) hover:bg-(--marker-color) hover:text-(--marker-contrast)'
 						: ''}"
 					style:--marker-color={markerColor}
@@ -223,52 +235,52 @@
 					aria-label="Add marker at playhead"
 					onclick={() => onCreateMarker()}
 				>
-					<DiamondPlus size={16} />
+					<DiamondPlus size={iconSize} />
 				</button>
 			{/if}
 			<button
-				class="btn btn-square btn-ghost btn-xs"
+				class="btn btn-square btn-ghost {btnSize}"
 				title="Jump to previous Marker on the left"
 				onclick={() => seekToAdjacentMarker(-1)}
 			>
-				<ArrowLeft size={16} />
+				<ArrowLeft size={iconSize} />
 			</button>
 			{#if playerAvailable}
-				<button class="btn btn-square btn-ghost btn-xs" onclick={togglePlayback}>
+				<button class="btn btn-square btn-ghost {btnSize}" onclick={togglePlayback}>
 					{#if paused}
-						<Play size={16} />
+						<Play size={iconSize} />
 					{:else}
-						<Pause size={16} />
+						<Pause size={iconSize} />
 					{/if}
 				</button>
 			{:else}
 				<button
-					class="btn btn-square btn-ghost btn-xs"
+					class="btn btn-square btn-ghost {btnSize}"
 					onclick={() => {
 						viewMode = "timeline";
 						togglePlayback();
 					}}
 				>
 					{#if paused}
-						<Play size={16} />
+						<Play size={iconSize} />
 					{:else}
-						<Pause size={16} />
+						<Pause size={iconSize} />
 					{/if}
 				</button>
 			{/if}
 			<button
-				class="btn btn-square btn-ghost btn-xs"
+				class="btn btn-square btn-ghost {btnSize}"
 				title="Jump to next Marker on the right"
 				onclick={() => seekToAdjacentMarker(1)}
 			>
-				<ArrowRight size={16} />
+				<ArrowRight size={iconSize} />
 			</button>
 		</div>
 		<div class="flex items-center gap-1 justify-self-end">
 			{#if status && !fullscreen}{@render status()}{/if}
 			{#if !fullscreen && timelineControls}
 				<button
-					class="btn btn-square btn-ghost btn-xs"
+					class="btn btn-square btn-ghost {btnSize}"
 					title={timelineMode === "full"
 						? "Compact Timeline"
 						: timelineMode === "compact"
@@ -277,17 +289,17 @@
 					onclick={() => (timelineMode = nextTimelineMode(timelineMode))}
 				>
 					{#if timelineMode === "full"}<ChevronsDownUp
-							size={16}
-						/>{:else if timelineMode === "compact"}<FoldVertical size={16} />{:else}<ChevronsUpDown
-							size={16}
-						/>{/if}
+							size={iconSize}
+						/>{:else if timelineMode === "compact"}<FoldVertical
+							size={iconSize}
+						/>{:else}<ChevronsUpDown size={iconSize} />{/if}
 				</button>
 			{/if}
 			{#if playerAvailable}
 				{#if qualities.length > 0}
 					{#if mobile}
-						<label class="btn relative btn-square btn-ghost btn-xs" title="Video quality">
-							<Settings2 size={16} />
+						<label class="btn relative btn-square btn-ghost {btnSize}" title="Video quality">
+							<Settings2 size={iconSize} />
 							<select
 								aria-label="Video quality"
 								class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
@@ -308,25 +320,27 @@
 						</select>
 					{/if}
 				{/if}
-				<button class="btn btn-square btn-ghost btn-xs" onclick={() => onToggleMute?.()}>
-					{#if muted}<VolumeX size={16} />{:else}<Volume2 size={16} />{/if}
+				<button class="btn btn-square btn-ghost {btnSize}" onclick={() => onToggleMute?.()}>
+					{#if muted}<VolumeX size={iconSize} />{:else}<Volume2 size={iconSize} />{/if}
 				</button>
 				<button
-					class="btn btn-square btn-ghost btn-xs"
+					class="btn btn-square btn-ghost {btnSize}"
 					title={fullscreen ? "Exit Fullscreen (F)" : "Fullscreen (F)"}
 					onclick={() => onFullscreen?.()}
 				>
-					{#if fullscreen}<Minimize size={16} />{:else}<Maximize size={16} />{/if}
+					{#if fullscreen}<Minimize size={iconSize} />{:else}<Maximize size={iconSize} />{/if}
 				</button>
 			{/if}
 
 			{#if !fullscreen && timelineControls}
 				<button
-					class="btn btn-square btn-ghost btn-xs"
+					class="btn btn-square btn-ghost {btnSize}"
 					title={viewMode === "timeline" ? "Show Shot Grid" : "Show Video"}
 					onclick={toggleViewMode}
 				>
-					{#if viewMode === "timeline"}<LayoutGrid size={16} />{:else}<Film size={16} />{/if}
+					{#if viewMode === "timeline"}<LayoutGrid size={iconSize} />{:else}<Film
+							size={iconSize}
+						/>{/if}
 				</button>
 			{/if}
 		</div>

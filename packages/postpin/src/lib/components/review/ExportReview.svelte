@@ -484,6 +484,7 @@
 	<MarkerPanel
 		bind:this={markerPanel}
 		{exportId}
+		mobile={isMobile.current}
 		{currentFrame}
 		onseek={seekToFrame}
 		startFrame={snapshot!.startFrameIndex}

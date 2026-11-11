@@ -5,6 +5,7 @@
 	import Marker from "./Marker.svelte";
 	import UpdateMarker from "./UpdateMarker.svelte";
 	import ResponseMarker from "./ResponseMarker.svelte";
+	import MobileMarkerModal from "./MobileMarkerModal.svelte";
 	import CategoryBadge from "../../categories/CategoryBadge.svelte";
 	import { markerFilter } from "./marker-filter.svelte.ts";
 	import { defaultCategory } from "./default-category.svelte.ts";
@@ -45,8 +46,18 @@
 		frameRate: FrameRate;
 		/** Timeline length in frames */
 		frameCount: number;
+		/** Phones: markers are edited in a fullscreen modal instead of the pane below the list */
+		mobile?: boolean;
 	}
-	let { exportId, currentFrame, onseek, frameRate, startFrame, frameCount }: Props = $props();
+	let {
+		exportId,
+		currentFrame,
+		onseek,
+		frameRate,
+		startFrame,
+		frameCount,
+		mobile = false,
+	}: Props = $props();
 	let updateMarkerComponent: UpdateMarker | null = null;
 
 	// On a share link: guests see only their own markers, no categories, no copy/paste
@@ -104,6 +115,10 @@
 	// The editor is only shown while exactly one marker is selected
 	let selectedMarkerId = $derived(selectedMarkerIds.length === 1 ? selectedMarkerIds[0] : null);
 	let selectedMarker = $derived(markers.find((marker) => marker.id === selectedMarkerId));
+
+	// Phones: the marker open in the modal
+	let editingMarkerId = $state<string | null>(null);
+	let editingMarker = $derived(markers.find((marker) => marker.id === editingMarkerId));
 
 	let isUpdateMarkerFocused = $state(false);
 
@@ -286,6 +301,11 @@
 		const marker = await addMarkerAtPlayhead();
 		if (!marker) return;
 		selectedMarkerIds = [marker.id];
+		// Phones: a new marker opens straight in the modal, ready for its title
+		if (mobile) {
+			editingMarkerId = marker.id;
+			return;
+		}
 		if (localStorage.getItem("UpdateMarkerFocused") === "true") {
 			// Wait for the markers list and UpdateMarker to render with the new marker
 			await tick();
@@ -422,7 +442,7 @@
 						</ul>
 					</details>
 				</li>
-				{#if markersComponents.length > 0}
+				{#if markersComponents.length > 0 && !mobile}
 					<li onclick={() => toggleCollapseAllMarkers()}>
 						{#if markersComponents.some((marker) => marker?.isExpanded())}
 							<a>Collapse All</a>
@@ -452,6 +472,8 @@
 						onselect={onseek}
 						onreposition={(frame) => repositionMarker(marker, frame)}
 						onrespond={() => respondTo(marker.id)}
+						{mobile}
+						onedit={() => (editingMarkerId = marker.id)}
 						{frameRate}
 						{startFrame}
 						{frameCount}
@@ -480,7 +502,7 @@
 				{/if}
 			</div>
 		</Pane>
-		{#if selectedMarker}
+		{#if selectedMarker && !mobile}
 			<Pane minSize={29} maxSize={70} class="overflow-auto">
 				<div class="h-full shrink-0 pb-10">
 					{#key selectedMarker.id}
@@ -504,6 +526,16 @@
 		{/if}
 	</Splitpanes>
 </div>
+
+{#if mobile}
+	<MobileMarkerModal
+		marker={editingMarker}
+		{startFrame}
+		{frameRate}
+		{onseek}
+		onclose={() => (editingMarkerId = null)}
+	/>
+{/if}
 
 <svelte:window
 	on:keydown={mKeypress}

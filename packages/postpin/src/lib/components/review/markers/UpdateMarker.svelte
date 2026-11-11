@@ -13,6 +13,7 @@
 	import type { ReviewMarker } from "./types";
 	import { useShare } from "../share-context.ts";
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let { marker, startFrame, onclose, mobile = false }: Props = $props();
 	let titleInputField: HTMLInputElement | null = null;
 	let titleFocusToggled = $state(false);
@@ -21,6 +22,7 @@
 		onclose?: () => void;
 		marker: ReviewMarker;
 		startFrame: number;
+		/** Inside the phone's marker modal: no card, no close button (the modal has one) */
 		mobile?: boolean;
 	}
 	const getShare = useShare();
@@ -183,15 +185,17 @@
 					</span> -->
 			</div>
 			<div class="flex shrink-0 gap-2">
-				<button
-					type="button"
-					class="btn btn-square btn-ghost"
-					title="Close"
-					aria-label="Close marker editor"
-					onclick={() => onclose?.()}
-				>
-					<X />
-				</button>
+				{#if !mobile}
+					<button
+						type="button"
+						class="btn btn-square btn-ghost"
+						title="Close"
+						aria-label="Close marker editor"
+						onclick={() => onclose?.()}
+					>
+						<X />
+					</button>
+				{/if}
 				{#if marker.canDelete}
 					<button
 						type="button"
@@ -225,24 +229,23 @@
 					oninput={() => schedule()}
 					readonly={!marker.canUpdate}
 				/>
-				{#if mobile!}
-					<button
-						type="button"
-						class="btn btn-square btn-ghost"
-						tabindex="-1"
-						class:btn-active={titleFocusToggled}
-						class:text-accent={titleFocusToggled}
-						title="When creating a new marker, you can immediately start typing the title"
-						onclick={() => toggleFocusTitleInputField()}
-					>
-						<CircleArrowLeft />
-					</button>
-				{/if}
+				<!-- Typing right after creating a marker needs a keyboard -->
+				<button
+					type="button"
+					class="btn btn-square btn-ghost pointer-coarse:hidden"
+					tabindex="-1"
+					class:btn-active={titleFocusToggled}
+					class:text-accent={titleFocusToggled}
+					title="When creating a new marker, you can immediately start typing the title"
+					onclick={() => toggleFocusTitleInputField()}
+				>
+					<CircleArrowLeft />
+				</button>
 			</div>
 
 			<textarea
 				readonly={!marker.canUpdate}
-				class="textarea min-h-0 w-full flex-1 resize-none"
+				class="textarea w-full resize-none {mobile ? 'min-h-40' : 'min-h-0 flex-1'}"
 				rows="2"
 				placeholder="Description"
 				aria-label="Marker description"
@@ -255,7 +258,9 @@
 					{#if saving}<span class="loading loading-xs loading-spinner"></span>Saving…{/if}
 				</span>
 				{#if fieldFocused}
-					<span class="text-xs text-base-content/60">⌘/Ctrl + Enter to close</span>
+					<span class="text-xs text-base-content/60 pointer-coarse:hidden"
+						>⌘/Ctrl + Enter to close</span
+					>
 				{/if}
 			</div>
 		</form>
