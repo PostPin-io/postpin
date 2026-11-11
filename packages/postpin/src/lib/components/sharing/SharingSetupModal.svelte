@@ -20,9 +20,17 @@
 	const targetQuery = $derived(isOpen && target ? getSharingTarget(target) : undefined);
 </script>
 
-<dialog class="modal" bind:this={dialog} onclose={() => (isOpen = false)}>
+<dialog
+	class="modal modal-bottom sm:modal-middle"
+	bind:this={dialog}
+	onclose={() => (isOpen = false)}
+>
 	<div class="modal-box min-h-[32rem] {targetQuery?.current?.type === 'export' ? 'max-w-3xl' : ''}">
-		<div class="flex items-start gap-2">
+		<div
+			class="modal-box sm:min-h-[32rem] {targetQuery?.current?.type === 'export'
+				? 'max-w-3xl'
+				: ''}"
+		>
 			<div class="min-w-0 flex-1">
 				<h3 class="text-lg font-bold">Time to collaborate</h3>
 				{#if targetQuery?.current?.type === "export"}
