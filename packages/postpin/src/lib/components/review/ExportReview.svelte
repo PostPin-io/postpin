@@ -386,6 +386,7 @@
 					bind:timelineMode
 					timelineControls={showTimeline}
 					mobile={isMobile.current}
+					mobileLandscape={isPhoneLandscape.current}
 					qualities={videoQualities}
 					muted={videoMuted}
 					playerAvailable={viewMode === "timeline" && !!player}

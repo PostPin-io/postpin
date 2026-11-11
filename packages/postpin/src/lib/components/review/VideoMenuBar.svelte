@@ -50,6 +50,7 @@
 		timelineControls = true,
 		status,
 		mobile = false,
+		mobileLandscape = false,
 	}: {
 		markers: { frame: number }[];
 		timing: FrameTiming;
@@ -78,6 +79,7 @@
 		/** Shown first in the right-hand group, e.g. the processing jobs */
 		status?: Snippet;
 		mobile?: boolean;
+		mobileLandscape?: boolean;
 	} = $props();
 
 	// Absolute timeline frame, like marker frames
@@ -160,6 +162,7 @@
 				frameCount={durationFrames}
 				editable={true}
 				{mobile}
+				{mobileLandscape}
 			/>
 			<span class="font-mono">|</span>
 			<button

@@ -13,6 +13,7 @@
 		frameCount: number;
 		editable?: boolean;
 		mobile?: boolean;
+		mobileLandscape?: boolean;
 	}
 
 	let {
@@ -23,6 +24,7 @@
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		editable,
 		mobile = false,
+		mobileLandscape = false,
 	}: Props = $props();
 
 	let editingField: "editing_TC" | "editingFrame" | null = $state(null);
@@ -115,7 +117,11 @@
 <div class="flex gap-1 font-mono">
 	{#if mobile}
 		<button class="cursor-pointer" title="Enter frames or timecode" onclick={openMobileInput}>
-			F {frame - startFrame}
+			{#if mobileLandscape}
+				{formatTimecode(frame, frameRate)}
+			{:else}
+				F {frame - startFrame}
+			{/if}
 		</button>
 	{:else if isTC}
 		<span>
