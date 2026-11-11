@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
-	import Share from "@lucide/svelte/icons/share";
+	import UserGroup from "@lucide/svelte/icons/user-group";
+	import Link from "@lucide/svelte/icons/link";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
 	import { getShareLinks } from "#lib/components/sharing/share-links/share-links.remote.ts";
 	import { getBreadcrumbNames } from "./breadcrumbs.remote.ts";
@@ -26,7 +27,7 @@
 	);
 </script>
 
-{#snippet shareButton(label: string, onclick: () => void, count = 0)}
+{#snippet shareButton(label: string, onclick: () => void, count = 0, linkIcon = false)}
 	<button
 		type="button"
 		class="btn btn-ghost btn-xs {count ? 'gap-1 px-1.5' : 'btn-square'}"
@@ -34,7 +35,11 @@
 		aria-label={count ? `${label} (${count} active links)` : label}
 		{onclick}
 	>
-		<Share class="size-3.5" />
+		{#if linkIcon}
+			<Link class="size-3.5" />
+		{:else}
+			<UserGroup class="size-3.5" />
+		{/if}
 		{#if count}<span>{count}</span>{/if}
 	</button>
 {/snippet}
@@ -101,6 +106,7 @@
 										exportId: exp.id,
 									}),
 								shareLinkCount,
+								true,
 							)}
 						{/if}
 					</li>
