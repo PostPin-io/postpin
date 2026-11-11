@@ -14,6 +14,7 @@
 	import Timecode from "./Timecode.svelte";
 	import FoldVertical from "@lucide/svelte/icons/fold-vertical";
 	import DiamondPlus from "@lucide/svelte/icons/diamond-plus";
+	import Settings2 from "@lucide/svelte/icons/settings-2";
 	import { contrastColor } from "../categories/category-color.ts";
 	import {
 		nextPlaybackRate,
@@ -48,6 +49,7 @@
 		markerColor,
 		timelineControls = true,
 		status,
+		mobile = false,
 	}: {
 		markers: { frame: number }[];
 		timing: FrameTiming;
@@ -75,6 +77,7 @@
 		timelineControls?: boolean;
 		/** Shown first in the right-hand group, e.g. the processing jobs */
 		status?: Snippet;
+		mobile?: boolean;
 	} = $props();
 
 	// Absolute timeline frame, like marker frames
@@ -156,6 +159,7 @@
 				startFrame={timing.startFrameIndex}
 				frameCount={durationFrames}
 				editable={true}
+				{mobile}
 			/>
 			<span class="font-mono">|</span>
 			<button
@@ -241,12 +245,28 @@
 			{/if}
 			{#if playerAvailable}
 				{#if qualities.length > 0}
-					<select class="select w-24 select-xs" bind:value={quality}>
-						<option value="auto">Auto</option>
-						{#each qualities as height (height)}
-							<option value={height}>{height}p</option>
-						{/each}
-					</select>
+					{#if mobile}
+						<label class="btn relative btn-square btn-ghost btn-xs" title="Video quality">
+							<Settings2 size={16} />
+							<select
+								aria-label="Video quality"
+								class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+								bind:value={quality}
+							>
+								<option value="auto">Auto</option>
+								{#each qualities as height (height)}
+									<option value={height}>{height}p</option>
+								{/each}
+							</select>
+						</label>
+					{:else}
+						<select class="select w-24 select-xs" bind:value={quality}>
+							<option value="auto">Auto</option>
+							{#each qualities as height (height)}
+								<option value={height}>{height}p</option>
+							{/each}
+						</select>
+					{/if}
 				{/if}
 				<button class="btn btn-square btn-ghost btn-xs" onclick={() => onToggleMute?.()}>
 					{#if muted}<VolumeX size={16} />{:else}<Volume2 size={16} />{/if}

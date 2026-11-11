@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount, tick } from "svelte";
+	import { MediaQuery } from "svelte/reactivity";
+
 	import { handleReviewShortcut } from "#lib/components/review/review-shortcuts.ts";
 	import {
 		getExport,
@@ -90,6 +92,15 @@
 
 	const isMarkerVisible = $derived(share?.markerPanelVisible ?? true);
 	const isTimelineVisible = $derived(share?.timelinePanelVisible ?? true);
+	// Phones and small tablets: video on top, marker panel below, no timeline
+	const isMobile = new MediaQuery("max-width: 1023px");
+	const isMobileLandscape = new MediaQuery("(max-width: 1023px) and (orientation: landscape)");
+	const showTimeline = $derived(isTimelineVisible && !isMobile.current);
+	let landscapeFullscreenDismissed = $state(false);
+	const landscapeFullscreen = $derived(isMobileLandscape.current && !landscapeFullscreenDismissed);
+	$effect(() => {
+		if (!isMobileLandscape.current) landscapeFullscreenDismissed = false;
+	});
 
 	const exportQuery = $derived(
 		getExport(share ? { exportId, shareToken } : { projectId, timelineId, exportId }),
@@ -307,6 +318,11 @@
 	);
 
 	let viewMode: "shot-grid" | "timeline" = $state("timeline");
+	// The shot grid needs the timeline's space: back to the video on phones
+	$effect(() => {
+		if (isMobile.current) viewMode = "timeline";
+	});
+
 	const TIMELINE_MODE_KEY = "postpin:timeline-mode";
 	function loadTimelineMode(): TimelineMode {
 		if (typeof localStorage === "undefined") return "full";
@@ -358,13 +374,17 @@
 					bind:quality={videoQuality}
 					bind:viewMode
 					bind:timelineMode
-					timelineControls={isTimelineVisible}
+					timelineControls={showTimeline}
+					mobile={isMobile.current}
 					qualities={videoQualities}
 					muted={videoMuted}
 					playerAvailable={viewMode === "timeline" && !!player}
-					fullscreen={videoFullscreen}
+					fullscreen={videoFullscreen || landscapeFullscreen}
 					onToggleMute={() => player?.toggleMute()}
-					onFullscreen={() => player?.toggleFullscreen()}
+					onFullscreen={() => {
+						if (landscapeFullscreen && !videoFullscreen) landscapeFullscreenDismissed = true;
+						else player?.toggleFullscreen();
+					}}
 					onCreateMarker={isMarkerVisible
 						? () => void markerPanel?.createMarkerAtPlayhead()
 						: undefined}
@@ -407,6 +427,7 @@
 							bind:qualities={videoQualities}
 							bind:muted={videoMuted}
 							bind:fullscreen={videoFullscreen}
+							mobileLandscapeFullscreen={landscapeFullscreen}
 							fullscreenControls={menuBar}
 							overlay={note}
 						/>
@@ -421,7 +442,7 @@
 					{/if}
 				{/if}
 			</div>
-			{#if snapshot}
+			{#if snapshot && !landscapeFullscreen}
 				{@render menuBar()}
 			{/if}
 		{/if}
@@ -506,58 +527,76 @@
 		{:else}
 			<Header />
 		{/if}
-
-		<Splitpanes
-			theme="daisy-theme"
-			class="min-h-0 flex-1"
-			on:resized={(event) => saveLayout("main", event)}
-		>
-			<!-- Main content; without the marker panel the video column takes the full width -->
-			<Pane
-				size={isMarkerVisible ? layout.main[0] : 100}
-				minSize={isMarkerVisible ? 25 : 100}
-				class="overflow-auto"
-			>
-				<div class="h-full" bind:clientHeight={leftPanesHeight}>
-					<Splitpanes
-						theme="daisy-theme"
-						horizontal
-						on:resized={(event) => saveLayout("left", event)}
-					>
-						<!-- Video and jobs; without the timeline panel the video takes the full height -->
-						<Pane
-							size={!isTimelineVisible
-								? 100
-								: collapsedPercent !== undefined
-									? 100 - collapsedPercent
-									: layout.left[0]}
-							minSize={isTimelineVisible ? 15 : 100}
-							class="overflow-auto"
-						>
-							{@render videoArea()}
-						</Pane>
-
-						<!-- Timeline panel -->
-						{#if isTimelineVisible}
-							<Pane
-								size={collapsedPercent ?? layout.left[1]}
-								minSize={collapsedPercent ?? 10}
-								maxSize={collapsedPercent ?? 100}
-								class="overflow-hidden"
-							>
-								{@render timelineArea()}
-							</Pane>
-						{/if}
-					</Splitpanes>
+		{#if isMobile.current}
+			<!-- Phones: the video stays on top, the marker panel below scrolls on its own -->
+			<div class="flex min-h-0 flex-1 flex-col">
+				<div class="shrink-0">
+					{@render videoArea(true)}
 				</div>
-			</Pane>
+				{#if isMarkerVisible}
+					<div class="flex min-h-0 flex-1 flex-col overflow-hidden border-t border-base-300">
+						{@render markerArea(false)}
+					</div>
+				{/if}
+			</div>
+		{:else}
+			<Splitpanes
+				theme="daisy-theme"
+				class="min-h-0 flex-1"
+				on:resized={(event) => saveLayout("main", event)}
+			>
+				<!-- Main content; without the marker panel the video column takes the full width -->
+				<Pane
+					size={isMarkerVisible ? layout.main[0] : 100}
+					minSize={isMarkerVisible ? 25 : 100}
+					class="overflow-auto"
+				>
+					<div class="h-full" bind:clientHeight={leftPanesHeight}>
+						<Splitpanes
+							theme="daisy-theme"
+							horizontal
+							on:resized={(event) => saveLayout("left", event)}
+						>
+							<!-- Video and jobs; without the timeline panel the video takes the full height -->
+							<Pane
+								size={!isTimelineVisible
+									? 100
+									: collapsedPercent !== undefined
+										? 100 - collapsedPercent
+										: layout.left[0]}
+								minSize={isTimelineVisible ? 15 : 100}
+								class="overflow-auto"
+							>
+								{@render videoArea()}
+							</Pane>
 
-			<!-- Marker panel -->
-			{#if isMarkerVisible}
-				<Pane size={layout.main[1]} minSize={20} maxSize={50} class="flex flex-col overflow-hidden">
-					{@render markerArea()}
+							<!-- Timeline panel -->
+							{#if isTimelineVisible}
+								<Pane
+									size={collapsedPercent ?? layout.left[1]}
+									minSize={collapsedPercent ?? 10}
+									maxSize={collapsedPercent ?? 100}
+									class="overflow-hidden"
+								>
+									{@render timelineArea()}
+								</Pane>
+							{/if}
+						</Splitpanes>
+					</div>
 				</Pane>
-			{/if}
-		</Splitpanes>
+
+				<!-- Marker panel -->
+				{#if isMarkerVisible}
+					<Pane
+						size={layout.main[1]}
+						minSize={20}
+						maxSize={50}
+						class="flex flex-col overflow-hidden"
+					>
+						{@render markerArea()}
+					</Pane>
+				{/if}
+			</Splitpanes>
+		{/if}
 	</div>
 {/if}

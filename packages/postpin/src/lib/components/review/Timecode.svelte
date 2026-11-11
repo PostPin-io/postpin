@@ -12,10 +12,18 @@
 		/** Timeline length in frames; typed values are capped to the timeline */
 		frameCount: number;
 		editable?: boolean;
+		mobile?: boolean;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	let { frame = $bindable(), frameRate, startFrame, frameCount, editable }: Props = $props();
+	 
+	let {
+		frame = $bindable(),
+		frameRate,
+		startFrame,
+		frameCount,
+		editable,
+		mobile = false,
+	}: Props = $props();
 
 	let editingField: "editing_TC" | "editingFrame" | null = $state(null);
 
@@ -26,7 +34,31 @@
 
 	let inputField_TC: HTMLInputElement | null = $state(null);
 	let inputField_Frame: HTMLInputElement | null = $state(null);
+	let mobileDialog: HTMLDialogElement | null = $state(null);
+	let mobileInput = $state("");
+	let mobileError = $state(false);
 	let isTC = $state(true);
+
+	function openMobileInput() {
+		mobileInput = String(frame - startFrame);
+		mobileError = false;
+		mobileDialog?.showModal();
+	}
+
+	function submitMobileInput(event: SubmitEvent) {
+		event.preventDefault();
+		try {
+			const input = mobileInput.trim();
+			const targetFrame = /^\d+$/.test(input)
+				? frameFromInput(input, startFrame)
+				: parseTimecode(input, frameRate);
+			frame = clampToTimeline(targetFrame, startFrame, frameCount);
+			mobileError = false;
+			mobileDialog?.close();
+		} catch {
+			mobileError = true;
+		}
+	}
 
 	$effect(() => {
 		if (editingField == "editing_TC") {
@@ -79,7 +111,11 @@
 </script>
 
 <div class="flex gap-1 font-mono">
-	{#if isTC}
+	{#if mobile}
+		<button class="cursor-pointer" title="Enter frames or timecode" onclick={openMobileInput}>
+			F {frame - startFrame}
+		</button>
+	{:else if isTC}
 		<span>
 			<button title="click to switch to Frame" class="cursor-pointer" onclick={() => (isTC = false)}
 				>TC</button
@@ -142,3 +178,29 @@
 		/>
 	{/if}
 </div>
+
+{#if mobile}
+	<dialog bind:this={mobileDialog} class="modal modal-bottom">
+		<form method="dialog" class="modal-box flex flex-col gap-3" onsubmit={submitMobileInput}>
+			<h2 class="text-lg font-semibold">Jump to time</h2>
+			<label class="text-sm" for="mobile-timecode-input">Enter frames or timecode</label>
+			<input
+				id="mobile-timecode-input"
+				autofocus
+				type="text"
+				bind:value={mobileInput}
+				placeholder="Frames or HH:MM:SS:FF"
+				class="input-bordered input w-full font-mono {mobileError ? 'input-error' : ''}"
+				aria-invalid={mobileError}
+			/>
+			{#if mobileError}
+				<p class="text-sm text-error">Enter a valid frame number or timecode.</p>
+			{/if}
+			<div class="modal-action">
+				<button type="button" class="btn" onclick={() => mobileDialog?.close()}>Cancel</button>
+				<button type="submit" class="btn btn-primary">Go</button>
+			</div>
+		</form>
+		<form method="dialog" class="modal-backdrop"><button>close</button></form>
+	</dialog>
+{/if}
