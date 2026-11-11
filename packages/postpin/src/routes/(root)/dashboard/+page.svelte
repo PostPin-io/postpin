@@ -26,7 +26,7 @@
 	let viewMode: "table" | "card" = $state("card");
 	// Tables don't fit on phones: show cards there, but keep the stored choice for desktop
 	const isMobile = new MediaQuery("max-width: 767px");
-	const shownView = $derived(isMobile.current ? "card" : viewMode);
+	const shownView = $derived.by(() => (isMobile.current ? "card" : viewMode));
 
 	type SortField = "name" | "created" | "updated";
 	const sortFields: { value: SortField; label: string }[] = [
