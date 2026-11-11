@@ -1,12 +1,13 @@
-import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
+import type { Clip, TimelineSnapshot, TrackType } from "@postpin-io/shared/types/TimelineSnapshot";
 import { PLAYBACK_RATES, type TimelineMode } from "#lib/components/review/video-player.ts";
+import { contrastColor } from "../categories/category-color";
 
 type Track = TimelineSnapshot["tracks"][number];
 
 export type Lane = {
 	id: string;
 	name: string;
-	type: string;
+	type: TrackType;
 	clips: Track["clips"];
 };
 
@@ -24,7 +25,7 @@ export function buildLanes(tracks: Track[], mode: TimelineMode): Lane[] {
 	const audio = tracks.filter((track) => track.type === "audio");
 	if (mode === "full") return [...[...video].reverse(), ...audio];
 	// Higher tracks come later and are drawn on top
-	const merge = (type: string, name: string, list: Track[]): Lane[] =>
+	const merge = (type: TrackType, name: string, list: Track[]): Lane[] =>
 		list.length > 0 ? [{ id: type, name, type, clips: list.flatMap((track) => track.clips) }] : [];
 	return [...merge("video", "Video", video), ...merge("audio", "Audio", audio)];
 }
@@ -92,4 +93,13 @@ export function visibleTicks(v: {
 		{ length: Math.max(last - first + 1, 0) },
 		(_, i) => v.firstFrame + (first + i) * v.tickFrames,
 	);
+}
+
+// Tailwind's blue-500 and green-600, for clips without a color (Pro Tools, older plugins)
+const TRACK_COLORS: Record<TrackType, string> = { video: "#3b82f6", audio: "#16a34a" };
+
+/** Inline style with the clip's color from the editing software, or its track type's */
+export function clipStyle(clip: Clip, trackType: TrackType) {
+	const background = clip.color?.hex ?? TRACK_COLORS[trackType];
+	return `background-color: ${background}; color: ${contrastColor(background) ?? "#ffffff"};`;
 }

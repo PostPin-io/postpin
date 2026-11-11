@@ -28,6 +28,7 @@ export type {
 	CategoryModel,
 	ClientOptions,
 	Clip,
+	ClipColor,
 	CompleteUploadData,
 	CompleteUploadErrors,
 	CompleteUploadResponse,

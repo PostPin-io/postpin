@@ -30,6 +30,13 @@ export type Track = {
 	clips: Clip[];
 };
 
+export type ClipColor = {
+	/** host name of the color, e.g. "Teal" (Resolve) or "Mango" (Premiere) */
+	name: string;
+	/** sRGB hex, resolved by the plugin */
+	hex: string;
+};
+
 export type Clip = {
 	id: string;
 	name: string;
@@ -42,6 +49,7 @@ export type Clip = {
 	/** Constant playback speed, 1 is normal speed. Speed ramps aren't supported. */
 	speed: number;
 	metadata: Record<string, unknown>;
+	color: ClipColor | null;
 };
 
 export type MediaItem = {

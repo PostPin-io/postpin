@@ -9,6 +9,7 @@ import type {
 import { formatTimecode } from "@postpin-io/shared/logic/timecode";
 import type {
 	Clip,
+	ClipColor,
 	MediaItem,
 	TimelineSnapshot,
 	Track,
@@ -16,6 +17,9 @@ import type {
 } from "@postpin-io/shared/types/TimelineSnapshot";
 import { ppro } from "../host";
 import { fps, fpsToFrameRate, TICKS_PER_SECOND, toFrame, type Timing } from "./time";
+import { clipLabels, type XmlClip } from "./fcpxml";
+import { exportSequenceXml, readLabelPrefs } from "../bridges/store";
+import { DEFAULT_LABEL_PREFS, labelColor } from "./labels";
 
 // Project panel column with the media's start time in ticks, as Adobe's samples read it
 const MEDIA_START_COLUMN = "Column.Intrinsic.MediaStart";
@@ -43,6 +47,20 @@ export async function buildTimelineSnapshot(
 	// promises, so clips of the same media converting in parallel share one conversion
 	const media = new Map<string, Promise<ConvertedMedia | null>>();
 
+	// The API has no labels for track items, only Final Cut Pro XML has them.
+	// Started first, it runs while the tracks are read.
+	const xmlClips = exportSequenceXml(sequence)
+		.then(clipLabels)
+		.catch((error) => {
+			console.warn("No clip colors, the XML export failed:", error);
+			return new Map<string, XmlClip>();
+		});
+
+	const labelPrefs = readLabelPrefs().catch((error) => {
+		console.warn("Premiere's factory label settings, reading the preferences failed:", error);
+		return DEFAULT_LABEL_PREFS;
+	});
+
 	function mediaFor(projectItem: ProjectItem, type: TrackType) {
 		const id = projectItem.getId();
 		let converted = media.get(id);
@@ -54,6 +72,14 @@ export async function buildTimelineSnapshot(
 			media.set(id, converted);
 		}
 		return converted;
+	}
+
+	// The XML has a clip's label only when it isn't the default for its media type
+	async function clipColor(id: string, name: string): Promise<ClipColor | null> {
+		const xmlClip = (await xmlClips).get(id);
+		// A different name means the XML numbers clips differently, so its label is another clip's
+		if (xmlClip?.name !== name) return null;
+		return labelColor(await labelPrefs, xmlClip);
 	}
 
 	async function convertMedia(
@@ -110,7 +136,10 @@ export async function buildTimelineSnapshot(
 			item.getName(),
 			item.getProjectItem(),
 		]);
-		const converted = projectItem ? await mediaFor(projectItem, type) : null;
+		const [converted, color] = await Promise.all([
+			projectItem ? mediaFor(projectItem, type) : null,
+			clipColor(id, name),
+		]);
 
 		// In points are relative to the media start, source frames are absolute like Resolve's
 		const sourceStartFrameIndex = converted
@@ -129,6 +158,7 @@ export async function buildTimelineSnapshot(
 			sourceStartFrameIndex,
 			speed: Math.round(speed * 1e4) / 1e4,
 			metadata: reversed ? { reversed: true } : {},
+			color,
 		};
 	}
 

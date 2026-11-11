@@ -6,6 +6,8 @@ export default defineConfig(({ mode }) => ({
 		"process.env.NODE_ENV": JSON.stringify(mode),
 		// development builds allow the webview inspector
 		DEV: JSON.stringify(mode === "development"),
+		// logged at startup, to tell which build Premiere runs
+		BUILD_TIME: JSON.stringify(new Date().toISOString()),
 		DEFAULT_SERVER_URL: JSON.stringify(
 			mode === "development" ? "http://localhost:5173" : "https://postpin.io",
 		),

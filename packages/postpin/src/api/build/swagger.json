@@ -357,8 +357,30 @@
 				"type": "object",
 				"description": "Construct a type with a set of properties K of type T"
 			},
+			"ClipColor": {
+				"properties": {
+					"hex": {
+						"type": "string",
+						"description": "sRGB hex, resolved by the plugin"
+					},
+					"name": {
+						"type": "string",
+						"description": "host name of the color, e.g. \"Teal\" (Resolve) or \"Mango\" (Premiere)"
+					}
+				},
+				"required": ["hex", "name"],
+				"type": "object"
+			},
 			"Clip": {
 				"properties": {
+					"color": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ClipColor"
+							}
+						],
+						"nullable": true
+					},
 					"metadata": {
 						"$ref": "#/components/schemas/Record_string.unknown_"
 					},
@@ -394,6 +416,7 @@
 					}
 				},
 				"required": [
+					"color",
 					"metadata",
 					"speed",
 					"sourceStartFrameIndex",

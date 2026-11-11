@@ -3,6 +3,7 @@ import type { Clip, Track } from "@postpin-io/shared/types/TimelineSnapshot";
 import {
 	adjacentCut,
 	buildLanes,
+	clipStyle,
 	collapsedLaneCount,
 	stepPlaybackRate,
 	tickStep,
@@ -19,6 +20,7 @@ const clip = (id: string, start: number, duration: number): Clip => ({
 	sourceStartFrameIndex: null,
 	speed: 1,
 	metadata: {},
+	color: null,
 });
 
 const track = (id: string, type: "video" | "audio", clips: Clip[] = []): Track => ({
@@ -157,5 +159,19 @@ describe("visibleTicks", () => {
 
 	it("empty before layout", () => {
 		expect(visibleTicks({ ...base, pixelsPerFrame: 0 })).toEqual([]);
+	});
+});
+
+describe("clipStyle", () => {
+	it("uses the clip's color, with readable text", () => {
+		const yellow = { ...clip("y", 0, 10), color: { name: "Lemon", hex: "#dfec53" } };
+		expect(clipStyle(yellow, "video")).toBe("background-color: #dfec53; color: #000000;");
+		const navy = { ...clip("n", 0, 10), color: { name: "Navy", hex: "#006086" } };
+		expect(clipStyle(navy, "video")).toBe("background-color: #006086; color: #ffffff;");
+	});
+
+	it("falls back to the track type's color for clips without one", () => {
+		expect(clipStyle(clip("v", 0, 10), "video")).toBe("background-color: #3b82f6; color: #ffffff;");
+		expect(clipStyle(clip("a", 0, 10), "audio")).toBe("background-color: #16a34a; color: #ffffff;");
 	});
 });

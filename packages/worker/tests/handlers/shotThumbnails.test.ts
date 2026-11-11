@@ -35,6 +35,7 @@ function snapshot(shotCount: number) {
 					sourceStartFrameIndex: null,
 					speed: 1,
 					metadata: {},
+					color: null,
 				})),
 			},
 		],

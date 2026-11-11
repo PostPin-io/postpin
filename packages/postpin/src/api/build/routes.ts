@@ -276,11 +276,28 @@ const models: TsoaRoute.Models = {
 		},
 	},
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	ClipColor: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				hex: { dataType: "string", required: true },
+				name: { dataType: "string", required: true },
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 	Clip: {
 		dataType: "refAlias",
 		type: {
 			dataType: "nestedObjectLiteral",
 			nestedProperties: {
+				color: {
+					dataType: "union",
+					subSchemas: [{ ref: "ClipColor" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
 				metadata: { ref: "Record_string.unknown_", required: true },
 				speed: { dataType: "double", required: true },
 				sourceStartFrameIndex: {

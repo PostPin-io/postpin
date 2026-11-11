@@ -1,12 +1,33 @@
 // UXP panel: runs the bridges against Premiere and hosts the plugin-core UI in a webview
+import { getServerUrl } from "./bridges/auth";
 import { createHostBridge } from "./bridges/hostBridge";
 import { createNetBridge } from "./bridges/net";
+import { uxp } from "./host";
 import { setupMenu } from "./menu";
 import { createPremiereBridge } from "./premiere";
 import { createRpcServer, parseMessage } from "./rpc";
 
 // set by vite.config.ts
 declare const DEV: boolean;
+declare const BUILD_TIME: string;
+
+// Which build runs, from where and against which server. The UXP Developer Tool loads the
+// manifest path it was given, which isn't necessarily the checkout being built.
+async function logStartup() {
+	const [folder, serverUrl] = await Promise.all([
+		uxp.storage.localFileSystem.getPluginFolder(),
+		getServerUrl(),
+	]);
+	console.log(
+		`[PostPin] ${DEV ? "development" : "production"} build from ` +
+			// not defined while a `pnpm dev` started before it was added runs
+			`${typeof BUILD_TIME === "string" ? BUILD_TIME : "unknown, restart pnpm dev"}\n` +
+			`  plugin folder: ${folder.nativePath}\n` +
+			`  server: ${serverUrl}\n` +
+			`  Premiere ${uxp.host.version}, UXP ${uxp.versions.uxp}`,
+	);
+}
+logStartup().catch((error) => console.error("[PostPin] startup log failed:", error));
 
 setupMenu();
 

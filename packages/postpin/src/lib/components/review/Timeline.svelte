@@ -8,6 +8,7 @@
 	import {
 		adjacentCut,
 		buildLanes,
+		clipStyle,
 		collapsedLaneCount,
 		stepPlaybackRate,
 		tickStep,
@@ -452,12 +453,9 @@
 						{#each track.clips as clip (clip.id)}
 							<button
 								type="button"
-								class="absolute inset-y-1 cursor-pointer overflow-hidden rounded-sm border px-1 text-left text-xs whitespace-nowrap text-white {track.type ===
-								'video'
-									? 'border-blue-700 bg-blue-500'
-									: 'border-green-800 bg-green-600'}"
+								class="absolute inset-y-1 cursor-pointer overflow-hidden rounded-sm border border-1 border-white px-1 text-left text-xs text-ellipsis whitespace-nowrap text-white"
 								style="left: {toX(clip.startFrameIndex)}px; width: {clip.durationFrameCount *
-									pixelsPerFrame}px"
+									pixelsPerFrame}px; {clipStyle(clip, track.type)}"
 								title={clip.name}
 								onclick={() => seek(clip.startFrameIndex)}
 							>

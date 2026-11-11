@@ -11,6 +11,7 @@ const clip = (id: string, startFrameIndex: number, durationFrameCount: number): 
 	sourceStartFrameIndex: 0,
 	speed: 1,
 	metadata: {},
+	color: null,
 });
 
 const video = (...clips: Clip[]): Track => ({ id: "v", type: "video", name: "Video", clips });

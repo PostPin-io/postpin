@@ -7,7 +7,8 @@
 		"build": "vite build && vite build -c vite.ui.config.ts",
 		"dev": "concurrently --kill-others-on-fail \"vite build --watch --mode development\" \"vite build -c vite.ui.config.ts --watch --mode development\"",
 		"check": "tsc --noEmit -p tsconfig.json",
-		"dist": "pnpm run build && ./scripts/build-ccx.sh"
+		"dist": "pnpm run build && ./scripts/build-ccx.sh",
+		"test": "vitest run"
 	},
 	"devDependencies": {
 		"@adobe/premierepro": "^27.0.0",
@@ -24,6 +25,10 @@
 		"svelte-check": "^4.7.8",
 		"tailwindcss": "^4.3.5",
 		"typescript": "^6.0.3",
-		"vite": "^8.3.6"
+		"vite": "^8.3.6",
+		"vitest": "5.1.0"
+	},
+	"dependencies": {
+		"fast-xml-parser": "^5.12.0"
 	}
 }

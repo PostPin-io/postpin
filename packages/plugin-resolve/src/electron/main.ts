@@ -20,6 +20,7 @@ import type {
 import { setTimeout as sleep } from "timers/promises";
 import { stringifyPostPinData } from "@postpin-io/plugin-core/customData";
 import { assignMarkerIds, newMarkerData, readMarkerIds, replacedMarkerData } from "./markerIds";
+import { CLIP_PALETTE, MARKER_PALETTE } from "./palette";
 import type {
 	Clip,
 	FrameRate,
@@ -27,12 +28,7 @@ import type {
 	TimelineSnapshot,
 	Track,
 } from "@postpin-io/shared/types/TimelineSnapshot";
-import type {
-	NleBridge,
-	NleMarker,
-	PaletteColor,
-	RenderProgress,
-} from "@postpin-io/plugin-core/bridge";
+import type { NleBridge, NleMarker, RenderProgress } from "@postpin-io/plugin-core/bridge";
 import { createWindow, exposeHostBridge, exposeNleBridge } from "@postpin-io/plugin-electron/main";
 
 declare const DEV_SERVER_URL: string;
@@ -42,26 +38,6 @@ const PLUGIN_ID = "io.postpin.plugin.resolve";
 const CLIENT_ID = "io.postpin.plugin.resolve";
 
 const WorkflowIntegration: WI = WorkflowIntegrationModule;
-
-// Resolve's fixed marker colors; the id is the color name the Resolve API takes
-const RESOLVE_PALETTE: PaletteColor[] = [
-	{ id: "Blue", hex: "#3B82F6" },
-	{ id: "Cyan", hex: "#00FFFF" },
-	{ id: "Green", hex: "#00FF00" },
-	{ id: "Yellow", hex: "#FFFF00" },
-	{ id: "Red", hex: "#FF0000" },
-	{ id: "Pink", hex: "#FFC0CB" },
-	{ id: "Purple", hex: "#800080" },
-	{ id: "Fuchsia", hex: "#FF00FF" },
-	{ id: "Rose", hex: "#FF007F" },
-	{ id: "Lavender", hex: "#E6E6FA" },
-	{ id: "Sky", hex: "#87CEEB" },
-	{ id: "Mint", hex: "#98FF98" },
-	{ id: "Lemon", hex: "#FFF700" },
-	{ id: "Sand", hex: "#C2B280" },
-	{ id: "Cocoa", hex: "#A0522D" },
-	{ id: "Cream", hex: "#FFFDD0" },
-];
 
 // Cached as promises, so concurrent first calls share one initialization of the native module.
 // A failed (null) result isn't kept, so the next call tries again.
@@ -328,6 +304,8 @@ async function buildTimelineSnapshot(): Promise<TimelineSnapshot | null> {
 			speed = Math.round(((sourceEnd - sourceStart) / timelineSeconds) * 1e4) / 1e4;
 		}
 
+		const colorName = await item.GetClipColor();
+
 		return {
 			id: await item.GetUniqueId(),
 			name: await item.GetName(),
@@ -337,6 +315,7 @@ async function buildTimelineSnapshot(): Promise<TimelineSnapshot | null> {
 			sourceStartFrameIndex,
 			speed,
 			metadata: {},
+			color: colorName ? { name: colorName, hex: CLIP_PALETTE[colorName] } : null,
 		};
 	};
 
@@ -467,7 +446,7 @@ async function addMarker(timeline: Timeline, frame: number, marker: MarkerInfo) 
 const resolveBridge: NleBridge = {
 	getCapabilities: async () => ({
 		hostName: "Resolve",
-		palette: RESOLVE_PALETTE,
+		palette: Object.entries(MARKER_PALETTE).map(([name, hex]) => ({ id: name, name, hex })),
 		renderPresets: true,
 		renderToDisk: true,
 		snapshotClips: true,

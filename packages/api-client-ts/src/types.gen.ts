@@ -127,7 +127,19 @@ export type RecordStringUnknown = {
 	[key: string]: unknown;
 };
 
+export type ClipColor = {
+	/**
+	 * sRGB hex, resolved by the plugin
+	 */
+	hex: string;
+	/**
+	 * host name of the color, e.g. "Teal" (Resolve) or "Mango" (Premiere)
+	 */
+	name: string;
+};
+
 export type Clip = {
+	color: ClipColor | null;
 	metadata: RecordStringUnknown;
 	/**
 	 * Constant playback speed, 1 is normal speed. Speed ramps aren't supported.
