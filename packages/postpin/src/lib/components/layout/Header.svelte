@@ -2,7 +2,9 @@
 	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
 	import { authClient } from "#lib/auth-client.ts";
-	import { goto, refreshAll } from "$app/navigation";
+	import { afterNavigate, goto, refreshAll } from "$app/navigation";
+
+	import Menu from "@lucide/svelte/icons/menu";
 
 	import type { Snippet } from "svelte";
 	import Logo from "#lib/components/layout/Logo.svelte";
@@ -11,6 +13,10 @@
 
 	const session = authClient.useSession();
 	const organizations = authClient.useListOrganizations();
+	// Mobile menu: closes again after every navigation
+	let menuOpen = $state(false);
+	afterNavigate(() => (menuOpen = false));
+
 	let activeOrganizationId = $derived($session.data?.session.activeOrganizationId);
 	let activeOrganization = $derived(
 		$organizations.data?.find((org) => org.id === activeOrganizationId),
@@ -39,48 +45,71 @@
 	let { children }: Props = $props();
 </script>
 
+{#snippet accountItems(mobile: boolean)}
+	{#if $organizations.data?.length}
+		<li class="menu-title">Organizations</li>
+		{#each $organizations.data as org (org.id)}
+			<li>
+				<button
+					class:menu-active={org.id === activeOrganizationId}
+					onclick={() => switchOrganization(org.id)}
+				>
+					{org.name}
+				</button>
+			</li>
+		{/each}
+		<li></li>
+	{/if}
+	<li><a href={resolve("/(root)/profile")}>Profile</a></li>
+	{#if activeOrganization}
+		<li>
+			<a
+				href={resolve("/(root)/organizations/[organization]/settings", {
+					organization: activeOrganization.slug,
+				})}>Settings</a
+			>
+		</li>
+	{/if}
+	{#if mobile && page.data.isSystemAdmin}
+		<li><a href={resolve("/(root)/admin")}>System</a></li>
+	{/if}
+	<li><button onclick={logout}>Logout</button></li>
+{/snippet}
+
 <header class="w-full rounded-md bg-base-200 shadow-sm max-lg:collapse">
-	<input id="navbar-1-toggle" class="peer hidden" type="checkbox" />
+	<input id="navbar-1-toggle" class="peer hidden" type="checkbox" bind:checked={menuOpen} />
 	<label for="navbar-1-toggle" class="fixed inset-0 hidden max-lg:peer-checked:block"></label>
 
-	<nav class="collapse-title navbar">
-		<div class="navbar-start">
-			<label for="navbar-1-toggle" class="btn btn-ghost lg:hidden">
-				<svg
-					aria-label="Menu"
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-5 w-5"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-					><path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M4 6h16M4 12h8m-8 6h16"
-					/></svg
-				>
+	<nav class="collapse-title navbar max-lg:px-2">
+		<div class="navbar-start min-w-0 max-lg:w-full">
+			<label for="navbar-1-toggle" class="btn btn-square btn-ghost lg:hidden" aria-label="Menu">
+				<Menu class="size-5" />
 			</label>
-			<a href={resolve("/(root)/dashboard")} class="btn btn-ghost text-xl">
+			<a
+				href={resolve("/(root)/dashboard")}
+				class="btn btn-ghost text-xl max-lg:btn-square"
+				aria-label="Dashboard"
+			>
 				<Logo class="h-6 w-auto" />
-				{#if activeOrganization}
-					{activeOrganization.name}
-					<span class="font-normal text-base-content/40">|</span>
-				{/if}
-				PostPin
+				<span class="flex items-center gap-2 max-lg:hidden">
+					{#if activeOrganization}
+						{activeOrganization.name}
+						<span class="font-normal text-base-content/40">|</span>
+					{/if}
+					PostPin
+				</span>
 			</a>
 			<Breadcrumbs />
 			{#if page.data.isSystemAdmin}
-				<ul class="menu menu-horizontal px-1">
+				<ul class="menu menu-horizontal px-1 max-lg:hidden">
 					<li><a href={resolve("/(root)/admin")}>System</a></li>
 				</ul>
 			{/if}
 		</div>
-		<div class="navbar-center hidden lg:flex"></div>
 		{#if children}
 			<div class="navbar-center hidden lg:flex">{@render children()}</div>
 		{/if}
-		<div class="navbar-end">
+		<div class="navbar-end max-lg:hidden">
 			<div class="dropdown dropdown-end">
 				<div tabindex="0" role="button" class="btn btn-ghost">
 					{$session.data?.user.name ?? "Account"}
@@ -89,47 +118,16 @@
 					tabindex="-1"
 					class="menu dropdown-content z-10 mt-2 w-56 rounded-box bg-base-100 p-2 shadow"
 				>
-					{#if $organizations.data?.length}
-						<li class="menu-title">Organizations</li>
-						{#each $organizations.data as org (org.id)}
-							<li>
-								<button
-									class:menu-active={org.id === activeOrganizationId}
-									onclick={() => switchOrganization(org.id)}
-								>
-									{org.name}
-								</button>
-							</li>
-						{/each}
-						<div class="divider my-1"></div>
-					{/if}
-					<li><a href={resolve("/(root)/profile")}>Profile</a></li>
-					{#if activeOrganization}
-						<li>
-							<a
-								href={resolve("/(root)/organizations/[organization]/settings", {
-									organization: activeOrganization.slug,
-								})}>Settings</a
-							>
-						</li>
-					{/if}
-					<li><button onclick={logout}>Logout</button></li>
+					{@render accountItems(false)}
 				</ul>
 			</div>
 		</div>
 	</nav>
 
 	<div class="collapse-content z-1 lg:hidden">
-		<ul class="menu">
-			<li><button>Item 1</button></li>
-			<li>
-				<button>Parent</button>
-				<ul>
-					<li><button>Submenu 1</button></li>
-					<li><button>Submenu 2</button></li>
-				</ul>
-			</li>
-			<li><button>Item 3</button></li>
+		<ul class="menu w-full">
+			<li class="menu-title">{$session.data?.user.name ?? "Account"}</li>
+			{@render accountItems(true)}
 		</ul>
 	</div>
 </header>

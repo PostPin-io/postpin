@@ -19,7 +19,7 @@
 		<Header />
 	</div>
 	<div bind:this={scroller} class="flex min-h-0 flex-1 flex-col overflow-y-auto">
-		<main class="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
+		<main class="mx-auto w-full max-w-4xl flex-1 px-4 py-4 md:py-8">
 			{@render children()}
 		</main>
 		<Footer />
