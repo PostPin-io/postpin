@@ -10,6 +10,7 @@
 	import { getShareLinks } from "#lib/components/sharing/share-links/share-links.remote.ts";
 
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
+	import Breadcrumbs from "#lib/components/layout/Breadcrumbs.svelte";
 
 	import { roleAllows, ORG_ROLES } from "#lib/roles.ts";
 	import type { Role } from "@postpin-io/shared/db/enums";
@@ -92,30 +93,12 @@
 				{/if}
 				PostPin
 			</a>
-			{#if activeOrganization}
-				<a
-					href={resolve("/(root)/organizations/[organization]/settings", {
-						organization: activeOrganization.slug,
-					})}
-					class="btn btn-ghost btn-sm">Settings</a
-				>
-			{/if}
-			<ul class="menu menu-horizontal px-1">
-				{#if page.params.project && page.params.timeline}
-					<li>
-						<a
-							href={resolve("/(root)/projects/[project]/timelines/[timeline]/exports", {
-								project: page.params.project,
-								timeline: page.params.timeline,
-							})}
-							class="btn btn-ghost btn-sm">Exports</a
-						>
-					</li>
-				{/if}
-				{#if page.data.isSystemAdmin}
+			<Breadcrumbs />
+			{#if page.data.isSystemAdmin}
+				<ul class="menu menu-horizontal px-1">
 					<li><a href={resolve("/(root)/admin")}>System</a></li>
-				{/if}
-			</ul>
+				</ul>
+			{/if}
 		</div>
 		<div class="navbar-center hidden lg:flex"></div>
 		{#if children}
@@ -155,6 +138,15 @@
 						<div class="divider my-1"></div>
 					{/if}
 					<li><a href={resolve("/(root)/profile")}>Profile</a></li>
+					{#if activeOrganization}
+						<li>
+							<a
+								href={resolve("/(root)/organizations/[organization]/settings", {
+									organization: activeOrganization.slug,
+								})}>Settings</a
+							>
+						</li>
+					{/if}
 					<li><button onclick={logout}>Logout</button></li>
 				</ul>
 			</div>
