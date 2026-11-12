@@ -27,7 +27,7 @@ function setCookie(cookies: Cookies, linkId: string, value: string) {
 export async function createShareGuest(
 	cookies: Cookies,
 	link: { id: string; token: string },
-	name: string,
+	name: string | null,
 ) {
 	const count = await prisma.shareGuest.count({ where: { shareLinkId: link.id } });
 	if (count >= MAX_GUESTS_PER_LINK) error(429, "This link has too many visitors");
