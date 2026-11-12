@@ -37,8 +37,6 @@
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
-	import ChevronLeft from "@lucide/svelte/icons/chevron-left";
-	import ChevronRight from "@lucide/svelte/icons/chevron-right";
 
 	interface Props {
 		exportId: string;

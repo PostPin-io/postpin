@@ -1,23 +1,13 @@
 <script lang="ts">
-	import CategoryBadge from "../../categories/CategoryBadge.svelte";
-
-	import X from "@lucide/svelte/icons/x";
-	import Send from "@lucide/svelte/icons/send";
-	import LocateFixed from "@lucide/svelte/icons/locate-fixed";
-	import Trash from "@lucide/svelte/icons/trash";
-	import UpdateMarker from "./UpdateMarker.svelte";
+	import MarkerCard from "./MarkerCard.svelte";
 	import MarkerPositionModal from "./MarkerPositionModal.svelte";
-
-	import { createResponse, getResponses } from "./markers.remote";
-	import { useShare } from "../share-context.ts";
-	import { formatTimecode } from "@postpin-io/shared/logic/timecode";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 	import type { ReviewMarker } from "./types";
 
 	interface Props {
 		/** The marker being edited; undefined closes the modal, also once the marker is deleted */
 		marker: ReviewMarker | undefined;
-		/** Neighbors in the list, shown as cards while swiping; undefined at the ends */
+		/** Neighbors in the list, shown as full cards while swiping; undefined at the ends */
 		previous: ReviewMarker | undefined;
 		next: ReviewMarker | undefined;
 		/** Playhead, offered as the new position */
@@ -25,10 +15,8 @@
 		/** Timeline length in frames */
 		frameCount: number;
 		startFrame: number;
-
 		frameRate: FrameRate;
 		onclose: () => void;
-
 		/** Swipe left/right: -1 for the previous marker, 1 for the next one */
 		onnavigate: (direction: -1 | 1) => void;
 	}
@@ -45,11 +33,19 @@
 	}: Props = $props();
 	let positionModal: MarkerPositionModal | null = $state(null);
 
-	let updateMarkerComponent: UpdateMarker | null = $state(null);
-	let deleting = $state(false);
+	// One component per marker id. The keyed #each below moves a card from "next" to "current"
+	// instead of rebuilding it, so what slid in is exactly what stays
+	const cards: Record<string, MarkerCard | null> = {};
 
-	const getShare = useShare();
-	const share = $derived(getShare());
+	type Slot = { marker: ReviewMarker; offset: -1 | 0 | 1 };
+	const slots = $derived.by(() => {
+		if (!marker) return [];
+		const list: Slot[] = [];
+		if (previous) list.push({ marker: previous, offset: -1 });
+		list.push({ marker, offset: 0 });
+		if (next) list.push({ marker: next, offset: 1 });
+		return list;
+	});
 
 	let dialog: HTMLDialogElement | null = $state(null);
 	$effect(() => {
@@ -58,39 +54,6 @@
 		else if (!marker && dialog.open) dialog.close();
 	});
 
-	// Guests have no conversations
-	const responses = $derived(marker && !share ? await getResponses(marker.id) : []);
-
-	let reply = $state("");
-	let sending = $state(false);
-	// A draft belongs to one marker
-	$effect(() => {
-		void marker?.id;
-		reply = "";
-	});
-
-	async function send() {
-		const content = reply.trim();
-		if (!marker || !content || sending) return;
-		sending = true;
-		try {
-			await createResponse({ markerId: marker.id, content });
-			reply = "";
-		} finally {
-			sending = false;
-		}
-	}
-
-	async function deleteCurrentMarker() {
-		if (!updateMarkerComponent || deleting) return;
-		deleting = true;
-		try {
-			await updateMarkerComponent.remove();
-		} finally {
-			deleting = false;
-		}
-	}
-
 	// ── Swipe: cards side by side, the finger drags them 1:1 ──
 	const GAP = 12; // px between two cards
 	const SNAP_MS = 220; // must match duration-220 on the cards
@@ -98,7 +61,6 @@
 	const NAVIGATE_SHARE = 0.25; // or drag a quarter of the width…
 	const FLICK_SPEED = 0.5; // …or flick faster than this (px/ms)
 
-	let scroller: HTMLElement | null = $state(null);
 	let track: HTMLElement | null = $state(null);
 	let trackWidth = $state(0);
 	let dragX = $state(0);
@@ -121,7 +83,7 @@
 						x: touch.clientX,
 						y: touch.clientY,
 						time: event.timeStamp,
-						fromTop: (scroller?.scrollTop ?? 0) <= 0,
+						fromTop: (target.closest("[data-scroller]")?.scrollTop ?? 0) <= 0,
 						axis: null,
 					}
 				: null;
@@ -214,43 +176,13 @@
 	const FADED = 25;
 	const currentStrength = $derived(100 - progress * (100 - FADED));
 	const incomingStrength = $derived(FADED + progress * (100 - FADED));
-	const previousStrength = $derived(dragX > 0 ? incomingStrength : FADED);
-	const nextStrength = $derived(dragX < 0 ? incomingStrength : FADED);
 
-	const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
-		dateStyle: "medium",
-		timeStyle: "short",
-	});
+	function strength(offset: -1 | 0 | 1) {
+		if (offset === 0) return currentStrength;
+		// Only the neighbor on the side being swiped towards comes in
+		return (offset === 1 && dragX < 0) || (offset === -1 && dragX > 0) ? incomingStrength : FADED;
+	}
 </script>
-
-{#snippet previewCard(neighbor: ReviewMarker, offset: -1 | 1, strength: number)}
-	<!-- Read-only preview: only the current card is interactive -->
-	<div
-		class="pointer-events-none absolute inset-0 flex flex-col overflow-hidden rounded-box border-[3px] bg-base-100 {snapping
-			? 'transition-[transform,border-color] duration-220 ease-out'
-			: ''}"
-		style:border-color={frameColor(neighbor.category.color, strength)}
-		style:transform={cardTransform(offset)}
-		aria-hidden="true"
-	>
-		<header class="flex min-h-14 shrink-0 items-center border-b border-base-300 px-2 py-2">
-			<h2 class="min-w-0 flex-1 truncate text-center text-lg font-semibold">
-				{neighbor.name?.trim() || "Marker"}
-			</h2>
-		</header>
-		<div class="flex flex-col gap-3 p-4">
-			<div class="flex items-center gap-2">
-				<span class="font-mono">{formatTimecode(neighbor.frame, frameRate)}</span>
-				<CategoryBadge category={neighbor.category} class="px-3 badge-md font-semibold" />
-			</div>
-			{#if neighbor.description}
-				<p class="line-clamp-6 whitespace-pre-wrap text-base-content/80">
-					{neighbor.description}
-				</p>
-			{/if}
-		</div>
-	</div>
-{/snippet}
 
 <!-- Fullscreen on the phone: the editor, the conversation and the reply field in one place -->
 <dialog bind:this={dialog} class="modal" {onclose}>
@@ -265,122 +197,25 @@
 				: 'transition-transform'}"
 			style:transform={dragY ? `translateY(${dragY}px)` : undefined}
 		>
-			{#if marker}
-				{#if previous}{@render previewCard(previous, -1, previousStrength)}{/if}
-				{#if next}{@render previewCard(next, 1, nextStrength)}{/if}
-
+			{#each slots as slot (slot.marker.id)}
+				<!-- Neighbors are the same full card, inert: visible, but only the current one reacts -->
 				<div
 					class="absolute inset-0 flex flex-col overflow-hidden rounded-box border-[3px] bg-base-100 {snapping
 						? 'transition-[transform,border-color] duration-220 ease-out'
 						: ''}"
-					style:border-color={frameColor(marker.category.color, currentStrength)}
-					style:transform={cardTransform(0)}
+					style:border-color={frameColor(slot.marker.category.color, strength(slot.offset))}
+					style:transform={cardTransform(slot.offset)}
+					inert={slot.offset !== 0}
 				>
-					<header
-						class="flex min-h-14 shrink-0 items-center gap-1 border-b border-base-300 px-2 py-2"
-					>
-						{#if marker.canDelete}
-							<button
-								type="button"
-								class="btn btn-square btn-error"
-								title="Delete marker"
-								aria-label="Delete marker"
-								disabled={deleting}
-								onclick={() => void deleteCurrentMarker()}
-							>
-								<Trash size={20} />
-							</button>
-						{/if}
-						<h2 class="min-w-0 flex-1 truncate text-center text-lg font-semibold">
-							{marker.name?.trim() || "Marker"}
-						</h2>
-						{#if marker.canDelete}
-							<span class="w-12 shrink-0" aria-hidden="true"></span>
-						{/if}
-					</header>
-
-					<div bind:this={scroller} class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-						{#key marker.id}
-							<UpdateMarker
-								bind:this={updateMarkerComponent}
-								{marker}
-								{startFrame}
-								mobile
-								onclose={() => dialog?.close()}
-							>
-								{#snippet mobileHeaderAction()}
-									{#if marker!.canUpdate}
-										<button
-											type="button"
-											class="btn btn-square btn-ghost"
-											title="Change position"
-											aria-label="Change marker position"
-											onclick={() => positionModal?.open(marker!.frame)}
-										>
-											<LocateFixed size={20} />
-										</button>
-									{/if}
-								{/snippet}
-							</UpdateMarker>
-						{/key}
-
-						{#if !share}
-							<form
-								class="flex items-end gap-2 px-4 pb-4"
-								onsubmit={(event) => {
-									event.preventDefault();
-									void send();
-								}}
-							>
-								<textarea
-									class="textarea min-h-11 flex-1 resize-none"
-									rows="1"
-									placeholder="Write a response…"
-									aria-label="Response"
-									bind:value={reply}></textarea>
-								<button
-									type="submit"
-									class="btn btn-square btn-primary"
-									aria-label="Send response"
-									disabled={sending || !reply.trim()}
-								>
-									{#if sending}<span class="loading loading-sm loading-spinner"></span>{:else}<Send
-											size={20}
-										/>{/if}
-								</button>
-							</form>
-
-							<section class="flex flex-col gap-3 px-4 pb-4" aria-label="Responses">
-								<h3 class="font-semibold">Responses ({responses.length})</h3>
-								<!-- Newest first: right below the reply field, where a sent response shows up -->
-								{#each [...responses].reverse() as response (response.id)}
-									<div class="rounded-box border border-base-300 bg-base-200/40 px-3 py-2">
-										<p class="break-words whitespace-pre-wrap">{response.content}</p>
-										<p class="mt-1 text-xs text-base-content/60">
-											{response.author?.name ?? "Deleted User"} · {dateTimeFormat.format(
-												response.createdAt,
-											)}
-										</p>
-									</div>
-								{:else}
-									<p class="text-sm text-base-content/60">No responses yet.</p>
-								{/each}
-							</section>
-						{/if}
-					</div>
-
-					<footer class="flex shrink-0 justify-end border-t border-base-300 px-3 py-2">
-						<button
-							type="button"
-							class="btn btn-square btn-ghost"
-							aria-label="Close"
-							onclick={() => dialog?.close()}
-						>
-							<X size={22} />
-						</button>
-					</footer>
+					<MarkerCard
+						bind:this={cards[slot.marker.id]}
+						marker={slot.marker}
+						{startFrame}
+						onclose={() => dialog?.close()}
+						onchangeposition={() => positionModal?.open(slot.marker.frame)}
+					/>
 				</div>
-			{/if}
+			{/each}
 		</div>
 	</div>
 
@@ -391,6 +226,8 @@
 		{startFrame}
 		{frameRate}
 		{frameCount}
-		onsave={(frame) => updateMarkerComponent?.moveTo(frame)}
+		onsave={(frame) => {
+			if (marker) cards[marker.id]?.moveTo(frame);
+		}}
 	/>
 </dialog>
