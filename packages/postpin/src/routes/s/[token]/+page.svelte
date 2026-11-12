@@ -63,7 +63,7 @@
 	<div class="flex h-full items-center justify-center" role="status" aria-live="polite">
 		<span class="loading loading-spinner"></span>
 	</div>
-{:else if info.needsname}
+{:else if info.needsName}
 	<div class="flex min-h-full items-center justify-center bg-base-200 p-4">
 		<form class="card w-full max-w-sm bg-base-100 shadow" onsubmit={join}>
 			<div class="card-body gap-3">

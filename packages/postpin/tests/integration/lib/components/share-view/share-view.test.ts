@@ -32,7 +32,7 @@ describe("getShareInfo", () => {
 			timelinePanelVisible: false,
 			markerPanelVisible: true,
 			guest: null,
-			needsname: true,
+			needsName: true,
 		});
 	});
 
