@@ -60,7 +60,7 @@ export async function encodeHls(
 				"-c:v",
 				"libx264",
 				"-preset",
-				"medium",
+				"faster",
 				"-profile:v",
 				"high",
 				"-level:v",
