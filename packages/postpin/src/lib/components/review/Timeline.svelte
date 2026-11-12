@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { tick } from "svelte";
 	import Diamond from "@lucide/svelte/icons/diamond";
+	import RangeEdgeIcon from "#lib/components/review/RangeEdgeIcon.svelte";
 	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 	import { onMount } from "svelte";
 	import type { ThumbnailElement, ThumbnailImage } from "@videojs/html";
@@ -11,9 +12,13 @@
 		clipStyle,
 		collapsedLaneCount,
 		stepPlaybackRate,
+		dragRange,
+		orderMarks,
 		tickStep,
 		timelineCuts,
 		visibleTicks,
+		type InOut,
+		type RangeDragMode,
 	} from "./timeline-view.ts";
 	import { getMarkers, updateMarker } from "#lib/components/review/markers/markers.remote.ts";
 	import {
@@ -24,6 +29,7 @@
 	import type { ReviewMarker } from "#lib/components/review/markers/types.ts";
 	import { useShare } from "./share-context.ts";
 	import { markersKey } from "./markers/marker-scope.ts";
+	import { lastFrameOf, type FrameRange } from "@postpin-io/shared/logic/ranges";
 
 	interface Props {
 		snapshot: TimelineSnapshot;
@@ -33,6 +39,8 @@
 		playbackRate: number;
 		seekThumbnails: ThumbnailImage[] | undefined;
 		mode?: TimelineMode;
+		/** In and out point for the next marker, set with I and O */
+		inOut?: InOut;
 
 		onCollapsedHeight: (height: number) => void;
 	}
@@ -48,6 +56,7 @@
 		markers,
 		seekThumbnails,
 		mode = "full",
+		inOut = $bindable({ in: null, out: null }),
 		onCollapsedHeight,
 	}: Props = $props();
 
@@ -143,51 +152,100 @@
 		}),
 	);
 
-	let visibleMarkers = $derived(
-		markers.filter((m) => {
-			const x = toX(markerFrame(m));
-			return x >= scrollLeft - 8 && x <= scrollLeft + viewportWidth;
-		}),
-	);
+	let markerDrag = $state<{
+		id: string;
+		mode: RangeDragMode;
+		origin: FrameRange;
+		/** Frame under the pointer when the drag started: the marker moves by the difference */
+		grabFrame: number;
+		current: FrameRange;
+	} | null>(null);
 
-	let markerDrag = $state<{ id: string; frame: number } | null>(null);
-	const markerFrame = (marker: (typeof markers)[number]) =>
-		markerDrag?.id === marker.id ? markerDrag.frame : marker.frame;
+	const rangeOf = (m: ReviewMarker): FrameRange =>
+		markerDrag?.id === m.id ? markerDrag.current : { frame: m.frame, duration: m.duration };
+
+	// Markers with any part in view, a range may start left of it
+	let visibleMarkers = $derived.by(() => {
+		const first = firstFrame + Math.floor((scrollLeft - 8) / pixelsPerFrame);
+		const last = firstFrame + Math.ceil((scrollLeft + viewportWidth) / pixelsPerFrame);
+		return markers.filter((m) => {
+			const range = rangeOf(m);
+			return range.frame <= last && lastFrameOf(range) >= first;
+		});
+	});
+
+	// Resize handles need room next to the diamond
+	const HANDLE_MIN_WIDTH = 12;
+	// A point marker's line, border-l-2 plus border-r: the diamond sits on its middle
+	const LINE_WIDTH = 3;
 
 	function startMarkerDrag(
 		event: PointerEvent & { currentTarget: HTMLElement },
-		marker: (typeof markers)[number],
+		marker: ReviewMarker,
+		mode: RangeDragMode = "move",
 	) {
 		if (event.button !== 0) return;
+		// Keep the ruler from starting a scrub, and the bar from moving when a handle is grabbed
+		event.stopPropagation();
 		if (!marker.canUpdate) {
 			seek(marker.frame);
 			return;
 		}
-		// Keep the ruler from starting a scrub
-		event.stopPropagation();
 		event.currentTarget.setPointerCapture(event.pointerId);
-		markerDrag = { id: marker.id, frame: marker.frame };
-		seek(marker.frame);
+		const origin = { frame: marker.frame, duration: marker.duration };
+		// Alt-dragging a point marker pulls a range out of it
+		const dragMode = event.altKey && origin.duration === 0 && mode === "move" ? "span" : mode;
+		markerDrag = {
+			id: marker.id,
+			mode: dragMode,
+			origin,
+			grabFrame: frameAtClientX(event.clientX),
+			current: origin,
+		};
+		// Dragging the end shows where the range stops, the rest where it starts
+		seek(dragMode === "end" ? lastFrameOf(origin) : marker.frame);
+
+		// On the window: the grabbed element goes away when the marker turns into a range or back
+		const move = (moveEvent: PointerEvent) => moveMarkerDrag(moveEvent);
+		const stop = (stopEvent: PointerEvent) => {
+			window.removeEventListener("pointermove", move, true);
+			window.removeEventListener("pointerup", stop, true);
+			window.removeEventListener("pointercancel", stop, true);
+			stopEvent.stopPropagation();
+			if (stopEvent.type === "pointerup") void endMarkerDrag(marker);
+			else markerDrag = null;
+		};
+		window.addEventListener("pointermove", move, true);
+		window.addEventListener("pointerup", stop, true);
+		window.addEventListener("pointercancel", stop, true);
 	}
 
 	function moveMarkerDrag(event: PointerEvent) {
 		if (!markerDrag) return;
+		// Keep the ruler from scrubbing and showing thumbnails meanwhile
 		event.stopPropagation();
-		markerDrag.frame = clampFrame(frameAtClientX(event.clientX));
+		const delta = frameAtClientX(event.clientX) - markerDrag.grabFrame;
+		const { origin, mode } = markerDrag;
+		markerDrag.current = dragRange(origin, mode, delta, { first: firstFrame, last: lastFrame });
+		const { current } = markerDrag;
+		// Follow the edge that is dragged
+		const draggedEnd =
+			mode === "end" || (mode === "span" && current.frame === origin.frame && current.duration > 0);
+		seek(draggedEnd ? lastFrameOf(current) : current.frame);
 	}
 
-	async function endMarkerDrag(marker: (typeof markers)[number]) {
+	async function endMarkerDrag(marker: ReviewMarker) {
 		if (markerDrag?.id !== marker.id) return;
-		const frame = markerDrag.frame;
+		const { frame, duration } = markerDrag.current;
 		try {
-			if (frame !== marker.frame) {
-				seek(frame);
+			if (frame !== marker.frame || duration !== marker.duration) {
 				await updateMarker({
 					id: marker.id,
 					name: marker.name ?? "",
 					description: marker.description ?? "",
 					categoryId: marker.categoryId,
 					frame,
+					duration,
 					shareToken: share?.token,
 				});
 				await getMarkers(markersKey(marker.exportId, share?.token)).refresh();
@@ -196,6 +254,20 @@
 			markerDrag = null;
 		}
 	}
+
+	// ─── In and out points ───
+	// Out is inclusive like in the NLEs: the frame under the playhead belongs to the range
+	export const marks = {
+		markIn() {
+			inOut = orderMarks({ in: playHeadPosition, out: inOut.out });
+		},
+		markOut() {
+			inOut = orderMarks({ in: inOut.in, out: playHeadPosition });
+		},
+		clearMarks() {
+			inOut = { in: null, out: null };
+		},
+	};
 
 	let dragging = $state(false);
 	let wasPlaying = false;
@@ -350,7 +422,8 @@
 		class="flex items-center justify-between gap-2 border-b border-gray-300 p-2"
 	>
 		<span class="text-xs text-gray-500">
-			Space play/pause · ←/→ frame · ↑/↓ previous/next cut · +/- speed
+			Space play/pause · ←/→ frame · ↑/↓ previous/next cut · +/- speed · I/O in/out · ⇧X clear · ⌥
+			drag a marker for a range
 		</span>
 		<div>
 			Zoom:
@@ -398,8 +471,9 @@
 				class="relative"
 				style="width: {snapshot.durationFrameCount * pixelsPerFrame}px"
 			>
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
-					class="sticky top-0 z-20 h-12 cursor-ew-resize overflow-hidden border-b border-gray-300 bg-base-100 select-none"
+					class="sticky top-0 z-20 h-[calc(3rem-1px)] cursor-ew-resize overflow-hidden bg-base-100 select-none"
 					tabindex="-1"
 					onpointerdown={startScrub}
 					onpointerup={endScrub}
@@ -419,27 +493,114 @@
 						</div>
 					{/each}
 
-					{#each visibleMarkers as marker (marker.id)}
-						<!-- svelte-ignore a11y_no_static_element_interactions -->
+					<!-- In/out for the next marker: an area once both are set, otherwise a bracket -->
+					{#if inOut.in !== null && inOut.out !== null}
 						<div
-							class="absolute bottom-0 z-10 -translate-x-1/2 cursor-grab touch-none {markerDrag?.id ===
-							marker.id
-								? 'cursor-grabbing'
-								: ''}"
-							style="left: {toX(markerFrame(marker)) + 1}px"
-							title={marker.name}
-							onpointerdown={(event) => startMarkerDrag(event, marker)}
-							onpointermove={moveMarkerDrag}
-							onpointerup={() => endMarkerDrag(marker)}
-							onpointercancel={() => (markerDrag = null)}
-						>
-							<Diamond
-								size={16}
-								fill={marker.category.color}
-								stroke="rgb(0 0 0 / 0.4)"
-								strokeWidth={1.5}
-							/>
-						</div>
+							class="pointer-events-none absolute inset-y-0 border-x-2 border-dashed border-primary bg-primary/10"
+							style="left: {toX(inOut.in)}px; width: {(inOut.out - inOut.in + 1) *
+								pixelsPerFrame}px"
+							title="In {formatTimecode(inOut.in, snapshot.frameRate)} · Out {formatTimecode(
+								inOut.out,
+								snapshot.frameRate,
+							)}"
+						></div>
+					{:else if inOut.in !== null}
+						<div
+							class="pointer-events-none absolute inset-y-0 w-1.5 border-y-2 border-l-2 border-primary"
+							style="left: {toX(inOut.in)}px"
+						></div>
+					{:else if inOut.out !== null}
+						<div
+							class="pointer-events-none absolute inset-y-0 -ml-1.5 w-1.5 border-y-2 border-r-2 border-primary"
+							style="left: {toX(inOut.out + 1)}px"
+						></div>
+					{/if}
+
+					{#each visibleMarkers as marker (marker.id)}
+						{@const range = rangeOf(marker)}
+						{@const width = range.duration * pixelsPerFrame}
+						<!-- The lane lines reach up under the icons, the icons' rounded tips stop short of the edge -->
+						{#if range.duration > 0}
+							{#each [toX(range.frame), toX(range.frame) + width - 1] as left, i (i)}
+								<div
+									class="pointer-events-none absolute bottom-0 h-2 border-l"
+									style="left: {left}px; border-color: {marker.category.color}"
+								></div>
+							{/each}
+						{:else}
+							<div
+								class="pointer-events-none absolute bottom-0 h-2 border border-l-2"
+								style="left: {toX(range.frame)}px; border-color: {marker.category.color}"
+							></div>
+						{/if}
+						{#if range.duration > 0}
+							<!-- Range bar, centered on the icons: dragging it moves the range, its edges resize it -->
+							<!-- svelte-ignore a11y_no_static_element_interactions -->
+							<div
+								class="absolute bottom-1 h-2 touch-none rounded-sm {marker.canUpdate
+									? markerDrag?.id === marker.id
+										? 'cursor-grabbing'
+										: 'cursor-grab'
+									: 'cursor-pointer'}"
+								style="left: {toX(range.frame)}px; width: {Math.max(
+									width,
+									2,
+								)}px; background-color: color-mix(in srgb, {marker.category
+									.color} 50%, transparent)"
+								title={marker.name}
+								onpointerdown={(event) => startMarkerDrag(event, marker, "move")}
+							>
+								{#if marker.canUpdate && width >= HANDLE_MIN_WIDTH}
+									{#each ["start", "end"] as const as edge (edge)}
+										<div
+											class="absolute -inset-y-1 w-2 cursor-ew-resize {edge === 'start'
+												? '-left-1'
+												: '-right-1'}"
+											title={edge === "start"
+												? "Drag to change the start"
+												: "Drag to change the end"}
+											onpointerdown={(event) => startMarkerDrag(event, marker, edge)}
+										></div>
+									{/each}
+								{/if}
+							</div>
+						{/if}
+						{#if range.duration > 0}
+							<!-- A range has two equal edges: triangles whose flat side sits on the edge -->
+							{#each ["start", "end"] as const as edge (edge)}
+								<div
+									class="absolute bottom-0 z-10 touch-none {edge === 'end'
+										? '-translate-x-full'
+										: ''} {markerDrag?.id === marker.id ? 'cursor-grabbing' : 'cursor-grab'}"
+									style="left: {toX(range.frame) + (edge === 'end' ? width : 0)}px"
+									title={marker.name}
+									onpointerdown={(event) => startMarkerDrag(event, marker)}
+								>
+									<RangeEdgeIcon {edge} fill={marker.category.color} strokeWidth={0} />
+								</div>
+							{/each}
+						{:else}
+							<div
+								class="absolute bottom-0 z-10 -translate-x-1/2 touch-none {markerDrag?.id ===
+								marker.id
+									? 'cursor-grabbing'
+									: 'cursor-grab'}"
+								style="left: {toX(range.frame) + LINE_WIDTH / 2}px"
+								title={marker.canUpdate
+									? `${marker.name ?? ""} · Alt-drag for a range`
+									: marker.name}
+								onpointerdown={(event) => startMarkerDrag(event, marker)}
+							>
+								<!-- block: inline it would sit on the text baseline, above the ruler's edge -->
+								<Diamond
+									class="block"
+									size={16}
+									fill={marker.category.color}
+									stroke="rgb(0 0 0 / 0.4)"
+									strokeWidth={0}
+								/>
+							</div>
+						{/if}
 					{/each}
 
 					<div
@@ -447,6 +608,9 @@
 						style="left: {toX(playHeadPosition)}px"
 					></div>
 				</div>
+				<!-- The ruler's bottom line, apart from the ruler so the marker lines can cross it while the
+				ruler still covers them when the lanes scroll up -->
+				<div class="pointer-events-none sticky top-[calc(3rem-1px)] z-18 h-px bg-gray-300"></div>
 
 				{#each tracks as track (track.id)}
 					<div class="relative {laneHeight} border-b border-gray-300">
@@ -471,12 +635,25 @@
 				></div>
 
 				{#each markers as marker (marker.id)}
+					{@const range = rangeOf(marker)}
+					{#if range.duration > 0}
+						<!-- Range over the lanes: only shown, clicks go through to the clips -->
+						<div
+							class="pointer-events-none absolute top-0 z-19 h-full border-r"
+							style="left: {toX(range.frame)}px; width: {range.duration *
+								pixelsPerFrame}px; background-color: color-mix(in srgb, {marker.category
+								.color} 10%, transparent); border-color: {marker.category.color}"
+						></div>
+					{/if}
+					<!-- A point marker gets a bold line, a range a thin one like its end -->
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
-						class="absolute top-0 h-full cursor-pointer border border-l-2"
-						style="left: {toX(markerFrame(marker))}px; border-color: {marker.category.color}"
+						class="absolute top-0 z-19 h-full cursor-pointer {range.duration > 0
+							? 'border-l'
+							: 'border border-l-2'}"
+						style="left: {toX(range.frame)}px; border-color: {marker.category.color}"
 						title={marker.name}
-						onclick={() => seek(marker.frame)}
+						onclick={() => seek(range.frame)}
 					></div>
 				{/each}
 			</div>

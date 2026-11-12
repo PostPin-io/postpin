@@ -45,6 +45,22 @@ const messageType = (name: string) =>
 
 const commandId = (name: CommandName) => CommandId[`CId_${name}`];
 
+const snakeCase = (key: string) => key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+
+// toJSON leaves out empty strings, but Pro Tools needs some of them: EditMemoryLocation without
+// comments fails, so a marker without a description couldn't be edited. Top-level empty strings the
+// caller passes are sent as they are.
+function toBody(type: MessageFns<unknown>, request: unknown) {
+	const body = type.toJSON(type.fromPartial(request as DeepPartial<unknown>)) as Record<
+		string,
+		unknown
+	>;
+	for (const [key, value] of Object.entries(request as Record<string, unknown>)) {
+		if (value === "") body[snakeCase(key)] = "";
+	}
+	return body;
+}
+
 const toRequest = (name: CommandName, request: unknown, sessionId?: string) => {
 	const type = messageType(`${name}RequestBody`);
 	return {
@@ -54,11 +70,7 @@ const toRequest = (name: CommandName, request: unknown, sessionId?: string) => {
 			version: API_VERSION,
 			versionMinor: API_VERSION_MINOR,
 		},
-		requestBodyJson: JSON.stringify(
-			type && request !== undefined
-				? type.toJSON(type.fromPartial(request as DeepPartial<unknown>))
-				: {},
-		),
+		requestBodyJson: JSON.stringify(type && request !== undefined ? toBody(type, request) : {}),
 	};
 };
 

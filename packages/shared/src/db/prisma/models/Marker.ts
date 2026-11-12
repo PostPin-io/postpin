@@ -27,10 +27,12 @@ export type AggregateMarker = {
 
 export type MarkerAvgAggregateOutputType = {
 	frame: number | null;
+	duration: number | null;
 };
 
 export type MarkerSumAggregateOutputType = {
 	frame: number | null;
+	duration: number | null;
 };
 
 export type MarkerMinAggregateOutputType = {
@@ -38,6 +40,7 @@ export type MarkerMinAggregateOutputType = {
 	name: string | null;
 	description: string | null;
 	frame: number | null;
+	duration: number | null;
 	createdAt: Date | null;
 	updatedAt: Date | null;
 	exportId: string | null;
@@ -52,6 +55,7 @@ export type MarkerMaxAggregateOutputType = {
 	name: string | null;
 	description: string | null;
 	frame: number | null;
+	duration: number | null;
 	createdAt: Date | null;
 	updatedAt: Date | null;
 	exportId: string | null;
@@ -66,6 +70,7 @@ export type MarkerCountAggregateOutputType = {
 	name: number;
 	description: number;
 	frame: number;
+	duration: number;
 	createdAt: number;
 	updatedAt: number;
 	exportId: number;
@@ -78,10 +83,12 @@ export type MarkerCountAggregateOutputType = {
 
 export type MarkerAvgAggregateInputType = {
 	frame?: true;
+	duration?: true;
 };
 
 export type MarkerSumAggregateInputType = {
 	frame?: true;
+	duration?: true;
 };
 
 export type MarkerMinAggregateInputType = {
@@ -89,6 +96,7 @@ export type MarkerMinAggregateInputType = {
 	name?: true;
 	description?: true;
 	frame?: true;
+	duration?: true;
 	createdAt?: true;
 	updatedAt?: true;
 	exportId?: true;
@@ -103,6 +111,7 @@ export type MarkerMaxAggregateInputType = {
 	name?: true;
 	description?: true;
 	frame?: true;
+	duration?: true;
 	createdAt?: true;
 	updatedAt?: true;
 	exportId?: true;
@@ -117,6 +126,7 @@ export type MarkerCountAggregateInputType = {
 	name?: true;
 	description?: true;
 	frame?: true;
+	duration?: true;
 	createdAt?: true;
 	updatedAt?: true;
 	exportId?: true;
@@ -219,6 +229,7 @@ export type MarkerGroupByOutputType = {
 	name: string;
 	description: string | null;
 	frame: number;
+	duration: number;
 	createdAt: Date;
 	updatedAt: Date;
 	exportId: string;
@@ -253,6 +264,7 @@ export type MarkerWhereInput = {
 	name?: Prisma.StringFilter<"Marker"> | string;
 	description?: Prisma.StringNullableFilter<"Marker"> | string | null;
 	frame?: Prisma.IntFilter<"Marker"> | number;
+	duration?: Prisma.IntFilter<"Marker"> | number;
 	createdAt?: Prisma.DateTimeFilter<"Marker"> | Date | string;
 	updatedAt?: Prisma.DateTimeFilter<"Marker"> | Date | string;
 	exportId?: Prisma.StringFilter<"Marker"> | string;
@@ -275,6 +287,7 @@ export type MarkerOrderByWithRelationInput = {
 	name?: Prisma.SortOrder;
 	description?: Prisma.SortOrderInput | Prisma.SortOrder;
 	frame?: Prisma.SortOrder;
+	duration?: Prisma.SortOrder;
 	createdAt?: Prisma.SortOrder;
 	updatedAt?: Prisma.SortOrder;
 	exportId?: Prisma.SortOrder;
@@ -299,6 +312,7 @@ export type MarkerWhereUniqueInput = Prisma.AtLeast<
 		name?: Prisma.StringFilter<"Marker"> | string;
 		description?: Prisma.StringNullableFilter<"Marker"> | string | null;
 		frame?: Prisma.IntFilter<"Marker"> | number;
+		duration?: Prisma.IntFilter<"Marker"> | number;
 		createdAt?: Prisma.DateTimeFilter<"Marker"> | Date | string;
 		updatedAt?: Prisma.DateTimeFilter<"Marker"> | Date | string;
 		exportId?: Prisma.StringFilter<"Marker"> | string;
@@ -323,6 +337,7 @@ export type MarkerOrderByWithAggregationInput = {
 	name?: Prisma.SortOrder;
 	description?: Prisma.SortOrderInput | Prisma.SortOrder;
 	frame?: Prisma.SortOrder;
+	duration?: Prisma.SortOrder;
 	createdAt?: Prisma.SortOrder;
 	updatedAt?: Prisma.SortOrder;
 	exportId?: Prisma.SortOrder;
@@ -345,6 +360,7 @@ export type MarkerScalarWhereWithAggregatesInput = {
 	name?: Prisma.StringWithAggregatesFilter<"Marker"> | string;
 	description?: Prisma.StringNullableWithAggregatesFilter<"Marker"> | string | null;
 	frame?: Prisma.IntWithAggregatesFilter<"Marker"> | number;
+	duration?: Prisma.IntWithAggregatesFilter<"Marker"> | number;
 	createdAt?: Prisma.DateTimeWithAggregatesFilter<"Marker"> | Date | string;
 	updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Marker"> | Date | string;
 	exportId?: Prisma.StringWithAggregatesFilter<"Marker"> | string;
@@ -359,6 +375,7 @@ export type MarkerCreateInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	nleId?: string | null;
@@ -374,6 +391,7 @@ export type MarkerUncheckedCreateInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	exportId: string;
@@ -389,6 +407,7 @@ export type MarkerUpdateInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -404,6 +423,7 @@ export type MarkerUncheckedUpdateInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -419,6 +439,7 @@ export type MarkerCreateManyInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	exportId: string;
@@ -433,6 +454,7 @@ export type MarkerUpdateManyMutationInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -443,6 +465,7 @@ export type MarkerUncheckedUpdateManyInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -472,6 +495,7 @@ export type MarkerCountOrderByAggregateInput = {
 	name?: Prisma.SortOrder;
 	description?: Prisma.SortOrder;
 	frame?: Prisma.SortOrder;
+	duration?: Prisma.SortOrder;
 	createdAt?: Prisma.SortOrder;
 	updatedAt?: Prisma.SortOrder;
 	exportId?: Prisma.SortOrder;
@@ -483,6 +507,7 @@ export type MarkerCountOrderByAggregateInput = {
 
 export type MarkerAvgOrderByAggregateInput = {
 	frame?: Prisma.SortOrder;
+	duration?: Prisma.SortOrder;
 };
 
 export type MarkerMaxOrderByAggregateInput = {
@@ -490,6 +515,7 @@ export type MarkerMaxOrderByAggregateInput = {
 	name?: Prisma.SortOrder;
 	description?: Prisma.SortOrder;
 	frame?: Prisma.SortOrder;
+	duration?: Prisma.SortOrder;
 	createdAt?: Prisma.SortOrder;
 	updatedAt?: Prisma.SortOrder;
 	exportId?: Prisma.SortOrder;
@@ -504,6 +530,7 @@ export type MarkerMinOrderByAggregateInput = {
 	name?: Prisma.SortOrder;
 	description?: Prisma.SortOrder;
 	frame?: Prisma.SortOrder;
+	duration?: Prisma.SortOrder;
 	createdAt?: Prisma.SortOrder;
 	updatedAt?: Prisma.SortOrder;
 	exportId?: Prisma.SortOrder;
@@ -515,6 +542,7 @@ export type MarkerMinOrderByAggregateInput = {
 
 export type MarkerSumOrderByAggregateInput = {
 	frame?: Prisma.SortOrder;
+	duration?: Prisma.SortOrder;
 };
 
 export type MarkerScalarRelationFilter = {
@@ -901,6 +929,7 @@ export type MarkerCreateWithoutAuthorInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	nleId?: string | null;
@@ -915,6 +944,7 @@ export type MarkerUncheckedCreateWithoutAuthorInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	exportId: string;
@@ -973,6 +1003,7 @@ export type MarkerScalarWhereInput = {
 	name?: Prisma.StringFilter<"Marker"> | string;
 	description?: Prisma.StringNullableFilter<"Marker"> | string | null;
 	frame?: Prisma.IntFilter<"Marker"> | number;
+	duration?: Prisma.IntFilter<"Marker"> | number;
 	createdAt?: Prisma.DateTimeFilter<"Marker"> | Date | string;
 	updatedAt?: Prisma.DateTimeFilter<"Marker"> | Date | string;
 	exportId?: Prisma.StringFilter<"Marker"> | string;
@@ -987,6 +1018,7 @@ export type MarkerCreateWithoutCategoryInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	nleId?: string | null;
@@ -1001,6 +1033,7 @@ export type MarkerUncheckedCreateWithoutCategoryInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	exportId: string;
@@ -1056,6 +1089,7 @@ export type MarkerCreateWithoutResponsesInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	nleId?: string | null;
@@ -1070,6 +1104,7 @@ export type MarkerUncheckedCreateWithoutResponsesInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	exportId: string;
@@ -1112,6 +1147,7 @@ export type MarkerUpdateWithoutResponsesInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1126,6 +1162,7 @@ export type MarkerUncheckedUpdateWithoutResponsesInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1140,6 +1177,7 @@ export type MarkerCreateWithoutExportInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	nleId?: string | null;
@@ -1154,6 +1192,7 @@ export type MarkerUncheckedCreateWithoutExportInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	categoryId: string;
@@ -1209,6 +1248,7 @@ export type MarkerCreateWithoutGuestInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	nleId?: string | null;
@@ -1223,6 +1263,7 @@ export type MarkerUncheckedCreateWithoutGuestInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	exportId: string;
@@ -1278,6 +1319,7 @@ export type MarkerCreateManyAuthorInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	exportId: string;
@@ -1291,6 +1333,7 @@ export type MarkerUpdateWithoutAuthorInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1305,6 +1348,7 @@ export type MarkerUncheckedUpdateWithoutAuthorInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1319,6 +1363,7 @@ export type MarkerUncheckedUpdateManyWithoutAuthorInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1332,6 +1377,7 @@ export type MarkerCreateManyCategoryInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	exportId: string;
@@ -1345,6 +1391,7 @@ export type MarkerUpdateWithoutCategoryInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1359,6 +1406,7 @@ export type MarkerUncheckedUpdateWithoutCategoryInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1373,6 +1421,7 @@ export type MarkerUncheckedUpdateManyWithoutCategoryInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1386,6 +1435,7 @@ export type MarkerCreateManyExportInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	categoryId: string;
@@ -1399,6 +1449,7 @@ export type MarkerUpdateWithoutExportInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1413,6 +1464,7 @@ export type MarkerUncheckedUpdateWithoutExportInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	categoryId?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1427,6 +1479,7 @@ export type MarkerUncheckedUpdateManyWithoutExportInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	categoryId?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1440,6 +1493,7 @@ export type MarkerCreateManyGuestInput = {
 	name: string;
 	description?: string | null;
 	frame: number;
+	duration?: number;
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	exportId: string;
@@ -1453,6 +1507,7 @@ export type MarkerUpdateWithoutGuestInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1467,6 +1522,7 @@ export type MarkerUncheckedUpdateWithoutGuestInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1481,6 +1537,7 @@ export type MarkerUncheckedUpdateManyWithoutGuestInput = {
 	name?: Prisma.StringFieldUpdateOperationsInput | string;
 	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1532,6 +1589,7 @@ export type MarkerSelect<
 		name?: boolean;
 		description?: boolean;
 		frame?: boolean;
+		duration?: boolean;
 		createdAt?: boolean;
 		updatedAt?: boolean;
 		exportId?: boolean;
@@ -1557,6 +1615,7 @@ export type MarkerSelectCreateManyAndReturn<
 		name?: boolean;
 		description?: boolean;
 		frame?: boolean;
+		duration?: boolean;
 		createdAt?: boolean;
 		updatedAt?: boolean;
 		exportId?: boolean;
@@ -1580,6 +1639,7 @@ export type MarkerSelectUpdateManyAndReturn<
 		name?: boolean;
 		description?: boolean;
 		frame?: boolean;
+		duration?: boolean;
 		createdAt?: boolean;
 		updatedAt?: boolean;
 		exportId?: boolean;
@@ -1600,6 +1660,7 @@ export type MarkerSelectScalar = {
 	name?: boolean;
 	description?: boolean;
 	frame?: boolean;
+	duration?: boolean;
 	createdAt?: boolean;
 	updatedAt?: boolean;
 	exportId?: boolean;
@@ -1616,6 +1677,7 @@ export type MarkerOmit<
 	| "name"
 	| "description"
 	| "frame"
+	| "duration"
 	| "createdAt"
 	| "updatedAt"
 	| "exportId"
@@ -1677,6 +1739,10 @@ export type $MarkerPayload<
 			name: string;
 			description: string | null;
 			frame: number;
+			/**
+			 * length in frames, 0 = point marker
+			 */
+			duration: number;
 			createdAt: Date;
 			updatedAt: Date;
 			exportId: string;
@@ -2294,6 +2360,7 @@ export interface MarkerFieldRefs {
 	readonly name: Prisma.FieldRef<"Marker", "String">;
 	readonly description: Prisma.FieldRef<"Marker", "String">;
 	readonly frame: Prisma.FieldRef<"Marker", "Int">;
+	readonly duration: Prisma.FieldRef<"Marker", "Int">;
 	readonly createdAt: Prisma.FieldRef<"Marker", "DateTime">;
 	readonly updatedAt: Prisma.FieldRef<"Marker", "DateTime">;
 	readonly exportId: Prisma.FieldRef<"Marker", "String">;

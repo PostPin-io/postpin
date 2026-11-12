@@ -19,11 +19,24 @@ export function listMemoryLocations() {
 	);
 }
 
-// Memory locations that show as markers in the ruler
-export async function listMarkerLocations() {
-	return (await listMemoryLocations()).filter(
-		(location) => location.timeProperties === TimeProperties.TProperties_Marker,
+const MARKER_RULERS = new Set([
+	MarkerLocation.MarkerLocation_MainRuler,
+	MarkerLocation.MarkerLocation_NamedRuler,
+]);
+
+// PostPin's markers: plain markers, and range markers, which are selections on a marker ruler.
+// Pro Tools puts every selection on a marker ruler unless it belongs to a track; those track
+// selections are never read, written or deleted.
+export function isMarkerLocation(location: MemoryLocation) {
+	if (location.timeProperties === TimeProperties.TProperties_Marker) return true;
+	return (
+		location.timeProperties === TimeProperties.TProperties_Selection &&
+		MARKER_RULERS.has(location.location)
 	);
+}
+
+export async function listMarkerLocations() {
+	return (await listMemoryLocations()).filter(isMarkerLocation);
 }
 
 // Pro Tools has no custom data field. Markers are recognized by their id instead,
@@ -33,19 +46,30 @@ export const markerId = (originId: string, number: number) => `${originId}:${num
 export async function getMarkers(timing: SessionTiming, originId: string): Promise<NleMarker[]> {
 	const locations = await listMarkerLocations();
 	return Promise.all(
-		locations.map(async (location) => ({
-			nleId: markerId(originId, location.number),
-			title: location.name,
-			description: location.comments,
-			frame: await samplesToFrame(location.startTime, timing),
-			color: String(location.colorIndex),
-			customData: null,
-		})),
+		locations.map(async (location) => {
+			const frame = await samplesToFrame(location.startTime, timing);
+			// A selection ends where its last frame ends, so the end is the frame after the range
+			const isRange = location.timeProperties === TimeProperties.TProperties_Selection;
+			const end = isRange ? await samplesToFrame(location.endTime, timing) : frame;
+			return {
+				nleId: markerId(originId, location.number),
+				title: location.name,
+				description: location.comments,
+				frame,
+				duration: Math.max(end - frame, 0),
+				color: String(location.colorIndex),
+				customData: null,
+			};
+		}),
 	);
 }
 
 // The ruler Pro Tools puts markers on in new sessions
 const DEFAULT_RULER = "Markers";
+const DEFAULT_RULER_PLACE = {
+	location: MarkerLocation.MarkerLocation_NamedRuler,
+	trackName: DEFAULT_RULER,
+};
 
 interface Ruler {
 	location: MarkerLocation;
@@ -67,15 +91,14 @@ function mostUsedRuler(locations: MemoryLocation[]): Ruler | null {
 
 // Writes the markers and returns their memory location numbers. Markers whose nleId is still in
 // the session are edited in place and stay on their ruler, the others go on the most used ruler.
+// Ranges are selections on a marker ruler: a track marker that becomes a range moves to the ruler.
 export async function setMarkers(
 	timing: SessionTiming,
 	originId: string,
 	markers: NleMarker[],
 ): Promise<number[]> {
 	const allLocations = await listMemoryLocations();
-	const markerLocations = allLocations.filter(
-		(location) => location.timeProperties === TimeProperties.TProperties_Marker,
-	);
+	const markerLocations = allLocations.filter(isMarkerLocation);
 	const existing = new Map(
 		markerLocations.map((location) => [markerId(originId, location.number), location]),
 	);
@@ -87,24 +110,25 @@ export async function setMarkers(
 	// One at a time, since each new marker takes the next number
 	const numbers: number[] = [];
 	for (const marker of markers) {
+		const current = marker.nleId ? existing.get(marker.nleId) : undefined;
+		const duration = marker.duration ?? (current ? await durationOf(current, timing) : 0);
 		const samples = await frameToSamples(marker.frame, timing);
 		const fields = {
 			name: marker.title,
 			comments: marker.description,
 			startTime: samples,
-			endTime: samples,
-			timeProperties: TimeProperties.TProperties_Marker,
+			endTime: duration > 0 ? await frameToSamples(marker.frame + duration, timing) : samples,
+			timeProperties:
+				duration > 0 ? TimeProperties.TProperties_Selection : TimeProperties.TProperties_Marker,
 			reference: MemoryLocationReference.MLReference_Absolute,
 			colorIndex: colorIndexOf(marker.color),
 		};
-		const current = marker.nleId ? existing.get(marker.nleId) : undefined;
 		if (current) {
-			await send("EditMemoryLocation", {
-				number: current.number,
-				...fields,
-				location: current.location,
-				trackName: current.trackName,
-			});
+			const place =
+				duration > 0 && !MARKER_RULERS.has(current.location)
+					? (ruler ?? DEFAULT_RULER_PLACE)
+					: { location: current.location, trackName: current.trackName };
+			await editMarker(current, { ...fields, ...place });
 			numbers.push(current.number);
 		} else {
 			next += 1;
@@ -113,6 +137,24 @@ export async function setMarkers(
 		}
 	}
 	return numbers;
+}
+
+// The range length of a marker already in the session, for updates that leave it out
+async function durationOf(location: MemoryLocation, timing: SessionTiming) {
+	if (location.timeProperties !== TimeProperties.TProperties_Selection) return 0;
+	const [start, end] = await Promise.all([
+		samplesToFrame(location.startTime, timing),
+		samplesToFrame(location.endTime, timing),
+	]);
+	return Math.max(end - start, 0);
+}
+
+type MarkerFields = Omit<Partial<RequestOf<"CreateMemoryLocation">>, "number">;
+
+// Edits a marker in place, keeping its number and so its nleId. Pro Tools also switches between
+// point marker and range this way.
+async function editMarker(current: MemoryLocation, fields: MarkerFields) {
+	await send("EditMemoryLocation", { number: current.number, ...fields });
 }
 
 // Creates a marker on the ruler and returns the ruler for the next ones. Without a known ruler it
@@ -127,7 +169,7 @@ async function createMarker(
 		await send("CreateMemoryLocation", { number, ...fields, ...ruler });
 		return ruler;
 	}
-	const fallback = { location: MarkerLocation.MarkerLocation_NamedRuler, trackName: DEFAULT_RULER };
+	const fallback = DEFAULT_RULER_PLACE;
 	try {
 		await send("CreateMemoryLocation", { number, ...fields, ...fallback });
 		return fallback;
@@ -145,7 +187,8 @@ async function createMarker(
 	}
 }
 
-// Deletes the markers only, unlike ClearAllMemoryLocations, which also takes the user's selections
+// Deletes the markers (ranges on marker rulers included) only, unlike ClearAllMemoryLocations, which
+// also takes the user's other selections
 export async function clearMarkers() {
 	const numbers = (await listMarkerLocations()).map((location) => location.number);
 	if (numbers.length === 0) return;

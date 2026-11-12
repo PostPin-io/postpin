@@ -44,6 +44,10 @@ export interface NleMarker {
 	 */
 	frame: number;
 	/**
+	 * length in frames, 0 = point marker. Left out: new markers get 0, existing ones keep theirs.
+	 */
+	duration?: number;
+	/**
 	 * palette id, or "#rrggbb" when palette is "rgb"
 	 */
 	color: string;

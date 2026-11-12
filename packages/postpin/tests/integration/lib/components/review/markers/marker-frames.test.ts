@@ -40,6 +40,25 @@ describe("createMarker", () => {
 		expect(await prisma.marker.count({ where: { exportId: exp.id } })).toBe(0);
 	});
 
+	it("a range may end on the last frame", async () => {
+		// covers 86450 … 86499
+		const m = await createMarker({ ...marker(86450), duration: 50 });
+		expect(m).toMatchObject({ frame: 86450, duration: 50 });
+	});
+
+	it("400 for a range that runs past the end", async () => {
+		await expectStatus(createMarker({ ...marker(86450), duration: 51 }), 400);
+		expect(await prisma.marker.count({ where: { exportId: exp.id } })).toBe(0);
+	});
+
+	it("400 for a negative duration", async () => {
+		await expectStatus(createMarker({ ...marker(86450), duration: -1 }), 400);
+	});
+
+	it("without duration it's a point marker", async () => {
+		expect((await createMarker(marker(86450))).duration).toBe(0);
+	});
+
 	it("exports without a snapshot are not checked", async () => {
 		const plain = await f.createExport(w.tl1);
 		const m = await createMarker({ ...marker(5), exportId: plain.id });
@@ -48,6 +67,27 @@ describe("createMarker", () => {
 });
 
 describe("updateMarker", () => {
+	it("moving keeps the duration when it's left out", async () => {
+		const m = await f.createMarker(exp, w.catA, { frame: 86410, duration: 20 });
+		const res = await updateMarker({ ...marker(86420), id: m.id });
+		expect(res).toMatchObject({ frame: 86420, duration: 20 });
+	});
+
+	it("400 when the kept duration would run past the end", async () => {
+		const m = await f.createMarker(exp, w.catA, { frame: 86410, duration: 20 });
+		await expectStatus(updateMarker({ ...marker(86490), id: m.id }), 400);
+		expect(await prisma.marker.findUniqueOrThrow({ where: { id: m.id } })).toMatchObject({
+			frame: 86410,
+			duration: 20,
+		});
+	});
+
+	it("changes the duration, 0 makes it a point marker", async () => {
+		const m = await f.createMarker(exp, w.catA, { frame: 86410, duration: 20 });
+		expect((await updateMarker({ ...marker(86410), id: m.id, duration: 89 })).duration).toBe(89);
+		expect((await updateMarker({ ...marker(86410), id: m.id, duration: 0 })).duration).toBe(0);
+	});
+
 	it("moves a marker within the timeline", async () => {
 		const m = await f.createMarker(exp, w.catA, { frame: 86410 });
 		const res = await updateMarker({ ...marker(86499), id: m.id });
@@ -83,6 +123,23 @@ describe("pasteMarkers", () => {
 			select: { frame: true },
 		});
 		expect(frames.map((m) => m.frame).sort()).toEqual([86469, 86499]);
+	});
+
+	it("keeps durations, and a range running past the end makes it 400", async () => {
+		const source = await f.createExport(w.tl1);
+		const a = await f.createMarker(source, w.catA, { frame: 1000, duration: 30 });
+		const args = {
+			sourceExportId: source.id,
+			markerIds: [a.id],
+			targetExportId: exp.id,
+			fallbackCategoryId: w.catA.id,
+			mode: "copy" as const,
+		};
+
+		await expectStatus(pasteMarkers({ ...args, anchorFrame: 86471 }), 400);
+		await pasteMarkers({ ...args, anchorFrame: 86470 });
+		const pasted = await prisma.marker.findMany({ where: { exportId: exp.id } });
+		expect(pasted.map((m) => [m.frame, m.duration])).toEqual([[86470, 30]]);
 	});
 
 	it("400 and nothing pasted when the last marker would land after the end", async () => {

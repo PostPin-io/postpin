@@ -53,6 +53,7 @@ export async function syncMarkersUp({ nle, client, projectId, timelineId, export
 			name: m.title,
 			description: parsed.description,
 			frame: m.frame,
+			duration: m.duration,
 			categoryId: category.id,
 			nleId: m.nleId,
 			id: postpinIdOf(m),
@@ -93,6 +94,7 @@ export async function syncMarkersDown({
 			title: m.name,
 			description: needsTag ? withCategoryTag(category.name, m.description) : (m.description ?? ""),
 			frame: m.frame,
+			duration: m.duration,
 			color,
 			customData: stringifyPostPinData({ id: m.id }),
 		};
@@ -113,6 +115,7 @@ export async function syncMarkersDown({
 			name: m.name,
 			description: m.description,
 			frame: m.frame,
+			duration: m.duration,
 			categoryId: m.categoryId,
 		})),
 		path: { projectId, timelineId, exportId },

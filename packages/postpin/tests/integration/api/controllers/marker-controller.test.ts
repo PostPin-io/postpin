@@ -174,6 +174,37 @@ describe("uploadMarkers: creating", () => {
 		expect(await prisma.marker.count()).toBe(1);
 	});
 
+	it("stores the duration, and markers without one are point markers", async () => {
+		await signInApi(w.owner.user, w.org.id);
+		await upload([marker({ nleId: "range", duration: 48 }), marker({ nleId: "point" })]);
+		const rows = await prisma.marker.findMany({
+			where: { exportId: w.exp1.id, nleId: { not: null } },
+			orderBy: { nleId: "asc" },
+		});
+		expect(rows.map((m) => [m.nleId, m.duration])).toEqual([
+			["point", 0],
+			["range", 48],
+		]);
+	});
+
+	it.each([-1, 1.5, Number.NaN])(
+		"400 for duration %s, and nothing is written",
+		async (duration) => {
+			await signInApi(w.owner.user, w.org.id);
+			await expectHttpError(upload([marker(), marker({ duration })]), 400);
+			expect(await prisma.marker.count()).toBe(1);
+		},
+	);
+
+	it("frames aren't checked against the timeline, exports may cover only part of it", async () => {
+		const partial = await f.createExport(w.tl1, {
+			snapshot: { startFrameIndex: 100, durationFrameCount: 10 },
+		});
+		await signInApi(w.owner.user, w.org.id);
+		await upload([marker({ frame: 5, duration: 500 })], partial.id);
+		expect(await prisma.marker.count({ where: { exportId: partial.id } })).toBe(1);
+	});
+
 	it("an empty upload changes nothing", async () => {
 		await signInApi(w.owner.user, w.org.id);
 		await upload([]);
@@ -189,6 +220,22 @@ describe("uploadMarkers: creating", () => {
 // ─── uploadMarkers: updating ────────────────────────────────────────────────
 
 describe("uploadMarkers: updating", () => {
+	it("an upload without duration keeps the marker's duration (plugins from before ranges)", async () => {
+		await signInApi(w.owner.user, w.org.id);
+		await upload([marker({ nleId: "nle-1", duration: 24 })]);
+		await upload([marker({ frame: 9, nleId: "nle-1" })]);
+		const row = await prisma.marker.findFirstOrThrow({ where: { nleId: "nle-1" } });
+		expect(row).toMatchObject({ frame: 9, duration: 24 });
+	});
+
+	it("an upload with duration 0 turns a range into a point marker", async () => {
+		await signInApi(w.owner.user, w.org.id);
+		await upload([marker({ nleId: "nle-1", duration: 24 })]);
+		await upload([marker({ nleId: "nle-1", duration: 0 })]);
+		const row = await prisma.marker.findFirstOrThrow({ where: { nleId: "nle-1" } });
+		expect(row.duration).toBe(0);
+	});
+
 	it("a marker with a known nleId is updated, not added again", async () => {
 		await signInApi(w.owner.user, w.org.id);
 		await upload([marker({ name: "v1", nleId: "nle-1" })]);

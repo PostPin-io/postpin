@@ -7,15 +7,19 @@
 	import { createResponse, getResponses } from "./markers.remote";
 	import { useShare } from "../share-context.ts";
 	import type { ReviewMarker } from "./types";
+	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 
 	interface Props {
 		marker: ReviewMarker;
 		startFrame: number;
+		frameRate: FrameRate;
+		/** Timeline length in frames */
+		frameCount: number;
 		onclose: () => void;
 		/** Opens the position modal for this marker */
 		onchangeposition: () => void;
 	}
-	let { marker, startFrame, onclose, onchangeposition }: Props = $props();
+	let { marker, startFrame, frameRate, frameCount, onclose, onchangeposition }: Props = $props();
 
 	let updateMarkerComponent: UpdateMarker | null = $state(null);
 	let deleting = $state(false);
@@ -87,7 +91,15 @@
 
 <!-- data-scroller: the modal checks it to tell a scroll from a swipe-down-to-close -->
 <div data-scroller class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-	<UpdateMarker bind:this={updateMarkerComponent} {marker} {startFrame} mobile {onclose}>
+	<UpdateMarker
+		bind:this={updateMarkerComponent}
+		{marker}
+		{startFrame}
+		{frameRate}
+		{frameCount}
+		mobile
+		{onclose}
+	>
 		{#snippet mobileHeaderAction()}
 			{#if marker.canUpdate}
 				<button

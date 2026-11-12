@@ -55,7 +55,7 @@
 		mobileLandscape = false,
 	}: {
 		/** Drawn on the scrub bar when there is no timeline to show them */
-		markers: { id: string; frame: number; category: { color: string } }[];
+		markers: { id: string; frame: number; duration: number; category: { color: string } }[];
 		timing: FrameTiming;
 		/** Length of the timeline; sizes the scrub bar */
 		durationFrames: number;
@@ -182,6 +182,15 @@
 			<div class="h-full bg-primary" style:width="{progress * 100}%"></div>
 			{#if showMarkers}
 				{#each markers as marker (marker.id)}
+					{#if marker.duration > 0}
+						<span
+							class="pointer-events-none absolute inset-y-0"
+							style:left="{((marker.frame - timing.startFrameIndex) / durationFrames) * 100}%"
+							style:width="{(marker.duration / durationFrames) * 100}%"
+							style:background-color="color-mix(in srgb, {marker.category.color} 60%, transparent)"
+							aria-hidden="true"
+						></span>
+					{/if}
 					<span
 						class="pointer-events-none absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
 						style:left="{barPosition(marker.frame) * 100}%"

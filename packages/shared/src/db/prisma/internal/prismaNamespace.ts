@@ -2215,6 +2215,7 @@ export const MarkerScalarFieldEnum = {
 	name: "name",
 	description: "description",
 	frame: "frame",
+	duration: "duration",
 	createdAt: "createdAt",
 	updatedAt: "updatedAt",
 	exportId: "exportId",

@@ -130,3 +130,14 @@ export function replacedMarkerData(
 	const pulled = ownData(pulledCustomData) ?? {};
 	return { nleId, customData: stringifyPostPinData({ ...existing, ...pulled, nleId, frame }) };
 }
+
+// Resolve gives every marker a duration, a plain marker has 1. In PostPin that is a point marker
+// (0), so a one-frame range becomes one too.
+export function fromResolveDuration(duration: number) {
+	return duration > 1 ? duration : 0;
+}
+
+// The duration to write: PostPin's, else the one the marker had in Resolve, at least 1
+export function toResolveDuration(duration: number | undefined, existing: number | undefined) {
+	return Math.max(duration ?? existing ?? 1, 1);
+}

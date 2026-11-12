@@ -163,6 +163,10 @@
 						"type": "string",
 						"format": "date-time"
 					},
+					"duration": {
+						"type": "number",
+						"format": "double"
+					},
 					"frame": {
 						"type": "number",
 						"format": "double"
@@ -186,6 +190,7 @@
 					"exportId",
 					"updatedAt",
 					"createdAt",
+					"duration",
 					"frame",
 					"description",
 					"id",
@@ -225,6 +230,10 @@
 						"type": "string",
 						"format": "date-time"
 					},
+					"duration": {
+						"type": "number",
+						"format": "double"
+					},
 					"frame": {
 						"type": "number",
 						"format": "double"
@@ -254,6 +263,7 @@
 					"exportId",
 					"updatedAt",
 					"createdAt",
+					"duration",
 					"frame",
 					"description",
 					"id",
@@ -277,6 +287,12 @@
 					},
 					"categoryId": {
 						"type": "string"
+					},
+					"duration": {
+						"type": "integer",
+						"format": "int32",
+						"description": "length in frames, 0 = point marker. Left out: new markers get 0, existing ones keep theirs.",
+						"minimum": 0
 					},
 					"frame": {
 						"type": "number",

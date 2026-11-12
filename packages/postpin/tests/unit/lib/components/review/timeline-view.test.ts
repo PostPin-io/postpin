@@ -5,6 +5,9 @@ import {
 	buildLanes,
 	clipStyle,
 	collapsedLaneCount,
+	dragRange,
+	orderMarks,
+	rangeFromMarks,
 	stepPlaybackRate,
 	tickStep,
 	timelineCuts,
@@ -173,5 +176,169 @@ describe("clipStyle", () => {
 	it("falls back to the track type's color for clips without one", () => {
 		expect(clipStyle(clip("v", 0, 10), "video")).toBe("background-color: #3b82f6; color: #ffffff;");
 		expect(clipStyle(clip("a", 0, 10), "audio")).toBe("background-color: #16a34a; color: #ffffff;");
+	});
+});
+
+// Timeline 100 … 199
+const bounds = { first: 100, last: 199 };
+
+describe("dragRange", () => {
+	it("moving keeps the duration", () => {
+		expect(dragRange({ frame: 120, duration: 10 }, "move", 5, bounds)).toEqual({
+			frame: 125,
+			duration: 10,
+		});
+	});
+
+	it("moving stops with the end on the last frame", () => {
+		expect(dragRange({ frame: 150, duration: 50 }, "move", 30, bounds)).toEqual({
+			frame: 150,
+			duration: 50,
+		});
+		expect(dragRange({ frame: 140, duration: 50 }, "move", 30, bounds)).toEqual({
+			frame: 150,
+			duration: 50,
+		});
+	});
+
+	it("a point marker moves up to the last frame", () => {
+		expect(dragRange({ frame: 190, duration: 0 }, "move", 30, bounds)).toEqual({
+			frame: 199,
+			duration: 0,
+		});
+	});
+
+	it("moving stops at the first frame", () => {
+		expect(dragRange({ frame: 110, duration: 10 }, "move", -30, bounds)).toEqual({
+			frame: 100,
+			duration: 10,
+		});
+	});
+
+	it("dragging the start keeps the end", () => {
+		// 120 … 129
+		expect(dragRange({ frame: 120, duration: 10 }, "start", -5, bounds)).toEqual({
+			frame: 115,
+			duration: 15,
+		});
+	});
+
+	it("the start pushed onto the end makes it a point marker there", () => {
+		expect(dragRange({ frame: 120, duration: 10 }, "start", 9, bounds)).toEqual({
+			frame: 129,
+			duration: 0,
+		});
+		expect(dragRange({ frame: 120, duration: 10 }, "start", 50, bounds)).toEqual({
+			frame: 129,
+			duration: 0,
+		});
+	});
+
+	it("grabbing an edge without moving it leaves a 1 frame range as it is", () => {
+		expect(dragRange({ frame: 120, duration: 1 }, "start", 0, bounds)).toEqual({
+			frame: 120,
+			duration: 1,
+		});
+		expect(dragRange({ frame: 120, duration: 1 }, "end", 0, bounds)).toEqual({
+			frame: 120,
+			duration: 1,
+		});
+	});
+
+	it("the start stops at the first frame", () => {
+		expect(dragRange({ frame: 120, duration: 10 }, "start", -50, bounds)).toEqual({
+			frame: 100,
+			duration: 30,
+		});
+	});
+
+	it("dragging the end keeps the start", () => {
+		expect(dragRange({ frame: 120, duration: 10 }, "end", 5, bounds)).toEqual({
+			frame: 120,
+			duration: 15,
+		});
+	});
+
+	it("the end pushed onto the start makes it a point marker, the end stops at the last frame", () => {
+		expect(dragRange({ frame: 120, duration: 10 }, "end", -9, bounds)).toEqual({
+			frame: 120,
+			duration: 0,
+		});
+		expect(dragRange({ frame: 120, duration: 10 }, "end", -50, bounds)).toEqual({
+			frame: 120,
+			duration: 0,
+		});
+		expect(dragRange({ frame: 120, duration: 10 }, "end", 500, bounds)).toEqual({
+			frame: 120,
+			duration: 80,
+		});
+	});
+});
+
+describe("dragRange: span", () => {
+	it("dragging a point marker right makes a range from it to the pointer", () => {
+		expect(dragRange({ frame: 120, duration: 0 }, "span", 9, bounds)).toEqual({
+			frame: 120,
+			duration: 10,
+		});
+	});
+
+	it("dragging left makes the range end on the marker", () => {
+		expect(dragRange({ frame: 120, duration: 0 }, "span", -9, bounds)).toEqual({
+			frame: 111,
+			duration: 10,
+		});
+	});
+
+	it("back on the marker it is a point marker again", () => {
+		expect(dragRange({ frame: 120, duration: 0 }, "span", 0, bounds)).toEqual({
+			frame: 120,
+			duration: 0,
+		});
+	});
+
+	it("stays on the timeline", () => {
+		expect(dragRange({ frame: 120, duration: 0 }, "span", 500, bounds)).toEqual({
+			frame: 120,
+			duration: 80,
+		});
+		expect(dragRange({ frame: 120, duration: 0 }, "span", -500, bounds)).toEqual({
+			frame: 100,
+			duration: 21,
+		});
+	});
+});
+
+describe("orderMarks", () => {
+	it("keeps in before out", () => {
+		expect(orderMarks({ in: 10, out: 20 })).toEqual({ in: 10, out: 20 });
+	});
+
+	it("swaps out before in", () => {
+		expect(orderMarks({ in: 20, out: 10 })).toEqual({ in: 10, out: 20 });
+	});
+
+	it("leaves a single mark alone", () => {
+		expect(orderMarks({ in: 20, out: null })).toEqual({ in: 20, out: null });
+		expect(orderMarks({ in: null, out: 10 })).toEqual({ in: null, out: 10 });
+	});
+});
+
+describe("rangeFromMarks", () => {
+	it("in to out, with out inclusive", () => {
+		expect(rangeFromMarks({ in: 10, out: 19 }, 50)).toEqual({ frame: 10, duration: 10 });
+	});
+
+	it("in equal to out is a one-frame range", () => {
+		expect(rangeFromMarks({ in: 10, out: 10 }, 50)).toEqual({ frame: 10, duration: 1 });
+	});
+
+	it("only in: a point marker at the in point", () => {
+		expect(rangeFromMarks({ in: 10, out: null }, 50)).toEqual({ frame: 10, duration: 0 });
+	});
+
+	it("no in: a point marker at the playhead", () => {
+		expect(rangeFromMarks({ in: null, out: null }, 50)).toEqual({ frame: 50, duration: 0 });
+		expect(rangeFromMarks({ in: null, out: 60 }, 50)).toEqual({ frame: 50, duration: 0 });
 	});
 });

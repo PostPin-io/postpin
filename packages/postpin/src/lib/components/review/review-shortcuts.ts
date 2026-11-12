@@ -9,6 +9,7 @@ export type ReviewShortcutTargets = {
 		seekToStart(): void;
 		seekToEnd(): void;
 		changePlaybackRate(direction: -1 | 1): void;
+		marks?: { markIn(): void; markOut(): void; clearMarks(): void };
 	};
 	player?: { toggleFullscreen(): void };
 	togglePlayback(): void;
@@ -60,6 +61,27 @@ export function handleReviewShortcut(
 		case "-":
 			if (event.metaKey) return;
 			timeline?.changePlaybackRate(event.key === "+" ? 1 : -1);
+			break;
+		case "i":
+		case "I":
+			if (event.metaKey || event.repeat) return;
+			timeline?.marks?.markIn();
+			break;
+		case "o":
+		case "O":
+			if (event.metaKey || event.repeat) return;
+			timeline?.marks?.markOut();
+			break;
+		case "c":
+		case "C":
+			if (event.metaKey || event.repeat) return;
+			timeline?.marks?.clearMarks();
+			break;
+		case "X":
+		case "x":
+			// deliberately only with Shift
+			if (event.metaKey || event.repeat || !event.shiftKey) return;
+			timeline?.marks?.clearMarks();
 			break;
 		default:
 			return;
