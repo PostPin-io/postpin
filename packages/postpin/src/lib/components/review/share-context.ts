@@ -4,7 +4,7 @@ import { getContext, setContext } from "svelte";
 export type ShareContext = {
 	token: string;
 	exportName: string;
-	guestName: string;
+	guestName: string | null;
 	note: string | null;
 	timelinePanelVisible: boolean;
 	markerPanelVisible: boolean;

@@ -3,6 +3,7 @@ import * as v from "valibot";
 import { shareGuestName } from "@postpin-io/shared/logic/share-links";
 import { prisma } from "#lib/server/database.ts";
 import { createShareGuest, findShareGuest, requireShareGuest } from "#lib/server/share-guests.ts";
+import { error } from "@sveltejs/kit";
 
 import { resolveShareLink } from "#lib/server/share-links.ts";
 
@@ -20,19 +21,30 @@ export const getShareInfo = query(v.string(), async (token) => {
 		timelinePanelVisible: link.timelinePanelVisible,
 		markerPanelVisible: link.markerPanelVisible,
 		guest: guest && { name: guest.name },
+		// Only someone who can leave markers has to say who they are
+		needsName: link.markerPanelVisible && !guest?.name,
 	};
 });
 
 export const joinShare = command(
-	v.object({ token: v.string(), name: shareGuestName }),
+	v.object({ token: v.string(), name: v.optional(shareGuestName) }),
 	async ({ token, name }) => {
 		const { cookies } = getRequestEvent();
 		const link = await resolveShareLink(token);
-		// Submitting twice (double click, two tabs) keeps the existing guest
-		if (!(await findShareGuest(cookies, link))) await createShareGuest(cookies, link, name);
+		if (link.markerPanelVisible && !name) error(400, "Enter your name");
+
+		const guest = await findShareGuest(cookies, link);
+		if (!guest) {
+			await createShareGuest(cookies, link, name ?? null);
+		} else if (name && !guest.name) {
+			// Joined while markers were off; the link shows them now
+			await prisma.shareGuest.update({ where: { id: guest.id }, data: { name } });
+		}
+		// Otherwise (double click, two tabs) the existing guest stays as it is
 		await getShareInfo(token).refresh();
 	},
 );
+
 /** A reload within this time is the same visit */
 const VISIT_GAP_MS = 30 * 60 * 1000;
 

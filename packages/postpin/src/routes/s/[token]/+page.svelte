@@ -28,6 +28,15 @@
 			// counting is best effort: the view works without it
 		});
 	});
+	// Without the marker panel nobody needs a name: join right away, without asking
+	let autoJoining = false;
+	$effect(() => {
+		if (!info || info.guest || info.needsName || autoJoining) return;
+		autoJoining = true;
+		joinShare({ token }).catch(() => {
+			joinError = "This link couldn't be opened. Please reload the page.";
+		});
+	});
 
 	async function join(event: SubmitEvent) {
 		event.preventDefault();
@@ -54,7 +63,7 @@
 	<div class="flex h-full items-center justify-center" role="status" aria-live="polite">
 		<span class="loading loading-spinner"></span>
 	</div>
-{:else if !info.guest}
+{:else if info.needsName}
 	<div class="flex min-h-full items-center justify-center bg-base-200 p-4">
 		<form class="card w-full max-w-sm bg-base-100 shadow" onsubmit={join}>
 			<div class="card-body gap-3">
@@ -80,8 +89,17 @@
 			</div>
 		</form>
 	</div>
+{:else if !info.guest}
+	<div class="flex h-full items-center justify-center" role="status" aria-live="polite">
+		{#if joinError}
+			<p class="text-sm text-error">{joinError}</p>
+		{:else}
+			<span class="loading loading-spinner"></span>
+		{/if}
+	</div>
 {:else}
 	<!-- The team's export view, limited to what the link shows -->
+
 	<ExportReview
 		exportId={info.exportId}
 		share={{

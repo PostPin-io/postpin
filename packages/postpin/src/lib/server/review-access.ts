@@ -48,4 +48,6 @@ export function requireMarkers(reader: Reader) {
 	if (reader.kind === "guest" && !reader.link.markerPanelVisible) {
 		error(403, "Markers are turned off for this link");
 	}
+	// Joined while markers were off, so no name yet: the share page asks for it first
+	if (reader.kind === "guest" && !reader.guest.name) error(401, "Enter your name first");
 }

@@ -4,7 +4,7 @@
 
 	interface Props {
 		exportName: string;
-		guestName: string;
+		guestName: string | null;
 		hasNote: boolean;
 		noteVisible?: boolean;
 	}
@@ -25,5 +25,7 @@
 			<StickyNote size={16} /> <span class="max-sm:hidden">Note</span>
 		</button>
 	{/if}
-	<span class="hidden text-sm text-base-content/60 sm:inline">{guestName}</span>
+	{#if guestName}
+		<span class="hidden text-sm text-base-content/60 sm:inline">{guestName}</span>
+	{/if}
 </header>

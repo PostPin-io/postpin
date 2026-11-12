@@ -32,6 +32,7 @@ describe("getShareInfo", () => {
 			timelinePanelVisible: false,
 			markerPanelVisible: true,
 			guest: null,
+			needsName: true,
 		});
 	});
 
@@ -84,6 +85,31 @@ describe("joinShare", () => {
 		const second = await f.createShareLink(exp);
 		await joinShare({ token: link.token, name: "Anna" });
 		expect((await getShareInfo(second.token)).guest).toBeNull();
+	});
+	it("400 without a name while the link shows markers", async () => {
+		await expectStatus(joinShare({ token: link.token }), 400);
+		expect(await prisma.shareGuest.count()).toBe(0);
+	});
+
+	it("without the marker panel: joins without a name", async () => {
+		await prisma.shareLink.update({ where: { id: link.id }, data: { markerPanelVisible: false } });
+		expect((await getShareInfo(link.token)).needsName).toBe(false);
+		await joinShare({ token: link.token });
+		expect((await getShareInfo(link.token)).guest).toEqual({ name: null });
+	});
+
+	it("markers turned on later: asks for the name and adds it to the same guest", async () => {
+		await prisma.shareLink.update({ where: { id: link.id }, data: { markerPanelVisible: false } });
+		await joinShare({ token: link.token });
+		await prisma.shareLink.update({ where: { id: link.id }, data: { markerPanelVisible: true } });
+		expect((await getShareInfo(link.token)).needsName).toBe(true);
+
+		await joinShare({ token: link.token, name: "Anna" });
+		expect(await prisma.shareGuest.count({ where: { shareLinkId: link.id } })).toBe(1);
+		expect(await getShareInfo(link.token)).toMatchObject({
+			guest: { name: "Anna" },
+			needsName: false,
+		});
 	});
 });
 

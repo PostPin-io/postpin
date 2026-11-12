@@ -95,7 +95,7 @@ model ShareGuest {
   createdAt        DateTime  @default(now())
   shareLink        ShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
   shareLinkId      String
-  name             String
+  name             String?
   /// sha256 of the cookie value; the raw token never touches the DB
   sessionTokenHash String    @unique
   lastViewedAt     DateTime?
