@@ -17,11 +17,12 @@
 	{#if hasNote}
 		<button
 			class="btn btn-ghost btn-sm"
+			aria-label="Note"
 			class:btn-active={noteVisible}
 			aria-pressed={noteVisible}
 			onclick={() => (noteVisible = !noteVisible)}
 		>
-			<StickyNote size={16} /> Note
+			<StickyNote size={16} /> <span class="max-sm:hidden">Note</span>
 		</button>
 	{/if}
 	<span class="hidden text-sm text-base-content/60 sm:inline">{guestName}</span>

@@ -31,11 +31,8 @@
 	const url = $derived(shareLinkUrl(page.url.origin, link.token));
 	const left = $derived(remainingTime(link.expiresAt));
 	const active = $derived(link.status === "active");
-	// The URL isn't shown, only copied: the note's first line (or the creation date) tells links apart
+	// The URL isn't shown, only copied: the note's first line tells links apart
 	const label = $derived(link.note?.split("\n")[0]?.trim() || null);
-	const created = $derived(
-		new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(link.createdAt),
-	);
 
 	let copied = $state(false);
 	let confirmRevoke = $state(false);
@@ -67,8 +64,6 @@
 			<PanelLayout mini timeline={link.timelinePanelVisible} markers={link.markerPanelVisible} />
 			{#if label}
 				<span class="min-w-0 flex-1 truncate text-sm" title={link.note}>{label}</span>
-			{:else}
-				<span class="min-w-0 flex-1 truncate text-sm text-base-content/50">Created {created}</span>
 			{/if}
 			<span
 				class="flex items-center gap-1 text-sm whitespace-nowrap {left.warn
@@ -81,6 +76,18 @@
 		</div>
 
 		<div class="flex shrink-0 gap-1">
+			{#if link.canUpdate}
+				<button
+					type="button"
+					class="btn btn-square btn-ghost btn-sm"
+					title={active ? "Edit" : "Edit to renew"}
+					aria-label="Edit"
+					disabled={busy}
+					onclick={onedit}
+				>
+					<Settings size={16} title={active ? "Settings" : "Settings (renew the link)"} />
+				</button>
+			{/if}
 			<button
 				type="button"
 				class="btn btn-square btn-ghost btn-sm {infoOpen ? 'btn-active' : ''}"
@@ -122,18 +129,6 @@
 			>
 				<Mail size={16} />
 			</button>
-			{#if link.canUpdate}
-				<button
-					type="button"
-					class="btn btn-square btn-ghost btn-sm"
-					title={active ? "Edit" : "Edit to renew"}
-					aria-label="Edit"
-					disabled={busy}
-					onclick={onedit}
-				>
-					<Settings size={16} title={active ? "Settings" : "Settings (renew the link)"} />
-				</button>
-			{/if}
 			{#if link.canRevoke}
 				<button
 					type="button"

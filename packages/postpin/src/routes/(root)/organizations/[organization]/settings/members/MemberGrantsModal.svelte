@@ -56,5 +56,5 @@
 			<button class="btn" onclick={() => dialog?.close()}>Close</button>
 		</div>
 	</div>
-	<form method="dialog" class="modal-backdrop"></form>
+	<form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>

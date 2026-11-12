@@ -27,6 +27,7 @@
 
 		muted = $bindable(false),
 		fullscreen = $bindable(false),
+		cssFullscreen = false,
 		fullscreenControls,
 		overlay,
 	}: {
@@ -42,6 +43,8 @@
 		qualities?: number[];
 		muted?: boolean;
 		fullscreen?: boolean;
+		/** Covers the viewport with CSS: where the Fullscreen API is missing (iPhone) or on a phone turned sideways */
+		cssFullscreen?: boolean;
 		/** Control bar shown over the video while in fullscreen, where the page's own bar is out of view */
 		fullscreenControls?: Snippet;
 		/** Drawn over the video (also in fullscreen), e.g. the share-link note */
@@ -227,12 +230,21 @@
 		else void container?.requestFullscreen();
 	}
 
+	// iPhone: Safari has fullscreen only for <video> itself, played by the system player.
+	// <hlsjs-video> keeps its <video> in its shadow root.
+	export function enterNativeFullscreen() {
+		type IosVideo = HTMLVideoElement & { webkitEnterFullscreen?: () => void };
+		const video = (element?.shadowRoot ?? element)?.querySelector<IosVideo>("video");
+		video?.webkitEnterFullscreen?.();
+	}
+
 	let controlsAwake = $state(false);
 	let controlsTimer: ReturnType<typeof setTimeout> | undefined;
-	const showControls = $derived(fullscreen && (controlsAwake || paused));
+	const fullscreenView = $derived(fullscreen || cssFullscreen);
+	const showControls = $derived(fullscreenView && (controlsAwake || paused));
 
 	function wakeControls() {
-		if (!fullscreen) return;
+		if (!fullscreenView) return;
 		controlsAwake = true;
 		clearTimeout(controlsTimer);
 		controlsTimer = setTimeout(() => (controlsAwake = false), 2500);
@@ -253,6 +265,9 @@
 	});
 
 	$effect(() => () => clearTimeout(controlsTimer));
+	$effect(() => {
+		if (fullscreenView) wakeControls();
+	});
 
 	function onVideoClick() {
 		togglePlayback();
@@ -302,8 +317,9 @@
 <div
 	bind:this={container}
 	class="group relative flex h-full w-full flex-col"
-	class:bg-black={fullscreen}
-	class:cursor-none={fullscreen && !showControls}
+	class:bg-black={fullscreenView}
+	class:cursor-none={fullscreenView && !showControls}
+	class:css-fullscreen={cssFullscreen && !fullscreen}
 	onpointermove={wakeControls}
 	onfocusin={wakeControls}
 >
@@ -341,7 +357,7 @@
 		{#if overlay}{@render overlay()}{/if}
 	</div>
 
-	{#if fullscreen && fullscreenControls}
+	{#if fullscreenView && fullscreenControls}
 		<div
 			class="absolute inset-x-0 bottom-0 bg-base-100/90 backdrop-blur transition-opacity duration-200"
 			class:opacity-0={!showControls}
@@ -353,6 +369,14 @@
 </div>
 
 <style>
+	.css-fullscreen {
+		position: fixed;
+		inset: 0;
+		z-index: 50;
+		width: 100vw;
+		height: 100dvh;
+	}
+
 	.indicator {
 		animation: indicator-flash 800ms ease-out forwards;
 	}

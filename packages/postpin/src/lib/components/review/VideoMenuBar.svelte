@@ -13,7 +13,9 @@
 	import ChevronsUpDown from "@lucide/svelte/icons/chevrons-up-down";
 	import Timecode from "./Timecode.svelte";
 	import FoldVertical from "@lucide/svelte/icons/fold-vertical";
+	import Diamond from "@lucide/svelte/icons/diamond";
 	import DiamondPlus from "@lucide/svelte/icons/diamond-plus";
+	import Settings2 from "@lucide/svelte/icons/settings-2";
 	import { contrastColor } from "../categories/category-color.ts";
 	import {
 		nextPlaybackRate,
@@ -42,14 +44,18 @@
 		muted = false,
 		playerAvailable = false,
 		fullscreen = false,
+		fullscreenActive = false,
 		onToggleMute,
 		onFullscreen,
 		onCreateMarker,
 		markerColor,
 		timelineControls = true,
 		status,
+		mobile = false,
+		mobileLandscape = false,
 	}: {
-		markers: { frame: number }[];
+		/** Drawn on the scrub bar when there is no timeline to show them */
+		markers: { id: string; frame: number; category: { color: string } }[];
 		timing: FrameTiming;
 		/** Length of the timeline; sizes the scrub bar */
 		durationFrames: number;
@@ -65,6 +71,8 @@
 		playerAvailable?: boolean;
 		/** Fullscreen hides the buttons that would leave the video */
 		fullscreen?: boolean;
+		/** Whether the fullscreen button leaves fullscreen; differs from `fullscreen` while the phone is sideways */
+		fullscreenActive?: boolean;
 		onToggleMute?: () => void;
 		onFullscreen?: () => void;
 		/** Shows the add-marker button */
@@ -75,7 +83,14 @@
 		timelineControls?: boolean;
 		/** Shown first in the right-hand group, e.g. the processing jobs */
 		status?: Snippet;
+		mobile?: boolean;
+		mobileLandscape?: boolean;
 	} = $props();
+
+	// Phones: finger-sized buttons (40px instead of 24px). Speed, previous/next marker and mute
+	// are left out there, so everything fits in one row
+	const btnSize = $derived(mobile ? "btn-md" : "btn-xs");
+	const iconSize = $derived(mobile ? 22 : 16);
 
 	// Absolute timeline frame, like marker frames
 	const frame = $derived(frameAtSeconds(currentTime, timing));
@@ -85,18 +100,37 @@
 		if (markerFrame !== undefined) currentTime = secondsAtFrame(markerFrame, timing);
 	}
 
-	const progress = $derived(
-		Math.min(1, Math.max(0, (frame - timing.startFrameIndex + 0.5) / durationFrames)),
-	);
+	// Position of a frame on the scrub bar, 0 to 1 (the middle of the frame)
+	const barPosition = (f: number) =>
+		Math.min(1, Math.max(0, (f - timing.startFrameIndex + 0.5) / durationFrames));
+	const progress = $derived(barPosition(frame));
+
+	// Without the timeline (phones, share links without it, fullscreen) the markers go on the scrub bar
+	const showMarkers = $derived(!timelineControls || fullscreen);
+	// A tap this close to a marker lands on it: a diamond is hard to hit exactly with a finger
+	const SNAP_PX = 8;
 
 	let scrubbing = false;
 	let resumeAfterScrub = false;
 
 	function scrubTo(event: PointerEvent & { currentTarget: HTMLElement }) {
 		const rect = event.currentTarget.getBoundingClientRect();
-		const fraction = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+		const x = event.clientX - rect.left;
+		const fraction = Math.min(1, Math.max(0, x / rect.width));
 		const offset = Math.min(durationFrames - 1, Math.floor(fraction * durationFrames));
-		currentTime = secondsAtFrame(timing.startFrameIndex + offset, timing);
+		let target = timing.startFrameIndex + offset;
+
+		if (showMarkers) {
+			let nearest = SNAP_PX;
+			for (const marker of markers) {
+				const distance = Math.abs(barPosition(marker.frame) * rect.width - x);
+				if (distance <= nearest) {
+					nearest = distance;
+					target = marker.frame;
+				}
+			}
+		}
+		currentTime = secondsAtFrame(target, timing);
 	}
 
 	function startScrub(event: PointerEvent & { currentTarget: HTMLElement }) {
@@ -138,14 +172,30 @@
 <div class="w-full shrink-0 border-t-1">
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
-		class="w-full cursor-pointer touch-none py-1"
+		class="w-full cursor-pointer touch-none {mobile ? 'py-3' : 'py-1'}"
 		onpointerdown={startScrub}
 		onpointermove={moveScrub}
 		onpointerup={endScrub}
 		onpointercancel={endScrub}
 	>
-		<div class="h-1 w-full bg-base-300">
+		<div class="relative h-1 w-full bg-base-300">
 			<div class="h-full bg-primary" style:width="{progress * 100}%"></div>
+			{#if showMarkers}
+				{#each markers as marker (marker.id)}
+					<span
+						class="pointer-events-none absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
+						style:left="{barPosition(marker.frame) * 100}%"
+						aria-hidden="true"
+					>
+						<Diamond
+							class="size-2.5"
+							fill={marker.category.color}
+							stroke="rgb(0 0 0 / 0.4)"
+							strokeWidth={1.5}
+						/>
+					</span>
+				{/each}
+			{/if}
 		</div>
 	</div>
 	<div class="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-1 p-1">
@@ -156,21 +206,25 @@
 				startFrame={timing.startFrameIndex}
 				frameCount={durationFrames}
 				editable={true}
+				{mobile}
+				{mobileLandscape}
 			/>
-			<span class="font-mono">|</span>
-			<button
-				class="font-mono"
-				title="Change playback speed"
-				onclick={() => (playbackRate = nextPlaybackRate(playbackRate))}
-			>
-				{playbackRate}×
-			</button>
+			{#if !mobile}
+				<span class="font-mono">|</span>
+				<button
+					class="font-mono"
+					title="Change playback speed"
+					onclick={() => (playbackRate = nextPlaybackRate(playbackRate))}
+				>
+					{playbackRate}×
+				</button>
+			{/if}
 		</div>
 		<!-- The add-marker button hangs off the left edge so play stays centered under the video -->
 		<div class="relative flex items-center justify-center">
 			{#if onCreateMarker}
 				<button
-					class="btn absolute right-full btn-square btn-ghost btn-xs {markerColor
+					class="btn absolute right-full btn-square btn-ghost {btnSize} {markerColor
 						? 'hover:border-(--marker-color) hover:bg-(--marker-color) hover:text-(--marker-contrast)'
 						: ''}"
 					style:--marker-color={markerColor}
@@ -179,52 +233,40 @@
 					aria-label="Add marker at playhead"
 					onclick={() => onCreateMarker()}
 				>
-					<DiamondPlus size={16} />
+					<DiamondPlus size={iconSize} />
 				</button>
 			{/if}
-			<button
-				class="btn btn-square btn-ghost btn-xs"
-				title="Jump to previous Marker on the left"
-				onclick={() => seekToAdjacentMarker(-1)}
-			>
-				<ArrowLeft size={16} />
-			</button>
-			{#if playerAvailable}
-				<button class="btn btn-square btn-ghost btn-xs" onclick={togglePlayback}>
-					{#if paused}
-						<Play size={16} />
-					{:else}
-						<Pause size={16} />
-					{/if}
-				</button>
-			{:else}
+			{#if !mobile}
 				<button
-					class="btn btn-square btn-ghost btn-xs"
-					onclick={() => {
-						viewMode = "timeline";
-						togglePlayback();
-					}}
+					class="btn btn-square btn-ghost {btnSize}"
+					title="Jump to previous Marker on the left"
+					onclick={() => seekToAdjacentMarker(-1)}
 				>
-					{#if paused}
-						<Play size={16} />
-					{:else}
-						<Pause size={16} />
-					{/if}
+					<ArrowLeft size={iconSize} />
 				</button>
 			{/if}
-			<button
-				class="btn btn-square btn-ghost btn-xs"
-				title="Jump to next Marker on the right"
-				onclick={() => seekToAdjacentMarker(1)}
-			>
-				<ArrowRight size={16} />
+			<button class="btn btn-square btn-ghost {btnSize}" onclick={togglePlayback}>
+				{#if paused}
+					<Play size={iconSize} />
+				{:else}
+					<Pause size={iconSize} />
+				{/if}
 			</button>
+			{#if !mobile}
+				<button
+					class="btn btn-square btn-ghost {btnSize}"
+					title="Jump to next Marker on the right"
+					onclick={() => seekToAdjacentMarker(1)}
+				>
+					<ArrowRight size={iconSize} />
+				</button>
+			{/if}
 		</div>
 		<div class="flex items-center gap-1 justify-self-end">
 			{#if status && !fullscreen}{@render status()}{/if}
 			{#if !fullscreen && timelineControls}
 				<button
-					class="btn btn-square btn-ghost btn-xs"
+					class="btn btn-square btn-ghost {btnSize}"
 					title={timelineMode === "full"
 						? "Compact Timeline"
 						: timelineMode === "compact"
@@ -233,40 +275,60 @@
 					onclick={() => (timelineMode = nextTimelineMode(timelineMode))}
 				>
 					{#if timelineMode === "full"}<ChevronsDownUp
-							size={16}
-						/>{:else if timelineMode === "compact"}<FoldVertical size={16} />{:else}<ChevronsUpDown
-							size={16}
-						/>{/if}
+							size={iconSize}
+						/>{:else if timelineMode === "compact"}<FoldVertical
+							size={iconSize}
+						/>{:else}<ChevronsUpDown size={iconSize} />{/if}
 				</button>
 			{/if}
 			{#if playerAvailable}
 				{#if qualities.length > 0}
-					<select class="select w-24 select-xs" bind:value={quality}>
-						<option value="auto">Auto</option>
-						{#each qualities as height (height)}
-							<option value={height}>{height}p</option>
-						{/each}
-					</select>
+					{#if mobile}
+						<label class="btn relative btn-square btn-ghost {btnSize}" title="Video quality">
+							<Settings2 size={iconSize} />
+							<select
+								aria-label="Video quality"
+								class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+								bind:value={quality}
+							>
+								<option value="auto">Auto</option>
+								{#each qualities as height (height)}
+									<option value={height}>{height}p</option>
+								{/each}
+							</select>
+						</label>
+					{:else}
+						<select class="select w-24 select-xs" bind:value={quality}>
+							<option value="auto">Auto</option>
+							{#each qualities as height (height)}
+								<option value={height}>{height}p</option>
+							{/each}
+						</select>
+					{/if}
 				{/if}
-				<button class="btn btn-square btn-ghost btn-xs" onclick={() => onToggleMute?.()}>
-					{#if muted}<VolumeX size={16} />{:else}<Volume2 size={16} />{/if}
-				</button>
+				{#if !mobile}
+					<button class="btn btn-square btn-ghost {btnSize}" onclick={() => onToggleMute?.()}>
+						{#if muted}<VolumeX size={iconSize} />{:else}<Volume2 size={iconSize} />{/if}
+					</button>
+				{/if}
 				<button
-					class="btn btn-square btn-ghost btn-xs"
-					title={fullscreen ? "Exit Fullscreen (F)" : "Fullscreen (F)"}
+					class="btn btn-square btn-ghost {btnSize}"
+					title={fullscreenActive ? "Exit Fullscreen (F)" : "Fullscreen (F)"}
 					onclick={() => onFullscreen?.()}
 				>
-					{#if fullscreen}<Minimize size={16} />{:else}<Maximize size={16} />{/if}
+					{#if fullscreenActive}<Minimize size={iconSize} />{:else}<Maximize size={iconSize} />{/if}
 				</button>
 			{/if}
 
 			{#if !fullscreen && timelineControls}
 				<button
-					class="btn btn-square btn-ghost btn-xs"
+					class="btn btn-square btn-ghost {btnSize}"
 					title={viewMode === "timeline" ? "Show Shot Grid" : "Show Video"}
 					onclick={toggleViewMode}
 				>
-					{#if viewMode === "timeline"}<LayoutGrid size={16} />{:else}<Film size={16} />{/if}
+					{#if viewMode === "timeline"}<LayoutGrid size={iconSize} />{:else}<Film
+							size={iconSize}
+						/>{/if}
 				</button>
 			{/if}
 		</div>

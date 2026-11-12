@@ -20,9 +20,19 @@
 	const targetQuery = $derived(isOpen && target ? getSharingTarget(target) : undefined);
 </script>
 
-<dialog class="modal" bind:this={dialog} onclose={() => (isOpen = false)}>
-	<div class="modal-box min-h-[32rem] {targetQuery?.current?.type === 'export' ? 'max-w-3xl' : ''}">
-		<div class="flex items-start gap-2">
+<!-- Phones: a sheet from the bottom that fits the visible viewport (dvh, not vh: iOS counts the address bar into vh) -->
+<dialog
+	class="modal modal-bottom sm:modal-middle"
+	bind:this={dialog}
+	onclose={() => (isOpen = false)}
+>
+	<div
+		class="modal-box max-h-[90dvh] pt-0 sm:min-h-[32rem] {targetQuery?.current?.type === 'export'
+			? 'sm:max-w-3xl'
+			: ''}"
+	>
+		<!-- Sticky so the close button stays reachable while scrolling long content -->
+		<div class="sticky top-0 z-10 -mx-6 flex items-start gap-2 bg-base-100 px-6 pt-6 pb-2">
 			<div class="min-w-0 flex-1">
 				<h3 class="text-lg font-bold">Time to collaborate</h3>
 				{#if targetQuery?.current?.type === "export"}
@@ -60,5 +70,6 @@
 			<span class="loading mt-2 loading-spinner"></span>
 		{/if}
 	</div>
-	<form method="dialog" class="modal-backdrop"></form>
+	<!-- The button is needed: tapping the backdrop submits this form, which closes the dialog -->
+	<form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>

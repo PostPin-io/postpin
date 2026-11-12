@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount, tick } from "svelte";
+	import { MediaQuery } from "svelte/reactivity";
+
 	import { handleReviewShortcut } from "#lib/components/review/review-shortcuts.ts";
 	import {
 		getExport,
@@ -90,6 +92,24 @@
 
 	const isMarkerVisible = $derived(share?.markerPanelVisible ?? true);
 	const isTimelineVisible = $derived(share?.timelinePanelVisible ?? true);
+	// Phones and small tablets: video on top, marker panel below, no timeline
+	const isMobile = new MediaQuery("max-width: 1023px");
+	const showTimeline = $derived(isTimelineVisible && !isMobile.current);
+
+	// A phone turned sideways: not just narrow and wide, which a small desktop window is too
+	const isPhoneLandscape = new MediaQuery(
+		"(orientation: landscape) and (max-height: 500px) and (pointer: coarse)",
+	);
+	// A phone turned sideways: the video fills the visible page (Safari's bars stay)
+	const cssFullscreen = $derived(isPhoneLandscape.current);
+
+	function toggleFullscreen() {
+		// Leave real fullscreen, or enter it where the page may: desktop and Android, with our controls
+		if (videoFullscreen || document.fullscreenEnabled) player?.toggleFullscreen();
+		// iPhone: no fullscreen for elements, only for the video. The system player takes the whole
+		// screen, without Safari's bars, but also without our controls and markers.
+		else player?.enterNativeFullscreen();
+	}
 
 	const exportQuery = $derived(
 		getExport(share ? { exportId, shareToken } : { projectId, timelineId, exportId }),
@@ -307,6 +327,11 @@
 	);
 
 	let viewMode: "shot-grid" | "timeline" = $state("timeline");
+	// The shot grid needs the timeline's space: back to the video on phones
+	$effect(() => {
+		if (isMobile.current) viewMode = "timeline";
+	});
+
 	const TIMELINE_MODE_KEY = "postpin:timeline-mode";
 	function loadTimelineMode(): TimelineMode {
 		if (typeof localStorage === "undefined") return "full";
@@ -340,6 +365,133 @@
 {/if}
 
 <svelte:window onkeydown={onGlobalKeyDown} />
+
+<!-- The three areas of the review, rendered by the desktop split panes and the phone layout -->
+{#snippet videoArea(compact = false)}
+	<div class="flex min-h-0 flex-col {compact ? '' : 'h-full'}">
+		{#if !media}
+			<p>Nothing uploaded yet.</p>
+		{:else}
+			{#snippet menuBar()}
+				<VideoMenuBar
+					{markers}
+					timing={snapshot!}
+					durationFrames={snapshot!.durationFrameCount}
+					bind:currentTime={videoPosition}
+					bind:paused={videoPaused}
+					bind:playbackRate={videoPlaybackRate}
+					bind:quality={videoQuality}
+					bind:viewMode
+					bind:timelineMode
+					timelineControls={showTimeline}
+					mobile={isMobile.current}
+					mobileLandscape={isPhoneLandscape.current}
+					qualities={videoQualities}
+					muted={videoMuted}
+					playerAvailable={viewMode === "timeline" && !!player}
+					fullscreen={videoFullscreen || cssFullscreen}
+					fullscreenActive={videoFullscreen}
+					onToggleMute={() => player?.toggleMute()}
+					onFullscreen={toggleFullscreen}
+					onCreateMarker={isMarkerVisible
+						? () => void markerPanel?.createMarkerAtPlayhead()
+						: undefined}
+					markerColor={newMarkerColor}
+					status={jobStatus}
+				/>
+			{/snippet}
+			{#snippet jobStatus()}
+				{#if processingJobsQuery?.current?.length}
+					<ProcessingJobs jobs={processingJobsQuery.current} variant="compact" />
+				{/if}
+			{/snippet}
+			{#snippet note()}
+				{#if share?.note && noteVisible}
+					<NoteOverlay note={share.note} onclose={() => (noteVisible = false)} />
+				{/if}
+			{/snippet}
+			<div
+				class={compact ? "aspect-video w-full overflow-hidden" : "min-h-0 flex-1 overflow-hidden"}
+			>
+				{#if viewMode === "shot-grid" && snapshot}
+					<ShotGrid
+						{snapshot}
+						thumbnailUrls={shotThumbnails?.current?.urls}
+						{currentFrame}
+						onSeek={seekToFrame}
+					/>
+				{:else if media.status !== "PENDING" && videoSource && snapshot}
+					<!-- A fresh player when the source switches between the original and HLS -->
+					{#key videoSource.type}
+						<VideoPlayer
+							bind:this={player}
+							source={videoSource}
+							poster={thumbnailUrl}
+							timing={snapshot}
+							bind:currentTime={videoPosition}
+							bind:paused={videoPaused}
+							bind:playbackRate={videoPlaybackRate}
+							bind:quality={videoQuality}
+							bind:qualities={videoQualities}
+							bind:muted={videoMuted}
+							bind:fullscreen={videoFullscreen}
+							{cssFullscreen}
+							fullscreenControls={menuBar}
+							overlay={note}
+						/>
+					{/key}
+				{:else if viewMode !== "shot-grid" && media.status !== "FAILED"}
+					{#if processingJobsQuery?.current?.length}
+						<ProcessingJobs jobs={processingJobsQuery.current} variant="inline" />
+					{:else}
+						<div class="flex h-full items-center justify-center" role="status" aria-live="polite">
+							<LoadingAnimation class="size-24" />
+						</div>
+					{/if}
+				{/if}
+			</div>
+			{#if snapshot && !cssFullscreen}
+				{@render menuBar()}
+			{/if}
+		{/if}
+	</div>
+{/snippet}
+
+{#snippet timelineArea()}
+	{#if exportQuery.current?.timelineSnapshot}
+		<Timeline
+			bind:this={timeline}
+			snapshot={exportQuery.current!.timelineSnapshot as TimelineSnapshot}
+			{markers}
+			{seekThumbnails}
+			mode={timelineMode}
+			onCollapsedHeight={(height) => (timelineCollapsedHeight = height)}
+			bind:videoPositionSeconds={videoPosition}
+			bind:paused={videoPaused}
+			bind:playbackRate={videoPlaybackRate}
+		/>
+	{/if}
+{/snippet}
+
+{#snippet markerArea(withBarcode = true)}
+	<!-- The barcode belongs to the timeline: guests only get it with the timeline panel -->
+	{#if withBarcode && isTimelineVisible && media}
+		{@const barcode = await getMovieBarcode({ mediaId: media.id, shareToken })}
+		{#if barcode}
+			<MovieBarcode data={barcode} />
+		{/if}
+	{/if}
+	<MarkerPanel
+		bind:this={markerPanel}
+		{exportId}
+		mobile={isMobile.current}
+		{currentFrame}
+		onseek={seekToFrame}
+		startFrame={snapshot!.startFrameIndex}
+		frameRate={snapshot!.frameRate}
+		frameCount={snapshot!.durationFrameCount}
+	/>
+{/snippet}
 
 {#snippet shareHeader(share: ShareContext)}
 	<ShareHeader
@@ -384,171 +536,76 @@
 		{:else}
 			<Header />
 		{/if}
-
-		<Splitpanes
-			theme="daisy-theme"
-			class="min-h-0 flex-1"
-			on:resized={(event) => saveLayout("main", event)}
-		>
-			<!-- Main content; without the marker panel the video column takes the full width -->
-			<Pane
-				size={isMarkerVisible ? layout.main[0] : 100}
-				minSize={isMarkerVisible ? 25 : 100}
-				class="overflow-auto"
-			>
-				<div class="h-full" bind:clientHeight={leftPanesHeight}>
-					<Splitpanes
-						theme="daisy-theme"
-						horizontal
-						on:resized={(event) => saveLayout("left", event)}
-					>
-						<!-- Video and jobs; without the timeline panel the video takes the full height -->
-						<Pane
-							size={!isTimelineVisible
-								? 100
-								: collapsedPercent !== undefined
-									? 100 - collapsedPercent
-									: layout.left[0]}
-							minSize={isTimelineVisible ? 15 : 100}
-							class="overflow-auto"
-						>
-							<div class="flex h-full min-h-0 flex-col">
-								{#if !media}
-									<p>Nothing uploaded yet.</p>
-								{:else}
-									{#snippet menuBar()}
-										<VideoMenuBar
-											{markers}
-											timing={snapshot!}
-											durationFrames={snapshot!.durationFrameCount}
-											bind:currentTime={videoPosition}
-											bind:paused={videoPaused}
-											bind:playbackRate={videoPlaybackRate}
-											bind:quality={videoQuality}
-											bind:viewMode
-											bind:timelineMode
-											timelineControls={isTimelineVisible}
-											qualities={videoQualities}
-											muted={videoMuted}
-											playerAvailable={viewMode === "timeline" && !!player}
-											fullscreen={videoFullscreen}
-											onToggleMute={() => player?.toggleMute()}
-											onFullscreen={() => player?.toggleFullscreen()}
-											onCreateMarker={isMarkerVisible
-												? () => void markerPanel?.createMarkerAtPlayhead()
-												: undefined}
-											markerColor={newMarkerColor}
-											status={jobStatus}
-										/>
-									{/snippet}
-									{#snippet jobStatus()}
-										{#if processingJobsQuery?.current?.length}
-											<ProcessingJobs jobs={processingJobsQuery.current} variant="compact" />
-										{/if}
-									{/snippet}
-									{#snippet note()}
-										{#if share?.note && noteVisible}
-											<NoteOverlay note={share.note} onclose={() => (noteVisible = false)} />
-										{/if}
-									{/snippet}
-									<div class="min-h-0 flex-1 overflow-hidden">
-										{#if viewMode === "shot-grid" && snapshot}
-											<ShotGrid
-												{snapshot}
-												thumbnailUrls={shotThumbnails?.current?.urls}
-												{currentFrame}
-												onSeek={seekToFrame}
-											/>
-										{:else if media.status !== "PENDING" && videoSource && snapshot}
-											<!-- A fresh player when the source switches between the original and HLS -->
-											{#key videoSource.type}
-												<VideoPlayer
-													bind:this={player}
-													source={videoSource}
-													poster={thumbnailUrl}
-													timing={snapshot}
-													bind:currentTime={videoPosition}
-													bind:paused={videoPaused}
-													bind:playbackRate={videoPlaybackRate}
-													bind:quality={videoQuality}
-													bind:qualities={videoQualities}
-													bind:muted={videoMuted}
-													bind:fullscreen={videoFullscreen}
-													fullscreenControls={menuBar}
-													overlay={note}
-												/>
-											{/key}
-										{:else if viewMode !== "shot-grid" && media.status !== "FAILED"}
-											{#if processingJobsQuery?.current?.length}
-												<ProcessingJobs jobs={processingJobsQuery.current} variant="inline" />
-											{:else}
-												<div
-													class="flex h-full items-center justify-center"
-													role="status"
-													aria-live="polite"
-												>
-													<LoadingAnimation class="size-24" />
-												</div>
-											{/if}
-										{/if}
-									</div>
-									{#if snapshot}
-										{@render menuBar()}
-									{/if}
-								{/if}
-							</div>
-						</Pane>
-
-						<!-- Timeline panel -->
-						{#if isTimelineVisible}
-							<Pane
-								size={collapsedPercent ?? layout.left[1]}
-								minSize={collapsedPercent ?? 10}
-								maxSize={collapsedPercent ?? 100}
-								class="overflow-hidden"
-							>
-								{#if exportQuery.current?.timelineSnapshot}
-									<Timeline
-										bind:this={timeline}
-										snapshot={exportQuery.current!.timelineSnapshot as TimelineSnapshot}
-										{markers}
-										{seekThumbnails}
-										mode={timelineMode}
-										onCollapsedHeight={(height) => (timelineCollapsedHeight = height)}
-										bind:videoPositionSeconds={videoPosition}
-										bind:paused={videoPaused}
-										bind:playbackRate={videoPlaybackRate}
-									/>
-								{/if}
-
-								<!-- Timeline content -->
-							</Pane>
-						{/if}
-					</Splitpanes>
+		{#if isMobile.current}
+			<!-- Phones: the video stays on top, the marker panel below scrolls on its own -->
+			<div class="flex min-h-0 flex-1 flex-col">
+				<div class="shrink-0">
+					{@render videoArea(true)}
 				</div>
-			</Pane>
+				{#if isMarkerVisible}
+					<div class="flex min-h-0 flex-1 flex-col overflow-hidden border-t border-base-300">
+						{@render markerArea(false)}
+					</div>
+				{/if}
+			</div>
+		{:else}
+			<Splitpanes
+				theme="daisy-theme"
+				class="min-h-0 flex-1"
+				on:resized={(event) => saveLayout("main", event)}
+			>
+				<!-- Main content; without the marker panel the video column takes the full width -->
+				<Pane
+					size={isMarkerVisible ? layout.main[0] : 100}
+					minSize={isMarkerVisible ? 25 : 100}
+					class="overflow-auto"
+				>
+					<div class="h-full" bind:clientHeight={leftPanesHeight}>
+						<Splitpanes
+							theme="daisy-theme"
+							horizontal
+							on:resized={(event) => saveLayout("left", event)}
+						>
+							<!-- Video and jobs; without the timeline panel the video takes the full height -->
+							<Pane
+								size={!isTimelineVisible
+									? 100
+									: collapsedPercent !== undefined
+										? 100 - collapsedPercent
+										: layout.left[0]}
+								minSize={isTimelineVisible ? 15 : 100}
+								class="overflow-auto"
+							>
+								{@render videoArea()}
+							</Pane>
 
-			<!-- Marker panel -->
-			{#if isMarkerVisible}
-				<Pane size={layout.main[1]} minSize={20} maxSize={50} class="flex flex-col overflow-hidden">
-					<!-- The barcode belongs to the timeline: guests only get it with the timeline panel -->
-					{#if isTimelineVisible && media}
-						{@const barcode = await getMovieBarcode({ mediaId: media.id, shareToken })}
-						{#if barcode}
-							<MovieBarcode data={barcode} />
-						{/if}
-					{/if}
-					<MarkerPanel
-						bind:this={markerPanel}
-						{exportId}
-						{currentFrame}
-						onseek={seekToFrame}
-						startFrame={snapshot!.startFrameIndex}
-						frameRate={snapshot!.frameRate}
-						frameCount={snapshot!.durationFrameCount}
-					/>
+							<!-- Timeline panel -->
+							{#if isTimelineVisible}
+								<Pane
+									size={collapsedPercent ?? layout.left[1]}
+									minSize={collapsedPercent ?? 10}
+									maxSize={collapsedPercent ?? 100}
+									class="overflow-hidden"
+								>
+									{@render timelineArea()}
+								</Pane>
+							{/if}
+						</Splitpanes>
+					</div>
 				</Pane>
-			{/if}
-		</Splitpanes>
+
+				<!-- Marker panel -->
+				{#if isMarkerVisible}
+					<Pane
+						size={layout.main[1]}
+						minSize={20}
+						maxSize={50}
+						class="flex flex-col overflow-hidden"
+					>
+						{@render markerArea()}
+					</Pane>
+				{/if}
+			</Splitpanes>
+		{/if}
 	</div>
 {/if}

@@ -2,6 +2,7 @@
 	import { formatTimecode, parseTimecode } from "@postpin-io/shared/logic/timecode";
 	import { clampToTimeline, frameFromInput } from "./timecode-input.ts";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
+	import Clock from "@lucide/svelte/icons/clock";
 
 	interface Props {
 		/** Absolute timeline frame */
@@ -12,10 +13,20 @@
 		/** Timeline length in frames; typed values are capped to the timeline */
 		frameCount: number;
 		editable?: boolean;
+		mobile?: boolean;
+		mobileLandscape?: boolean;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	let { frame = $bindable(), frameRate, startFrame, frameCount, editable }: Props = $props();
+	let {
+		frame = $bindable(),
+		frameRate,
+		startFrame,
+		frameCount,
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		editable,
+		mobile = false,
+		mobileLandscape = false,
+	}: Props = $props();
 
 	let editingField: "editing_TC" | "editingFrame" | null = $state(null);
 
@@ -26,7 +37,33 @@
 
 	let inputField_TC: HTMLInputElement | null = $state(null);
 	let inputField_Frame: HTMLInputElement | null = $state(null);
+	// Unique per instance: in fullscreen a second menu bar, and so a second Timecode, is rendered
+	const inputId = $props.id();
+	let mobileDialog: HTMLDialogElement | null = $state(null);
+	let mobileInput = $state("");
+	let mobileError = $state(false);
 	let isTC = $state(true);
+
+	function openMobileInput() {
+		mobileInput = String(frame - startFrame);
+		mobileError = false;
+		mobileDialog?.showModal();
+	}
+
+	function submitMobileInput(event: SubmitEvent) {
+		event.preventDefault();
+		try {
+			const input = mobileInput.trim();
+			const targetFrame = /^\d+$/.test(input)
+				? frameFromInput(input, startFrame)
+				: parseTimecode(input, frameRate);
+			frame = clampToTimeline(targetFrame, startFrame, frameCount);
+			mobileError = false;
+			mobileDialog?.close();
+		} catch {
+			mobileError = true;
+		}
+	}
 
 	$effect(() => {
 		if (editingField == "editing_TC") {
@@ -79,7 +116,20 @@
 </script>
 
 <div class="flex gap-1 font-mono">
-	{#if isTC}
+	{#if mobile}
+		<button
+			class="btn btn-ghost btn-md {mobileLandscape ? '' : 'btn-square'}"
+			title="Enter frames or timecode"
+			aria-label="Jump to time"
+			onclick={openMobileInput}
+		>
+			{#if mobileLandscape}
+				{formatTimecode(frame, frameRate)}
+			{:else}
+				<Clock size={22} />
+			{/if}
+		</button>
+	{:else if isTC}
 		<span>
 			<button title="click to switch to Frame" class="cursor-pointer" onclick={() => (isTC = false)}
 				>TC</button
@@ -142,3 +192,28 @@
 		/>
 	{/if}
 </div>
+
+{#if mobile}
+	<dialog bind:this={mobileDialog} class="modal modal-bottom">
+		<form method="dialog" class="modal-box flex flex-col gap-3" onsubmit={submitMobileInput}>
+			<h2 class="text-lg font-semibold">Jump to time</h2>
+			<label class="text-sm" for={inputId}>Enter frames or timecode</label>
+			<input
+				id={inputId}
+				type="text"
+				bind:value={mobileInput}
+				placeholder="Frames or HH:MM:SS:FF"
+				class="input w-full font-mono {mobileError ? 'input-error' : ''}"
+				aria-invalid={mobileError}
+			/>
+			{#if mobileError}
+				<p class="text-sm text-error">Enter a valid frame number or timecode.</p>
+			{/if}
+			<div class="modal-action">
+				<button type="button" class="btn" onclick={() => mobileDialog?.close()}>Cancel</button>
+				<button type="submit" class="btn btn-primary">Go</button>
+			</div>
+		</form>
+		<form method="dialog" class="modal-backdrop"><button>close</button></form>
+	</dialog>
+{/if}

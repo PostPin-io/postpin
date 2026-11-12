@@ -2,25 +2,30 @@
 	import EditCategoriesModal from "../../categories/EditCategoriesModal.svelte";
 	import CategorySelector from "../../categories/CategorySelector.svelte";
 
-	import { updateMarker, deleteMarker, getCategories } from "./markers.remote";
+	import { updateMarker, deleteMarker, getCategories, getMarkers } from "./markers.remote";
+	import { markersKey } from "./marker-scope.ts";
 	import { page } from "$app/state";
 	import { defaultCategory } from "./default-category.svelte.ts";
 	import ClipboardList from "@lucide/svelte/icons/clipboard-list";
 	import Trash from "@lucide/svelte/icons/trash";
-	import { onDestroy, onMount } from "svelte";
+	import { onDestroy, onMount, type Snippet } from "svelte";
 	import X from "@lucide/svelte/icons/x";
 	import CircleArrowLeft from "@lucide/svelte/icons/circle-arrow-left";
 	import type { ReviewMarker } from "./types";
 	import { useShare } from "../share-context.ts";
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	let { marker, startFrame, onclose }: Props = $props();
+	let { marker, startFrame, onclose, mobile = false, mobileHeaderAction }: Props = $props();
 	let titleInputField: HTMLInputElement | null = null;
 	let titleFocusToggled = $state(false);
+
 	interface Props {
 		onclose?: () => void;
 		marker: ReviewMarker;
 		startFrame: number;
+		/** Inside the phone's marker modal: no card, no close button (the modal has one) */
+		mobile?: boolean;
+		mobileHeaderAction?: Snippet;
 	}
 	const getShare = useShare();
 	const share = $derived(getShare());
@@ -34,6 +39,7 @@
 	let description = $state(marker.description ?? "");
 
 	let selectedCategoryId = $state<string>(marker.categoryId);
+	let movedFrame: number | null = null;
 	let saving = $state(false);
 	let fieldFocused = $state(false);
 
@@ -70,28 +76,54 @@
 			queued = true;
 			return;
 		}
-		const next = { name: name.trim(), description: description.trim(), categoryId };
+		const next = {
+			name: name.trim(),
+			description: description.trim(),
+			categoryId,
+			frame: movedFrame ?? marker.frame,
+		};
 		if (!next.categoryId) return;
 		if (
 			next.name === saved.name &&
 			next.description === saved.description &&
-			next.categoryId === saved.categoryId
+			next.categoryId === saved.categoryId &&
+			movedFrame === null
 		) {
 			return;
 		}
 
 		saving = true;
 		try {
+			const category = categories.find((c) => c.id === next.categoryId);
 			await updateMarker({
 				id: marker.id,
 				name: next.name,
 				description: next.description,
 				categoryId: next.categoryId,
-				frame: marker.frame,
+				frame: next.frame,
 				shareToken: share?.token,
-			});
+			}).updates(
+				// Shows the edit everywhere right away (list, timeline, swipe cards), before the server answers
+				getMarkers(markersKey(marker.exportId, share?.token)).withOverride((markers) =>
+					markers.map((m) =>
+						m.id !== marker.id
+							? m
+							: {
+									...m,
+									name: next.name,
+									description: next.description,
+									frame: next.frame,
+									categoryId: next.categoryId,
+									category: category
+										? { ...m.category, id: category.id, name: category.name, color: category.color }
+										: m.category,
+								},
+					),
+				),
+			);
 
-			saved = { ...next, categoryId: next.categoryId };
+			saved = { name: next.name, description: next.description, categoryId: next.categoryId };
+			if (movedFrame === next.frame) movedFrame = null;
 		} finally {
 			saving = false;
 		}
@@ -99,6 +131,12 @@
 			queued = false;
 			void persist();
 		}
+	}
+
+	/** Moves the marker to another frame, saved together with the other fields */
+	export function moveTo(newFrame: number) {
+		movedFrame = newFrame;
+		void persist();
 	}
 
 	async function openEditCategoriesModal() {
@@ -141,9 +179,11 @@
 	}
 </script>
 
-<section class="@container card mx-1 h-full border border-base-300 bg-base-200 shadow-sm">
+<section
+	class="@container {mobile ? '' : 'card mx-1 h-full border border-base-300 bg-base-200 shadow-sm'}"
+>
 	<div class="card-body h-full min-h-0 w-full gap-3 p-4">
-		<div class="flex items-center justify-between gap-3">
+		<div class="flex items-center justify-between gap-3 {mobile ? 'flex-wrap' : ''}">
 			<div class="flex-screen flex min-w-0 items-center gap-2">
 				<h2 class="card-title text-base whitespace-nowrap">
 					{#if marker.canUpdate}
@@ -179,17 +219,23 @@
 					Frame {marker.frame - startFrame}
 					</span> -->
 			</div>
-			<div class="flex shrink-0 gap-2">
-				<button
-					type="button"
-					class="btn btn-square btn-ghost"
-					title="Close"
-					aria-label="Close marker editor"
-					onclick={() => onclose?.()}
-				>
-					<X />
-				</button>
-				{#if marker.canDelete}
+			<div class="flex shrink-0 gap-2 {mobile ? 'ml-auto' : ''}">
+				{#if mobile && mobileHeaderAction}
+					{@render mobileHeaderAction()}
+				{/if}
+				{#if !mobile}
+					<button
+						type="button"
+						class="btn btn-square btn-ghost"
+						title="Close"
+						aria-label="Close marker editor"
+						onclick={() => onclose?.()}
+					>
+						<X />
+					</button>
+				{/if}
+
+				{#if marker.canDelete && !mobile}
 					<button
 						type="button"
 						class="btn btn-square btn-error"
@@ -222,9 +268,10 @@
 					oninput={() => schedule()}
 					readonly={!marker.canUpdate}
 				/>
+				<!-- Typing right after creating a marker needs a keyboard -->
 				<button
 					type="button"
-					class="btn btn-square btn-ghost"
+					class="btn btn-square btn-ghost pointer-coarse:hidden"
 					tabindex="-1"
 					class:btn-active={titleFocusToggled}
 					class:text-accent={titleFocusToggled}
@@ -237,7 +284,7 @@
 
 			<textarea
 				readonly={!marker.canUpdate}
-				class="textarea min-h-0 w-full flex-1 resize-none"
+				class="textarea w-full resize-none {mobile ? 'min-h-40' : 'min-h-0 flex-1'}"
 				rows="2"
 				placeholder="Description"
 				aria-label="Marker description"
@@ -250,7 +297,9 @@
 					{#if saving}<span class="loading loading-xs loading-spinner"></span>Saving…{/if}
 				</span>
 				{#if fieldFocused}
-					<span class="text-xs text-base-content/60">⌘/Ctrl + Enter to close</span>
+					<span class="text-xs text-base-content/60 pointer-coarse:hidden"
+						>⌘/Ctrl + Enter to close</span
+					>
 				{/if}
 			</div>
 		</form>

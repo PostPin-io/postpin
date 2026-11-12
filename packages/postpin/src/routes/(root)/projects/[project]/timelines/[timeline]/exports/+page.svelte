@@ -2,10 +2,12 @@
 	import PageMeta from "#lib/components/layout/PageMeta.svelte";
 	import { page } from "$app/state";
 	import { onMount } from "svelte";
+	import { MediaQuery } from "svelte/reactivity";
 	import { getExportList, getTimelineName } from "./exportlist.remote.ts";
 	import { getUrl } from "#lib/components/review/export-view.remote.ts";
 	import RenameExportModal from "#lib/components/exports/RenameExportModal.svelte";
 	import DeleteExportModal from "#lib/components/exports/DeleteExportModal.svelte";
+	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
 	import { formatByteSize } from "@postpin-io/shared/logic/bytes";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
@@ -19,6 +21,9 @@
 	import Trash2 from "@lucide/svelte/icons/trash-2";
 
 	let viewMode: "table" | "card" = $state("card");
+	// Tables don't fit on phones: show cards there, but keep the stored choice for desktop
+	const isMobile = new MediaQuery("max-width: 767px");
+	const shownView = $derived.by(() => (isMobile.current ? "card" : viewMode));
 	type SortField = "name" | "created" | "updated";
 	const sortFields: { value: SortField; label: string }[] = [
 		{ value: "name", label: "Name" },
@@ -32,6 +37,7 @@
 
 	let renameExportDialog: RenameExportModal | null = null;
 	let deleteExportDialog: DeleteExportModal | null = null;
+	let sharingDialog: SharingSetupModal | null = null;
 
 	let exports = $derived(await getExportList(page.params.timeline || ""));
 	let timelineName = $derived(await getTimelineName(page.params.timeline || ""));
@@ -52,13 +58,13 @@
 		document.getElementById(`export-menu-${id}`)?.hidePopover();
 	}
 
-	async function copyLink(id: string) {
+	function shareExport(id: string) {
 		closeMenu(id);
-		try {
-			await navigator.clipboard.writeText(location.origin + exportUrl(id));
-		} catch (err) {
-			console.error("Could not copy link", err);
-		}
+		sharingDialog?.open({
+			projectId: page.params.project!,
+			timelineId: page.params.timeline!,
+			exportId: id,
+		});
 	}
 
 	function renameExport(singleExport: (typeof exports)[number]) {
@@ -102,7 +108,7 @@
 <PageMeta title="{timelineName} exports" description="The exports of {timelineName}." />
 
 <!--
-	Ein Dropdown für alle Aktionen eines Exports (Öffnen, Link kopieren, Umbenennen, Löschen).
+	Ein Dropdown für alle Aktionen eines Exports (Öffnen, Share-Links, Umbenennen, Löschen).
 	Nutzt das Popover-API von daisyUI 5: Das Menü liegt im Top-Layer des Browsers
 	und wird deshalb nicht von overflow-Containern (Tabelle, Card) abgeschnitten.
 -->
@@ -129,12 +135,14 @@
 				Open export
 			</a>
 		</li>
-		<li>
-			<button type="button" onclick={() => copyLink(singleExport.id)}>
-				<Link class="size-4" />
-				Copy link
-			</button>
-		</li>
+		{#if singleExport.canShare}
+			<li>
+				<button type="button" onclick={() => shareExport(singleExport.id)}>
+					<Link class="size-4" />
+					Share links
+				</button>
+			</li>
+		{/if}
 		{#if singleExport.canRename}
 			<li class="mt-1 border-t border-base-300 pt-1">
 				<button type="button" onclick={() => renameExport(singleExport)}>
@@ -199,7 +207,7 @@
 	{/if}
 {/snippet}
 
-<div class="flex h-full w-full flex-col gap-6 p-6">
+<div class="flex h-full w-full flex-col gap-4 md:gap-6 md:p-6">
 	{#if loadingStatus}
 		<div class="flex flex-1 items-center justify-center" role="status" aria-live="polite">
 			<div
@@ -215,16 +223,18 @@
 			</div>
 		</div>
 	{:else}
-		<header class="flex justify-between border-b border-base-300 pb-4">
+		<header
+			class="flex flex-col gap-3 border-b border-base-300 pb-4 md:flex-row md:items-center md:justify-between"
+		>
 			<h1 class="text-2xl font-bold">Your Exports</h1>
 
-			<div class="flex flex-wrap items-baseline gap-3">
-				<div class="flex flex-wrap items-center gap-2">
+			<div class="flex flex-wrap items-baseline gap-3 max-md:w-full">
+				<div class="flex flex-wrap items-center gap-2 max-md:flex-1">
 					<input
 						type="search"
 						placeholder="Search exports"
 						aria-label="Search exports"
-						class="input input-sm"
+						class="input input-sm max-md:w-full"
 						bind:value={searchQuery}
 					/>
 				</div>
@@ -242,7 +252,7 @@
 					{/if}
 				</button>
 
-				<div class="join" role="group">
+				<div class="join max-md:hidden" role="group">
 					<button
 						class="btn join-item btn-sm"
 						class:btn-active={viewMode === "table"}
@@ -313,7 +323,7 @@
 				return (sortDirection == "asc" ? 1 : -1) * comparison || a.id.localeCompare(b.id);
 			})}
 
-		{#if viewMode === "table"}
+		{#if shownView === "table"}
 			<div class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 shadow">
 				<table class="table table-zebra">
 					<thead>
@@ -459,3 +469,4 @@
 
 <RenameExportModal bind:this={renameExportDialog} />
 <DeleteExportModal bind:this={deleteExportDialog} />
+<SharingSetupModal bind:this={sharingDialog} />
