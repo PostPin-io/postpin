@@ -31,11 +31,8 @@
 	const url = $derived(shareLinkUrl(page.url.origin, link.token));
 	const left = $derived(remainingTime(link.expiresAt));
 	const active = $derived(link.status === "active");
-	// The URL isn't shown, only copied: the note's first line (or the creation date) tells links apart
+	// The URL isn't shown, only copied: the note's first line tells links apart
 	const label = $derived(link.note?.split("\n")[0]?.trim() || null);
-	const created = $derived(
-		new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(link.createdAt),
-	);
 
 	let copied = $state(false);
 	let confirmRevoke = $state(false);
@@ -65,7 +62,9 @@
 		<!-- Expired: everything but the buttons greyed out -->
 		<div class="flex min-w-0 flex-1 items-center gap-3 {active ? '' : 'opacity-50'}">
 			<PanelLayout mini timeline={link.timelinePanelVisible} markers={link.markerPanelVisible} />
-
+			{#if label}
+				<span class="min-w-0 flex-1 truncate text-sm" title={link.note}>{label}</span>
+			{/if}
 			<span
 				class="flex items-center gap-1 text-sm whitespace-nowrap {left.warn
 					? 'text-error'

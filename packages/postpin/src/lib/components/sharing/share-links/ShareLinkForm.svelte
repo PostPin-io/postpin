@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { untrack } from "svelte";
 	import Check from "@lucide/svelte/icons/check";
-	import Clock from "@lucide/svelte/icons/clock";
 	import X from "@lucide/svelte/icons/x";
 	import {
 		NOTE_MAX_LENGTH,
