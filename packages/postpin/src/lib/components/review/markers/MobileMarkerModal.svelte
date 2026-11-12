@@ -6,6 +6,8 @@
 	import LocateFixed from "@lucide/svelte/icons/locate-fixed";
 	import Trash from "@lucide/svelte/icons/trash";
 	import UpdateMarker from "./UpdateMarker.svelte";
+	import MarkerPositionModal from "./MarkerPositionModal.svelte";
+
 	import { createResponse, getResponses } from "./markers.remote";
 	import { useShare } from "../share-context.ts";
 	import { formatTimecode } from "@postpin-io/shared/logic/timecode";
@@ -18,16 +20,30 @@
 		/** Neighbors in the list, shown as cards while swiping; undefined at the ends */
 		previous: ReviewMarker | undefined;
 		next: ReviewMarker | undefined;
-
+		/** Playhead, offered as the new position */
+		currentFrame: number;
+		/** Timeline length in frames */
+		frameCount: number;
 		startFrame: number;
+
 		frameRate: FrameRate;
 		onclose: () => void;
-		onseek: (frame: number) => void;
+
 		/** Swipe left/right: -1 for the previous marker, 1 for the next one */
 		onnavigate: (direction: -1 | 1) => void;
 	}
-	let { marker, previous, next, startFrame, frameRate, onclose, onseek, onnavigate }: Props =
-		$props();
+	let {
+		marker,
+		previous,
+		next,
+		currentFrame,
+		frameCount,
+		startFrame,
+		frameRate,
+		onclose,
+		onnavigate,
+	}: Props = $props();
+	let positionModal: MarkerPositionModal | null = $state(null);
 
 	let updateMarkerComponent: UpdateMarker | null = $state(null);
 	let deleting = $state(false);
@@ -293,18 +309,17 @@
 								onclose={() => dialog?.close()}
 							>
 								{#snippet mobileHeaderAction()}
-									<button
-										type="button"
-										class="btn btn-ghost"
-										aria-label="Go to marker in the video"
-										onclick={() => {
-											onseek(marker!.frame);
-											dialog?.close();
-										}}
-									>
-										<LocateFixed size={20} />
-										<span class="font-mono">{formatTimecode(marker!.frame, frameRate)}</span>
-									</button>
+									{#if marker!.canUpdate}
+										<button
+											type="button"
+											class="btn btn-square btn-ghost"
+											title="Change position"
+											aria-label="Change marker position"
+											onclick={() => positionModal?.open(marker!.frame)}
+										>
+											<LocateFixed size={20} />
+										</button>
+									{/if}
 								{/snippet}
 							</UpdateMarker>
 						{/key}
@@ -368,4 +383,14 @@
 			{/if}
 		</div>
 	</div>
+
+	<!-- Outside the track, so touches in it never start a swipe -->
+	<MarkerPositionModal
+		bind:this={positionModal}
+		{currentFrame}
+		{startFrame}
+		{frameRate}
+		{frameCount}
+		onsave={(frame) => updateMarkerComponent?.moveTo(frame)}
+	/>
 </dialog>

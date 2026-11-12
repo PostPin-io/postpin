@@ -2,7 +2,8 @@
 	import EditCategoriesModal from "../../categories/EditCategoriesModal.svelte";
 	import CategorySelector from "../../categories/CategorySelector.svelte";
 
-	import { updateMarker, deleteMarker, getCategories } from "./markers.remote";
+	import { updateMarker, deleteMarker, getCategories, getMarkers } from "./markers.remote";
+	import { markersKey } from "./marker-scope.ts";
 	import { page } from "$app/state";
 	import { defaultCategory } from "./default-category.svelte.ts";
 	import ClipboardList from "@lucide/svelte/icons/clipboard-list";
@@ -38,6 +39,7 @@
 	let description = $state(marker.description ?? "");
 
 	let selectedCategoryId = $state<string>(marker.categoryId);
+	let movedFrame: number | null = null;
 	let saving = $state(false);
 	let fieldFocused = $state(false);
 
@@ -74,28 +76,54 @@
 			queued = true;
 			return;
 		}
-		const next = { name: name.trim(), description: description.trim(), categoryId };
+		const next = {
+			name: name.trim(),
+			description: description.trim(),
+			categoryId,
+			frame: movedFrame ?? marker.frame,
+		};
 		if (!next.categoryId) return;
 		if (
 			next.name === saved.name &&
 			next.description === saved.description &&
-			next.categoryId === saved.categoryId
+			next.categoryId === saved.categoryId &&
+			movedFrame === null
 		) {
 			return;
 		}
 
 		saving = true;
 		try {
+			const category = categories.find((c) => c.id === next.categoryId);
 			await updateMarker({
 				id: marker.id,
 				name: next.name,
 				description: next.description,
 				categoryId: next.categoryId,
-				frame: marker.frame,
+				frame: next.frame,
 				shareToken: share?.token,
-			});
+			}).updates(
+				// Shows the edit everywhere right away (list, timeline, swipe cards), before the server answers
+				getMarkers(markersKey(marker.exportId, share?.token)).withOverride((markers) =>
+					markers.map((m) =>
+						m.id !== marker.id
+							? m
+							: {
+									...m,
+									name: next.name,
+									description: next.description,
+									frame: next.frame,
+									categoryId: next.categoryId,
+									category: category
+										? { ...m.category, id: category.id, name: category.name, color: category.color }
+										: m.category,
+								},
+					),
+				),
+			);
 
-			saved = { ...next, categoryId: next.categoryId };
+			saved = { name: next.name, description: next.description, categoryId: next.categoryId };
+			if (movedFrame === next.frame) movedFrame = null;
 		} finally {
 			saving = false;
 		}
@@ -103,6 +131,12 @@
 			queued = false;
 			void persist();
 		}
+	}
+
+	/** Moves the marker to another frame, saved together with the other fields */
+	export function moveTo(newFrame: number) {
+		movedFrame = newFrame;
+		void persist();
 	}
 
 	async function openEditCategoriesModal() {

@@ -544,9 +544,10 @@
 		marker={editingMarker}
 		previous={previousMarker}
 		next={nextMarker}
+		{currentFrame}
+		{frameCount}
 		{startFrame}
 		{frameRate}
-		{onseek}
 		onnavigate={navigateEditingMarker}
 		onclose={() => (editingMarkerId = null)}
 	/>
