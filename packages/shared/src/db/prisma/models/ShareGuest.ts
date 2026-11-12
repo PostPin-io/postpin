@@ -157,7 +157,7 @@ export type ShareGuestGroupByOutputType = {
 	id: string;
 	createdAt: Date;
 	shareLinkId: string;
-	name: string;
+	name: string | null;
 	sessionTokenHash: string;
 	lastViewedAt: Date | null;
 	_count: ShareGuestCountAggregateOutputType | null;
@@ -184,7 +184,7 @@ export type ShareGuestWhereInput = {
 	id?: Prisma.StringFilter<"ShareGuest"> | string;
 	createdAt?: Prisma.DateTimeFilter<"ShareGuest"> | Date | string;
 	shareLinkId?: Prisma.StringFilter<"ShareGuest"> | string;
-	name?: Prisma.StringFilter<"ShareGuest"> | string;
+	name?: Prisma.StringNullableFilter<"ShareGuest"> | string | null;
 	sessionTokenHash?: Prisma.StringFilter<"ShareGuest"> | string;
 	lastViewedAt?: Prisma.DateTimeNullableFilter<"ShareGuest"> | Date | string | null;
 	shareLink?: Prisma.XOR<Prisma.ShareLinkScalarRelationFilter, Prisma.ShareLinkWhereInput>;
@@ -195,7 +195,7 @@ export type ShareGuestOrderByWithRelationInput = {
 	id?: Prisma.SortOrder;
 	createdAt?: Prisma.SortOrder;
 	shareLinkId?: Prisma.SortOrder;
-	name?: Prisma.SortOrder;
+	name?: Prisma.SortOrderInput | Prisma.SortOrder;
 	sessionTokenHash?: Prisma.SortOrder;
 	lastViewedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
 	shareLink?: Prisma.ShareLinkOrderByWithRelationInput;
@@ -211,7 +211,7 @@ export type ShareGuestWhereUniqueInput = Prisma.AtLeast<
 		NOT?: Prisma.ShareGuestWhereInput | Prisma.ShareGuestWhereInput[];
 		createdAt?: Prisma.DateTimeFilter<"ShareGuest"> | Date | string;
 		shareLinkId?: Prisma.StringFilter<"ShareGuest"> | string;
-		name?: Prisma.StringFilter<"ShareGuest"> | string;
+		name?: Prisma.StringNullableFilter<"ShareGuest"> | string | null;
 		lastViewedAt?: Prisma.DateTimeNullableFilter<"ShareGuest"> | Date | string | null;
 		shareLink?: Prisma.XOR<Prisma.ShareLinkScalarRelationFilter, Prisma.ShareLinkWhereInput>;
 		markers?: Prisma.MarkerListRelationFilter;
@@ -223,7 +223,7 @@ export type ShareGuestOrderByWithAggregationInput = {
 	id?: Prisma.SortOrder;
 	createdAt?: Prisma.SortOrder;
 	shareLinkId?: Prisma.SortOrder;
-	name?: Prisma.SortOrder;
+	name?: Prisma.SortOrderInput | Prisma.SortOrder;
 	sessionTokenHash?: Prisma.SortOrder;
 	lastViewedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
 	_count?: Prisma.ShareGuestCountOrderByAggregateInput;
@@ -242,7 +242,7 @@ export type ShareGuestScalarWhereWithAggregatesInput = {
 	id?: Prisma.StringWithAggregatesFilter<"ShareGuest"> | string;
 	createdAt?: Prisma.DateTimeWithAggregatesFilter<"ShareGuest"> | Date | string;
 	shareLinkId?: Prisma.StringWithAggregatesFilter<"ShareGuest"> | string;
-	name?: Prisma.StringWithAggregatesFilter<"ShareGuest"> | string;
+	name?: Prisma.StringNullableWithAggregatesFilter<"ShareGuest"> | string | null;
 	sessionTokenHash?: Prisma.StringWithAggregatesFilter<"ShareGuest"> | string;
 	lastViewedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ShareGuest"> | Date | string | null;
 };
@@ -250,7 +250,7 @@ export type ShareGuestScalarWhereWithAggregatesInput = {
 export type ShareGuestCreateInput = {
 	id?: string;
 	createdAt?: Date | string;
-	name: string;
+	name?: string | null;
 	sessionTokenHash: string;
 	lastViewedAt?: Date | string | null;
 	shareLink: Prisma.ShareLinkCreateNestedOneWithoutGuestsInput;
@@ -261,7 +261,7 @@ export type ShareGuestUncheckedCreateInput = {
 	id?: string;
 	createdAt?: Date | string;
 	shareLinkId: string;
-	name: string;
+	name?: string | null;
 	sessionTokenHash: string;
 	lastViewedAt?: Date | string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutGuestInput;
@@ -270,7 +270,7 @@ export type ShareGuestUncheckedCreateInput = {
 export type ShareGuestUpdateInput = {
 	id?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	shareLink?: Prisma.ShareLinkUpdateOneRequiredWithoutGuestsNestedInput;
@@ -281,7 +281,7 @@ export type ShareGuestUncheckedUpdateInput = {
 	id?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	shareLinkId?: Prisma.StringFieldUpdateOperationsInput | string;
-	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutGuestNestedInput;
@@ -291,7 +291,7 @@ export type ShareGuestCreateManyInput = {
 	id?: string;
 	createdAt?: Date | string;
 	shareLinkId: string;
-	name: string;
+	name?: string | null;
 	sessionTokenHash: string;
 	lastViewedAt?: Date | string | null;
 };
@@ -299,7 +299,7 @@ export type ShareGuestCreateManyInput = {
 export type ShareGuestUpdateManyMutationInput = {
 	id?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 };
@@ -308,7 +308,7 @@ export type ShareGuestUncheckedUpdateManyInput = {
 	id?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	shareLinkId?: Prisma.StringFieldUpdateOperationsInput | string;
-	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 };
@@ -472,7 +472,7 @@ export type ShareGuestUncheckedUpdateManyWithoutShareLinkNestedInput = {
 export type ShareGuestCreateWithoutMarkersInput = {
 	id?: string;
 	createdAt?: Date | string;
-	name: string;
+	name?: string | null;
 	sessionTokenHash: string;
 	lastViewedAt?: Date | string | null;
 	shareLink: Prisma.ShareLinkCreateNestedOneWithoutGuestsInput;
@@ -482,7 +482,7 @@ export type ShareGuestUncheckedCreateWithoutMarkersInput = {
 	id?: string;
 	createdAt?: Date | string;
 	shareLinkId: string;
-	name: string;
+	name?: string | null;
 	sessionTokenHash: string;
 	lastViewedAt?: Date | string | null;
 };
@@ -518,7 +518,7 @@ export type ShareGuestUpdateToOneWithWhereWithoutMarkersInput = {
 export type ShareGuestUpdateWithoutMarkersInput = {
 	id?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	shareLink?: Prisma.ShareLinkUpdateOneRequiredWithoutGuestsNestedInput;
@@ -528,7 +528,7 @@ export type ShareGuestUncheckedUpdateWithoutMarkersInput = {
 	id?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	shareLinkId?: Prisma.StringFieldUpdateOperationsInput | string;
-	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 };
@@ -536,7 +536,7 @@ export type ShareGuestUncheckedUpdateWithoutMarkersInput = {
 export type ShareGuestCreateWithoutShareLinkInput = {
 	id?: string;
 	createdAt?: Date | string;
-	name: string;
+	name?: string | null;
 	sessionTokenHash: string;
 	lastViewedAt?: Date | string | null;
 	markers?: Prisma.MarkerCreateNestedManyWithoutGuestInput;
@@ -545,7 +545,7 @@ export type ShareGuestCreateWithoutShareLinkInput = {
 export type ShareGuestUncheckedCreateWithoutShareLinkInput = {
 	id?: string;
 	createdAt?: Date | string;
-	name: string;
+	name?: string | null;
 	sessionTokenHash: string;
 	lastViewedAt?: Date | string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutGuestInput;
@@ -599,7 +599,7 @@ export type ShareGuestScalarWhereInput = {
 	id?: Prisma.StringFilter<"ShareGuest"> | string;
 	createdAt?: Prisma.DateTimeFilter<"ShareGuest"> | Date | string;
 	shareLinkId?: Prisma.StringFilter<"ShareGuest"> | string;
-	name?: Prisma.StringFilter<"ShareGuest"> | string;
+	name?: Prisma.StringNullableFilter<"ShareGuest"> | string | null;
 	sessionTokenHash?: Prisma.StringFilter<"ShareGuest"> | string;
 	lastViewedAt?: Prisma.DateTimeNullableFilter<"ShareGuest"> | Date | string | null;
 };
@@ -607,7 +607,7 @@ export type ShareGuestScalarWhereInput = {
 export type ShareGuestCreateManyShareLinkInput = {
 	id?: string;
 	createdAt?: Date | string;
-	name: string;
+	name?: string | null;
 	sessionTokenHash: string;
 	lastViewedAt?: Date | string | null;
 };
@@ -615,7 +615,7 @@ export type ShareGuestCreateManyShareLinkInput = {
 export type ShareGuestUpdateWithoutShareLinkInput = {
 	id?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	markers?: Prisma.MarkerUpdateManyWithoutGuestNestedInput;
@@ -624,7 +624,7 @@ export type ShareGuestUpdateWithoutShareLinkInput = {
 export type ShareGuestUncheckedUpdateWithoutShareLinkInput = {
 	id?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutGuestNestedInput;
@@ -633,7 +633,7 @@ export type ShareGuestUncheckedUpdateWithoutShareLinkInput = {
 export type ShareGuestUncheckedUpdateManyWithoutShareLinkInput = {
 	id?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 };
@@ -766,7 +766,7 @@ export type $ShareGuestPayload<
 			id: string;
 			createdAt: Date;
 			shareLinkId: string;
-			name: string;
+			name: string | null;
 			/**
 			 * sha256 of the cookie value; the raw token never touches the DB
 			 */
