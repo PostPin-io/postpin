@@ -1001,20 +1001,52 @@ describe("guest category", () => {
 		});
 	});
 
-	it("nothing can be merged into it", async () => {
-		await expectStatus(deleteCategory({ id: w.catA.id, mergeIntoId: guestId }), 400);
-	});
-
-	it("team markers can't be moved into it", async () => {
+	it("markers can be merged into it", async () => {
 		const m = await f.createMarker(w.exp1, w.catA, { author: w.owner.user });
-		await expectStatus(
-			moveMarker({ exportId: w.exp1.id, ids: [m.id], targetCategoryId: guestId }),
-			400,
+		expect(await deleteCategory({ id: w.catA.id, mergeIntoId: guestId })).toEqual({
+			success: true,
+		});
+		expect((await prisma.marker.findUniqueOrThrow({ where: { id: m.id } })).categoryId).toBe(
+			guestId,
 		);
 	});
 
-	it("is flagged and not deletable in getCategories, but renamable", async () => {
+	it("team members can move markers into it", async () => {
+		const m = await f.createMarker(w.exp1, w.catA, { author: w.owner.user });
+		await moveMarker({ exportId: w.exp1.id, ids: [m.id], targetCategoryId: guestId });
+		expect((await prisma.marker.findUniqueOrThrow({ where: { id: m.id } })).categoryId).toBe(
+			guestId,
+		);
+	});
+
+	it("team members can set it when editing a marker", async () => {
+		const m = await f.createMarker(w.exp1, w.catA, { author: w.owner.user });
+		const updated = await updateMarker({
+			id: m.id,
+			name: "Renamed",
+			description: "",
+			frame: m.frame,
+			categoryId: guestId,
+		});
+		expect(updated).toMatchObject({ name: "Renamed", categoryId: guestId });
+	});
+
+	it("is flagged, not deletable and not renamable in getCategories", async () => {
 		const guest = (await getCategories(w.projectA.id)).find((c) => c.id === guestId)!;
-		expect(guest).toMatchObject({ isGuest: true, canDelete: false, canUpdate: true });
+		expect(guest).toMatchObject({
+			isGuest: true,
+			canDelete: false,
+			canRename: false,
+			canUpdate: true,
+		});
+	});
+
+	it("can't be renamed, but its color can be changed", async () => {
+		await expectStatus(renameCategory({ id: guestId, name: "Feedback" }), 403);
+		await changeCategoryColor({ id: guestId, color: "#000000" });
+		expect(await prisma.category.findUniqueOrThrow({ where: { id: guestId } })).toMatchObject({
+			name: "Guest",
+			color: "#000000",
+		});
 	});
 });

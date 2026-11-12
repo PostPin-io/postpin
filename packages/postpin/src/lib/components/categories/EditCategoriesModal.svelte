@@ -10,6 +10,7 @@
 	} from "../review/markers/markers.remote";
 	import { page } from "$app/state";
 	import ColorPicker from "./ColorPicker.svelte";
+	import GuestCategoryInfo from "./GuestCategoryInfo.svelte";
 	import Pencil from "@lucide/svelte/icons/pencil";
 	import Check from "@lucide/svelte/icons/check";
 	import Trash from "@lucide/svelte/icons/trash";
@@ -120,7 +121,7 @@
 	}
 	async function renameCategoryHandler(id: string, name: string) {
 		const category = categories.find((c) => c.id === id);
-		if (!category?.canUpdate) return;
+		if (!category?.canRename) return;
 		const trimmedName = name.trim();
 		if (trimmedName === category.name) return;
 		if (trimmedName === "") return;
@@ -157,7 +158,7 @@
 							type="text"
 							class="input input-sm"
 							bind:value={category.name}
-							readonly={!category.canUpdate}
+							readonly={!category.canRename}
 							onblur={() => {
 								renameCategoryHandler(category.id, category.name);
 								isRenaming = null;
@@ -179,6 +180,9 @@
 					{/if}
 					{#if isRenaming !== category.id}
 						<span class="truncate">{category.name}</span>
+						{#if category.isGuest}
+							<GuestCategoryInfo id={category.id} />
+						{/if}
 						{#if category.canDelete}
 							<button
 								type="button"
@@ -189,7 +193,7 @@
 								<Trash class="size-[1.1em]" />
 							</button>
 						{/if}
-						{#if category.canUpdate}
+						{#if category.canRename}
 							<button
 								type="button"
 								class="btn btn-square btn-ghost btn-sm"

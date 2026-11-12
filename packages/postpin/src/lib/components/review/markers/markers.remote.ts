@@ -28,8 +28,12 @@ async function assertCategoriesInProject(categoryIds: string[], projectId: strin
 	const unique = [...new Set(categoryIds)];
 	const count = await prisma.category.count({ where: { id: { in: unique }, projectId } });
 	if (count !== unique.length) error(404, "Not found");
-	if (await prisma.project.count({ where: { guestCategoryId: { in: unique } } })) {
-		error(400, "The guest category is reserved for share-link visitors");
+}
+
+/** The guest category is always called "Guest" and can't be renamed */
+async function assertNotGuestCategory(categoryId: string) {
+	if (await isGuestCategory(categoryId)) {
+		error(403, "The guest category can't be renamed");
 	}
 }
 
@@ -206,11 +210,6 @@ export const pasteMarkers = command(
 		// 4. Kategorien zuordnen (siehe Schritt 3)
 		const categoryOf = await mapCategories(source, target.projectId!, data.fallbackCategoryId);
 
-		const { guestCategoryId } = await prisma.project.findUniqueOrThrow({
-			where: { id: target.projectId! },
-			select: { guestCategoryId: true },
-		});
-
 		// 5. Anlegen (+ bei "cut" Quelle löschen) in EINER Transaktion
 		const minFrame = Math.min(...source.map((m) => m.frame));
 		await assertFramesInTimeline(
@@ -225,11 +224,7 @@ export const pasteMarkers = command(
 						description: m.description,
 						frame: data.anchorFrame + (m.frame - minFrame),
 						exportId: data.targetExportId,
-						// a copy is a team marker: it may not sit in the guest category
-						categoryId:
-							data.mode === "copy" && m.categoryId === guestCategoryId
-								? data.fallbackCategoryId
-								: categoryOf(m),
+						categoryId: categoryOf(m),
 						// cut = verschieben → Autor bleibt (auch ein Gast); copy = neuer Marker → wer einfügt
 						authorId: data.mode === "cut" ? m.authorId : user.id,
 						guestId: data.mode === "cut" ? m.guestId : null,
@@ -555,6 +550,7 @@ export const getCategories = query(v.string(), async (projectId: string) => {
 			...c,
 			isGuest,
 			canUpdate: allowed("category", "update", t),
+			canRename: !isGuest && allowed("category", "update", t),
 			canDelete: !isGuest && allowed("category", "delete", t),
 		};
 	});
@@ -718,6 +714,7 @@ export const renameCategory = command(
 	}),
 	async (data) => {
 		await authorize("category", "update", { type: "category", id: data.id });
+		await assertNotGuestCategory(data.id);
 		const category = await prisma.category
 			.update({
 				where: { id: data.id },

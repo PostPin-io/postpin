@@ -37,6 +37,16 @@ describe("createProject", () => {
 		},
 	);
 
+	it("creates the guest category with the project", async () => {
+		await signInAs(w.org, OWNER);
+		await createProject({ name: "With guest" });
+		const p = await prisma.project.findFirstOrThrow({
+			where: { name: "With guest" },
+			include: { guestCategory: true },
+		});
+		expect(p.guestCategory).toMatchObject({ name: "Guest", projectId: p.id, createdById: null });
+	});
+
 	it("a member without any grant creates a project and gets a project grant on it", async () => {
 		const me = await signInAs(w.org, MEMBER);
 		await createProject({ name: "Mine" });

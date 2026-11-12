@@ -168,7 +168,7 @@
 	let creating = false;
 
 	async function resolveDefaultCategory() {
-		// The guest category is reserved for share-link visitors: team markers can't use it
+		// New team markers don't default to the guest category, but it can be picked afterwards
 		const categories = (await getCategories(projectId)).filter((c) => !c.isGuest);
 
 		let categoryId = categories.find((c) => c.id === defaultCategory.id)?.id ?? categories[0]?.id;

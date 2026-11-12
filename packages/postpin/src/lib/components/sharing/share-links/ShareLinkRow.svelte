@@ -63,18 +63,18 @@
 		<div class="flex min-w-0 flex-1 items-center gap-3 {active ? '' : 'opacity-50'}">
 			<PanelLayout mini timeline={link.timelinePanelVisible} markers={link.markerPanelVisible} />
 			{#if label}
-				<span class="min-w-0 flex-1 truncate text-sm" title={link.note}>{label}</span>
+				<span class="max-w-48 min-w-0 flex-1 truncate text-sm" title={link.note}>{label}</span>
 			{/if}
-			<span
-				class="flex items-center gap-1 text-sm whitespace-nowrap {left.warn
-					? 'text-error'
-					: 'text-base-content/60'}"
-				title={active ? `Expires ${link.expiresAt.toLocaleString()}` : "Expired, edit to renew"}
-			>
-				<Clock size={14} />{left.text}
-			</span>
 		</div>
 
+		<span
+			class="flex items-center gap-1 text-sm whitespace-nowrap {left.warn
+				? 'text-error'
+				: 'text-base-content/60'}"
+			title={active ? `Expires ${link.expiresAt.toLocaleString()}` : "Expired, edit to renew"}
+		>
+			<Clock size={14} />{left.text}
+		</span>
 		<div class="flex shrink-0 gap-1">
 			{#if link.canUpdate}
 				<button

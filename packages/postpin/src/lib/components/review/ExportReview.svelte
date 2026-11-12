@@ -134,7 +134,7 @@
 		isMarkerVisible ? await getMarkers(markersKey(exportId, shareToken)) : [],
 	);
 	let markers = $derived(markerFilter.apply(allMarkers));
-	// Team only: guests have no categories. The guest category is reserved, so new markers never use it
+	// Team only: guests have no categories. New markers don't default to the guest category
 	const creatableCategories = $derived(
 		!share && projectId ? (await getCategories(projectId)).filter((c) => !c.isGuest) : [],
 	);

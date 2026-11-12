@@ -170,7 +170,7 @@ describe("team view", () => {
 		await createResponse({ markerId: own, content: "On it" });
 	});
 
-	it("paste: copy becomes a team marker outside the guest category, cut keeps the guest", async () => {
+	it("paste: copy becomes a team marker, cut keeps the guest; both keep the guest category", async () => {
 		const base = {
 			sourceExportId: w.exp.id,
 			markerIds: [own],
@@ -182,7 +182,7 @@ describe("team view", () => {
 		await pasteMarkers({ ...base, mode: "copy" });
 		expect(
 			await prisma.marker.findFirstOrThrow({ where: { exportId: w.otherExp.id, guestId: null } }),
-		).toMatchObject({ authorId: w.owner.user.id, categoryId: w.teamCategory.id });
+		).toMatchObject({ authorId: w.owner.user.id, categoryId: await guestCategoryId() });
 
 		await pasteMarkers({ ...base, mode: "cut" });
 		expect(

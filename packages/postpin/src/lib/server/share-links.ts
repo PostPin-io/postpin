@@ -6,7 +6,7 @@ import { prisma } from "#lib/server/database.ts";
 
 type Tx = Prisma.TransactionClient;
 
-export const GUEST_CATEGORY_NAME = "Gast";
+export const GUEST_CATEGORY_NAME = "Guest";
 export const GUEST_CATEGORY_COLOR = "#8b5cf6";
 
 /** 256 bit, URL-safe */
@@ -37,7 +37,8 @@ export async function resolveShareLink(token: string) {
 }
 
 /**
- * Id of the project's guest category, created on first use.
+ * Id of the project's guest category. It is created with the project, so this only creates
+ * one for projects that lack it.
  * createdById stays null: nobody owns it, so moveMarker's cleanup
  * (deletes only the user's own empty categories) never removes it.
  */
