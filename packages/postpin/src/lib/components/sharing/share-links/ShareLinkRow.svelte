@@ -65,13 +65,7 @@
 		<!-- Expired: everything but the buttons greyed out -->
 		<div class="flex min-w-0 flex-1 items-center gap-3 {active ? '' : 'opacity-50'}">
 			<PanelLayout mini timeline={link.timelinePanelVisible} markers={link.markerPanelVisible} />
-			{#if label}
-				<span class="min-w-0 flex-1 truncate text-sm" title={link.note}>{label}</span>
-			{:else}
-				<span class="hidden min-w-0 flex-1 truncate text-sm text-base-content/50 sm:inline"
-					>Created {created}</span
-				>
-			{/if}
+
 			<span
 				class="flex items-center gap-1 text-sm whitespace-nowrap {left.warn
 					? 'text-error'

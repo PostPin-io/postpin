@@ -80,7 +80,7 @@
 		<label class="flex min-w-50 flex-1">
 			<span class="sr-only">Note</span>
 			<textarea
-				class="textarea h-full min-h-24 w-full resize-none textarea-sm"
+				class="textarea min-h-24 w-full flex-1 resize-none textarea-sm"
 				maxlength={NOTE_MAX_LENGTH}
 				placeholder="Note: shown in the player and added to the e-mail"
 				bind:value={values.note}
@@ -89,49 +89,50 @@
 	</div>
 
 	<!-- Slim bar: expiry, note length, cancel and save -->
-	<div class="flex flex-wrap items-center gap-2 border-t border-base-300 pt-2.5">
-		<span title="Expires after{editing ? ' (from now)' : ''}">
-			<Clock size={14} class="text-base-content/60" />
-		</span>
-		<div class="join">
-			{#each presets as preset (preset ?? "keep")}
-				<button
-					type="button"
-					class="btn join-item btn-xs {values.preset === preset ? 'btn-neutral' : ''}"
-					aria-pressed={values.preset === preset}
-					title={preset ? PRESET_TITLES[preset] : keepTitle}
-					disabled={busy}
-					onclick={() => (values.preset = preset)}
-				>
-					{preset ?? keepLabel}
-				</button>
-			{/each}
+	<div class="flex flex-wrap items-center justify-between gap-2 border-t border-base-300 pt-2.5">
+		<div class="flex min-w-0 flex-wrap items-center gap-2">
+			<div class="join">
+				{#each presets as preset (preset ?? "keep")}
+					<button
+						type="button"
+						class="btn join-item btn-xs {values.preset === preset ? 'btn-neutral' : ''}"
+						aria-pressed={values.preset === preset}
+						title={preset ? PRESET_TITLES[preset] : keepTitle}
+						disabled={busy}
+						onclick={() => (values.preset = preset)}
+					>
+						{preset ?? keepLabel}
+					</button>
+				{/each}
+			</div>
 		</div>
 
-		<span class="ml-auto text-xs text-base-content/50">
-			{#if values.note.length}{values.note.length} / {NOTE_MAX_LENGTH}{/if}
-		</span>
-		{#if oncancel}
+		<div class="ml-auto flex shrink-0 items-center gap-2">
+			<span class="text-xs whitespace-nowrap text-base-content/50">
+				{#if values.note.length}{values.note.length} / {NOTE_MAX_LENGTH}{/if}
+			</span>
+			{#if oncancel}
+				<button
+					type="button"
+					class="btn btn-square btn-sm"
+					title="Cancel"
+					aria-label="Cancel"
+					disabled={busy}
+					onclick={oncancel}
+				>
+					<X size={16} />
+				</button>
+			{/if}
 			<button
-				type="button"
-				class="btn btn-square btn-sm"
-				title="Cancel"
-				aria-label="Cancel"
+				class="btn btn-square btn-primary btn-sm"
+				title={submitLabel}
+				aria-label={submitLabel}
 				disabled={busy}
-				onclick={oncancel}
 			>
-				<X size={16} />
+				{#if busy}<span class="loading loading-xs loading-spinner"></span>{:else}<Check
+						size={16}
+					/>{/if}
 			</button>
-		{/if}
-		<button
-			class="btn btn-square btn-primary btn-sm"
-			title={submitLabel}
-			aria-label={submitLabel}
-			disabled={busy}
-		>
-			{#if busy}<span class="loading loading-xs loading-spinner"></span>{:else}<Check
-					size={16}
-				/>{/if}
-		</button>
+		</div>
 	</div>
 </form>
