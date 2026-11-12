@@ -1,6 +1,6 @@
 <script lang="ts">
-	import ChevronLeft from "@lucide/svelte/icons/chevron-left";
-	import ChevronRight from "@lucide/svelte/icons/chevron-right";
+	import CategoryBadge from "../../categories/CategoryBadge.svelte";
+
 	import X from "@lucide/svelte/icons/x";
 	import Send from "@lucide/svelte/icons/send";
 	import LocateFixed from "@lucide/svelte/icons/locate-fixed";
@@ -15,6 +15,10 @@
 	interface Props {
 		/** The marker being edited; undefined closes the modal, also once the marker is deleted */
 		marker: ReviewMarker | undefined;
+		/** Neighbors in the list, shown as cards while swiping; undefined at the ends */
+		previous: ReviewMarker | undefined;
+		next: ReviewMarker | undefined;
+
 		startFrame: number;
 		frameRate: FrameRate;
 		onclose: () => void;
@@ -22,7 +26,9 @@
 		/** Swipe left/right: -1 for the previous marker, 1 for the next one */
 		onnavigate: (direction: -1 | 1) => void;
 	}
-	let { marker, startFrame, frameRate, onclose, onseek, onnavigate }: Props = $props();
+	let { marker, previous, next, startFrame, frameRate, onclose, onseek, onnavigate }: Props =
+		$props();
+
 	let updateMarkerComponent: UpdateMarker | null = $state(null);
 	let deleting = $state(false);
 
@@ -69,65 +75,100 @@
 		}
 	}
 
-	// Swipe down from the top of the content to close, left/right for the next/previous marker
-	const CLOSE_DISTANCE = 60;
-	const NAVIGATE_DISTANCE = 60;
+	// ── Swipe: cards side by side, the finger drags them 1:1 ──
+	const GAP = 12; // px between two cards
+	const SNAP_MS = 220; // must match duration-220 on the cards
+	const CLOSE_DISTANCE = 60; // swipe down from the top this far to close
+	const NAVIGATE_SHARE = 0.25; // or drag a quarter of the width…
+	const FLICK_SPEED = 0.5; // …or flick faster than this (px/ms)
+
 	let scroller: HTMLElement | null = $state(null);
-	let box: HTMLElement | null = $state(null);
-	let dragStart: { x: number; y: number; fromTop: boolean } | null = null;
-	let lastTouch = { x: 0, y: 0 };
-	let dragOffset = $state(0);
+	let track: HTMLElement | null = $state(null);
+	let trackWidth = $state(0);
 	let dragX = $state(0);
+	let dragY = $state(0);
+	let snapping = $state(false);
+	let gesture: {
+		x: number;
+		y: number;
+		time: number;
+		fromTop: boolean;
+		axis: "x" | "y" | null;
+	} | null = null;
 
 	function onTouchStart(event: TouchEvent) {
 		const target = event.target as HTMLElement;
 		const touch = event.touches[0];
-		dragStart =
-			event.touches.length === 1 && !target.closest("textarea, input")
-				? { x: touch.clientX, y: touch.clientY, fromTop: (scroller?.scrollTop ?? 0) <= 0 }
+		gesture =
+			!snapping && event.touches.length === 1 && !target.closest("textarea, input")
+				? {
+						x: touch.clientX,
+						y: touch.clientY,
+						time: event.timeStamp,
+						fromTop: (scroller?.scrollTop ?? 0) <= 0,
+						axis: null,
+					}
 				: null;
-		lastTouch = { x: touch.clientX, y: touch.clientY };
 	}
 
 	function onTouchMove(event: TouchEvent) {
-		if (!dragStart) return;
+		if (!gesture) return;
 		const touch = event.touches[0];
-		lastTouch = { x: touch.clientX, y: touch.clientY };
-		const dy = touch.clientY - dragStart.y;
-		const dx = touch.clientX - dragStart.x;
-		const horizontal = Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.5;
-		dragX = horizontal ? dx : 0;
-		if (!dragStart.fromTop || dy <= 0 || Math.abs(dx) > dy) {
-			dragOffset = 0;
-			return;
+		const dx = touch.clientX - gesture.x;
+		const dy = touch.clientY - gesture.y;
+		// Decide once per gesture, so a sideways swipe never scrolls and a scroll never swipes
+		if (!gesture.axis) {
+			if (Math.max(Math.abs(dx), Math.abs(dy)) < 10) return;
+			gesture.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
 		}
-		// Keeps the browser's pull-to-refresh from taking over the same gesture
-		if (event.cancelable) event.preventDefault();
-		dragOffset = dy;
+		if (gesture.axis === "x") {
+			if (event.cancelable) event.preventDefault();
+			// Rubber band at the first and last marker
+			const blocked = (dx < 0 && !next) || (dx > 0 && !previous);
+			dragX = blocked ? dx * 0.25 : dx;
+		} else if (gesture.fromTop && dy > 0) {
+			// Keeps the browser's pull-to-refresh from taking over the same gesture
+			if (event.cancelable) event.preventDefault();
+			dragY = dy;
+		}
 	}
 
 	function onTouchEnd(event: TouchEvent) {
-		const start = dragStart;
-		const shouldClose = dragOffset >= CLOSE_DISTANCE;
-		dragStart = null;
-		dragOffset = 0;
-		dragX = 0;
-		if (shouldClose) {
-			dialog?.close();
+		const g = gesture;
+		gesture = null;
+		if (!g) return;
+
+		if (dragY) {
+			const shouldClose = dragY >= CLOSE_DISTANCE && event.type === "touchend";
+			dragY = 0;
+			if (shouldClose) dialog?.close();
 			return;
 		}
-		if (!start || event.type === "touchcancel") return;
-		const dx = lastTouch.x - start.x;
-		const dy = lastTouch.y - start.y;
-		if (Math.abs(dx) >= NAVIGATE_DISTANCE && Math.abs(dx) > Math.abs(dy) * 1.5) {
-			onnavigate(dx < 0 ? 1 : -1);
+		if (g.axis !== "x") return;
+
+		const speed = dragX / Math.max(event.timeStamp - g.time, 1);
+		const far = Math.abs(dragX) >= trackWidth * NAVIGATE_SHARE || Math.abs(speed) >= FLICK_SPEED;
+		let direction: -1 | 0 | 1 = 0;
+		if (event.type === "touchend" && far) {
+			if (dragX < 0 && next) direction = 1;
+			if (dragX > 0 && previous) direction = -1;
 		}
+
+		// Let the cards glide to their end position, then swap the marker
+		snapping = true;
+		dragX = direction === 0 ? 0 : -direction * (trackWidth + GAP);
+		setTimeout(() => {
+			if (direction !== 0) onnavigate(direction);
+			// Same tick as the marker swap: the new current card sits at 0 without a jump
+			snapping = false;
+			dragX = 0;
+		}, SNAP_MS);
 	}
 
 	// Svelte's touch handlers are passive, so preventDefault needs manual listeners
 	$effect(() => {
-		if (!box) return;
-		const el = box;
+		if (!track) return;
+		const el = track;
 		el.addEventListener("touchstart", onTouchStart, { passive: true });
 		el.addEventListener("touchmove", onTouchMove, { passive: false });
 		el.addEventListener("touchend", onTouchEnd);
@@ -140,8 +181,25 @@
 		};
 	});
 
-	// Swiping left reveals "next" on the right edge, swiping right reveals "previous" on the left
-	const swipeProgress = $derived(Math.min(Math.abs(dragX) / NAVIGATE_DISTANCE, 1));
+	// 0 at rest, 1 once a neighbor has fully slid in
+	const progress = $derived(trackWidth ? Math.min(Math.abs(dragX) / (trackWidth + GAP), 1) : 0);
+
+	/** The category color as the card frame; strength 0–100 fades it towards transparent */
+	function frameColor(color: string, strength: number) {
+		return `color-mix(in oklab, ${color} ${Math.round(strength)}%, transparent)`;
+	}
+
+	/** offset -1 = previous card, 0 = current, 1 = next */
+	function cardTransform(offset: -1 | 0 | 1) {
+		return `translate3d(calc(${offset * 100}% + ${offset * GAP + dragX}px), 0, 0)`;
+	}
+
+	// The card leaving fades out, the card coming in fades in
+	const FADED = 25;
+	const currentStrength = $derived(100 - progress * (100 - FADED));
+	const incomingStrength = $derived(FADED + progress * (100 - FADED));
+	const previousStrength = $derived(dragX > 0 ? incomingStrength : FADED);
+	const nextStrength = $derived(dragX < 0 ? incomingStrength : FADED);
 
 	const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
 		dateStyle: "medium",
@@ -149,142 +207,165 @@
 	});
 </script>
 
+{#snippet previewCard(neighbor: ReviewMarker, offset: -1 | 1, strength: number)}
+	<!-- Read-only preview: only the current card is interactive -->
+	<div
+		class="pointer-events-none absolute inset-0 flex flex-col overflow-hidden rounded-box border-[3px] bg-base-100 {snapping
+			? 'transition-[transform,border-color] duration-220 ease-out'
+			: ''}"
+		style:border-color={frameColor(neighbor.category.color, strength)}
+		style:transform={cardTransform(offset)}
+		aria-hidden="true"
+	>
+		<header class="flex min-h-14 shrink-0 items-center border-b border-base-300 px-2 py-2">
+			<h2 class="min-w-0 flex-1 truncate text-center text-lg font-semibold">
+				{neighbor.name?.trim() || "Marker"}
+			</h2>
+		</header>
+		<div class="flex flex-col gap-3 p-4">
+			<div class="flex items-center gap-2">
+				<span class="font-mono">{formatTimecode(neighbor.frame, frameRate)}</span>
+				<CategoryBadge category={neighbor.category} class="px-3 badge-md font-semibold" />
+			</div>
+			{#if neighbor.description}
+				<p class="line-clamp-6 whitespace-pre-wrap text-base-content/80">
+					{neighbor.description}
+				</p>
+			{/if}
+		</div>
+	</div>
+{/snippet}
+
 <!-- Fullscreen on the phone: the editor, the conversation and the reply field in one place -->
 <dialog bind:this={dialog} class="modal" {onclose}>
 	<div
-		bind:this={box}
-		class="modal-box flex h-dvh max-h-none w-full max-w-none flex-col overscroll-contain rounded-none p-0 {dragOffset ||
-		dragX
-			? ''
-			: 'transition-transform'}"
-		style:transform={dragOffset
-			? `translateY(${dragOffset}px)`
-			: dragX
-				? `translateX(${dragX * 0.3}px)`
-				: undefined}
+		class="fixed inset-0 bg-base-300 px-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))]"
 	>
-		{#if marker}
-			<header
-				class="flex shrink-0 items-center gap-1 border-b border-base-300 px-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2"
-			>
-				{#if marker.canDelete}
-					<button
-						type="button"
-						class="btn btn-square btn-error"
-						title="Delete marker"
-						aria-label="Delete marker"
-						disabled={deleting}
-						onclick={() => void deleteCurrentMarker()}
-					>
-						<Trash size={20} />
-					</button>
-				{/if}
-				<h2 class="min-w-0 flex-1 truncate text-center text-lg font-semibold">
-					{marker.name?.trim() || "Marker"}
-				</h2>
-				{#if marker.canDelete}
-					<span class="w-12 shrink-0" aria-hidden="true"></span>
-				{/if}
-			</header>
+		<div
+			bind:this={track}
+			bind:clientWidth={trackWidth}
+			class="relative h-full overflow-hidden overscroll-contain {dragY
+				? ''
+				: 'transition-transform'}"
+			style:transform={dragY ? `translateY(${dragY}px)` : undefined}
+		>
+			{#if marker}
+				{#if previous}{@render previewCard(previous, -1, previousStrength)}{/if}
+				{#if next}{@render previewCard(next, 1, nextStrength)}{/if}
 
-			<div bind:this={scroller} class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-				{#key marker.id}
-					<UpdateMarker
-						bind:this={updateMarkerComponent}
-						{marker}
-						{startFrame}
-						mobile
-						onclose={() => dialog?.close()}
+				<div
+					class="absolute inset-0 flex flex-col overflow-hidden rounded-box border-[3px] bg-base-100 {snapping
+						? 'transition-[transform,border-color] duration-220 ease-out'
+						: ''}"
+					style:border-color={frameColor(marker.category.color, currentStrength)}
+					style:transform={cardTransform(0)}
+				>
+					<header
+						class="flex min-h-14 shrink-0 items-center gap-1 border-b border-base-300 px-2 py-2"
 					>
-						{#snippet mobileHeaderAction()}
+						{#if marker.canDelete}
 							<button
 								type="button"
-								class="btn btn-ghost"
-								aria-label="Go to marker in the video"
-								onclick={() => {
-									onseek(marker!.frame);
-									dialog?.close();
+								class="btn btn-square btn-error"
+								title="Delete marker"
+								aria-label="Delete marker"
+								disabled={deleting}
+								onclick={() => void deleteCurrentMarker()}
+							>
+								<Trash size={20} />
+							</button>
+						{/if}
+						<h2 class="min-w-0 flex-1 truncate text-center text-lg font-semibold">
+							{marker.name?.trim() || "Marker"}
+						</h2>
+						{#if marker.canDelete}
+							<span class="w-12 shrink-0" aria-hidden="true"></span>
+						{/if}
+					</header>
+
+					<div bind:this={scroller} class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+						{#key marker.id}
+							<UpdateMarker
+								bind:this={updateMarkerComponent}
+								{marker}
+								{startFrame}
+								mobile
+								onclose={() => dialog?.close()}
+							>
+								{#snippet mobileHeaderAction()}
+									<button
+										type="button"
+										class="btn btn-ghost"
+										aria-label="Go to marker in the video"
+										onclick={() => {
+											onseek(marker!.frame);
+											dialog?.close();
+										}}
+									>
+										<LocateFixed size={20} />
+										<span class="font-mono">{formatTimecode(marker!.frame, frameRate)}</span>
+									</button>
+								{/snippet}
+							</UpdateMarker>
+						{/key}
+
+						{#if !share}
+							<form
+								class="flex items-end gap-2 px-4 pb-4"
+								onsubmit={(event) => {
+									event.preventDefault();
+									void send();
 								}}
 							>
-								<LocateFixed size={20} />
-								<span class="font-mono">{formatTimecode(marker!.frame, frameRate)}</span>
-							</button>
-						{/snippet}
-					</UpdateMarker>
-				{/key}
+								<textarea
+									class="textarea min-h-11 flex-1 resize-none"
+									rows="1"
+									placeholder="Write a response…"
+									aria-label="Response"
+									bind:value={reply}></textarea>
+								<button
+									type="submit"
+									class="btn btn-square btn-primary"
+									aria-label="Send response"
+									disabled={sending || !reply.trim()}
+								>
+									{#if sending}<span class="loading loading-sm loading-spinner"></span>{:else}<Send
+											size={20}
+										/>{/if}
+								</button>
+							</form>
 
-				{#if !share}
-					<form
-						class="flex items-end gap-2 px-4 pb-4"
-						onsubmit={(event) => {
-							event.preventDefault();
-							void send();
-						}}
-					>
-						<textarea
-							class="textarea min-h-11 flex-1 resize-none"
-							rows="1"
-							placeholder="Write a response…"
-							aria-label="Response"
-							bind:value={reply}></textarea>
+							<section class="flex flex-col gap-3 px-4 pb-4" aria-label="Responses">
+								<h3 class="font-semibold">Responses ({responses.length})</h3>
+								<!-- Newest first: right below the reply field, where a sent response shows up -->
+								{#each [...responses].reverse() as response (response.id)}
+									<div class="rounded-box border border-base-300 bg-base-200/40 px-3 py-2">
+										<p class="break-words whitespace-pre-wrap">{response.content}</p>
+										<p class="mt-1 text-xs text-base-content/60">
+											{response.author?.name ?? "Deleted User"} · {dateTimeFormat.format(
+												response.createdAt,
+											)}
+										</p>
+									</div>
+								{:else}
+									<p class="text-sm text-base-content/60">No responses yet.</p>
+								{/each}
+							</section>
+						{/if}
+					</div>
+
+					<footer class="flex shrink-0 justify-end border-t border-base-300 px-3 py-2">
 						<button
-							type="submit"
-							class="btn btn-square btn-primary"
-							aria-label="Send response"
-							disabled={sending || !reply.trim()}
+							type="button"
+							class="btn btn-square btn-ghost"
+							aria-label="Close"
+							onclick={() => dialog?.close()}
 						>
-							{#if sending}<span class="loading loading-sm loading-spinner"></span>{:else}<Send
-									size={20}
-								/>{/if}
+							<X size={22} />
 						</button>
-					</form>
-
-					<section class="flex flex-col gap-3 px-4 pb-4" aria-label="Responses">
-						<h3 class="font-semibold">Responses ({responses.length})</h3>
-						<!-- Newest first: right below the reply field, where a sent response shows up -->
-						{#each [...responses].reverse() as response (response.id)}
-							<div class="rounded-box border border-base-300 bg-base-200/40 px-3 py-2">
-								<p class="break-words whitespace-pre-wrap">{response.content}</p>
-								<p class="mt-1 text-xs text-base-content/60">
-									{response.author?.name ?? "Deleted User"} · {dateTimeFormat.format(
-										response.createdAt,
-									)}
-								</p>
-							</div>
-						{:else}
-							<p class="text-sm text-base-content/60">No responses yet.</p>
-						{/each}
-					</section>
-				{/if}
-			</div>
-
-			<footer
-				class="flex shrink-0 justify-end border-t border-base-300 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
-			>
-				<button
-					type="button"
-					class="btn btn-square btn-ghost"
-					aria-label="Close"
-					onclick={() => dialog?.close()}
-				>
-					<X size={22} />
-				</button>
-			</footer>
-		{/if}
-	</div>
-	{#if dragX}
-		<div
-			class="pointer-events-none fixed top-1/2 z-10 flex size-12 items-center justify-center rounded-full shadow-lg {dragX <
-			0
-				? 'right-3'
-				: 'left-3'} {swipeProgress >= 1
-				? 'bg-primary text-primary-content'
-				: 'bg-base-300 text-base-content'}"
-			style:opacity={0.3 + swipeProgress * 0.7}
-			style:transform={`translateY(-50%) scale(${0.6 + swipeProgress * 0.4})`}
-			aria-hidden="true"
-		>
-			{#if dragX < 0}<ChevronRight size={28} />{:else}<ChevronLeft size={28} />{/if}
+					</footer>
+				</div>
+			{/if}
 		</div>
-	{/if}
+	</div>
 </dialog>

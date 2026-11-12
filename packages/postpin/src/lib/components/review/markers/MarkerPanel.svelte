@@ -37,6 +37,8 @@
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
+	import ChevronLeft from "@lucide/svelte/icons/chevron-left";
+	import ChevronRight from "@lucide/svelte/icons/chevron-right";
 
 	interface Props {
 		exportId: string;
@@ -120,11 +122,14 @@
 	let editingMarkerId = $state<string | null>(null);
 	let editingMarker = $derived(markers.find((marker) => marker.id === editingMarkerId));
 
-	// Stops at the first and last marker of the list
+	// The neighbors the modal shows as cards while swiping; none at the ends of the list
+	let editingIndex = $derived(visibleMarkers.findIndex((marker) => marker.id === editingMarkerId));
+	let previousMarker = $derived(editingIndex > 0 ? visibleMarkers[editingIndex - 1] : undefined);
+	let nextMarker = $derived(editingIndex !== -1 ? visibleMarkers[editingIndex + 1] : undefined);
+
 	function navigateEditingMarker(direction: -1 | 1) {
-		const index = visibleMarkers.findIndex((marker) => marker.id === editingMarkerId);
-		const target = visibleMarkers[index + direction];
-		if (index !== -1 && target) editingMarkerId = target.id;
+		const target = direction === 1 ? nextMarker : previousMarker;
+		if (target) editingMarkerId = target.id;
 	}
 
 	let isUpdateMarkerFocused = $state(false);
@@ -537,6 +542,8 @@
 {#if mobile}
 	<MobileMarkerModal
 		marker={editingMarker}
+		previous={previousMarker}
+		next={nextMarker}
 		{startFrame}
 		{frameRate}
 		{onseek}
