@@ -5,7 +5,7 @@ import "./app.css";
 
 const app = mount(App, {
 	target: document.getElementById("app")!,
-	props: { nle: connectNleBridge(), host: connectHostBridge() },
+	props: { nle: connectNleBridge(), host: await connectHostBridge() },
 });
 
 export default app;

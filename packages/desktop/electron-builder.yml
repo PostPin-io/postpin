@@ -18,6 +18,7 @@ mac:
   target:
     - { target: dmg, arch: universal }
     - { target: zip, arch: universal } # electron-updater needs the zip on macOS
+  x64ArchFiles: "Contents/Resources/bin/*" # dont try to merge
 win:
   icon: dist/icon.png
   target: nsis
@@ -27,3 +28,5 @@ publish:
   provider: github
   owner: PostPin-io
   repo: postpin
+extraResources:
+  - { from: "bin/${os}", to: "bin" } # ${os} is mac or win

@@ -603,7 +603,11 @@ function openWindow() {
 		url: path.join(__dirname, "ui/index.html"),
 	});
 
-	exposeHostBridge(win, { clientId: CLIENT_ID, defaultServerUrl: DEFAULT_SERVER_URL });
+	exposeHostBridge(win, {
+		clientId: CLIENT_ID,
+		defaultServerUrl: DEFAULT_SERVER_URL,
+		ffmpegDir: path.join(__dirname, "bin"),
+	});
 	exposeNleBridge(win, resolveBridge);
 
 	win.on("close", () => {

@@ -55,6 +55,36 @@ export interface LoginCode {
 	userCode: string;
 	verificationUri: string;
 }
+export interface ProbedMedia {
+	width: number;
+	height: number;
+	rotation?: number;
+	hasAudio: boolean;
+	duration?: number;
+}
+export interface Rendition {
+	width: number;
+	height: number;
+	bitRate: number;
+}
+export interface HlsRange {
+	offset: number;
+	length: number;
+}
+export interface HlsSegment {
+	duration: number;
+	offset: number;
+	length: number;
+}
+export interface HlsInfo {
+	init: HlsRange;
+	segments: HlsSegment[];
+}
+export interface EncodedProxy {
+	path: string;
+	hls: HlsInfo;
+	bytes: number;
+}
 export interface ICommonAPIImpl {
 	getServerUrl(): Promise<string> | string;
 	getDefaultServerUrl(): Promise<string> | string;
@@ -73,6 +103,14 @@ export interface ICommonAPIImpl {
 	openInBrowser(path: string): Promise<boolean> | boolean;
 	pickDirectory(): Promise<string> | string;
 	setProgress(fraction: number): Promise<boolean> | boolean;
+	canTranscode(): Promise<boolean> | boolean;
+	probe(path: string): Promise<ProbedMedia> | ProbedMedia;
+	transcode(
+		input: string,
+		renditions: Rendition[],
+		hasAudio: boolean,
+	): Promise<EncodedProxy[]> | EncodedProxy[];
+	removeFile(path: string): Promise<boolean> | boolean;
 }
 export interface ICommonAPIRenderer {
 	getServerUrl(): Promise<string>;
@@ -88,9 +126,14 @@ export interface ICommonAPIRenderer {
 	openInBrowser(path: string): Promise<boolean>;
 	pickDirectory(): Promise<string>;
 	setProgress(fraction: number): Promise<boolean>;
+	canTranscode(): Promise<boolean>;
+	probe(path: string): Promise<ProbedMedia>;
+	transcode(input: string, renditions: Rendition[], hasAudio: boolean): Promise<EncodedProxy[]>;
+	removeFile(path: string): Promise<boolean>;
 	onLoginCode(fn: (code: LoginCode) => void): () => void;
 	onSessionChanged(fn: (session: unknown) => void): () => void;
 	onUploadProgress(fn: (progress: UploadProgress) => void): () => void;
+	onTranscodeProgress(fn: (fraction: number) => void): () => void;
 }
 export interface TimelineInfo {
 	name: string;

@@ -19,3 +19,23 @@ interface DesktopAPI {
   // throws while an action runs on the current host
   selectHost(id: string) -> boolean
 }
+
+structure AvailableUpdate {
+  version: string
+  // null when the release's api-version.json couldn't be read
+  apiVersion?: number
+}
+
+// Updates the app in place through electron-updater (GitHub releases)
+[RendererAPI]
+[ContextBridge]
+[Validator=App]
+interface UpdaterAPI {
+  // the newest release when it's newer than this one, null otherwise or in development
+  checkForUpdate() -> AvailableUpdate?
+  downloadUpdate() -> boolean
+  [Event]
+  updateProgress(fraction: number)
+  // quits and restarts into the downloaded update
+  installUpdate() -> boolean
+}

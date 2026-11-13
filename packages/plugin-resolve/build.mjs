@@ -1,6 +1,7 @@
 import esbuild from "esbuild";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 
 const { version } = JSON.parse(await fs.readFile("package.json", "utf8"));
 const dev = process.argv.includes("--dev");
@@ -44,6 +45,18 @@ await fs.writeFile(
 	"dist/package.json",
 	JSON.stringify({ name: "postpin-resolve", version, main: "main.js" }, null, 2),
 );
+
+// macOS: universal; Windows targets get the Windows build
+const ffmpegPlatform = target.startsWith("win32") ? "windows-x64" : "macos-universal";
+try {
+	execFileSync("node", ["../../tools/ffmpeg/fetch.mjs", ffmpegPlatform, "dist/bin"], {
+		stdio: "inherit",
+	});
+} catch (error) {
+	// a release must ship ffmpeg; while developing, the server encodes without it (or set FFMPEG_DIR)
+	if (!dev) throw error;
+	console.warn("No ffmpeg in dist/bin, the server encodes. Set FFMPEG_DIR to use a local one.");
+}
 
 let installing = Promise.resolve();
 const installDist = () =>
