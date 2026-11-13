@@ -4,6 +4,8 @@
 #   tools/ffmpeg/build.sh macos-x64      # same Mac, cross compiled; needs nasm
 #   tools/ffmpeg/build.sh windows-x64    # on Linux; needs mingw-w64, nasm
 set -euo pipefail
+# Runs with macOS's bash 3.2 too (GitHub's runners): there, "${empty[@]}" fails under set -u, so the
+# arrays that may be empty expand as ${name[@]+"${name[@]}"}
 PLATFORM=${1:?platform}
 HERE=$(cd "$(dirname "$0")" && pwd)
 WORK=${WORK:-$HERE/.work}
@@ -46,7 +48,7 @@ case $PLATFORM in
 esac
 
 fetch x264
-(cd "$SRC/x264" && ./configure --prefix="$PREFIX" --enable-static --disable-cli --enable-pic "${X264_HOST[@]}" \
+(cd "$SRC/x264" && ./configure --prefix="$PREFIX" --enable-static --disable-cli --enable-pic ${X264_HOST[@]+"${X264_HOST[@]}"} \
   && make -j"$JOBS" && make install)
 
 if [ "$PLATFORM" = windows-x64 ]; then
@@ -60,7 +62,7 @@ fetch ffmpeg
 (cd "$SRC/ffmpeg" && PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig" ./configure \
   --prefix="$PREFIX" --pkg-config-flags=--static \
   --extra-cflags="-I$PREFIX/include" --extra-ldflags="-L$PREFIX/lib" \
-  "${FF_CROSS[@]}" "${COMMON_FLAGS[@]}" "${EXTRA[@]}" \
+  ${FF_CROSS[@]+"${FF_CROSS[@]}"} "${COMMON_FLAGS[@]}" "${EXTRA[@]}" \
   && make -j"$JOBS")
 
 cp "$SRC/ffmpeg/ffmpeg$EXE" "$SRC/ffmpeg/ffprobe$EXE" "$OUT/"
