@@ -94,10 +94,12 @@ check("buildconf: GPL with x264, no network", () => {
 if (process.platform === "darwin") {
 	for (const bin of [FFMPEG, FFPROBE]) {
 		check(`${path.basename(bin)}: only system libraries`, () => {
+			// a universal binary lists its libraries once per architecture, each under a
+			// "<path> (architecture …):" header; the libraries are the indented lines
 			const libs = run("otool", ["-L", bin])
 				.stdout.split("\n")
-				.slice(1)
-				.map((l) => l.trim().split(" ")[0])
+				.filter((line) => /^\s/.test(line))
+				.map((line) => line.trim().split(" ")[0])
 				.filter(Boolean);
 			const foreign = libs.filter(
 				(l) => !l.startsWith("/usr/lib/") && !l.startsWith("/System/Library/"),
