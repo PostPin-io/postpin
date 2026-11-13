@@ -1,6 +1,8 @@
 import Hapi from "@hapi/hapi";
 import type { RequestEvent } from "@sveltejs/kit";
 import { RegisterRoutes } from "./build/routes";
+import { version } from "$app/env";
+import { API_VERSION_HEADER, POSTPIN_API_VERSION } from "@postpin-io/shared/api-version";
 
 declare module "@hapi/hapi" {
 	interface RequestApplicationState {
@@ -11,7 +13,35 @@ declare module "@hapi/hapi" {
 // Any origin may call the API, e.g. the Resolve plugin, whose UI runs on file:// (Origin: null).
 // hapi answers CORS preflight requests itself once cors is enabled for the routes.
 const server = Hapi.server({
-	routes: { cors: { origin: ["*"] } },
+	routes: { cors: { origin: ["*"], additionalHeaders: [API_VERSION_HEADER] } },
+});
+
+// Plugins send their API version and must speak exactly the server's (see POSTPIN_API_VERSION).
+// Clients without the header, e.g. scripts using the OpenAPI spec, aren't checked. onPreAuth runs
+// after routing, so the 426 still carries the CORS headers the plugin needs to read it.
+server.ext("onPreAuth", (request, h) => {
+	const value: unknown = request.headers[API_VERSION_HEADER.toLowerCase()];
+	// repeated headers arrive as an array; the first one counts
+	const header = Array.isArray(value) ? value[0] : value;
+	if (typeof header !== "string" || header === String(POSTPIN_API_VERSION)) return h.continue;
+	const clientApiVersion = /^\d+$/.test(header) ? Number(header) : header;
+	const update =
+		typeof clientApiVersion === "number" && clientApiVersion > POSTPIN_API_VERSION
+			? "Update the PostPin server, or install an older plugin."
+			: "Update the plugin.";
+	return h
+		.response({
+			name: "HttpError",
+			message:
+				`This plugin speaks API version ${header}, but the PostPin server speaks ` +
+				`${POSTPIN_API_VERSION}. ${update}`,
+			serverApiVersion: POSTPIN_API_VERSION,
+			// the plugins of this release speak the server's API version, see releaseDownloadUrl()
+			serverRelease: version,
+			clientApiVersion,
+		})
+		.code(426)
+		.takeover();
 });
 server.ext("onPreResponse", (request, h) => {
 	const { response } = request;

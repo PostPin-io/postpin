@@ -29,7 +29,7 @@ type FlowNode = {
 
 describe("startMediaProcessing", () => {
 	it("adds one flow per media and sets the media to PROCESSING", async () => {
-		await startMediaProcessing(mediaId);
+		await startMediaProcessing(mediaId, { transcode: true });
 
 		expect(fakes.queue).toHaveLength(1);
 		expect(fakes.queue[0]).toMatchObject({ queue: "flow", method: "add" });
@@ -47,7 +47,7 @@ describe("startMediaProcessing", () => {
 	});
 
 	it("flow: probe, thumbnail, barcode → sprites → transcode, shot thumbnails", async () => {
-		await startMediaProcessing(mediaId);
+		await startMediaProcessing(mediaId, { transcode: true });
 		const flow = fakes.queue[0]!.args[0] as FlowNode;
 
 		const tree = (n: FlowNode): unknown =>
@@ -72,10 +72,24 @@ describe("startMediaProcessing", () => {
 		// one job encodes every rendition
 		expect(transcodes.map((c) => c.data.renditions)).toEqual([
 			[
+				{ width: 3840, height: 2160, bitRate: 20_000_000, codec: "h264" },
 				{ width: 1920, height: 1080, bitRate: 8_000_000, codec: "h264" },
 				{ width: 1280, height: 720, bitRate: 3_500_000, codec: "h264" },
 				{ width: 854, height: 480, bitRate: 1_200_000, codec: "h264" },
 			],
+		]);
+	});
+
+	it("without transcode, seekSprites waits for verifyProxies: the plugin uploaded the proxies", async () => {
+		await startMediaProcessing(mediaId, { transcode: false });
+		const flow = fakes.queue[0]!.args[0] as FlowNode;
+		const tree = (n: FlowNode): unknown =>
+			n.children?.length ? { [n.name]: n.children.map(tree) } : n.name;
+		expect(flow.children!.map(tree)).toEqual([
+			"probe",
+			"thumbnail",
+			{ movieBarcode: [{ seekSprites: ["verifyProxies"] }] },
+			"shotThumbnails",
 		]);
 	});
 

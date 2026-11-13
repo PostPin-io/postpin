@@ -14,6 +14,8 @@ import { MarkerController } from "./../controllers/MarkerController";
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ExportController } from "./../controllers/ExportController";
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { ConfigController } from "./../controllers/ConfigController";
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { CategoryController } from "./../controllers/CategoryController";
 import { hapiAuthentication } from "./../authentication";
 // @ts-ignore - no great way to install types from subpackage
@@ -233,6 +235,24 @@ const models: TsoaRoute.Models = {
 		additionalProperties: false,
 	},
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	ProxyUpload: {
+		dataType: "refObject",
+		properties: {
+			uploadId: { dataType: "string", required: true },
+			partSize: { dataType: "double", required: true },
+			parts: {
+				dataType: "array",
+				array: { dataType: "refObject", ref: "MultipartUploadPartUrl" },
+				required: true,
+			},
+			proxyId: { dataType: "string", required: true },
+			width: { dataType: "double", required: true },
+			height: { dataType: "double", required: true },
+			bitRate: { dataType: "double", required: true },
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 	InitUploadResponse: {
 		dataType: "refObject",
 		properties: {
@@ -244,6 +264,33 @@ const models: TsoaRoute.Models = {
 				required: true,
 			},
 			mediaId: { dataType: "string", required: true },
+			proxies: { dataType: "array", array: { dataType: "refObject", ref: "ProxyUpload" } },
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	ProxyUploadRequest: {
+		dataType: "refObject",
+		properties: {
+			width: { dataType: "double", required: true },
+			height: { dataType: "double", required: true },
+			bitRate: { dataType: "double", required: true },
+			fileSize: { dataType: "double", required: true },
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	CompleteUploadResponse: {
+		dataType: "refObject",
+		properties: {
+			transcodedBy: {
+				dataType: "union",
+				subSchemas: [
+					{ dataType: "enum", enums: ["plugin"] },
+					{ dataType: "enum", enums: ["server"] },
+				],
+				required: true,
+			},
 		},
 		additionalProperties: false,
 	},
@@ -397,6 +444,93 @@ const models: TsoaRoute.Models = {
 			},
 			validators: {},
 		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	UploadedProxy: {
+		dataType: "refObject",
+		properties: {
+			proxyId: { dataType: "string", required: true },
+			uploadId: { dataType: "string", required: true },
+			parts: {
+				dataType: "array",
+				array: { dataType: "refObject", ref: "UploadedPart" },
+				required: true,
+			},
+			hls: {
+				dataType: "nestedObjectLiteral",
+				nestedProperties: {
+					segments: {
+						dataType: "array",
+						array: {
+							dataType: "nestedObjectLiteral",
+							nestedProperties: {
+								length: { dataType: "double", required: true },
+								offset: { dataType: "double", required: true },
+								duration: { dataType: "double", required: true },
+							},
+						},
+						required: true,
+					},
+					init: {
+						dataType: "nestedObjectLiteral",
+						nestedProperties: {
+							length: { dataType: "double", required: true },
+							offset: { dataType: "double", required: true },
+						},
+						required: true,
+					},
+				},
+				required: true,
+			},
+			hasAudio: { dataType: "boolean", required: true },
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	ProxyRendition: {
+		dataType: "refObject",
+		properties: {
+			width: { dataType: "double", required: true },
+			height: { dataType: "double", required: true },
+			bitRate: { dataType: "double", required: true },
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	ClientConfig: {
+		dataType: "refObject",
+		properties: {
+			apiVersion: { dataType: "double", required: true },
+			serverRelease: { dataType: "string", required: true },
+			transcode: {
+				dataType: "nestedObjectLiteral",
+				nestedProperties: {
+					audio: {
+						dataType: "nestedObjectLiteral",
+						nestedProperties: {
+							bitRate: { dataType: "double", required: true },
+							codec: { dataType: "string", required: true },
+						},
+						required: true,
+					},
+					renditions: {
+						dataType: "array",
+						array: { dataType: "refObject", ref: "ProxyRendition" },
+						required: true,
+					},
+					mode: {
+						dataType: "union",
+						subSchemas: [
+							{ dataType: "enum", enums: ["plugin"] },
+							{ dataType: "enum", enums: ["server"] },
+						],
+						required: true,
+					},
+				},
+				required: true,
+			},
+		},
+		additionalProperties: false,
 	},
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 	DefaultSelection__36_CategoryPayload_: {
@@ -1033,7 +1167,10 @@ export function RegisterRoutes(server: any) {
 			name: "body",
 			required: true,
 			dataType: "nestedObjectLiteral",
-			nestedProperties: { fileSize: { dataType: "double", required: true } },
+			nestedProperties: {
+				proxies: { dataType: "array", array: { dataType: "refObject", ref: "ProxyUploadRequest" } },
+				fileSize: { dataType: "double", required: true },
+			},
 		},
 	};
 	server.route({
@@ -1086,6 +1223,74 @@ export function RegisterRoutes(server: any) {
 		},
 	});
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsExportController_initProxyUploads: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+		exportId: { in: "path", name: "exportId", required: true, dataType: "string" },
+		body: {
+			in: "body",
+			name: "body",
+			required: true,
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				proxies: {
+					dataType: "array",
+					array: { dataType: "refObject", ref: "ProxyUploadRequest" },
+					required: true,
+				},
+			},
+		},
+	};
+	server.route({
+		method: "post",
+		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/init-proxy-uploads",
+		options: {
+			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ExportController.prototype.initProxyUploads),
+			],
+			handler: function ExportController_initProxyUploads(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsExportController_initProxyUploads,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new ExportController();
+
+				return templateService.apiHandler({
+					methodName: "initProxyUploads",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 	const argsExportController_completeUpload: Record<string, TsoaRoute.ParameterSchema> = {
 		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
 		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
@@ -1096,6 +1301,7 @@ export function RegisterRoutes(server: any) {
 			required: true,
 			dataType: "nestedObjectLiteral",
 			nestedProperties: {
+				proxies: { dataType: "array", array: { dataType: "refObject", ref: "UploadedProxy" } },
 				timelineSnapshot: { ref: "TimelineSnapshot", required: true },
 				parts: {
 					dataType: "array",
@@ -1165,7 +1371,19 @@ export function RegisterRoutes(server: any) {
 			name: "body",
 			required: true,
 			dataType: "nestedObjectLiteral",
-			nestedProperties: { uploadId: { dataType: "string", required: true } },
+			nestedProperties: {
+				proxies: {
+					dataType: "array",
+					array: {
+						dataType: "nestedObjectLiteral",
+						nestedProperties: {
+							uploadId: { dataType: "string", required: true },
+							proxyId: { dataType: "string", required: true },
+						},
+					},
+				},
+				uploadId: { dataType: "string", required: true },
+			},
 		},
 	};
 	server.route({
@@ -1209,6 +1427,57 @@ export function RegisterRoutes(server: any) {
 
 				return templateService.apiHandler({
 					methodName: "abortUpload",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsConfigController_getConfig: Record<string, TsoaRoute.ParameterSchema> = {};
+	server.route({
+		method: "get",
+		path: "/v1/config",
+		options: {
+			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ConfigController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(ConfigController.prototype.getConfig),
+			],
+			handler: function ConfigController_getConfig(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsConfigController_getConfig,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new ConfigController();
+
+				return templateService.apiHandler({
+					methodName: "getConfig",
 					controller,
 					h,
 					validatedArgs,

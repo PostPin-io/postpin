@@ -324,6 +324,42 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ProxyUpload": {
+				"properties": {
+					"uploadId": {
+						"type": "string"
+					},
+					"partSize": {
+						"type": "number",
+						"format": "double",
+						"description": "Size of every part except the last one, in bytes."
+					},
+					"parts": {
+						"items": {
+							"$ref": "#/components/schemas/MultipartUploadPartUrl"
+						},
+						"type": "array"
+					},
+					"proxyId": {
+						"type": "string"
+					},
+					"width": {
+						"type": "number",
+						"format": "double"
+					},
+					"height": {
+						"type": "number",
+						"format": "double"
+					},
+					"bitRate": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": ["uploadId", "partSize", "parts", "proxyId", "width", "height", "bitRate"],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"InitUploadResponse": {
 				"properties": {
 					"uploadId": {
@@ -342,9 +378,53 @@
 					},
 					"mediaId": {
 						"type": "string"
+					},
+					"proxies": {
+						"items": {
+							"$ref": "#/components/schemas/ProxyUpload"
+						},
+						"type": "array",
+						"description": "one per requested proxy, same order"
 					}
 				},
 				"required": ["uploadId", "partSize", "parts", "mediaId"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ProxyUploadRequest": {
+				"description": "A review proxy the plugin encoded with hlsArgs() and wants to upload",
+				"properties": {
+					"width": {
+						"type": "number",
+						"format": "double",
+						"description": "a rendition from GET /v1/config, unchanged"
+					},
+					"height": {
+						"type": "number",
+						"format": "double"
+					},
+					"bitRate": {
+						"type": "number",
+						"format": "double"
+					},
+					"fileSize": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": ["width", "height", "bitRate", "fileSize"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CompleteUploadResponse": {
+				"properties": {
+					"transcodedBy": {
+						"type": "string",
+						"enum": ["plugin", "server"],
+						"description": "who encodes the review proxies: the plugin's were accepted, or the server encodes them"
+					}
+				},
+				"required": ["transcodedBy"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -559,6 +639,138 @@
 					"id"
 				],
 				"type": "object"
+			},
+			"UploadedProxy": {
+				"properties": {
+					"proxyId": {
+						"type": "string"
+					},
+					"uploadId": {
+						"type": "string"
+					},
+					"parts": {
+						"items": {
+							"$ref": "#/components/schemas/UploadedPart"
+						},
+						"type": "array"
+					},
+					"hls": {
+						"properties": {
+							"segments": {
+								"items": {
+									"properties": {
+										"length": {
+											"type": "number",
+											"format": "double"
+										},
+										"offset": {
+											"type": "number",
+											"format": "double"
+										},
+										"duration": {
+											"type": "number",
+											"format": "double"
+										}
+									},
+									"required": ["length", "offset", "duration"],
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"init": {
+								"properties": {
+									"length": {
+										"type": "number",
+										"format": "double"
+									},
+									"offset": {
+										"type": "number",
+										"format": "double"
+									}
+								},
+								"required": ["length", "offset"],
+								"type": "object"
+							}
+						},
+						"required": ["segments", "init"],
+						"type": "object",
+						"description": "byte ranges from the playlist ffmpeg wrote, see parseHlsPlaylist()"
+					},
+					"hasAudio": {
+						"type": "boolean"
+					}
+				},
+				"required": ["proxyId", "uploadId", "parts", "hls", "hasAudio"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ProxyRendition": {
+				"properties": {
+					"width": {
+						"type": "number",
+						"format": "double",
+						"description": "the box the video is fitted into, keeping its aspect ratio"
+					},
+					"height": {
+						"type": "number",
+						"format": "double"
+					},
+					"bitRate": {
+						"type": "number",
+						"format": "double",
+						"description": "video bits per second"
+					}
+				},
+				"required": ["width", "height", "bitRate"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ClientConfig": {
+				"properties": {
+					"apiVersion": {
+						"type": "number",
+						"format": "double",
+						"description": "Plugins must speak exactly this API version, the API rejects others with 426"
+					},
+					"serverRelease": {
+						"type": "string",
+						"description": "Release the server runs, e.g. `1.4.2`; its plugins speak its API version"
+					},
+					"transcode": {
+						"properties": {
+							"audio": {
+								"properties": {
+									"bitRate": {
+										"type": "number",
+										"format": "double"
+									},
+									"codec": {
+										"type": "string"
+									}
+								},
+								"required": ["bitRate", "codec"],
+								"type": "object"
+							},
+							"renditions": {
+								"items": {
+									"$ref": "#/components/schemas/ProxyRendition"
+								},
+								"type": "array",
+								"description": "Largest first. Encode only those selectRenditions() picks for the render's size."
+							},
+							"mode": {
+								"type": "string",
+								"enum": ["plugin", "server"],
+								"description": "`plugin`: plugins encode the review proxies with hlsArgs() and upload them with the original.\nThe server still encodes when a plugin can't. `server`: the server always encodes."
+							}
+						},
+						"required": ["audio", "renditions", "mode"],
+						"type": "object"
+					}
+				},
+				"required": ["apiVersion", "serverRelease", "transcode"],
+				"type": "object",
+				"additionalProperties": false
 			},
 			"DefaultSelection__36_CategoryPayload_": {
 				"properties": {
@@ -1101,6 +1313,9 @@
 					},
 					"413": {
 						"description": "File too large or storage quota exceeded"
+					},
+					"422": {
+						"description": "Invalid proxies, or the server transcodes itself"
 					}
 				},
 				"description": "Starts a multipart upload of the export's original file. PUT each part's bytes to its URL,\nkeep the ETag response headers and pass them to complete-upload.",
@@ -1136,39 +1351,69 @@
 					}
 				],
 				"requestBody": {
+					"description": "`proxies`: the review proxies the plugin encoded, when GET /v1/config says `plugin`.\nLeft out, the server encodes them.",
 					"required": true,
 					"content": {
 						"application/json": {
 							"schema": {
 								"properties": {
+									"proxies": {
+										"items": {
+											"$ref": "#/components/schemas/ProxyUploadRequest"
+										},
+										"type": "array"
+									},
 									"fileSize": {
 										"type": "number",
 										"format": "double"
 									}
 								},
 								"required": ["fileSize"],
-								"type": "object"
+								"type": "object",
+								"description": "`proxies`: the review proxies the plugin encoded, when GET /v1/config says `plugin`.\nLeft out, the server encodes them."
 							}
 						}
 					}
 				}
 			}
 		},
-		"/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/complete-upload": {
+		"/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/init-proxy-uploads": {
 			"post": {
-				"operationId": "CompleteUpload",
+				"operationId": "InitProxyUploads",
 				"responses": {
-					"204": {
-						"description": "No content"
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"proxies": {
+											"items": {
+												"$ref": "#/components/schemas/ProxyUpload"
+											},
+											"type": "array"
+										}
+									},
+									"required": ["proxies"],
+									"type": "object"
+								}
+							}
+						}
 					},
 					"404": {
 						"description": "Export not found"
 					},
 					"409": {
-						"description": "Upload missing or media already processing"
+						"description": "Media already processing or upload cancelled"
+					},
+					"413": {
+						"description": "Storage quota exceeded"
+					},
+					"422": {
+						"description": "Invalid proxies, or the server transcodes itself"
 					}
 				},
-				"description": "Call after all parts were PUT: assembles the original in storage, stores the timeline\nsnapshot and queues transcoding, probing and thumbnailing.",
+				"description": "Uploads for the review proxies the plugin encoded, after init-upload started the original\nwithout them: the plugin uploads the original while it still encodes. One per proxy, in\nrequest order; a second call replaces the first one's. Then pass them to complete-upload.",
 				"security": [
 					{
 						"session": []
@@ -1206,6 +1451,87 @@
 						"application/json": {
 							"schema": {
 								"properties": {
+									"proxies": {
+										"items": {
+											"$ref": "#/components/schemas/ProxyUploadRequest"
+										},
+										"type": "array"
+									}
+								},
+								"required": ["proxies"],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/complete-upload": {
+			"post": {
+				"operationId": "CompleteUpload",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CompleteUploadResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Export not found"
+					},
+					"409": {
+						"description": "Upload missing or media already processing"
+					}
+				},
+				"description": "Call after all parts were PUT: assembles the original (and the proxies) in storage, stores the\ntimeline snapshot and queues probing, thumbnailing and, without usable proxies, transcoding.\nProxies that don't check out are dropped and the server encodes instead.",
+				"security": [
+					{
+						"session": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "timelineId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "exportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"proxies": {
+										"items": {
+											"$ref": "#/components/schemas/UploadedProxy"
+										},
+										"type": "array",
+										"description": "every proxy init-upload returned, after its parts were PUT"
+									},
 									"timelineSnapshot": {
 										"$ref": "#/components/schemas/TimelineSnapshot"
 									},
@@ -1279,6 +1605,21 @@
 						"application/json": {
 							"schema": {
 								"properties": {
+									"proxies": {
+										"items": {
+											"properties": {
+												"uploadId": {
+													"type": "string"
+												},
+												"proxyId": {
+													"type": "string"
+												}
+											},
+											"required": ["uploadId", "proxyId"],
+											"type": "object"
+										},
+										"type": "array"
+									},
 									"uploadId": {
 										"type": "string"
 									}
@@ -1289,6 +1630,30 @@
 						}
 					}
 				}
+			}
+		},
+		"/v1/config": {
+			"get": {
+				"operationId": "GetConfig",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ClientConfig"
+								}
+							}
+						}
+					}
+				},
+				"description": "What a plugin needs to know before rendering and uploading",
+				"security": [
+					{
+						"session": []
+					}
+				],
+				"parameters": []
 			}
 		},
 		"/v1/projects/{projectId}/categories": {

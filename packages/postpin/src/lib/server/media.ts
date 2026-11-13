@@ -13,26 +13,26 @@ import { s3Client } from "./storage";
 import { JobWeights } from "@postpin-io/shared/queue";
 import type { Prisma } from "@postpin-io/shared/db";
 import { newShotThumbnailsGeneration } from "@postpin-io/shared/types/ShotThumbnails";
+import { proxyTranscodeMessage } from "@postpin-io/shared/media/hls";
 
 const flowProducer = building ? (null as unknown as TypedFlowProducer) : getFlowProducer(env);
 const lightQueue = building ? null : getQueue(Queues.light, env);
 
-const KBits = 1000;
-
-const PROXY_RESOLUTIONS = [
-	{ width: 1920, height: 1080, bitRate: 8000 * KBits },
-	{ width: 1280, height: 720, bitRate: 3500 * KBits },
-	{ width: 854, height: 480, bitRate: 1200 * KBits },
-];
-// one job for all renditions: ffmpeg decodes the original once and encodes them side by side
+// one job for all renditions: ffmpeg decodes the original once and encodes them side by side.
+// The worker skips the renditions larger than the original.
 const transcodeJob = (mediaId: string): TypedFlowChildJob => ({
 	name: "transcode",
 	queueName: Queues.heavy,
-	data: {
-		mediaId,
-		audio: { bitRate: 128_000, codec: "aac" },
-		renditions: PROXY_RESOLUTIONS.map((rendition) => ({ ...rendition, codec: "h264" })),
-	},
+	data: proxyTranscodeMessage(mediaId),
+	opts: { failParentOnFailure: true },
+});
+
+// The plugin's proxies: checked before sprites and barcode read the smallest one. Proxies that don't
+// check out are replaced by a server transcode, which this job then waits for.
+const verifyProxiesJob = (mediaId: string): TypedFlowChildJob => ({
+	name: "verifyProxies",
+	queueName: Queues.light,
+	data: { mediaId },
 	opts: { failParentOnFailure: true },
 });
 
@@ -53,11 +53,14 @@ const lightJob = <N extends "probe" | "sceneDetect" | "shotThumbnails">(
  * Queues the processing of an uploaded original. Web uploads have an estimated snapshot that probe
  * (and the cut detection) replace, so their shot thumbnails wait for those: probe → sceneDetect →
  * shotThumbnails. Plugin snapshots are final, so everything runs side by side.
+ * `transcode: false` when the plugin uploaded the proxies already: then seekSprites waits for
+ * verifyProxies instead of a transcode.
  */
 export async function startMediaProcessing(
 	mediaId: string,
-	opts: { webUpload?: boolean; detectCuts?: boolean } = {},
+	opts: { webUpload?: boolean; detectCuts?: boolean; transcode?: boolean } = {},
 ) {
+	const transcode = opts.transcode ?? true;
 	// stored before the jobs exist, so the shot thumbnails job finds itself current
 	const generation = newShotThumbnailsGeneration();
 	await prisma.media.update({
@@ -99,8 +102,8 @@ export async function startMediaProcessing(
 						queueName: Queues.light,
 						data: { mediaId },
 						opts: { failParentOnFailure: true },
-						// the transcode returns its smallest proxy, which sprites and barcode read
-						children: [transcodeJob(mediaId)],
+						// both return the smallest proxy, which sprites and barcode read
+						children: [transcode ? transcodeJob(mediaId) : verifyProxiesJob(mediaId)],
 					},
 				],
 			},

@@ -23,6 +23,8 @@ import type {
 	CreateTimelineResponses,
 	GetCategoriesData,
 	GetCategoriesResponses,
+	GetConfigData,
+	GetConfigResponses,
 	GetDocsHtmlData,
 	GetDocsHtmlResponses,
 	GetExportsData,
@@ -36,6 +38,9 @@ import type {
 	GetProjectResponses,
 	GetProjectsData,
 	GetProjectsResponses,
+	InitProxyUploadsData,
+	InitProxyUploadsErrors,
+	InitProxyUploadsResponses,
 	InitUploadData,
 	InitUploadErrors,
 	InitUploadResponses,
@@ -187,8 +192,27 @@ export const initUpload = <ThrowOnError extends boolean = false>(
 	});
 
 /**
- * Call after all parts were PUT: assembles the original in storage, stores the timeline
- * snapshot and queues transcoding, probing and thumbnailing.
+ * Uploads for the review proxies the plugin encoded, after init-upload started the original
+ * without them: the plugin uploads the original while it still encodes. One per proxy, in
+ * request order; a second call replaces the first one's. Then pass them to complete-upload.
+ */
+export const initProxyUploads = <ThrowOnError extends boolean = false>(
+	options: Options<InitProxyUploadsData, ThrowOnError>,
+): RequestResult<InitProxyUploadsResponses, InitProxyUploadsErrors, ThrowOnError> =>
+	(options.client ?? client).post<InitProxyUploadsResponses, InitProxyUploadsErrors, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
+		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/init-proxy-uploads",
+		...options,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
+	});
+
+/**
+ * Call after all parts were PUT: assembles the original (and the proxies) in storage, stores the
+ * timeline snapshot and queues probing, thumbnailing and, without usable proxies, transcoding.
+ * Proxies that don't check out are dropped and the server encodes instead.
  */
 export const completeUpload = <ThrowOnError extends boolean = false>(
 	options: Options<CompleteUploadData, ThrowOnError>,
@@ -217,6 +241,18 @@ export const abortUpload = <ThrowOnError extends boolean = false>(
 			"Content-Type": "application/json",
 			...options.headers,
 		},
+	});
+
+/**
+ * What a plugin needs to know before rendering and uploading
+ */
+export const getConfig = <ThrowOnError extends boolean = false>(
+	options?: Options<GetConfigData, ThrowOnError>,
+): RequestResult<GetConfigResponses, unknown, ThrowOnError> =>
+	(options?.client ?? client).get<GetConfigResponses, unknown, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
+		url: "/v1/config",
+		...options,
 	});
 
 export const getCategories = <ThrowOnError extends boolean = false>(
