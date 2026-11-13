@@ -36,10 +36,12 @@
 		defaultLayout,
 		normalizeSizes,
 		parsePaneLayout,
+		parsePlayheads,
 		parseQuality,
 		parseTimelineMode,
 		seekThumbnailTiles,
 		type PaneLayout,
+		withPlayhead,
 	} from "#lib/components/review/export-view.ts";
 
 	import ProcessingJobs from "#lib/components/review/ProcessingJobs.svelte";
@@ -311,8 +313,57 @@
 		};
 	});
 
+	// The playhead survives a reload: the player resumes wherever videoPosition is when the video loads
+	const PLAYHEAD_KEY = "postpin:playheads";
+	function loadPlayhead(id: string): number {
+		try {
+			return parsePlayheads(localStorage.getItem(PLAYHEAD_KEY))[id] ?? 0;
+		} catch {
+			return 0;
+		}
+	}
+	function savePlayhead(id: string, seconds: number) {
+		try {
+			const stored = parsePlayheads(localStorage.getItem(PLAYHEAD_KEY));
+			localStorage.setItem(PLAYHEAD_KEY, JSON.stringify(withPlayhead(stored, id, seconds)));
+		} catch (error) {
+			console.error("Failed to save playhead position:", error);
+		}
+	}
+
 	let videoPosition = $state(0);
 	let videoPaused = $state(true);
+	// The page component is reused when navigating between exports, so each one loads its own position
+	let playheadExportId: string | undefined;
+	$effect.pre(() => {
+		const id = exportId;
+		untrack(() => {
+			if (playheadExportId !== undefined) savePlayhead(playheadExportId, videoPosition);
+			playheadExportId = id;
+			videoPaused = true;
+			videoPosition = loadPlayhead(id);
+		});
+	});
+	// Playback updates the position every frame; writing at most once a second is plenty
+	let lastPlayheadSave = 0;
+	$effect(() => {
+		const seconds = videoPosition;
+		const id = untrack(() => playheadExportId);
+		if (!id || Date.now() - lastPlayheadSave < 1000) return;
+		lastPlayheadSave = Date.now();
+		savePlayhead(id, seconds);
+	});
+	// Catch the position since the last throttled write
+	onMount(() => {
+		const flush = () => {
+			if (playheadExportId) savePlayhead(playheadExportId, videoPosition);
+		};
+		window.addEventListener("pagehide", flush);
+		return () => {
+			flush();
+			window.removeEventListener("pagehide", flush);
+		};
+	});
 	let videoPlaybackRate = $state(1);
 
 	let timeline = $state<Timeline>();
@@ -404,11 +455,12 @@
 			console.error("Failed to save timeline mode:", error);
 		}
 	});
+	const timelinePaneVisible = $derived(isTimelineVisible && timelineMode !== "hidden");
 	let timelineCollapsedHeight = $state(0);
 	let leftPanesHeight = $state(0);
-	// Compact and scrub-only timelines get exactly the space they need, in percent of the pane column
+	// The compact timeline gets exactly the space it needs, in percent of the pane column
 	const collapsedPercent = $derived(
-		timelineMode !== "full" && leftPanesHeight > 0 && timelineCollapsedHeight > 0
+		timelineMode === "compact" && leftPanesHeight > 0 && timelineCollapsedHeight > 0
 			? Math.min((timelineCollapsedHeight / leftPanesHeight) * 100, 85)
 			: undefined,
 	);
@@ -443,6 +495,7 @@
 					bind:viewMode
 					bind:timelineMode
 					timelineControls={showTimeline}
+					timelineHidden={timelineMode === "hidden"}
 					mobile={isMobile.current}
 					mobileLandscape={isPhoneLandscape.current}
 					qualities={videoQualities}
@@ -655,19 +708,19 @@
 						>
 							<!-- Video and jobs; without the timeline panel the video takes the full height -->
 							<Pane
-								size={!isTimelineVisible
+								size={!timelinePaneVisible
 									? 100
 									: collapsedPercent !== undefined
 										? 100 - collapsedPercent
 										: layout.left[0]}
-								minSize={isTimelineVisible ? 15 : 100}
+								minSize={timelinePaneVisible ? 15 : 100}
 								class="overflow-auto"
 							>
 								{@render videoArea()}
 							</Pane>
 
 							<!-- Timeline panel -->
-							{#if isTimelineVisible}
+							{#if timelinePaneVisible}
 								<Pane
 									size={collapsedPercent ?? layout.left[1]}
 									minSize={collapsedPercent ?? 10}
@@ -678,6 +731,10 @@
 								</Pane>
 							{/if}
 						</Splitpanes>
+						{#if isTimelineVisible && timelineMode === "hidden"}
+							<!-- Not shown, but still mounted: the keyboard shortcuts step through cuts and frames with it -->
+							<div class="hidden">{@render timelineArea()}</div>
+						{/if}
 					</div>
 				</Pane>
 

@@ -61,8 +61,8 @@ describe("buildLanes", () => {
 		expect(buildLanes([tracks[2]!], "compact").map((l) => l.id)).toEqual(["audio"]);
 	});
 
-	it("scrub: no lanes", () => {
-		expect(buildLanes(tracks, "scrub")).toEqual([]);
+	it("hidden: no lanes", () => {
+		expect(buildLanes(tracks, "hidden")).toEqual([]);
 	});
 });
 
@@ -72,7 +72,7 @@ describe("collapsedLaneCount", () => {
 		expect(collapsedLaneCount(tracks, "compact")).toBe(2);
 		expect(collapsedLaneCount([tracks[0]!, tracks[1]!], "compact")).toBe(1);
 		expect(collapsedLaneCount([], "compact")).toBe(0);
-		expect(collapsedLaneCount(tracks, "scrub")).toBe(0);
+		expect(collapsedLaneCount(tracks, "hidden")).toBe(0);
 	});
 });
 

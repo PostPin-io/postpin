@@ -120,7 +120,7 @@ export function importedMarkersText(counts: Record<keyof typeof CUT_LIST_FORMATS
 		counts.edl > 0 && counts.fcpxml > 0
 			? "EDL and FCPXML"
 			: `the ${CUT_LIST_FORMATS[counts.edl > 0 ? "edl" : "fcpxml"]}`;
-	return { title: `Markers from ${from}`, count: plural(total, "marker") };
+	return { title: `Marker Import`, count: plural(total, "marker") };
 }
 
 /**

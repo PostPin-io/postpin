@@ -31,7 +31,7 @@
 	const url = $derived(shareLinkUrl(page.url.origin, link.token));
 	const left = $derived(remainingTime(link.expiresAt));
 	const active = $derived(link.status === "active");
-	// The URL isn't shown, only copied: the note's first line tells links apart
+	// The row shows no URL (only the details do): the note's first line tells links apart
 	const label = $derived(link.note?.split("\n")[0]?.trim() || null);
 
 	let copied = $state(false);
@@ -61,7 +61,24 @@
 	<div class="flex items-center gap-3">
 		<!-- Expired: everything but the buttons greyed out -->
 		<div class="flex min-w-0 flex-1 items-center gap-3 {active ? '' : 'opacity-50'}">
-			<PanelLayout mini timeline={link.timelinePanelVisible} markers={link.markerPanelVisible} />
+			{#if link.canUpdate}
+				<button
+					type="button"
+					class="cursor-pointer rounded-sm disabled:cursor-default"
+					title="Edit panels"
+					aria-label="Edit panels"
+					disabled={busy}
+					onclick={onedit}
+				>
+					<PanelLayout
+						mini
+						timeline={link.timelinePanelVisible}
+						markers={link.markerPanelVisible}
+					/>
+				</button>
+			{:else}
+				<PanelLayout mini timeline={link.timelinePanelVisible} markers={link.markerPanelVisible} />
+			{/if}
 			{#if label}
 				<span class="max-w-48 min-w-0 flex-1 truncate text-sm" title={link.note}>{label}</span>
 			{/if}
@@ -148,6 +165,8 @@
 		<dl
 			class="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-t border-base-300 pt-2 text-xs text-base-content/70"
 		>
+			<dt>Link</dt>
+			<dd class="font-mono break-all select-all">{url}</dd>
 			<dt>Visits</dt>
 			<dd>{formatViews(link.viewCount, link.guestCount)}</dd>
 			<dt>Last opened</dt>
