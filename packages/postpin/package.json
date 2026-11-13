@@ -65,6 +65,7 @@
 		"prettier": "^3.9.10",
 		"prettier-plugin-svelte": "^4.1.1",
 		"prettier-plugin-tailwindcss": "^0.8.1",
+		"qrcode": "^1.5.4",
 		"svelte": "^5.57.3",
 		"svelte-check": "^4.7.8",
 		"svelte-splitpanes": "^8.0.12",
@@ -79,8 +80,5 @@
 	"imports": {
 		"#lib": "./src/lib/index.js",
 		"#lib/*": "./src/lib/*"
-	},
-	"dependencies": {
-		"qrcode": "^1.5.4"
 	}
 }

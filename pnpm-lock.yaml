@@ -482,10 +482,6 @@ importers:
         version: 8.3.6(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
 
   packages/postpin:
-    dependencies:
-      qrcode:
-        specifier: ^1.5.4
-        version: 1.5.4
     devDependencies:
       '@aws-sdk/client-s3':
         specifier: ^3.1164.0
@@ -613,6 +609,9 @@ importers:
       prettier-plugin-tailwindcss:
         specifier: ^0.8.1
         version: 0.8.1(prettier-plugin-svelte@4.1.1(prettier@3.9.10)(svelte@5.57.3(@typescript-eslint/types@8.72.1)))(prettier@3.9.10)
+      qrcode:
+        specifier: ^1.5.4
+        version: 1.5.4
       svelte:
         specifier: ^5.57.3
         version: 5.57.3(@typescript-eslint/types@8.72.1)
