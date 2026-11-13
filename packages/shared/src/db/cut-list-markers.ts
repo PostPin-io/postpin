@@ -1,5 +1,6 @@
 // Saving the markers of a cut list (see logic/cut-list.ts) as PostPin markers: by the worker after
 // an upload, and by the review page when markers are imported later.
+import type { CutList } from "../logic/cut-list.ts";
 import type { PlacedMarker } from "../logic/web-upload.ts";
 import type { PrismaClient } from "./prisma/client.ts";
 
@@ -14,11 +15,23 @@ function hash(text: string): string {
 }
 
 /**
- * The marker's nleId: made from what it is, so the same marker imported again (a retried job,
- * the same list uploaded twice) isn't added twice, while other markers never collide with it
+ * The marker's nleId: the format it came from (so the review can say "Markers from the EDL", see
+ * importedMarkerCounts) and a hash of what it is, so the same marker imported again (a retried
+ * job, the same list uploaded twice) isn't added twice, while other markers never collide with it
  */
-export const cutListMarkerId = (m: PlacedMarker) =>
-	`cutList:${hash([m.frame, m.duration, m.category.name, m.name, m.description ?? ""].join("\u0000"))}`;
+export const cutListMarkerId = (m: PlacedMarker, format: CutList["format"]) =>
+	`cutList:${format}:${hash([m.frame, m.duration, m.category.name, m.name, m.description ?? ""].join("\u0000"))}`;
+
+/** How many of the export's markers came from each format of timeline data */
+export async function importedMarkerCounts(
+	db: Pick<PrismaClient, "marker">,
+	exportId: string,
+): Promise<Record<CutList["format"], number>> {
+	const count = (format: CutList["format"]) =>
+		db.marker.count({ where: { exportId, nleId: { startsWith: `cutList:${format}:` } } });
+	const [edl, fcpxml] = await Promise.all([count("edl"), count("fcpxml")]);
+	return { edl, fcpxml };
+}
 
 /**
  * Adds the markers to the export, in a category per color shared with the project's other markers
@@ -27,7 +40,13 @@ export const cutListMarkerId = (m: PlacedMarker) =>
  */
 export async function saveCutListMarkers(
 	db: Pick<PrismaClient, "category" | "marker">,
-	a: { exportId: string; projectId: string; authorId: string | null; markers: PlacedMarker[] },
+	a: {
+		exportId: string;
+		projectId: string;
+		authorId: string | null;
+		format: CutList["format"];
+		markers: PlacedMarker[];
+	},
 ): Promise<number> {
 	if (a.markers.length === 0) return 0;
 	const categoryIds = new Map<string, string>();
@@ -45,7 +64,7 @@ export async function saveCutListMarkers(
 	const { count } = await db.marker.createMany({
 		data: a.markers.map((m) => ({
 			exportId: a.exportId,
-			nleId: cutListMarkerId(m),
+			nleId: cutListMarkerId(m, a.format),
 			name: m.name,
 			description: m.description,
 			frame: m.frame,

@@ -58,6 +58,7 @@ export async function cutList(job: TypedJob<typeof Queues.light, "cutList">) {
 		exportId: exp.id,
 		projectId: exp.timeline.projectId,
 		authorId: exp.uploadedById,
+		format: list.format,
 		markers,
 	});
 	await prisma.export.update({

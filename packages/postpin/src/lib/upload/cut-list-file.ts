@@ -107,3 +107,47 @@ export const cutListSummaryText = (s: ReturnType<typeof cutListSummary>) =>
 	]
 		.filter(Boolean)
 		.join(", ") || "Nothing";
+
+/**
+ * Where an export's imported markers came from, for the review: "Markers from the EDL" and
+ * "3 markers"; null without any
+ */
+export function importedMarkersText(counts: Record<keyof typeof CUT_LIST_FORMATS, number> | null) {
+	if (!counts) return null;
+	const total = counts.edl + counts.fcpxml;
+	if (total === 0) return null;
+	const from =
+		counts.edl > 0 && counts.fcpxml > 0
+			? "EDL and FCPXML"
+			: `the ${CUT_LIST_FORMATS[counts.edl > 0 ? "edl" : "fcpxml"]}`;
+	return { title: `Markers from ${from}`, count: plural(total, "marker") };
+}
+
+/**
+ * Drag & drop on a window's icon: highlights it while a file is over it, and on drop starts
+ * reading at once (the browser empties the dropped data right after the event) and hands the read
+ * to `ondropped`, which opens the window and imports it.
+ */
+export function iconDrop(a: {
+	enabled: () => boolean;
+	ondragging: (dragging: boolean) => void;
+	ondropped: (read: Promise<CutListRead | null>) => void | Promise<void>;
+}) {
+	return {
+		ondragenter: (e: DragEvent) => {
+			if (!a.enabled()) return;
+			e.preventDefault();
+			a.ondragging(true);
+		},
+		ondragover: (e: DragEvent) => {
+			if (a.enabled()) e.preventDefault();
+		},
+		ondragleave: () => a.ondragging(false),
+		ondrop: (e: DragEvent) => {
+			if (!a.enabled()) return;
+			e.preventDefault();
+			a.ondragging(false);
+			void a.ondropped(readDroppedCutList(e.dataTransfer));
+		},
+	};
+}

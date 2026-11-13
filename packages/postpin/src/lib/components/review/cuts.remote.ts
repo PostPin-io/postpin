@@ -1,5 +1,6 @@
 // The cuts of a web upload: estimated (see @postpin-io/shared/logic/web-upload), or from the
-// editing software's timeline data imported later (see @postpin-io/shared/logic/cut-list)
+// editing software's timeline data imported later (see @postpin-io/shared/logic/cut-list); and
+// markers from timeline data, for any export
 import { command } from "$app/server";
 import { error } from "@sveltejs/kit";
 import * as v from "valibot";
@@ -24,6 +25,8 @@ import {
 	applyCuts,
 	cutLevel,
 	isWebUpload,
+	placeCutListMarkers,
+	type PlacedMarker,
 } from "@postpin-io/shared/logic/web-upload";
 import { sceneScores } from "@postpin-io/shared/types/SceneScores";
 import { newShotThumbnailsGeneration } from "@postpin-io/shared/types/ShotThumbnails";
@@ -77,16 +80,21 @@ export const setCutSensitivity = command(
 );
 
 /**
- * Imports timeline data (an EDL or FCPXML, read in the browser into a cut list) into a processed
- * web upload: its markers always, as markers of the importer in a category per color; with
- * `replaceTracks` also its tracks, which replace the timeline (estimated or from an earlier list),
- * and the shot thumbnails are rendered again. Markers that are there already are skipped.
+ * Imports timeline data (an EDL or FCPXML, read in the browser into a cut list) into an export.
+ *
+ * - Markers, into any export with a timeline, a plugin export's too: as markers of the importer in
+ *   a category per color. Who may write markers may import them. Markers that are there already
+ *   are skipped.
+ * - With `replaceTracks`, web uploads only: also its tracks, which replace the timeline (estimated
+ *   or from an earlier list), and the shot thumbnails are rendered again. Like uploading a new
+ *   version, that needs the upload right. Plugin exports have the editing software's timeline.
  */
 export const importCutList = command(
 	v.object({ exportId: v.string(), cutList: cutListSchema, replaceTracks: v.boolean() }),
 	async ({ exportId, cutList, replaceTracks }) => {
-		// changes what everyone sees of the export, like uploading a new version would
-		const { member } = await authorize("export", "upload", { type: "export", id: exportId });
+		const { user } = replaceTracks
+			? await authorize("export", "upload", { type: "export", id: exportId })
+			: await authorize("marker", "create", { type: "export", id: exportId });
 		const exp = await prisma.export.findUnique({
 			where: { id: exportId },
 			select: {
@@ -96,21 +104,31 @@ export const importCutList = command(
 			},
 		});
 		const snapshot = exp?.timelineSnapshot as TimelineSnapshot | null | undefined;
-		if (!exp?.media || !isWebUpload(snapshot)) {
-			error(409, "Only web uploads can import timeline data");
+		if (!exp?.media || !snapshot) error(409, "The export has no timeline yet");
+		const webUpload = isWebUpload(snapshot);
+		if (replaceTracks && !webUpload) {
+			error(409, "The timeline of a plugin export comes from the editing software");
 		}
-		if (exp.media.status !== "COMPLETED") error(409, "The video is still being processed");
+		// a web upload's frame rate and length are estimates until the video is processed
+		if (webUpload && exp.media.status !== "COMPLETED") {
+			error(409, "The video is still being processed");
+		}
 		if (replaceTracks && !hasVideoClips(cutList)) {
 			error(400, "The file has no video clips to replace the timeline with");
 		}
 		if (!replaceTracks && cutList.markers.length === 0) error(400, "The file has no markers");
 
-		// markers only: the tracks of the list play no part
-		const list = replaceTracks ? cutList : { ...cutList, tracks: [] };
-		let applied: ReturnType<typeof applyCutList>;
+		let markers: PlacedMarker[];
+		let replaced: TimelineSnapshot | null = null;
 		try {
-			checkCutList(list);
-			applied = applyCutList(snapshot, list);
+			checkCutList(cutList);
+			if (replaceTracks && webUpload) {
+				const applied = applyCutList(snapshot, cutList);
+				markers = applied.markers;
+				replaced = applied.snapshot;
+			} else {
+				markers = cutList.markers.length > 0 ? placeCutListMarkers(snapshot, cutList) : [];
+			}
 		} catch (e) {
 			if (e instanceof CutListError) error(400, e.message);
 			throw e;
@@ -119,10 +137,11 @@ export const importCutList = command(
 		const added = await saveCutListMarkers(prisma, {
 			exportId,
 			projectId: exp.timeline.projectId,
-			authorId: member.userId,
-			markers: applied.markers,
+			authorId: user.id,
+			format: cutList.format,
+			markers,
 		});
-		if (replaceTracks) {
+		if (replaced) {
 			const key = await putTextObject(
 				s3Client,
 				env,
@@ -135,7 +154,7 @@ export const importCutList = command(
 			await prisma.export.update({
 				where: { id: exportId },
 				data: {
-					timelineSnapshot: applied.snapshot as unknown as Prisma.JsonObject,
+					timelineSnapshot: replaced as unknown as Prisma.JsonObject,
 					cutListKey: key,
 					cutListError: null,
 					media: {
@@ -153,10 +172,8 @@ export const importCutList = command(
 		}
 		return {
 			markers: added,
-			clips: replaceTracks
-				? applied.snapshot.tracks
-						.filter((t) => t.type === "video")
-						.reduce((n, t) => n + t.clips.length, 0)
+			clips: replaced
+				? replaced.tracks.filter((t) => t.type === "video").reduce((n, t) => n + t.clips.length, 0)
 				: null,
 		};
 	},

@@ -1,7 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
 	checkCutListAt,
 	cutListSummaryText,
+	iconDrop,
+	importedMarkersText,
 	readCutListFile,
 	readDroppedCutList,
 } from "#lib/upload/cut-list-file.ts";
@@ -125,5 +127,69 @@ describe("checkCutListAt and cutListSummaryText", () => {
 				markers: 0,
 			}),
 		).toBe("Nothing");
+	});
+});
+
+describe("importedMarkersText", () => {
+	it.each([
+		[
+			{ edl: 3, fcpxml: 0 },
+			{ title: "Markers from the EDL", count: "3 markers" },
+		],
+		[
+			{ edl: 0, fcpxml: 1 },
+			{ title: "Markers from the FCPXML", count: "1 marker" },
+		],
+		[
+			{ edl: 2, fcpxml: 2 },
+			{ title: "Markers from EDL and FCPXML", count: "4 markers" },
+		],
+		[{ edl: 0, fcpxml: 0 }, null],
+		[null, null],
+	])("%j", (counts, expected) => {
+		expect(importedMarkersText(counts)).toEqual(expected);
+	});
+});
+
+describe("iconDrop", () => {
+	const event = (data: unknown = null) =>
+		({ preventDefault: vi.fn(), dataTransfer: data }) as unknown as DragEvent;
+
+	it("reads the drop while the event lasts, then hands the read on", async () => {
+		const ondropped = vi.fn();
+		const ondragging = vi.fn();
+		const handlers = iconDrop({ enabled: () => true, ondragging, ondropped });
+		const files = [file(EDL, "cut.edl")];
+		const data = { items: [], files };
+		const drop = event(data);
+
+		handlers.ondrop(drop);
+		// the browser empties the data after the event: the read must not need it any more
+		files.length = 0;
+
+		expect(drop.preventDefault).toHaveBeenCalled();
+		expect(ondragging).toHaveBeenCalledWith(false);
+		expect(await ondropped.mock.calls[0]![0]).toMatchObject({ ok: true, name: "cut.edl" });
+	});
+
+	it("highlights while dragging over", () => {
+		const ondragging = vi.fn();
+		const handlers = iconDrop({ enabled: () => true, ondragging, ondropped: vi.fn() });
+		const enter = event();
+		handlers.ondragenter(enter);
+		handlers.ondragleave();
+		expect(enter.preventDefault).toHaveBeenCalled();
+		expect(ondragging.mock.calls).toEqual([[true], [false]]);
+	});
+
+	it("takes nothing without the right to import", () => {
+		const ondropped = vi.fn();
+		const handlers = iconDrop({ enabled: () => false, ondragging: vi.fn(), ondropped });
+		const over = event();
+		handlers.ondragover(over);
+		handlers.ondrop(event({ items: [], files: [file(EDL, "cut.edl")] }));
+		// without preventDefault the browser doesn't offer the drop here
+		expect(over.preventDefault).not.toHaveBeenCalled();
+		expect(ondropped).not.toHaveBeenCalled();
 	});
 });

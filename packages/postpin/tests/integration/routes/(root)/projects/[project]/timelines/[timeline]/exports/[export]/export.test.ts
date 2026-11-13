@@ -53,6 +53,38 @@ describe("getExport", () => {
 		},
 	);
 
+	it("counts the markers imported from timeline data, by format", async () => {
+		signIn(w.owner.user, w.org.id);
+		expect((await getExport(ids())).importedMarkers).toEqual({ edl: 0, fcpxml: 0 });
+		const category = await prisma.category.create({
+			data: { projectId: w.projectA.id, name: "Resolve Blue", color: "#008feb" },
+		});
+		const marker = (nleId: string | null) => ({
+			exportId: w.exp1.id,
+			name: "m",
+			frame: 0,
+			categoryId: category.id,
+			nleId,
+		});
+		await prisma.marker.createMany({
+			data: [
+				marker("cutList:edl:1"),
+				marker("cutList:edl:2"),
+				marker("cutList:fcpxml:3"),
+				marker(null),
+				marker("ptx:7"),
+			],
+		});
+		expect((await getExport(ids())).importedMarkers).toEqual({ edl: 2, fcpxml: 1 });
+	});
+
+	it("a reviewer may import markers, a member also change the cuts", async () => {
+		await signInAs(w.org, REVIEWER, [{ timelineId: w.tl1.id }]);
+		expect(await getExport(ids())).toMatchObject({ canImportMarkers: true, canChangeCuts: false });
+		await signInAs(w.org, MEMBER, [{ timelineId: w.tl1.id }]);
+		expect(await getExport(ids())).toMatchObject({ canImportMarkers: true, canChangeCuts: true });
+	});
+
 	it("tells the team whether the cut list was used, without where it is stored", async () => {
 		signIn(w.owner.user, w.org.id);
 		expect((await getExport(ids())).cutList).toBeNull();

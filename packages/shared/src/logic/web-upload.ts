@@ -9,6 +9,7 @@ import {
 	cutListTracks,
 	hasVideoClips,
 	type CutList,
+	type CutListMarkerAt,
 } from "./cut-list.ts";
 import { markerCategory } from "./marker-categories.ts";
 import type { Clip, FrameRate, TimelineSnapshot, Track } from "../types/TimelineSnapshot.ts";
@@ -352,6 +353,65 @@ export type PlacedMarker = {
  * Throws a CutListError when a timecode doesn't fit the frame rate, or when nothing of the list is
  * inside the video.
  */
+/** The timing of a snapshot: where the cut list's timecodes are placed */
+type Timing = Pick<TimelineSnapshot, "startFrameIndex" | "durationFrameCount" | "frameRate">;
+
+/**
+ * How far the list is moved to sit on the video. Record timecodes are absolute like the timeline's
+ * start; a list whose first video clip doesn't start inside the video (e.g. a file without a
+ * timecode, starting at 00:00:00:00, and a list at 01:00:00:00) is moved to the start of the video.
+ * A list with only markers is moved by whole hours instead, since a marker rarely sits at the
+ * very start.
+ */
+function cutListOffset(timing: Timing, tracks: Track[], markers: CutListMarkerAt[]): number {
+	const start = timing.startFrameIndex;
+	const end = start + timing.durationFrameCount;
+	const inside = (frame: number) => frame >= start && frame < end;
+	const firstVideo = Math.min(
+		...tracks
+			.filter((t) => t.type === "video")
+			.flatMap((t) => t.clips.map((c) => c.startFrameIndex)),
+	);
+	if (Number.isFinite(firstVideo)) return inside(firstVideo) ? 0 : start - firstVideo;
+	const firstMarker = Math.min(...markers.map((m) => m.frame));
+	if (!Number.isFinite(firstMarker) || inside(firstMarker)) return 0;
+	const hour = Math.round(3600 * fps(timing.frameRate));
+	return start - Math.floor(firstMarker / hour) * hour;
+}
+
+function placeMarkers(timing: Timing, markers: CutListMarkerAt[], offset: number): PlacedMarker[] {
+	const start = timing.startFrameIndex;
+	const end = start + timing.durationFrameCount;
+	return markers.flatMap(({ index, frame, duration, marker }) => {
+		const at = frame + offset;
+		if (at < start || at >= end) return [];
+		return [
+			{
+				index,
+				name: marker.name,
+				description: marker.note,
+				frame: at,
+				// a range marker ends with the video at the latest
+				duration: Math.min(duration, end - at),
+				category: markerCategory(marker.host, marker.label),
+			},
+		];
+	});
+}
+
+/**
+ * The cut list's markers placed on any timeline, a plugin export's too, the same way applyCutList
+ * places them (the list's clips, if it has any, decide how far it is moved). Throws a CutListError
+ * when a timecode doesn't fit the frame rate, or when no marker is inside the timeline.
+ */
+export function placeCutListMarkers(timing: Timing, list: CutList): PlacedMarker[] {
+	const tracks = cutListTracks(list, timing.frameRate, "placing");
+	const listMarkers = cutListMarkers(list, timing.frameRate);
+	const markers = placeMarkers(timing, listMarkers, cutListOffset(timing, tracks, listMarkers));
+	if (markers.length === 0) throw new CutListError("No marker of the list is inside the timeline");
+	return markers;
+}
+
 export function applyCutList(
 	snapshot: TimelineSnapshot & { metadata: WebUploadMetadata },
 	list: CutList,
@@ -360,22 +420,7 @@ export function applyCutList(
 	const end = start + snapshot.durationFrameCount;
 	const tracks = cutListTracks(list, snapshot.frameRate, WEB_UPLOAD_MEDIA_ID);
 	const listMarkers = cutListMarkers(list, snapshot.frameRate);
-	const inside = (frame: number) => frame >= start && frame < end;
-
-	const firstVideo = Math.min(
-		...tracks
-			.filter((t) => t.type === "video")
-			.flatMap((t) => t.clips.map((c) => c.startFrameIndex)),
-	);
-	const firstMarker = Math.min(...listMarkers.map((m) => m.frame));
-	const hour = Math.round(3600 * fps(snapshot.frameRate));
-	const offset = Number.isFinite(firstVideo)
-		? inside(firstVideo)
-			? 0
-			: start - firstVideo
-		: Number.isFinite(firstMarker) && !inside(firstMarker)
-			? start - Math.floor(firstMarker / hour) * hour
-			: 0;
+	const offset = cutListOffset(snapshot, tracks, listMarkers);
 
 	const fitted: Track[] = [];
 	for (const track of tracks) {
@@ -395,22 +440,7 @@ export function applyCutList(
 		}
 		if (clips.length > 0) fitted.push({ ...track, clips });
 	}
-
-	const markers: PlacedMarker[] = listMarkers.flatMap(({ index, frame, duration, marker }) => {
-		const at = frame + offset;
-		if (!inside(at)) return [];
-		return [
-			{
-				index,
-				name: marker.name,
-				description: marker.note,
-				frame: at,
-				// a range marker ends with the video at the latest
-				duration: Math.min(duration, end - at),
-				category: markerCategory(marker.host, marker.label),
-			},
-		];
-	});
+	const markers = placeMarkers(snapshot, listMarkers, offset);
 
 	const hasClips = fitted.some((t) => t.type === "video");
 	if (hasVideoClips(list) && !hasClips) {

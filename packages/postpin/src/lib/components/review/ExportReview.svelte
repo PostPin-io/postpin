@@ -44,6 +44,7 @@
 
 	import ProcessingJobs from "#lib/components/review/ProcessingJobs.svelte";
 	import EstimatedCuts from "#lib/components/review/EstimatedCuts.svelte";
+	import MarkerImport from "#lib/components/review/MarkerImport.svelte";
 	import { isWebUpload } from "@postpin-io/shared/logic/web-upload";
 	import {
 		readyShotThumbnails,
@@ -474,9 +475,20 @@
 							.filter((t) => t.type === "video")
 							.reduce((n, t) => n + t.clips.length, 0)}
 						cutListError={exp?.cutList?.error ?? null}
+						canImportMarkers={!!exp?.canImportMarkers && media.status === "COMPLETED"}
 						frameRate={snapshot.frameRate}
+						importedMarkers={exp?.importedMarkers ?? null}
 						onchanged={async () => {
 							// brings the new generation; polling runs until it is published
+							await exportQuery.refresh();
+						}}
+					/>
+				{:else if snapshot && !share && exp?.canImportMarkers}
+					<MarkerImport
+						{exportId}
+						frameRate={snapshot.frameRate}
+						importedMarkers={exp?.importedMarkers ?? null}
+						onchanged={async () => {
 							await exportQuery.refresh();
 						}}
 					/>

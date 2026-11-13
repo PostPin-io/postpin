@@ -188,7 +188,7 @@ describe("cutList", () => {
 		expect(data).toEqual([
 			{
 				exportId: "e1",
-				nleId: expect.stringMatching(/^cutList:[0-9a-f]{8}$/),
+				nleId: expect.stringMatching(/^cutList:fcpxml:[0-9a-f]{8}$/),
 				name: "Fix the grade",
 				description: "a note",
 				frame: 90025,

@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { cutListMarkerId, saveCutListMarkers } from "../../src/db/cut-list-markers.ts";
+import {
+	cutListMarkerId,
+	importedMarkerCounts,
+	saveCutListMarkers,
+} from "../../src/db/cut-list-markers.ts";
 import type { PlacedMarker } from "../../src/logic/web-upload.ts";
 
 const marker = (over: Partial<PlacedMarker> = {}): PlacedMarker => ({
@@ -14,8 +18,13 @@ const marker = (over: Partial<PlacedMarker> = {}): PlacedMarker => ({
 
 describe("cutListMarkerId", () => {
 	it("the same for the same marker, wherever it is in the list", () => {
-		expect(cutListMarkerId(marker())).toBe(cutListMarkerId(marker({ index: 7 })));
-		expect(cutListMarkerId(marker())).toMatch(/^cutList:[0-9a-f]{8}$/);
+		expect(cutListMarkerId(marker(), "edl")).toBe(cutListMarkerId(marker({ index: 7 }), "edl"));
+		expect(cutListMarkerId(marker(), "edl")).toMatch(/^cutList:edl:[0-9a-f]{8}$/);
+	});
+
+	it("another for the same marker from another format", () => {
+		expect(cutListMarkerId(marker(), "fcpxml")).not.toBe(cutListMarkerId(marker(), "edl"));
+		expect(cutListMarkerId(marker(), "fcpxml")).toMatch(/^cutList:fcpxml:/);
 	});
 
 	it.each([
@@ -25,7 +34,7 @@ describe("cutListMarkerId", () => {
 		["name", { name: "Fix it" }],
 		["note", { description: null }],
 	])("another for another %s", (_, over) => {
-		expect(cutListMarkerId(marker(over))).not.toBe(cutListMarkerId(marker()));
+		expect(cutListMarkerId(marker(over), "edl")).not.toBe(cutListMarkerId(marker(), "edl"));
 	});
 });
 
@@ -47,6 +56,7 @@ describe("saveCutListMarkers", () => {
 			exportId: "e1",
 			projectId: "p1",
 			authorId: "u1",
+			format: "edl",
 			markers: [
 				marker(),
 				marker({ frame: 90050, category: { name: "Resolve Red", color: "#fc0000" } }),
@@ -73,7 +83,7 @@ describe("saveCutListMarkers", () => {
 		]);
 		expect(data[0]).toMatchObject({
 			exportId: "e1",
-			nleId: cutListMarkerId(marker()),
+			nleId: cutListMarkerId(marker(), "edl"),
 			authorId: "u1",
 		});
 	});
@@ -89,5 +99,20 @@ describe("saveCutListMarkers", () => {
 			}),
 		).toBe(0);
 		expect(d.marker.createMany).not.toHaveBeenCalled();
+	});
+});
+
+describe("importedMarkerCounts", () => {
+	it("counts the export's markers by the format in their nleId", async () => {
+		const count = vi.fn(async ({ where }: { where: { nleId: { startsWith: string } } }) =>
+			where.nleId.startsWith === "cutList:edl:" ? 3 : 0,
+		);
+		expect(await importedMarkerCounts({ marker: { count } } as never, "e1")).toEqual({
+			edl: 3,
+			fcpxml: 0,
+		});
+		expect(count).toHaveBeenCalledWith({
+			where: { exportId: "e1", nleId: { startsWith: "cutList:edl:" } },
+		});
 	});
 });

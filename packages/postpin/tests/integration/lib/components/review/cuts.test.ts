@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { Prisma } from "@postpin-io/shared/db";
 import { Role } from "@postpin-io/shared/db/enums";
 import { webUploadSnapshot } from "@postpin-io/shared/logic/web-upload";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
@@ -315,30 +316,96 @@ describe("importCutList", () => {
 		expect(await markersOf()).toEqual([]);
 	});
 
-	it("409 while processing and for plugin exports; 403 for a reviewer", async () => {
+	it("409 for a web upload that is still processed: its frame rate is an estimate", async () => {
 		await webUpload(SCORES, "PROCESSING" as "COMPLETED");
 		signIn(w.owner.user, w.org.id);
-		await expectStatus(
-			importCutList({ exportId: w.exp1.id, cutList: LIST, replaceTracks: false }),
-			409,
-		);
+		for (const replaceTracks of [false, true]) {
+			await expectStatus(importCutList({ exportId: w.exp1.id, cutList: LIST, replaceTracks }), 409);
+		}
+	});
 
-		await prisma.export.update({
-			where: { id: w.exp1.id },
-			data: { timelineSnapshot: { ...snapshot(), metadata: {} } as never },
-		});
-		await prisma.media.update({ where: { id: w.exp1.mediaId! }, data: { status: "COMPLETED" } });
-		await expectStatus(
-			importCutList({ exportId: w.exp1.id, cutList: LIST, replaceTracks: false }),
-			409,
-		);
-
+	it("a reviewer may import markers, but not replace the timeline", async () => {
 		await webUpload();
-		await signInAs(w.org, REVIEWER, [{ timelineId: w.tl1.id }]);
+		const reviewer = await signInAs(w.org, REVIEWER, [{ timelineId: w.tl1.id }]);
 		await expectStatus(
-			importCutList({ exportId: w.exp1.id, cutList: LIST, replaceTracks: false }),
+			importCutList({ exportId: w.exp1.id, cutList: LIST, replaceTracks: true }),
 			403,
 		);
-		expect(await markersOf()).toEqual([]);
+		expect(
+			await importCutList({ exportId: w.exp1.id, cutList: LIST, replaceTracks: false }),
+		).toMatchObject({
+			markers: 2,
+		});
+		expect((await markersOf()).every((m) => m.authorId === reviewer.user.id)).toBe(true);
+	});
+
+	it("404 without access to the export", async () => {
+		await webUpload();
+		await signInAs(w.org, MEMBER, [{ timelineId: w.tl2.id }]);
+		await expectStatus(
+			importCutList({ exportId: w.exp1.id, cutList: LIST, replaceTracks: false }),
+			404,
+		);
+	});
+
+	describe("plugin exports", () => {
+		// exp1 as a plugin export: the editing software's timeline, 24 fps from 01:00:00:00, 10 s
+		async function pluginExport(status: "PROCESSING" | "COMPLETED" = "PROCESSING") {
+			await prisma.export.update({
+				where: { id: w.exp1.id },
+				data: {
+					timelineSnapshot: {
+						id: "tl",
+						name: "Cut",
+						frameRate: FPS_24,
+						startFrameIndex: 86400,
+						durationFrameCount: 240,
+						tracks: [],
+						mediaItems: [],
+						metadata: {},
+					} as never,
+					media: { update: { status } },
+				},
+			});
+		}
+		const pluginList = (): CutList => ({
+			...LIST,
+			format: "edl",
+			frameRate: null,
+			tracks: [],
+			markers: [marker("Fix the grade", "01:00:01:00"), marker("Later", "01:00:30:00")],
+		});
+
+		it("markers can be imported, also while the video is processed: the timeline is known", async () => {
+			await pluginExport();
+			await signInAs(w.org, MEMBER, [{ timelineId: w.tl1.id }]);
+			expect(
+				await importCutList({ exportId: w.exp1.id, cutList: pluginList(), replaceTracks: false }),
+			).toEqual({ markers: 1, clips: null });
+			expect((await markersOf()).map((m) => [m.name, m.frame])).toEqual([["Fix the grade", 86424]]);
+		});
+
+		it("the timeline can't be replaced: it is the editing software's", async () => {
+			await pluginExport("COMPLETED");
+			signIn(w.owner.user, w.org.id);
+			const res = await expectStatus(
+				importCutList({ exportId: w.exp1.id, cutList: LIST, replaceTracks: true }),
+				409,
+			);
+			expect(res.body.message).toMatch(/editing software/);
+			expect(fakes.queue).toEqual([]);
+		});
+
+		it("409 before the plugin sent its timeline", async () => {
+			await prisma.export.update({
+				where: { id: w.exp1.id },
+				data: { timelineSnapshot: Prisma.DbNull },
+			});
+			signIn(w.owner.user, w.org.id);
+			await expectStatus(
+				importCutList({ exportId: w.exp1.id, cutList: pluginList(), replaceTracks: false }),
+				409,
+			);
+		});
 	});
 });

@@ -4,6 +4,7 @@ import { CutListError, type CutList } from "../../src/logic/cut-list.ts";
 import {
 	applyCuts,
 	applyCutList,
+	placeCutListMarkers,
 	applyProbe,
 	cutFrames,
 	frameRateLabel,
@@ -611,5 +612,61 @@ describe("applyCutList", () => {
 				'Marker "Fix": 01:00:00:29 doesn\'t fit',
 			);
 		});
+	});
+});
+
+describe("placeCutListMarkers", () => {
+	// a plugin export's timeline: 25 fps from 01:00:00:00, 10 s
+	const timing = { frameRate: FPS_25, startFrameIndex: 90000, durationFrameCount: 250 };
+	const marker = (at: string, duration = 0) => ({
+		name: "Fix",
+		note: null,
+		at,
+		duration,
+		host: "Avid" as const,
+		label: "RED",
+	});
+	const list = (markers: CutList["markers"], tracks: CutList["tracks"] = []): CutList => ({
+		format: "edl",
+		title: "x",
+		frameRate: null,
+		tracks,
+		markers,
+	});
+
+	it("on any timeline, at their timecode, with their category", () => {
+		expect(
+			placeCutListMarkers(timing, list([marker("01:00:02:00"), marker("01:00:30:00")])),
+		).toEqual([
+			{
+				index: 0,
+				name: "Fix",
+				description: null,
+				frame: 90050,
+				duration: 0,
+				category: { name: "Avid Red", color: "#ff0000" },
+			},
+		]);
+	});
+
+	it("moved like the list's clips would be, which aren't placed themselves", () => {
+		// the timeline starts at 0; the list's first clip at 10:00:00:00
+		const t = { ...timing, startFrameIndex: 0 };
+		const tracks: CutList["tracks"] = [
+			{
+				type: "video",
+				name: "V",
+				events: [{ name: "A", in: "10:00:00:00", out: "10:00:05:00", sourceIn: "00:00:00:00" }],
+			},
+		];
+		expect(
+			placeCutListMarkers(t, list([marker("10:00:01:00")], tracks)).map((m) => m.frame),
+		).toEqual([25]);
+	});
+
+	it("throws when none is inside the timeline", () => {
+		expect(() => placeCutListMarkers(timing, list([marker("01:00:30:00")]))).toThrow(
+			"No marker of the list is inside the timeline",
+		);
 	});
 });
