@@ -296,7 +296,7 @@
 
 							{#if marker.guest}
 								<span class="truncate">By {marker.guest.name}</span>
-								<span class="badge badge-ghost badge-xs">Gast</span>
+								<span class="badge badge-ghost badge-xs">Guest</span>
 							{:else}
 								<span class="truncate">By {marker.author?.name ?? "Deleted User"}</span>
 							{/if}
