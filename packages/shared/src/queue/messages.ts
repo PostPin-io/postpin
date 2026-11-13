@@ -40,6 +40,13 @@ export interface SeekSpritesMessage {
 	mediaId: string;
 }
 
+/** Checks the proxies a plugin uploaded; replaces them with a server transcode if they don't fit */
+export interface VerifyProxiesMessage {
+	mediaId: string;
+	/** set once the job fell back to a transcode, which it then waits for */
+	fallback?: boolean;
+}
+
 export interface ShotThumbnailsMessage {
 	mediaId: string;
 	/** Only publishes while it is still the media's shotThumbnailsGeneration */
