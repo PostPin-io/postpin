@@ -138,6 +138,7 @@ const models: TsoaRoute.Models = {
 				exportId: { dataType: "string", required: true },
 				updatedAt: { dataType: "datetime", required: true },
 				createdAt: { dataType: "datetime", required: true },
+				duration: { dataType: "double", required: true },
 				frame: { dataType: "double", required: true },
 				description: {
 					dataType: "union",
@@ -178,6 +179,7 @@ const models: TsoaRoute.Models = {
 			exportId: { dataType: "string", required: true },
 			updatedAt: { dataType: "datetime", required: true },
 			createdAt: { dataType: "datetime", required: true },
+			duration: { dataType: "double", required: true },
 			frame: { dataType: "double", required: true },
 			description: {
 				dataType: "union",
@@ -209,6 +211,7 @@ const models: TsoaRoute.Models = {
 					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
 				},
 				categoryId: { dataType: "string", required: true },
+				duration: { dataType: "integer", validators: { minimum: { value: 0 } } },
 				frame: { dataType: "double", required: true },
 				description: {
 					dataType: "union",

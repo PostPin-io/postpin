@@ -53,6 +53,15 @@ export class MarkerController extends Controller {
 		if (markers.length > MAX_UPLOAD_MARKERS) {
 			throw new HttpError(400, `Too many markers, ${MAX_UPLOAD_MARKERS} is the limit`);
 		}
+		// Frames aren't checked against the export's timeline: an export may cover only part of it
+		// (Pro Tools renders the edit selection), but the NLE pushes all of its markers.
+		if (
+			markers.some(
+				(m) => m.duration !== undefined && !(Number.isInteger(m.duration) && m.duration >= 0),
+			)
+		) {
+			throw new HttpError(400, "Marker duration must be a whole number of frames, 0 or more");
+		}
 
 		const { user, member, target } = await apiAuthorize("marker", "create", {
 			type: "export",
@@ -141,6 +150,12 @@ type UploadMarker = {
 	name: string;
 	description: string | null;
 	frame: number;
+	/**
+	 * length in frames, 0 = point marker. Left out: new markers get 0, existing ones keep theirs.
+	 * @isInt
+	 * @minimum 0
+	 */
+	duration?: number;
 	categoryId: string;
 	/**
 	 * id of the marker in the NLE, unique per export. Markers with a known nleId are updated.

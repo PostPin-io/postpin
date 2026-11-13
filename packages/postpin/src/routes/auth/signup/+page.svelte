@@ -4,6 +4,7 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { safeRedirect } from "#lib/redirect.ts";
+	import { DPA_URL, PRIVACY_URL, TERMS_URL } from "$app/env/public";
 
 	const redirectTo = safeRedirect(page.url.searchParams.get("redirect"));
 	// keeps ?redirect= (and the invited email) when switching between login and signup
@@ -22,8 +23,6 @@
 		if (isLoading) return; // Prevent multiple submissions
 
 		isLoading = true;
-
-		console.log("Signing up with:", { firstName, lastName, email, password });
 
 		await authClient.signUp.email(
 			{
@@ -121,6 +120,23 @@
 			Sign Up
 		{/if}
 	</button>
+
+	{#if TERMS_URL || PRIVACY_URL}
+		<p class="text-center text-xs text-base-content/60">
+			{#if TERMS_URL}
+				By signing up, you agree to the
+				<a class="link" href={TERMS_URL} target="_blank" rel="noopener">Terms of Service</a
+				>{#if DPA_URL}
+					and, for organizations you create or manage, the
+					<a class="link" href={DPA_URL} target="_blank" rel="noopener">Data Processing Agreement</a
+					>{/if}.
+			{/if}
+			{#if PRIVACY_URL}
+				Learn how we handle your data in the
+				<a class="link" href={PRIVACY_URL} target="_blank" rel="noopener">Privacy Policy</a>.
+			{/if}
+		</p>
+	{/if}
 </div>
 
 <p class="text-center text-sm text-base-content/70">

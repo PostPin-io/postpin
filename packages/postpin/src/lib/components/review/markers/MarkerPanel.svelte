@@ -37,10 +37,16 @@
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
+	import { isInTimeline, lastFrameOf, type FrameRange } from "@postpin-io/shared/logic/ranges";
+	import { rangeFromMarks, type InOut } from "../timeline-view.ts";
 
 	interface Props {
 		exportId: string;
 		currentFrame: number;
+		/** In and out point from the timeline: the next marker spans them */
+		inOut?: InOut;
+		/** Called after a marker was created from inOut, to clear it */
+		onrangeused?: () => void;
 		onseek: (frame: number) => void;
 		startFrame: number;
 		frameRate: FrameRate;
@@ -52,6 +58,8 @@
 	let {
 		exportId,
 		currentFrame,
+		inOut = { in: null, out: null },
+		onrangeused,
 		onseek,
 		frameRate,
 		startFrame,
@@ -71,7 +79,21 @@
 
 	let markers = $derived(await getMarkers(markersKey(currentExportId, shareToken)));
 
-	let markerAtPlayhead = $derived(markers.find((marker) => marker.frame === currentFrame));
+	// Where M puts the next marker: the in/out range, or the playhead
+	let nextRange = $derived(rangeFromMarks(inOut, currentFrame));
+	// Pressing M again selects the marker instead of adding the same one twice
+	let existingAtNext = $derived(
+		markers.find((m) => m.frame === nextRange.frame && m.duration === nextRange.duration),
+	);
+	// Ranges the playhead is in, highlighted in the list
+	let playingIds = $derived(
+		new Set(
+			markers
+				.filter((m) => m.duration > 0 && m.frame <= currentFrame && currentFrame <= lastFrameOf(m))
+				.map((m) => m.id),
+		),
+	);
+	const timeline = $derived({ startFrameIndex: startFrame, durationFrameCount: frameCount });
 
 	let markersComponents: Marker[] = $state([]);
 
@@ -179,20 +201,24 @@
 	}
 
 	async function addMarkerAtPlayhead() {
-		if (markerAtPlayhead) return markerAtPlayhead;
+		if (existingAtNext) return existingAtNext;
 		if (creating) return;
 		creating = true;
+		const range = nextRange;
 		try {
 			// Guests have no categories: the server puts their markers in the guest category
 			const categoryId = share ? undefined : (await resolveDefaultCategory()).categoryId;
-			return await createMarker({
+			const marker = await createMarker({
 				exportId: currentExportId,
 				name: "",
 				description: "",
 				categoryId,
-				frame: currentFrame,
+				...range,
 				shareToken,
 			});
+			// The in point was used up, like in the NLEs
+			if (inOut.in !== null) onrangeused?.();
+			return marker;
 		} finally {
 			creating = false;
 		}
@@ -341,14 +367,27 @@
 		anchorMarkerId = range.anchor;
 	}
 
+	// A range that would run past the end stops there, instead of the server refusing it
 	async function repositionMarker(marker: (typeof markers)[number], frame: number) {
-		if (!Number.isInteger(frame) || frame < 0 || frame === marker.frame) return;
+		if (!Number.isInteger(frame) || frame < 0) return;
+		const lastStart = startFrame + Math.max(frameCount, 1) - Math.max(marker.duration, 1);
+		await saveRange(marker, { frame: Math.min(frame, lastStart), duration: marker.duration });
+	}
+
+	async function resizeMarker(marker: (typeof markers)[number], duration: number) {
+		if (!Number.isInteger(duration) || duration < 0) return;
+		await saveRange(marker, { frame: marker.frame, duration });
+	}
+
+	async function saveRange(marker: (typeof markers)[number], range: FrameRange) {
+		if (range.frame === marker.frame && range.duration === marker.duration) return;
+		if (!isInTimeline(range, timeline)) return;
 		await updateMarker({
 			id: marker.id,
 			name: marker.name ?? "",
 			description: marker.description ?? "",
 			categoryId: marker.categoryId,
-			frame,
+			...range,
 			shareToken,
 		});
 	}
@@ -472,6 +511,7 @@
 					<Marker
 						{marker}
 						active={selectedMarkerIds.includes(marker.id)}
+						playing={playingIds.has(marker.id)}
 						bind:this={markersComponents[index]}
 						onchoose={() => {
 							selectedMarkerIds = [marker.id];
@@ -481,6 +521,7 @@
 						ontoggle={() => toggleMarkerSelection(marker.id)}
 						onselect={onseek}
 						onreposition={(frame) => repositionMarker(marker, frame)}
+						onresize={(duration) => resizeMarker(marker, duration)}
 						onrespond={() => respondTo(marker.id)}
 						{mobile}
 						onedit={() => (editingMarkerId = marker.id)}
@@ -528,6 +569,8 @@
 								marker={selectedMarker}
 								onclose={() => (selectedMarkerIds = [])}
 								{startFrame}
+								{frameRate}
+								{frameCount}
 							/>
 						{/if}
 					{/key}

@@ -9,15 +9,20 @@
 	import type { ReviewMarker } from "./types";
 	import Pencil from "@lucide/svelte/icons/pencil";
 	import MessageSquare from "@lucide/svelte/icons/message-square";
+	import { lastFrameOf } from "@postpin-io/shared/logic/ranges";
 
 	interface Props {
 		active?: boolean;
+		/** The playhead is inside this range */
+		playing?: boolean;
 		onselect?: (frame: number) => void;
 		onchoose?: () => void;
 		ontoggle?: () => void;
 		onrange?: () => void;
 		/** Called with the new absolute frame when the marker's timecode is edited */
 		onreposition?: (frame: number) => void;
+		/** Called with the new duration when the range's out timecode is edited */
+		onresize?: (duration: number) => void;
 		onrespond?: () => void;
 		marker: ReviewMarker;
 		frameRate: FrameRate;
@@ -33,6 +38,7 @@
 	let {
 		marker,
 		active = false,
+		playing = false,
 		onselect,
 		frameRate,
 		startFrame,
@@ -41,6 +47,7 @@
 		ontoggle,
 		onrange,
 		onreposition,
+		onresize,
 		onrespond,
 		mobile = false,
 		onedit,
@@ -141,7 +148,9 @@
 	<article
 		class="mx-1 flex items-center rounded-box border border-l-4 bg-base-100 shadow-sm {active
 			? 'border-primary ring-1 ring-primary'
-			: 'border-base-300'}"
+			: playing
+				? 'border-base-content/40'
+				: 'border-base-300'}"
 		style:border-left-color={marker.category.color}
 	>
 		<button
@@ -182,7 +191,9 @@
 	<article
 		class="card mx-1 max-w-full cursor-pointer overflow-hidden border bg-base-100 shadow-sm transition-colors hover:border-primary/60 {active
 			? 'border-primary ring-1 ring-primary'
-			: 'border-base-300'}"
+			: playing
+				? 'border-base-content/40'
+				: 'border-base-300'}"
 		role="button"
 		tabindex="0"
 		aria-pressed={active}
@@ -195,7 +206,7 @@
 			style:border-left-color={marker.category.color}
 			bind:open={isOpen}
 		>
-			<summary class="collapse-title px-3 py-3 font-semibold">
+			<summary class="collapse-title flex items-center gap-2 px-3 py-3 font-semibold">
 				{#if marker.name?.trim()}
 					<div class="max-w-xs truncate text-xs group-open:max-w-none group-open:whitespace-normal">
 						{marker.name}
@@ -303,6 +314,19 @@
 								{frameCount}
 								editable={true}
 							/>
+							{#if marker.duration > 0}
+								–
+								<Timecode
+									bind:frame={
+										() => lastFrameOf(marker),
+										(end) => onresize?.(Math.max(end - marker.frame + 1, 1))
+									}
+									{frameRate}
+									{startFrame}
+									{frameCount}
+									editable={true}
+								/>
+							{/if}
 						</span>
 					</div>
 				</div>

@@ -6,6 +6,12 @@ import { vi } from "vitest";
 export class FakeProcess extends EventEmitter {
 	stdout = new PassThrough();
 	stderr = new EventEmitter();
+	/** fd 3 and up, as many as the spawn options ask for */
+	extra: PassThrough[] = [];
+
+	get stdio() {
+		return [null, this.stdout, this.stderr, ...this.extra];
+	}
 
 	writeStdout(data: string | Buffer) {
 		this.stdout.write(data);

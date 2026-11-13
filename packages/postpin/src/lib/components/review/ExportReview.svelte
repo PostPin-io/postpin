@@ -31,6 +31,7 @@
 	import { getMarkers, getCategories } from "#lib/components/review/markers/markers.remote.ts";
 	import { defaultCategory } from "#lib/components/review/markers/default-category.svelte.ts";
 	import type { TimelineMode } from "#lib/components/review/video-player.ts";
+	import type { InOut } from "#lib/components/review/timeline-view.ts";
 	import {
 		defaultLayout,
 		normalizeSizes,
@@ -314,6 +315,8 @@
 	let videoPlaybackRate = $state(1);
 
 	let timeline = $state<Timeline>();
+	// Set in the timeline with I and O, used by the marker panel for the next marker
+	let inOut = $state<InOut>({ in: null, out: null });
 
 	// Single global keyboard handler. Shortcuts work wherever focus is, except while typing or
 	// inside modals. Components with their own shortcuts (MarkerPanel) skip the same targets.
@@ -527,6 +530,7 @@
 			{markers}
 			{seekThumbnails}
 			mode={timelineMode}
+			bind:inOut
 			onCollapsedHeight={(height) => (timelineCollapsedHeight = height)}
 			bind:videoPositionSeconds={videoPosition}
 			bind:paused={videoPaused}
@@ -548,6 +552,8 @@
 		{exportId}
 		mobile={isMobile.current}
 		{currentFrame}
+		{inOut}
+		onrangeused={() => (inOut = { in: null, out: null })}
 		onseek={seekToFrame}
 		startFrame={snapshot!.startFrameIndex}
 		frameRate={snapshot!.frameRate}

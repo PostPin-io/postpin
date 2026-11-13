@@ -3,6 +3,7 @@
 	import { GUEST_NAME_MAX_LENGTH } from "@postpin-io/shared/logic/share-links";
 	import ExportReview from "#lib/components/review/ExportReview.svelte";
 	import PageMeta from "#lib/components/layout/PageMeta.svelte";
+	import LegalLinks from "#lib/components/layout/LegalLinks.svelte";
 	import ShareLinkError from "#lib/components/share-view/ShareLinkError.svelte";
 	import {
 		getShareInfo,
@@ -86,6 +87,7 @@
 					Continue
 					{#if joining}<span class="loading loading-xs loading-spinner"></span>{/if}
 				</button>
+				<LegalLinks class="text-xs text-base-content/60" />
 			</div>
 		</form>
 	</div>

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import LegalLinks from "#lib/components/layout/LegalLinks.svelte";
+
 	interface Props {
 		/** HTTP status of the failed share-link request */
 		status: number | undefined;
@@ -20,6 +22,7 @@
 					? "Ask the person who shared it with you for a new link."
 					: "Check the address, or ask for a new link."}
 			</p>
+			<LegalLinks class="mt-2 text-xs text-base-content/60" />
 		</div>
 	</div>
 </div>

@@ -211,6 +211,8 @@
 						bind:this={cards[slot.marker.id]}
 						marker={slot.marker}
 						{startFrame}
+						{frameRate}
+						{frameCount}
 						onclose={() => dialog?.close()}
 						onchangeposition={() => positionModal?.open(slot.marker.frame)}
 					/>

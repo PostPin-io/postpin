@@ -46,24 +46,17 @@ describe("startMediaProcessing", () => {
 		);
 	});
 
-	it("flow: probe, thumbnail, barcode → sprites → 480p, shot thumbnails, 1080p and 720p", async () => {
+	it("flow: probe, thumbnail, barcode → sprites → transcode, shot thumbnails", async () => {
 		await startMediaProcessing(mediaId);
 		const flow = fakes.queue[0]!.args[0] as FlowNode;
 
-		const tree = (n: FlowNode): unknown => {
-			const label =
-				n.name === "transcode"
-					? `transcode ${(n.data.video as { height: number }).height}p`
-					: n.name;
-			return n.children?.length ? { [label]: n.children.map(tree) } : label;
-		};
+		const tree = (n: FlowNode): unknown =>
+			n.children?.length ? { [n.name]: n.children.map(tree) } : n.name;
 		expect(flow.children!.map(tree)).toEqual([
 			"probe",
 			"thumbnail",
-			{ movieBarcode: [{ seekSprites: ["transcode 480p"] }] },
+			{ movieBarcode: [{ seekSprites: ["transcode"] }] },
 			"shotThumbnails",
-			"transcode 1080p",
-			"transcode 720p",
 		]);
 
 		const all = (nodes: FlowNode[]): FlowNode[] =>
@@ -76,10 +69,13 @@ describe("startMediaProcessing", () => {
 		expect(
 			children.filter((c) => c.name !== "transcode").every((c) => c.queueName === "media-light"),
 		).toBe(true);
-		expect(transcodes.map((c) => c.data.video)).toEqual([
-			{ width: 854, height: 480, bitRate: 1_200_000, codec: "h264" },
-			{ width: 1920, height: 1080, bitRate: 8_000_000, codec: "h264" },
-			{ width: 1280, height: 720, bitRate: 3_500_000, codec: "h264" },
+		// one job encodes every rendition
+		expect(transcodes.map((c) => c.data.renditions)).toEqual([
+			[
+				{ width: 1920, height: 1080, bitRate: 8_000_000, codec: "h264" },
+				{ width: 1280, height: 720, bitRate: 3_500_000, codec: "h264" },
+				{ width: 854, height: 480, bitRate: 1_200_000, codec: "h264" },
+			],
 		]);
 	});
 
@@ -132,13 +128,11 @@ describe("getMediaJobs", () => {
 					children: [
 						{
 							...job("seekSprites", "waiting-children"),
-							children: [
-								job("transcode", "active", { data: { video: { height: 480 } }, progress: 40 }),
-							],
+							children: [job("transcode", "active", { progress: 40 })],
 						},
 					],
 				},
-				job("transcode", "active", { data: { video: { height: 1080 } }, progress: { frame: 3 } }),
+				job("shotThumbnails", "active", { progress: { frame: 3 } }),
 				job("thumbnail", "failed", { failedReason: "boom" }),
 				job("custom", "waiting"),
 			],
@@ -147,8 +141,8 @@ describe("getMediaJobs", () => {
 		const jobs = await getMediaJobs(mediaId);
 		expect(jobs.map((j) => [j.label, j.state, j.progress, j.weight])).toEqual([
 			// state order: active, …, waiting-children, waiting, …, failed, completed; then label (numeric)
-			["Transcode 480p", "active", 40, 100],
-			["Transcode 1080p", "active", 0, 100],
+			["Shot Thumbnails", "active", 0, 50],
+			["Transcode", "active", 40, 100],
 			["Movie Barcode", "waiting-children", 0, 50],
 			["Seek Thumbnails", "waiting-children", 0, 50],
 			["custom", "waiting", 0, 1],

@@ -51,3 +51,9 @@ export function toTickTime(frame: number, timing: Timing): TickTime {
 	const ticks = BigInt(frame - timing.startFrame) * timing.ticksPerFrame;
 	return ppro.TickTime.createWithTicks(ticks.toString());
 }
+
+// For lengths, unlike toFrame and toTickTime: no sequence start to add or take away
+export const ticksToFrames = (t: TickTime, timing: Timing) =>
+	Number((BigInt(t.ticks) + timing.ticksPerFrame / 2n) / timing.ticksPerFrame);
+export const framesToTickTime = (n: number, timing: Timing) =>
+	ppro.TickTime.createWithTicks((BigInt(n) * timing.ticksPerFrame).toString());

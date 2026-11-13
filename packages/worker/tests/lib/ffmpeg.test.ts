@@ -6,6 +6,7 @@ vi.mock("node:child_process", () => childProcess);
 
 import { ProbeResult, ffmpeg, ffprobe } from "../../src/lib/ffmpeg.ts";
 import * as v from "valibot";
+import { PassThrough } from "node:stream";
 
 let proc: FakeProcess;
 
@@ -127,8 +128,23 @@ describe("ffprobe", () => {
 describe("ffmpeg", () => {
 	it("spawns ffmpeg with the given args and exposes stdout", () => {
 		const run = ffmpeg(["-i", "in", "pipe:1"]);
-		expect(childProcess.spawn).toHaveBeenCalledWith("ffmpeg", ["-i", "in", "pipe:1"]);
+		expect(childProcess.spawn).toHaveBeenCalledWith("ffmpeg", ["-i", "in", "pipe:1"], {
+			stdio: ["ignore", "pipe", "pipe"],
+		});
 		expect(run.stdout).toBe(proc.stdout);
+		expect(run.outputs).toEqual([]);
+		proc.close(0);
+		return run.done;
+	});
+
+	it("opens one extra pipe per output from fd 3 on and exposes them in order", () => {
+		proc.extra = [new PassThrough(), new PassThrough()];
+		const run = ffmpeg(["-i", "in", "pipe:3", "pipe:4"], undefined, 2);
+		expect(childProcess.spawn).toHaveBeenCalledWith("ffmpeg", ["-i", "in", "pipe:3", "pipe:4"], {
+			stdio: ["ignore", "pipe", "pipe", "pipe", "pipe"],
+		});
+		expect(run.outputs).toEqual(proc.extra);
+		expect(run.outputs[0]).toBe(proc.extra[0]);
 		proc.close(0);
 		return run.done;
 	});

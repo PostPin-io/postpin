@@ -11,6 +11,7 @@ import {
 } from "bullmq";
 import type { RedisEnv } from "../env/index.ts";
 import type {
+	CleanupMessage,
 	MovieBarcodeMessage,
 	ProbeMessage,
 	SceneDetectMessage,
@@ -35,6 +36,7 @@ export const JobWeights: {
 	sceneDetect: 50,
 };
 
+// media jobs only: these feed the processing progress shown for a video
 export const JobLabels: {
 	[N in keyof QueueJobs["media-heavy"] | keyof QueueJobs["media-light"]]: string;
 } = {
@@ -48,7 +50,11 @@ export const JobLabels: {
 	sceneDetect: "Detecting cuts",
 };
 
-export const Queues = { heavy: "media-heavy", light: "media-light" } as const;
+export const Queues = {
+	heavy: "media-heavy",
+	light: "media-light",
+	maintenance: "maintenance",
+} as const;
 
 export type QueueName = (typeof Queues)[keyof typeof Queues];
 
@@ -63,6 +69,7 @@ export interface QueueJobs {
 		movieBarcode: MovieBarcodeMessage;
 		sceneDetect: SceneDetectMessage;
 	};
+	[Queues.maintenance]: { cleanup: CleanupMessage };
 }
 
 export type JobName<Q extends QueueName> = keyof QueueJobs[Q] & string;

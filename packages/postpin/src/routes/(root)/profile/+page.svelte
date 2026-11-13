@@ -4,6 +4,7 @@
 	import { refreshAll } from "$app/navigation";
 	import { authClient } from "#lib/auth-client.ts";
 	import {
+		getDeletionBlockers,
 		getMemberships,
 		getMyStorage,
 		getProfile,
@@ -161,6 +162,29 @@
 	}
 
 	let dialog: NewOrgModal | null = null;
+
+	const blockers = $derived(await getDeletionBlockers());
+	let deleteDialog = $state<HTMLDialogElement>();
+	let deletePassword = $state("");
+	let deleting = $state(false);
+	let deleteMessage = $state<Message>(null);
+
+	async function deleteAccount() {
+		if (!deletePassword) {
+			deleteMessage = { type: "error", text: "Enter your password." };
+			return;
+		}
+		deleting = true;
+		deleteMessage = null;
+		const { error } = await authClient.deleteUser({ password: deletePassword });
+		deleting = false;
+		if (error) {
+			deleteMessage = { type: "error", text: error.message ?? "Could not delete your account." };
+			return;
+		}
+		// full reload: the session cookie is gone, every cached query is stale
+		window.location.href = "/auth/login";
+	}
 </script>
 
 <PageMeta title="Profile" description="Manage your PostPin profile, organizations and sessions." />
@@ -414,6 +438,70 @@
 			</table>
 		{/if}
 	</fieldset>
+
+	<fieldset class="fieldset rounded-box border border-error/40 bg-base-100 p-4">
+		<legend class="fieldset-legend text-error">Delete account</legend>
+		<p class="text-sm text-base-content/70">
+			Deletes your account, your sessions and your memberships right away. Markers, comments and
+			exports you created stay with their organization and show as “Deleted User”.
+		</p>
+		{#if blockers.length > 0}
+			<p class="text-sm text-warning">
+				You're the last owner of {blockers.map((b) => b.name).join(", ")}. Make someone else owner
+				or delete the organization first.
+			</p>
+		{/if}
+		<div>
+			<button
+				type="button"
+				class="btn btn-outline btn-error btn-sm"
+				disabled={blockers.length > 0}
+				onclick={() => {
+					deletePassword = "";
+					deleteMessage = null;
+					deleteDialog?.showModal();
+				}}
+			>
+				Delete account…
+			</button>
+		</div>
+	</fieldset>
 </div>
+
+<dialog bind:this={deleteDialog} class="modal">
+	<form
+		class="modal-box flex flex-col gap-3"
+		onsubmit={(e) => {
+			e.preventDefault();
+			deleteAccount();
+		}}
+	>
+		<h3 class="text-lg font-bold">Delete your account?</h3>
+		<p class="text-sm">
+			This can't be undone. Markers and comments you wrote stay with their organization and show as
+			“Deleted User”.
+		</p>
+		{@render alert(deleteMessage, () => (deleteMessage = null))}
+		<label class="label" for="delete-password">Confirm with your password</label>
+		<input
+			id="delete-password"
+			type="password"
+			class="input w-full input-sm"
+			autocomplete="current-password"
+			bind:value={deletePassword}
+			disabled={deleting}
+		/>
+		<div class="modal-action">
+			<button type="button" class="btn btn-ghost btn-sm" onclick={() => deleteDialog?.close()}>
+				Cancel
+			</button>
+			<button type="submit" class="btn btn-error btn-sm" disabled={deleting || !deletePassword}>
+				Delete account
+				{#if deleting}<span class="loading loading-xs loading-spinner"></span>{/if}
+			</button>
+		</div>
+	</form>
+	<form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
 
 <NewOrgModal bind:this={dialog} />

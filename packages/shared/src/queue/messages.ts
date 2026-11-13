@@ -5,10 +5,10 @@ interface TrackConfig {
 
 export interface TranscodeMessage {
 	mediaId: string;
-	video: TrackConfig & {
+	renditions: (TrackConfig & {
 		width: number;
 		height: number;
-	};
+	})[];
 	audio: TrackConfig;
 }
 
@@ -53,3 +53,5 @@ export interface MovieBarcodeMessage {
 export interface SceneDetectMessage {
 	mediaId: string;
 }
+
+export type CleanupMessage = Record<string, never>;

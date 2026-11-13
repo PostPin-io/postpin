@@ -2,7 +2,7 @@ import type { Action, Marker, Project, Sequence } from "@adobe/premierepro";
 import type { NleMarker } from "@postpin-io/plugin-core/bridge";
 import { createStore } from "../bridges/store";
 import { ppro } from "../host";
-import { toFrame, toTickTime, type Timing } from "./time";
+import { framesToTickTime, ticksToFrames, toFrame, toTickTime, type Timing } from "./time";
 
 // Premiere markers have no custom data field, so it's kept locally per sequence and marker guid.
 // It's lost on another machine: pulled markers are then pushed as new ones.
@@ -34,6 +34,7 @@ export async function getMarkers(sequence: Sequence, timing: Timing): Promise<Nl
 			title: marker.getName(),
 			description: marker.getComments(),
 			frame: toFrame(marker.getStart(), timing),
+			duration: ticksToFrames(marker.getDuration(), timing),
 			color: String(marker.getColorIndex()),
 			customData: data[dataKey(sequence, nleId)] ?? null,
 		};
@@ -58,13 +59,17 @@ export async function setMarkers(
 				add(current.createSetCommentsAction(marker.description));
 				add(current.createSetColorByIndexAction(Number(marker.color)));
 				add(markers.createMoveMarkerAction(current, start));
+				// Left out: the marker keeps its length
+				if (marker.duration !== undefined) {
+					add(current.createSetDurationAction(framesToTickTime(marker.duration, timing)));
+				}
 			} else {
 				add(
 					markers.createAddMarkerAction(
 						marker.title,
 						ppro.Marker.MARKER_TYPE_COMMENT,
 						start,
-						ppro.TickTime.TIME_ZERO,
+						framesToTickTime(marker.duration ?? 0, timing),
 						marker.description,
 					),
 				);

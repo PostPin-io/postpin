@@ -19,7 +19,14 @@ import type {
 } from "./resolve";
 import { setTimeout as sleep } from "timers/promises";
 import { stringifyPostPinData } from "@postpin-io/plugin-core/customData";
-import { assignMarkerIds, newMarkerData, readMarkerIds, replacedMarkerData } from "./markerIds";
+import {
+	assignMarkerIds,
+	fromResolveDuration,
+	newMarkerData,
+	readMarkerIds,
+	replacedMarkerData,
+	toResolveDuration,
+} from "./markerIds";
 import { CLIP_PALETTE, MARKER_PALETTE } from "./palette";
 import type {
 	Clip,
@@ -504,6 +511,7 @@ const resolveBridge: NleBridge = {
 				title: marker.name,
 				description: marker.note,
 				frame: frame + startFrame,
+				duration: fromResolveDuration(marker.duration),
 				color: marker.color,
 				customData,
 			});
@@ -549,7 +557,7 @@ const resolveBridge: NleBridge = {
 				color: marker.color as MarkerColor,
 				name: marker.title || `M${i + 1}`,
 				note: marker.description,
-				duration: existing?.info.duration ?? 1,
+				duration: toResolveDuration(marker.duration, existing?.info.duration),
 				customData: customData ?? "",
 			});
 			if (added) {

@@ -54,6 +54,7 @@ export type DefaultSelection36MarkerPayload = {
 	exportId: string;
 	updatedAt: string;
 	createdAt: string;
+	duration: number;
 	frame: number;
 	description: string | null;
 	id: string;
@@ -70,6 +71,7 @@ export type MarkerWithResponses = {
 	exportId: string;
 	updatedAt: string;
 	createdAt: string;
+	duration: number;
 	frame: number;
 	description: string | null;
 	id: string;
@@ -87,6 +89,10 @@ export type UploadMarker = {
 	 */
 	nleId?: string | null;
 	categoryId: string;
+	/**
+	 * length in frames, 0 = point marker. Left out: new markers get 0, existing ones keep theirs.
+	 */
+	duration?: number;
 	frame: number;
 	description: string | null;
 	name: string;

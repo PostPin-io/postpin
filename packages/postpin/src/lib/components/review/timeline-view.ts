@@ -1,6 +1,7 @@
 import type { Clip, TimelineSnapshot, TrackType } from "@postpin-io/shared/types/TimelineSnapshot";
 import { PLAYBACK_RATES, type TimelineMode } from "#lib/components/review/video-player.ts";
 import { contrastColor } from "../categories/category-color";
+import { lastFrameOf, type FrameRange } from "@postpin-io/shared/logic/ranges";
 
 type Track = TimelineSnapshot["tracks"][number];
 
@@ -102,4 +103,71 @@ const TRACK_COLORS: Record<TrackType, string> = { video: "#3b82f6", audio: "#16a
 export function clipStyle(clip: Clip, trackType: TrackType) {
 	const background = clip.color?.hex ?? TRACK_COLORS[trackType];
 	return `background-color: ${background}; color: ${contrastColor(background) ?? "#ffffff"};`;
+}
+
+/** "span" drags a point marker into a range: the marker's frame stays one end, the pointer is the other */
+export type RangeDragMode = "move" | "start" | "end" | "span";
+
+/**
+ * The marker after dragging by delta frames, kept on the timeline (first … last).
+ * Resizing never flips a range: the dragged edge stops at the other one, and pushed onto it the range
+ * becomes a point marker there.
+ */
+export function dragRange(
+	origin: FrameRange,
+	mode: RangeDragMode,
+	delta: number,
+	{ first, last }: { first: number; last: number },
+): FrameRange {
+	const clamp = (n: number, min: number, max: number) => Math.min(Math.max(n, min), max);
+	const end = lastFrameOf(origin);
+	// Only grabbing an edge must not turn a 1 frame range into a point
+	if (delta === 0 && mode !== "span") return origin;
+	switch (mode) {
+		case "move":
+			return {
+				frame: clamp(origin.frame + delta, first, last - (end - origin.frame)),
+				duration: origin.duration,
+			};
+		case "start": {
+			const frame = clamp(origin.frame + delta, first, end);
+			return { frame, duration: frame === end ? 0 : end - frame + 1 };
+		}
+		case "end": {
+			const newEnd = clamp(end + delta, origin.frame, last);
+			return {
+				frame: origin.frame,
+				duration: newEnd === origin.frame ? 0 : newEnd - origin.frame + 1,
+			};
+		}
+		case "span": {
+			const other = clamp(origin.frame + delta, first, last);
+			const frame = Math.min(origin.frame, other);
+			const duration = other === origin.frame ? 0 : Math.abs(other - origin.frame) + 1;
+			return { frame, duration };
+		}
+	}
+}
+
+/** In and out point for the next marker; out is inclusive, like in the NLEs */
+export interface InOut {
+	in: number | null;
+	out: number | null;
+}
+
+/** Swaps in and out when out was set before in, instead of ignoring the key */
+export function orderMarks({ in: inFrame, out }: InOut): InOut {
+	if (inFrame !== null && out !== null && out < inFrame) return { in: out, out: inFrame };
+	return { in: inFrame, out };
+}
+
+/**
+ * Where a new marker goes: from in to out when both are set, at the in point when only that one is
+ * (whoever sets it means that spot), otherwise a point marker at the playhead.
+ */
+export function rangeFromMarks(inOut: InOut, playhead: number): FrameRange {
+	if (inOut.in !== null && inOut.out !== null) {
+		return { frame: inOut.in, duration: inOut.out - inOut.in + 1 };
+	}
+	return { frame: inOut.in ?? playhead, duration: 0 };
 }

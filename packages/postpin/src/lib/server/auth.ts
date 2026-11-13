@@ -7,7 +7,8 @@ import { BETTER_AUTH_SECRET, BETTER_AUTH_URL } from "$app/env/private";
 import { building } from "$app/env";
 import { bearer, deviceAuthorization } from "better-auth/plugins";
 import { DEVICE_CLIENTS } from "#lib/device-clients.ts";
-import { createAuthMiddleware, getIP } from "better-auth/api";
+import { APIError, createAuthMiddleware, getIP } from "better-auth/api";
+import { prepareAccountDeletion } from "#lib/server/account-deletion.ts";
 import { Role } from "@postpin-io/shared/db";
 import { ac, betterAuthRoles } from "#lib/better-auth-roles.ts";
 
@@ -47,6 +48,15 @@ export const auth = betterAuth({
 		bearer(),
 	],
 	hooks: {
+		// better-auth deletes without a password while the session is younger than a day. That would
+		// let anyone at an unlocked browser, or any desktop/plugin token, delete the account.
+		before: createAuthMiddleware(async (ctx) => {
+			if (ctx.path === "/delete-user" && !ctx.body?.password) {
+				throw new APIError("BAD_REQUEST", {
+					message: "Enter your password to delete your account.",
+				});
+			}
+		}),
 		after: createAuthMiddleware(async (ctx) => {
 			const deviceName = ctx.headers?.get("x-device-name")?.trim().slice(0, 100) || null;
 
@@ -74,6 +84,19 @@ export const auth = betterAuth({
 		changeEmail: {
 			enabled: true,
 			updateEmailWithoutVerification: true,
+		},
+		deleteUser: {
+			enabled: true,
+			// throws if the user is the last owner somewhere; tidies up what SetNull doesn't
+			beforeDelete: (user) => prepareAccountDeletion(user),
+			// the account is gone at this point; a failed mail must not turn that into an error
+			afterDelete: async (user) => {
+				await sendEmail(
+					user.email,
+					"Your PostPin account was deleted",
+					"Your PostPin account and all its sessions have been deleted. Markers and comments you wrote stay with their organizations and show as “Deleted User”.",
+				).catch((err: unknown) => console.error("Account deletion mail failed", err));
+			},
 		},
 	},
 	emailVerification: {

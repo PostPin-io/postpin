@@ -20,6 +20,7 @@ type ServerMarker = {
 	name: string;
 	description: string | null;
 	frame: number;
+	duration: number;
 	categoryId: string;
 };
 
@@ -200,6 +201,28 @@ describe("syncMarkersUp", () => {
 	});
 });
 
+describe("syncMarkersUp: ranges", () => {
+	it("uploads each marker's duration", async () => {
+		const nle = fakeNle(RESOLVE_CAPABILITIES, [
+			nleMarker({ nleId: "range", duration: 48 }),
+			nleMarker({ nleId: "point", duration: 0 }),
+		]);
+		await syncMarkersUp({ nle, client, ...ids });
+		expect(
+			uploaded().map((m: { nleId: string; duration?: number }) => [m.nleId, m.duration]),
+		).toEqual([
+			["range", 48],
+			["point", 0],
+		]);
+	});
+
+	it("leaves the duration out when the adapter doesn't know it, so PostPin keeps its own", async () => {
+		const nle = fakeNle(RESOLVE_CAPABILITIES, [nleMarker({ nleId: "n1" })]);
+		await syncMarkersUp({ nle, client, ...ids });
+		expect(uploaded()[0].duration).toBeUndefined();
+	});
+});
+
 describe("syncMarkersDown", () => {
 	const serverMarker = (overrides: Partial<ServerMarker>): ServerMarker => ({
 		id: "pp-1",
@@ -207,6 +230,7 @@ describe("syncMarkersDown", () => {
 		name: "Marker",
 		description: "text",
 		frame: 100,
+		duration: 0,
 		categoryId: "c-vfx",
 		...overrides,
 	});
@@ -239,6 +263,7 @@ describe("syncMarkersDown", () => {
 				title: "Sky",
 				description: "#VFX\n\nFix it",
 				frame: 86400,
+				duration: 0,
 				color: "Red",
 				customData: '{"__postpin":1,"id":"pp-1"}',
 			},
@@ -318,6 +343,7 @@ describe("syncMarkersDown", () => {
 					name: "New",
 					description: null,
 					frame: 5,
+					duration: 0,
 					categoryId: "c-blue",
 				},
 			],
@@ -412,5 +438,35 @@ describe("round trip", () => {
 				categoryId: "c-sound",
 			},
 		]);
+	});
+});
+
+describe("syncMarkersDown: ranges", () => {
+	const serverMarker = (overrides: Partial<ServerMarker>): ServerMarker => ({
+		id: "pp-1",
+		nleId: null,
+		name: "Marker",
+		description: "text",
+		frame: 100,
+		duration: 0,
+		categoryId: "c-vfx",
+		...overrides,
+	});
+
+	it("writes the duration into the NLE", async () => {
+		serverMarkers = [
+			serverMarker({ id: "pp-range", duration: 24 }),
+			serverMarker({ id: "pp-point", frame: 200 }),
+		];
+		const nle = fakeNle();
+		await syncMarkersDown({ nle, client, ...ids });
+		expect(nle.setMarkers.mock.calls[0]![0].map((m: NleMarker) => m.duration)).toEqual([24, 0]);
+	});
+
+	it("keeps the duration when linking new NLE markers back to PostPin", async () => {
+		serverMarkers = [serverMarker({ id: "pp-range", duration: 24 })];
+		const nle = fakeNle();
+		await syncMarkersDown({ nle, client, ...ids });
+		expect(uploaded()).toEqual([expect.objectContaining({ id: "pp-range", duration: 24 })]);
 	});
 });

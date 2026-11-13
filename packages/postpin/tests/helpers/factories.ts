@@ -98,12 +98,13 @@ export async function createCategory(
 export async function createMarker(
 	exp: { id: string },
 	category: { id: string },
-	data: { author?: { id: string }; guest?: { id: string }; frame?: number } = {},
+	data: { author?: { id: string }; guest?: { id: string }; frame?: number; duration?: number } = {},
 ) {
 	return prisma.marker.create({
 		data: {
 			name: `Marker ${next()}`,
 			frame: data.frame ?? 0,
+			duration: data.duration ?? 0,
 			exportId: exp.id,
 			categoryId: category.id,
 			authorId: data.author?.id ?? null,

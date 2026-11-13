@@ -12,10 +12,22 @@
 	import X from "@lucide/svelte/icons/x";
 	import CircleArrowLeft from "@lucide/svelte/icons/circle-arrow-left";
 	import type { ReviewMarker } from "./types";
+	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
+	import { formatTimecode } from "@postpin-io/shared/logic/timecode";
+	import { lastFrameOf } from "@postpin-io/shared/logic/ranges";
+	import MoveHorizontal from "@lucide/svelte/icons/move-horizontal";
+	import Diamond from "@lucide/svelte/icons/diamond";
 	import { useShare } from "../share-context.ts";
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	let { marker, startFrame, onclose, mobile = false, mobileHeaderAction }: Props = $props();
+	let {
+		marker,
+		startFrame,
+		frameRate,
+		frameCount,
+		onclose,
+		mobile = false,
+		mobileHeaderAction,
+	}: Props = $props();
 	let titleInputField: HTMLInputElement | null = null;
 	let titleFocusToggled = $state(false);
 
@@ -23,6 +35,9 @@
 		onclose?: () => void;
 		marker: ReviewMarker;
 		startFrame: number;
+		frameRate: FrameRate;
+		/** Timeline length in frames */
+		frameCount: number;
 		/** Inside the phone's marker modal: no card, no close button (the modal has one) */
 		mobile?: boolean;
 		mobileHeaderAction?: Snippet;
@@ -40,6 +55,7 @@
 
 	let selectedCategoryId = $state<string>(marker.categoryId);
 	let movedFrame: number | null = null;
+	let changedDuration: number | null = null;
 	let saving = $state(false);
 	let fieldFocused = $state(false);
 
@@ -87,11 +103,14 @@
 			next.name === saved.name &&
 			next.description === saved.description &&
 			next.categoryId === saved.categoryId &&
-			movedFrame === null
+			movedFrame === null &&
+			changedDuration === null
 		) {
 			return;
 		}
 
+		// Left out unless changed here: the server keeps the duration, e.g. one just dragged in the timeline
+		const duration = changedDuration;
 		saving = true;
 		try {
 			const category = categories.find((c) => c.id === next.categoryId);
@@ -101,6 +120,7 @@
 				description: next.description,
 				categoryId: next.categoryId,
 				frame: next.frame,
+				...(duration !== null ? { duration } : {}),
 				shareToken: share?.token,
 			}).updates(
 				// Shows the edit everywhere right away (list, timeline, swipe cards), before the server answers
@@ -113,6 +133,7 @@
 									name: next.name,
 									description: next.description,
 									frame: next.frame,
+									duration: duration ?? m.duration,
 									categoryId: next.categoryId,
 									category: category
 										? { ...m.category, id: category.id, name: category.name, color: category.color }
@@ -124,6 +145,7 @@
 
 			saved = { name: next.name, description: next.description, categoryId: next.categoryId };
 			if (movedFrame === next.frame) movedFrame = null;
+			if (changedDuration === duration) changedDuration = null;
 		} finally {
 			saving = false;
 		}
@@ -133,9 +155,20 @@
 		}
 	}
 
+	// A new range is one second long, or shorter when the timeline ends earlier
+	function toggleRange() {
+		const fps = Math.round(frameRate.fpsNumerator / frameRate.fpsDenominator);
+		const frame = movedFrame ?? marker.frame;
+		const timelineEnd = startFrame + Math.max(frameCount, 1);
+		changedDuration = marker.duration > 0 ? 0 : Math.max(Math.min(fps, timelineEnd - frame), 1);
+		void persist();
+	}
+
 	/** Moves the marker to another frame, saved together with the other fields */
 	export function moveTo(newFrame: number) {
-		movedFrame = newFrame;
+		// A range that would run past the end stops there, instead of the server refusing it
+		const lastStart = startFrame + Math.max(frameCount, 1) - Math.max(marker.duration, 1);
+		movedFrame = Math.min(newFrame, lastStart);
 		void persist();
 	}
 
@@ -215,9 +248,18 @@
 						</button>
 					{/if}
 				{/if}
-				<!-- <span class="badge badge-outline tabular-nums" title="Marker frame">
-					Frame {marker.frame - startFrame}
-					</span> -->
+				{#if marker.canUpdate}
+					<button
+						type="button"
+						class="btn btn-square btn-ghost"
+						title={marker.duration > 0 ? "Make it a point marker" : "Make it a range"}
+						aria-label={marker.duration > 0 ? "Make it a point marker" : "Make it a range"}
+						disabled={saving}
+						onclick={toggleRange}
+					>
+						{#if marker.duration > 0}<Diamond size={20} />{:else}<MoveHorizontal size={20} />{/if}
+					</button>
+				{/if}
 			</div>
 			<div class="flex shrink-0 gap-2 {mobile ? 'ml-auto' : ''}">
 				{#if mobile && mobileHeaderAction}
@@ -249,6 +291,14 @@
 				{/if}
 			</div>
 		</div>
+		<!-- On its own line: in the header it squeezes the category selector. A div, as daisyUI lets a
+		card-body p grow -->
+		{#if marker.duration > 0}
+			<div class="-mt-1 font-mono text-xs text-base-content/60" title="In – Out (duration)">
+				{formatTimecode(marker.frame, frameRate)} – {formatTimecode(lastFrameOf(marker), frameRate)}
+				({formatTimecode(marker.duration, frameRate)})
+			</div>
+		{/if}
 		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 		<form
 			class="flex min-h-0 flex-1 flex-col gap-2"

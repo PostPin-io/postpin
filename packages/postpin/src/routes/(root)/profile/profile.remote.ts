@@ -15,6 +15,7 @@ import {
 	totalUsed,
 	userQuota,
 } from "#lib/server/storage-usage.ts";
+import { soleOwnerOrgs } from "#lib/server/account-deletion.ts";
 
 export const getProfile = query(async () => {
 	const id = getRequestEvent().locals.user?.id;
@@ -171,4 +172,10 @@ export const leaveOrganization = command(v.string(), async (organizationId) => {
 		},
 		{ isolationLevel: "Serializable" },
 	);
+});
+
+export const getDeletionBlockers = query(async () => {
+	const { user } = getRequestEvent().locals;
+	if (!user) error(401, "Not signed in");
+	return soleOwnerOrgs(user.id);
 });

@@ -35,6 +35,7 @@ const targets = () => ({
 		seekToStart: vi.fn(),
 		seekToEnd: vi.fn(),
 		changePlaybackRate: vi.fn(),
+		marks: { markIn: vi.fn(), markOut: vi.fn(), clearMarks: vi.fn() },
 	},
 	player: { toggleFullscreen: vi.fn() },
 	togglePlayback: vi.fn(),
@@ -100,5 +101,43 @@ describe("handleReviewShortcut", () => {
 		handleReviewShortcut(key(" ", { target: new FakeElement(["textarea"]) } as never), t);
 		handleReviewShortcut(key(" ", { target: new FakeElement(["dialog[open]"]) } as never), t);
 		expect(t.togglePlayback).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		["i", {}, "markIn"],
+		["I", { shiftKey: true }, "markIn"],
+		["o", {}, "markOut"],
+		["c", {}, "clearMarks"],
+		["X", { shiftKey: true }, "clearMarks"],
+	] as const)("%s %o calls %s", (k, mods, method) => {
+		const t = targets();
+		const e = key(k, mods);
+		handleReviewShortcut(e, t);
+		expect(t.timeline.marks[method]).toHaveBeenCalledOnce();
+		expect(e.preventDefault).toHaveBeenCalled();
+	});
+
+	it("x without shift doesn't clear the marks", () => {
+		const t = targets();
+		const e = key("x");
+		handleReviewShortcut(e, t);
+		expect(t.timeline.marks.clearMarks).not.toHaveBeenCalled();
+		expect(e.preventDefault).not.toHaveBeenCalled();
+	});
+
+	it("in/out ignore repeats and ⌘", () => {
+		const t = targets();
+		handleReviewShortcut(key("i", { repeat: true }), t);
+		handleReviewShortcut(key("o", { metaKey: true }), t);
+		handleReviewShortcut(key("c", { metaKey: true }), t);
+		expect(t.timeline.marks.markIn).not.toHaveBeenCalled();
+		expect(t.timeline.marks.markOut).not.toHaveBeenCalled();
+		expect(t.timeline.marks.clearMarks).not.toHaveBeenCalled();
+	});
+
+	it("in/out do nothing while typing", () => {
+		const t = targets();
+		handleReviewShortcut(key("i", { target: new FakeElement(["input"]) } as never), t);
+		expect(t.timeline.marks.markIn).not.toHaveBeenCalled();
 	});
 });

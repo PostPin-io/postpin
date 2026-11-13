@@ -75,6 +75,23 @@ These only configure `compose.yml` itself:
 | `BETTER_AUTH_SECRET` |         | Secret for signing sessions, at least 32 characters. Generate one with `openssl rand -hex 32`. Changing it signs everyone out.                                                                                            |
 | `ADMIN_EMAILS`       | (empty) | Comma-separated emails that get system admin access (`/admin`). Only applies once the address is verified.                                                                                                                |
 
+### Legal links
+
+Links to your legal pages. Each one shows in the footer and on share links once it is set; the
+terms and the data processing agreement are also linked on the sign-up page. Leave them empty to
+hide the links. If your instance is publicly reachable, you are the operator: you need your own
+imprint and privacy policy, and if other organizations use your instance, a data processing
+agreement with them (GDPR Art. 28).
+
+| Variable      | Default | Description                                                       |
+| ------------- | ------- | ----------------------------------------------------------------- |
+| `IMPRINT_URL` | (empty) | Your imprint (Impressum), e.g. `https://example.com/imprint`.     |
+| `PRIVACY_URL` | (empty) | Your privacy policy.                                              |
+| `TERMS_URL`   | (empty) | Your terms of service.                                            |
+| `DPA_URL`     | (empty) | Your data processing agreement, linked on sign-up with the terms. |
+
+Only `http://` and `https://` URLs are accepted.
+
 ### Database
 
 | Variable            | Default              | Description                                                                                                                                                       |

@@ -353,17 +353,19 @@ describe("completeUpload", () => {
 		expect(saved.media!.status).toBe("PROCESSING");
 
 		expect(fakes.queue).toHaveLength(1);
-		const flow = fakes.queue[0]!.args[0] as {
-			name: string;
-			opts: { jobId: string };
-			children: { name: string }[];
-		};
+		type Node = { name: string; data: unknown; children?: Node[] };
+		const flow = fakes.queue[0]!.args[0] as Node & { opts: { jobId: string } };
 		expect(fakes.queue[0]!.queue).toBe("flow");
 		expect(flow.name).toBe("setMediaProcessingDone");
 		expect(flow.opts.jobId).toBe(exp.mediaId);
-		expect(flow.children.map((c) => c.name)).toEqual(
-			expect.arrayContaining(["probe", "thumbnail", "movieBarcode", "shotThumbnails", "transcode"]),
+		expect(flow.children!.map((c) => c.name)).toEqual(
+			expect.arrayContaining(["probe", "thumbnail", "movieBarcode", "shotThumbnails"]),
 		);
+		// one transcode for all renditions, below the jobs that read its smallest proxy
+		const all = (n: Node): Node[] => [n, ...(n.children ?? []).flatMap(all)];
+		const transcodes = all(flow).filter((n) => n.name === "transcode");
+		expect(transcodes).toHaveLength(1);
+		expect((transcodes[0]!.data as { renditions: unknown[] }).renditions).toHaveLength(3);
 	});
 
 	it("413 for a part larger than reserved; nothing is queued", async () => {

@@ -16,6 +16,7 @@ import {
 import { can } from "#lib/roles.ts";
 
 import * as v from "valibot";
+import { isInTimeline, timelineBounds, type FrameRange } from "@postpin-io/shared/logic/ranges";
 
 const MAX_BULK = 500;
 
@@ -38,23 +39,24 @@ async function assertNotGuestCategory(categoryId: string) {
 }
 
 /**
- * Markers must sit on the export's timeline: startFrameIndex … startFrameIndex + durationFrameCount - 1.
+ * Markers must sit on the export's timeline from their first to their last frame.
  * Exports without a snapshot (yet) have no known range and are not checked.
  */
-async function assertFramesInTimeline(exportId: string, frames: number[]) {
+async function assertRangesInTimeline(exportId: string, ranges: FrameRange[]) {
 	const exp = await prisma.export.findUnique({
 		where: { id: exportId },
 		select: { timelineSnapshot: true },
 	});
-	const range = v.safeParse(timelineRange, exp?.timelineSnapshot);
-	if (!range.success) return;
-	const first = range.output.startFrameIndex;
-	const last = first + Math.max(range.output.durationFrameCount, 1) - 1;
-	if (frames.some((f) => f < first || f > last)) {
-		error(400, `Frame outside the timeline (${first}–${last})`);
+	const timeline = v.safeParse(timelineRange, exp?.timelineSnapshot);
+	if (!timeline.success) return;
+	if (ranges.some((r) => !isInTimeline(r, timeline.output))) {
+		const { first, last } = timelineBounds(timeline.output);
+		error(400, `Marker outside the timeline (${first}–${last})`);
 	}
 }
 const timelineRange = v.object({ startFrameIndex: v.number(), durationFrameCount: v.number() });
+/** Length in frames, 0 = point marker */
+const duration = v.pipe(v.number(), v.integer(), v.minValue(0));
 /** Set by the share page: the call is a share-link guest's (see readExport) */
 const shareToken = v.optional(v.string());
 
@@ -65,13 +67,13 @@ const shareToken = v.optional(v.string());
 async function guestMarker(id: string, token: string) {
 	const marker = await prisma.marker.findUnique({
 		where: { id },
-		select: { exportId: true, guestId: true },
+		select: { exportId: true, guestId: true, duration: true },
 	});
 	if (!marker) error(404, "Not found");
 	const reader = await readExport(marker.exportId, token);
 	if (reader.kind !== "guest" || marker.guestId !== reader.guest.id) error(404, "Not found");
 	requireMarkers(reader);
-	return { reader, exportId: marker.exportId };
+	return { reader, exportId: marker.exportId, duration: marker.duration };
 }
 
 /**
@@ -212,9 +214,9 @@ export const pasteMarkers = command(
 
 		// 5. Anlegen (+ bei "cut" Quelle löschen) in EINER Transaktion
 		const minFrame = Math.min(...source.map((m) => m.frame));
-		await assertFramesInTimeline(
+		await assertRangesInTimeline(
 			data.targetExportId,
-			source.map((m) => data.anchorFrame + (m.frame - minFrame)),
+			source.map((m) => ({ frame: data.anchorFrame + (m.frame - minFrame), duration: m.duration })),
 		);
 		await prisma.$transaction(async (tx) => {
 			for (const m of source) {
@@ -223,6 +225,7 @@ export const pasteMarkers = command(
 						name: m.name,
 						description: m.description,
 						frame: data.anchorFrame + (m.frame - minFrame),
+						duration: m.duration,
 						exportId: data.targetExportId,
 						categoryId: categoryOf(m),
 						// cut = verschieben → Autor bleibt (auch ein Gast); copy = neuer Marker → wer einfügt
@@ -263,6 +266,7 @@ export const createMarker = command(
 		name: v.string(),
 		description: v.string(),
 		frame: v.pipe(v.number(), v.integer(), v.minValue(0)),
+		duration: v.optional(duration, 0),
 		exportId: v.string(),
 		/** Members only; guests always get the project's guest category */
 		categoryId: v.optional(v.string()),
@@ -274,7 +278,7 @@ export const createMarker = command(
 			const reader = await readExport(data.exportId, data.shareToken);
 			if (reader.kind !== "guest") error(404, "Not found");
 			requireMarkers(reader);
-			await assertFramesInTimeline(data.exportId, [data.frame]);
+			await assertRangesInTimeline(data.exportId, [{ frame: data.frame, duration: data.duration }]);
 
 			const marker = await prisma.$transaction(async (tx) =>
 				tx.marker.create({
@@ -300,13 +304,14 @@ export const createMarker = command(
 			id: data.exportId,
 		});
 		await assertCategoriesInProject([data.categoryId], target.projectId);
-		await assertFramesInTimeline(data.exportId, [data.frame]);
+		await assertRangesInTimeline(data.exportId, [{ frame: data.frame, duration: data.duration }]);
 
 		const marker = await prisma.marker.create({
 			data: {
 				name: data.name,
 				description: data.description,
 				frame: data.frame,
+				duration: data.duration,
 				exportId: data.exportId,
 				categoryId: data.categoryId,
 				authorId: user.id,
@@ -323,6 +328,8 @@ export const updateMarker = command(
 		name: v.string(),
 		description: v.string(),
 		frame: v.pipe(v.number(), v.integer(), v.minValue(0)),
+		/** Left out: the marker keeps its duration, e.g. when it's only moved */
+		duration: v.optional(duration),
 		/** Ignored for guests: their markers stay in the guest category */
 		categoryId: v.string(),
 		shareToken,
@@ -330,11 +337,18 @@ export const updateMarker = command(
 	async (data) => {
 		// ─── Guest: only own markers, category stays ───
 		if (data.shareToken) {
-			const { exportId } = await guestMarker(data.id, data.shareToken);
-			await assertFramesInTimeline(exportId, [data.frame]);
+			const { exportId, duration } = await guestMarker(data.id, data.shareToken);
+			await assertRangesInTimeline(exportId, [
+				{ frame: data.frame, duration: data.duration ?? duration },
+			]);
 			const marker = await prisma.marker.update({
 				where: { id: data.id },
-				data: { name: data.name, description: data.description, frame: data.frame },
+				data: {
+					name: data.name,
+					description: data.description,
+					frame: data.frame,
+					duration: data.duration,
+				},
 			});
 			await getMarkers(markersKey(exportId, data.shareToken)).refresh();
 			return marker;
@@ -343,11 +357,13 @@ export const updateMarker = command(
 		// ─── Member: as before ───
 		const { target } = await authorize("marker", "update", { type: "marker", id: data.id });
 		await assertCategoriesInProject([data.categoryId], target.projectId);
-		const { exportId } = await prisma.marker.findUniqueOrThrow({
+		const { exportId, duration } = await prisma.marker.findUniqueOrThrow({
 			where: { id: data.id },
-			select: { exportId: true },
+			select: { exportId: true, duration: true },
 		});
-		await assertFramesInTimeline(exportId, [data.frame]);
+		await assertRangesInTimeline(exportId, [
+			{ frame: data.frame, duration: data.duration ?? duration },
+		]);
 
 		const marker = await prisma.marker.update({
 			where: { id: data.id },
@@ -355,6 +371,7 @@ export const updateMarker = command(
 				name: data.name,
 				description: data.description,
 				frame: data.frame,
+				duration: data.duration,
 				categoryId: data.categoryId,
 			},
 		});
