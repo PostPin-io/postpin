@@ -40,18 +40,22 @@ fn reports_output_and_exit_code() {
     assert_eq!(out.exit_code, Some(3));
 }
 
-/// std quotes for the C runtime's rules; PowerShell prints what it received, one per line
+/// std quotes them for the C runtime's rules, echo-args splits them again with those rules
 #[test]
 fn passes_arguments_unchanged() {
     let mut t = ProcessTable::new().unwrap();
-    let args = ["a b", "c\"d", r"C:\x\", r"\\server\share\", "ü"];
-    let mut all = vec![
-        "-NoProfile".to_string(),
-        "-Command".into(),
-        "$args | ForEach-Object { $_ }".into(),
+    let args = [
+        "a b",
+        "c\"d",
+        r"C:\x\",
+        r"\\server\share\",
+        "",
+        "ü",
+        "-vf",
+        "scale=w='min(1280,iw)'",
     ];
-    all.extend(args.iter().map(|a| a.to_string()));
-    let h = t.spawn("powershell.exe", &all).unwrap();
+    let all: Vec<String> = args.iter().map(|a| a.to_string()).collect();
+    let h = t.spawn(env!("CARGO_BIN_EXE_echo-args"), &all).unwrap();
     let out = run_to_end(&mut t, h);
     assert_eq!(out.exit_code, Some(0), "{}", out.stderr);
     let lines: Vec<&str> = out.stdout.lines().collect();

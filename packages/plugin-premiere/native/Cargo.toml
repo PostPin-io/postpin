@@ -9,6 +9,13 @@ publish = false
 # rlib: so tests/ can use the process module
 crate-type = ["cdylib", "rlib"]
 
+# for tests/process_windows.rs (CARGO_BIN_EXE_echo-args); build-*.sh copy only the library
+[[bin]]
+name = "echo-args"
+path = "src/bin/echo-args.rs"
+test = false
+doc = false
+
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"   # kill() on a process group; std only offers SIGKILL
 
