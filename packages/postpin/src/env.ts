@@ -12,6 +12,22 @@ import {
 import * as v from "valibot";
 
 /**
+ * An optional http(s) link shown to visitors, e.g. the imprint. Empty means unset, which hides the
+ * link. Only http(s) is allowed because the value ends up in an `href`.
+ */
+const envLinkUrl = v.pipe(
+	v.optional(v.string()),
+	v.transform((value) => value?.trim() || undefined),
+	v.optional(
+		v.pipe(
+			v.string(),
+			v.url(),
+			v.check((url) => /^https?:\/\//i.test(url), "Must start with http:// or https://"),
+		),
+	),
+);
+
+/**
  * Makes every variable optional while building, so the Docker build needs no runtime env. At
  * runtime the schemas apply unchanged, which is why the types stay those of the real schemas.
  * Code that runs during the build must not rely on these values (guard it with `building`).
@@ -56,6 +72,11 @@ export const variables = defineEnvVars(
 				v.transform((s) => s?.trim() || undefined),
 			),
 		}, // empty = disabled
+		// Legal links in the footer, on sign-up and on share links. Public: rendered in the browser.
+		IMPRINT_URL: { schema: envLinkUrl, public: true },
+		PRIVACY_URL: { schema: envLinkUrl, public: true },
+		TERMS_URL: { schema: envLinkUrl, public: true },
+		DPA_URL: { schema: envLinkUrl, public: true }, // data processing agreement (AVV)
 		...databaseEnvVars,
 		...s3EnvVars,
 		...redisEnvVars,
