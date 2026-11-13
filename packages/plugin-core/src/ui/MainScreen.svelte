@@ -2,12 +2,14 @@
 	import {
 		createProject,
 		createTimeline,
+		getConfig,
 		getExports,
 		type GetExportsResponse,
 		type ProjectWithTimelines,
 		type Timeline,
 	} from "@postpin-io/api-client-ts";
 	import { createClient } from "@postpin-io/api-client-ts/client";
+	import { API_VERSION_HEADER, POSTPIN_API_VERSION } from "@postpin-io/shared/api-version";
 	import { onMount, type Snippet } from "svelte";
 	import type {
 		Capabilities,
@@ -19,6 +21,9 @@
 	import { errorMessage } from "../errors";
 	import { loadProjectsWithTimelines } from "../projects";
 	import { renderAndUpload as runRenderAndUpload } from "../renderAndUpload";
+	import { prepareCompatibleUpdate } from "../autoUpdate";
+	import type { AvailableUpdate } from "../bridge";
+	import RefreshCw from "@lucide/svelte/icons/refresh-cw";
 	import { syncMarkersDown, syncMarkersUp } from "../sync";
 	import { getBridges } from "./context";
 	import Destination from "./Destination.svelte";
@@ -30,6 +35,7 @@
 	import Globe from "@lucide/svelte/icons/globe";
 	import LogOut from "@lucide/svelte/icons/log-out";
 	import PostPinLogo from "./PostPinLogo.svelte";
+	import VersionMismatch from "./VersionMismatch.svelte";
 
 	interface Props {
 		header?: Snippet;
@@ -52,6 +58,8 @@
 	const client = createClient({
 		baseUrl: `${await host.getServerUrl()}/api`,
 		auth: async () => (await host.getToken()) ?? undefined,
+		// the API answers 426 unless this plugin speaks exactly the server's API version
+		headers: { [API_VERSION_HEADER]: String(POSTPIN_API_VERSION) },
 		// svelte-ignore state_referenced_locally
 		fetch,
 	});
@@ -62,9 +70,23 @@
 		if (response.status === 401 && !loggingOut) {
 			loggingOut = true;
 			await host.logout();
+		} else if (response.status === 426 && !versionMismatch) {
+			// a clone: the caller still reads the body for its error
+			const body = await response.clone().json();
+			versionMismatch = {
+				pluginApiVersion: body.clientApiVersion ?? POSTPIN_API_VERSION,
+				serverApiVersion: body.serverApiVersion,
+				serverRelease: body.serverRelease ?? null,
+			};
 		}
 		return response;
 	});
+
+	let versionMismatch = $state<{
+		pluginApiVersion: number | string;
+		serverApiVersion: number;
+		serverRelease?: string | null;
+	} | null>(null);
 
 	type NleState =
 		| { status: "connecting" }
@@ -73,7 +95,11 @@
 	let nleState = $state<NleState>({ status: "connecting" });
 
 	const [loadedProjects, lastSettings] = await Promise.all([
-		loadProjectsWithTimelines(client),
+		// a 426 rejects the first request; the interceptor set versionMismatch, which replaces the screen
+		loadProjectsWithTimelines(client).catch((error: unknown): ProjectWithTimelines[] => {
+			if (versionMismatch) return [];
+			throw error;
+		}),
 		host.getSettings(),
 	]);
 
@@ -126,8 +152,24 @@
 	const capabilities = $derived(nleState.status === "connected" ? nleState.capabilities : null);
 	const nleTimeline = $derived(nleState.status === "connected" ? nleState.timeline : null);
 
+	// An update downloaded in the background, ready to install (self-updating hosts only)
+	let readyUpdate = $state<AvailableUpdate | null>(null);
+
 	onMount(() => {
 		connectNle();
+		// Only now the server's API version is known: updating blindly at startup could install a
+		// plugin newer than a pinned server. A 426 shows VersionMismatch, which has its own update.
+		const { updater } = host;
+		if (updater) {
+			getConfig({ client, throwOnError: true })
+				.then(({ data }) => prepareCompatibleUpdate(updater, data.apiVersion))
+				.then((update) => {
+					if (!destroyed) readyUpdate = update;
+				})
+				.catch((error: unknown) =>
+					console.warn("[PostPin] update check failed:", errorMessage(error)),
+				);
+		}
 		return () => {
 			destroyed = true;
 			clearNleConnectTimer();
@@ -257,6 +299,8 @@
 		$state(null);
 	let renderProgress = $state<RenderProgress | null>(null);
 	let uploadProgress = $state<UploadProgress | null>(null);
+	// encoding the review versions, 0 to 1
+	let transcodeProgress = $state<number | null>(null);
 	let error = $state<string | null>(null);
 
 	// Runs a button action, showing its error and blocking the other buttons meanwhile
@@ -288,7 +332,8 @@
 		}
 	}
 
-	// Dock / taskbar progress for the whole run: rendering fills the first half, uploading the second.
+	// Dock / taskbar progress for the whole run: rendering up to 45 %, uploading the rest. Encoding
+	// the review versions runs alongside the upload and has only its own bar.
 	// Only sends whole-percent changes, progress events can come in much faster.
 	let lastDockPercent: number | null = null;
 	function setDockProgress(fraction: number | null) {
@@ -304,6 +349,7 @@
 		const ids = { projectId: target.project.id, timelineId: target.timeline.id };
 
 		renderProgress = null;
+		transcodeProgress = null;
 		uploadProgress = null;
 		log = [];
 		return runLong(async () => {
@@ -317,11 +363,14 @@
 				onStep: (message) => log.push(message),
 				onRenderProgress: (progress) => {
 					renderProgress = progress;
-					setDockProgress((progress.percent / 100) * 0.5);
+					setDockProgress((progress.percent / 100) * 0.45);
+				},
+				onTranscodeProgress: (fraction) => {
+					transcodeProgress = fraction;
 				},
 				onUploadProgress: (progress) => {
 					uploadProgress = progress;
-					setDockProgress(0.5 + (progress.uploadedBytes / progress.totalBytes) * 0.5);
+					setDockProgress(0.45 + (progress.uploadedBytes / progress.totalBytes) * 0.55);
 				},
 			}).finally(() => setDockProgress(null));
 
@@ -372,222 +421,238 @@
 {#snippet fromPostPin()}<span class="@3xl:hidden">↓</span><span class="hidden @3xl:inline">←</span
 	>{/snippet}
 
-<!-- Fills the window: the header stays put, only the content below it scrolls -->
-<main class="@container flex h-screen flex-col">
-	<header
-		class={[
-			"flex shrink-0 items-center border-t border-base-content/20 px-4 py-2 text-sm select-none [app-region:drag]",
-			titleBarInset && "ms-16",
-		]}
-	>
-		<button
-			type="button"
-			class="cursor-pointer
+{#if versionMismatch}
+	<VersionMismatch {...versionMismatch} />
+{:else}
+	<!-- Fills the window: the header stays put, only the content below it scrolls -->
+	<main class="@container flex h-screen flex-col">
+		<header
+			class={[
+				"flex shrink-0 items-center border-t border-base-content/20 px-4 py-2 text-sm select-none [app-region:drag]",
+				titleBarInset && "ms-16",
+			]}
+		>
+			<button
+				type="button"
+				class="cursor-pointer
 			 items-center flex [app-region:no-drag] text-white"
-			onclick={() => host.openInBrowser("/")}
-		>
-			<PostPinLogo class="h-5 w-auto me-3" />
-			<span class="text-base-content/60 text-xl no-underline"> PostPin </span>
-		</button>
+				onclick={() => host.openInBrowser("/")}
+			>
+				<PostPinLogo class="h-5 w-auto me-3" />
+				<span class="text-base-content/60 text-xl no-underline"> PostPin </span>
+			</button>
 
-		<span class="flex-1"></span>
-		<!-- Buttons in a drag region need no-drag, otherwise the window swallows their clicks -->
-		<button
-			type="button"
-			class="btn btn-link btn-sm [app-region:no-drag]"
-			onclick={() => host.openInBrowser("/")}
-		>
-			<Globe size={14} />
-		</button>
-		<button
-			type="button"
-			class="btn btn-link btn-sm [app-region:no-drag]"
-			onclick={() => host.logout()}
-		>
-			<LogOut size={14} />
-		</button>
-	</header>
+			<span class="flex-1"></span>
+			<!-- Buttons in a drag region need no-drag, otherwise the window swallows their clicks -->
+			{#if readyUpdate}
+				<!-- installs on quit anyway; restarting now would cut off a running render or upload -->
+				<button
+					type="button"
+					class="btn btn-ghost btn-sm text-primary [app-region:no-drag]"
+					title="Restart PostPin to install the update"
+					disabled={!!isBusy}
+					onclick={() => host.updater?.install()}
+				>
+					<RefreshCw size={14} /> Update {readyUpdate.version}
+				</button>
+			{/if}
+			<button
+				type="button"
+				class="btn btn-link btn-sm [app-region:no-drag]"
+				onclick={() => host.openInBrowser("/")}
+			>
+				<Globe size={14} />
+			</button>
+			<button
+				type="button"
+				class="btn btn-link btn-sm [app-region:no-drag]"
+				onclick={() => host.logout()}
+			>
+				<LogOut size={14} />
+			</button>
+		</header>
 
-	<div class="min-h-0 flex-1 overflow-y-auto">
-		<!-- Stacked: PostPin on top, the actions, the program at the bottom, joined by vertical arrows.
+		<div class="min-h-0 flex-1 overflow-y-auto">
+			<!-- Stacked: PostPin on top, the actions, the program at the bottom, joined by vertical arrows.
 		     @md: PostPin's two parts side by side, each action right below its part.
 		     @3xl: the program left, the actions in the middle, PostPin right, joined by horizontal arrows.
 		     PostPin's parts line up with the actions through subgrid. Below @3xl the rows have no gap,
 		     so the arrows reach the boxes. -->
-		<div
-			class="grid grid-cols-1 p-4 @md:grid-cols-2 @md:gap-x-4 @3xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.2fr)] @3xl:gap-x-0 @3xl:gap-y-4"
-		>
-			<section
-				class="grid min-w-0 rounded-box border-2 border-base-content/50 @md:col-span-2 @md:grid-cols-subgrid @md:gap-x-0 @3xl:col-span-1 @3xl:col-start-3 @3xl:row-span-2 @3xl:row-start-1 @3xl:grid-cols-1 @3xl:grid-rows-subgrid @3xl:gap-y-0"
+			<div
+				class="grid grid-cols-1 p-4 @md:grid-cols-2 @md:gap-x-4 @3xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.2fr)] @3xl:gap-x-0 @3xl:gap-y-4"
 			>
-				<div class="min-w-0 p-4">
-					<Destination
-						framed={false}
-						title="Upload to"
-						path={uploadTarget?.project.name}
-						name={uploadTarget?.timeline.name}
-						mode="timeline"
-						projects={projectsWithTimelines}
-						selectedProjectId={uploadTarget?.project.id}
-						selectedTimelineId={uploadTarget?.timeline.id}
-						onSelect={selectUploadTarget}
-						onBeforeChoose={refreshProjects}
-						onCreateProject={createNewProject}
-						onCreateTimeline={createNewTimeline}
-						emptyText="This timeline isn't linked to a PostPin timeline yet."
-						highlightChoose={!uploadTarget}
-						browserUrl={uploadTarget
-							? `/projects/${uploadTarget.project.id}/timelines/${uploadTarget.timeline.id}/exports`
-							: undefined}
-					></Destination>
-				</div>
-
-				<div
-					class="min-w-0 border-t border-base-content/30 p-4 @md:border-t-0 @md:border-l @3xl:border-t @3xl:border-l-0"
+				<section
+					class="grid min-w-0 rounded-box border-2 border-base-content/50 @md:col-span-2 @md:grid-cols-subgrid @md:gap-x-0 @3xl:col-span-1 @3xl:col-start-3 @3xl:row-span-2 @3xl:row-start-1 @3xl:grid-cols-1 @3xl:grid-rows-subgrid @3xl:gap-y-0"
 				>
-					<Destination
-						framed={false}
-						title="Markers with"
-						path={markerTarget
-							? `${markerTarget.project.name} › ${markerTarget.timeline.name}`
-							: undefined}
-						name={markerTarget?.export?.name}
-						mode="export"
-						projects={projectsWithExports}
-						selectedProjectId={markerTarget?.project.id}
-						selectedTimelineId={markerTarget?.timeline.id}
-						selectedExportId={markerTarget?.export?.id}
-						onSelect={selectMarkerTarget}
-						onBeforeChoose={refreshProjects}
-						onCreateProject={createNewProject}
-						onCreateTimeline={createNewTimeline}
-						browserUrl={markerTarget?.export
-							? `/projects/${markerTarget.project.id}/timelines/${markerTarget.timeline.id}/exports/${markerTarget.export.id}`
-							: undefined}
-						emptyText={markerTarget
-							? "No exports in this timeline yet. Render one first."
-							: "No export selected."}
+					<div class="min-w-0 p-4">
+						<Destination
+							framed={false}
+							title="Upload to"
+							path={uploadTarget?.project.name}
+							name={uploadTarget?.timeline.name}
+							mode="timeline"
+							projects={projectsWithTimelines}
+							selectedProjectId={uploadTarget?.project.id}
+							selectedTimelineId={uploadTarget?.timeline.id}
+							onSelect={selectUploadTarget}
+							onBeforeChoose={refreshProjects}
+							onCreateProject={createNewProject}
+							onCreateTimeline={createNewTimeline}
+							emptyText="This timeline isn't linked to a PostPin timeline yet."
+							highlightChoose={!uploadTarget}
+							browserUrl={uploadTarget
+								? `/projects/${uploadTarget.project.id}/timelines/${uploadTarget.timeline.id}/exports`
+								: undefined}
+						></Destination>
+					</div>
+
+					<div
+						class="min-w-0 border-t border-base-content/30 p-4 @md:border-t-0 @md:border-l @3xl:border-t @3xl:border-l-0"
 					>
-						{#if markerTarget?.export}
-							<span class="text-sm text-base-content/60">
-								{new Date(markerTarget.export.createdAt).toLocaleString()}
-							</span>
-						{/if}
-					</Destination>
-				</div>
-			</section>
-
-			{#if isBusy == "rendering"}
-				<div
-					class="flex flex-col justify-center gap-3 py-4 @md:col-span-2 @md:col-start-1 @md:row-start-2 @3xl:col-span-1 @3xl:col-start-2 @3xl:row-span-2 @3xl:row-start-1 @3xl:px-4 @3xl:py-0"
-				>
-					<ProgressBars {renderProgress} {uploadProgress} />
-					{#if log.length}
-						<p class="text-center text-sm text-base-content/60">{log.at(-1)}</p>
-					{/if}
-				</div>
-			{:else}
-				<div
-					class="flex min-w-0 flex-col @md:col-start-1 @md:row-start-2 @3xl:col-start-2 @3xl:row-start-1 @3xl:flex-row @3xl:items-center"
-				>
-					<FlowArrow direction="right" disabled={!canRender}>
-						<div class="join max-w-full">
-							<button
-								type="button"
-								class="btn join-item h-auto min-w-0 flex-col gap-0 py-2 whitespace-normal btn-primary"
-								disabled={!canRender}
-								onclick={renderAndUpload}
-							>
-								Render & Upload {@render toPostPin()}
-								<span class="text-xs font-normal break-words opacity-75">
-									{uploadTarget
-										? `new export in ${uploadTarget.timeline.name}`
-										: "choose a location first"}
+						<Destination
+							framed={false}
+							title="Markers with"
+							path={markerTarget
+								? `${markerTarget.project.name} › ${markerTarget.timeline.name}`
+								: undefined}
+							name={markerTarget?.export?.name}
+							mode="export"
+							projects={projectsWithExports}
+							selectedProjectId={markerTarget?.project.id}
+							selectedTimelineId={markerTarget?.timeline.id}
+							selectedExportId={markerTarget?.export?.id}
+							onSelect={selectMarkerTarget}
+							onBeforeChoose={refreshProjects}
+							onCreateProject={createNewProject}
+							onCreateTimeline={createNewTimeline}
+							browserUrl={markerTarget?.export
+								? `/projects/${markerTarget.project.id}/timelines/${markerTarget.timeline.id}/exports/${markerTarget.export.id}`
+								: undefined}
+							emptyText={markerTarget
+								? "No exports in this timeline yet. Render one first."
+								: "No export selected."}
+						>
+							{#if markerTarget?.export}
+								<span class="text-sm text-base-content/60">
+									{new Date(markerTarget.export.createdAt).toLocaleString()}
 								</span>
-							</button>
-							{#if capabilities?.renderToDisk}
+							{/if}
+						</Destination>
+					</div>
+				</section>
+
+				{#if isBusy == "rendering"}
+					<div
+						class="flex flex-col justify-center gap-3 py-4 @md:col-span-2 @md:col-start-1 @md:row-start-2 @3xl:col-span-1 @3xl:col-start-2 @3xl:row-span-2 @3xl:row-start-1 @3xl:px-4 @3xl:py-0"
+					>
+						<ProgressBars {renderProgress} {transcodeProgress} {uploadProgress} />
+						{#if log.length}
+							<p class="text-center text-sm text-base-content/60">{log.at(-1)}</p>
+						{/if}
+					</div>
+				{:else}
+					<div
+						class="flex min-w-0 flex-col @md:col-start-1 @md:row-start-2 @3xl:col-start-2 @3xl:row-start-1 @3xl:flex-row @3xl:items-center"
+					>
+						<FlowArrow direction="right" disabled={!canRender}>
+							<div class="join max-w-full">
 								<button
 									type="button"
-									class={[
-										"btn join-item h-auto btn-primary border-left-2 border-base-content/20 border-0 flex-col gap-0 py-2",
-										showDiskSettings && "btn-active",
-									]}
-									aria-label="Render to disk settings"
-									onclick={() => (showDiskSettings = !showDiskSettings)}
+									class="btn join-item h-auto min-w-0 flex-col gap-0 py-2 whitespace-normal btn-primary"
+									disabled={!canRender}
+									onclick={renderAndUpload}
 								>
-									<SettingsIcon />
+									Render & Upload {@render toPostPin()}
+									<span class="text-xs font-normal break-words opacity-75">
+										{uploadTarget
+											? `new export in ${uploadTarget.timeline.name}`
+											: "choose a location first"}
+									</span>
 								</button>
-							{/if}
-						</div>
-					</FlowArrow>
-				</div>
+								{#if capabilities?.renderToDisk}
+									<button
+										type="button"
+										class={[
+											"btn join-item h-auto btn-primary border-left-2 border-base-content/20 border-0 flex-col gap-0 py-2",
+											showDiskSettings && "btn-active",
+										]}
+										aria-label="Render to disk settings"
+										onclick={() => (showDiskSettings = !showDiskSettings)}
+									>
+										<SettingsIcon />
+									</button>
+								{/if}
+							</div>
+						</FlowArrow>
+					</div>
+
+					<div
+						class="flex min-w-0 flex-col @md:col-start-2 @md:row-start-2 @3xl:col-start-2 @3xl:row-start-2 @3xl:flex-row @3xl:items-center"
+					>
+						<FlowArrow direction="both" disabled={!canSync}>
+							<div
+								class="flex w-48 max-w-full flex-col gap-2 rounded-box border-2 border-base-content/50 p-3"
+							>
+								<!-- the export's name is in the PostPin box already -->
+								<h3 class="text-center text-xs tracking-widest text-base-content/60 uppercase">
+									Markers
+								</h3>
+								<button type="button" class="btn" disabled={!canSync} onclick={syncUp}>
+									{#if isBusy == "syncingMarkersUp"}
+										<span class="loading loading-spinner loading-sm ms-2"></span>
+									{:else}
+										Push markers {@render toPostPin()}
+									{/if}
+								</button>
+								<button type="button" class="btn" disabled={!canSync} onclick={syncDown}>
+									{#if isBusy == "syncingMarkersDown"}
+										<span class="loading loading-spinner loading-sm ms-2"></span>
+									{:else}
+										{@render fromPostPin()} Pull comments
+									{/if}
+								</button>
+							</div>
+						</FlowArrow>
+					</div>
+				{/if}
 
 				<div
-					class="flex min-w-0 flex-col @md:col-start-2 @md:row-start-2 @3xl:col-start-2 @3xl:row-start-2 @3xl:flex-row @3xl:items-center"
+					class="@md:col-span-2 @md:row-start-3 @3xl:col-span-1 @3xl:col-start-1 @3xl:row-span-2 @3xl:row-start-1 @3xl:grid"
 				>
-					<FlowArrow direction="both" disabled={!canSync}>
-						<div
-							class="flex w-48 max-w-full flex-col gap-2 rounded-box border-2 border-base-content/50 p-3"
-						>
-							<!-- the export's name is in the PostPin box already -->
-							<h3 class="text-center text-xs tracking-widest text-base-content/60 uppercase">
-								Markers
-							</h3>
-							<button type="button" class="btn" disabled={!canSync} onclick={syncUp}>
-								{#if isBusy == "syncingMarkersUp"}
-									<span class="loading loading-spinner loading-sm ms-2"></span>
-								{:else}
-									Push markers {@render toPostPin()}
-								{/if}
-							</button>
-							<button type="button" class="btn" disabled={!canSync} onclick={syncDown}>
-								{#if isBusy == "syncingMarkersDown"}
-									<span class="loading loading-spinner loading-sm ms-2"></span>
-								{:else}
-									{@render fromPostPin()} Pull comments
-								{/if}
-							</button>
-						</div>
-					</FlowArrow>
+					<HostNode
+						hostName={capabilities?.hostName ?? null}
+						status={nleState.status}
+						error={nleState.status === "disconnected" ? nleState.error : null}
+						onRetry={connectNle}
+						thumbnailDataUrl={nleTimeline?.thumbnailDataUrl}
+						timelineName={nleTimeline?.name ?? null}
+						projectName={nleTimeline?.projectName ?? null}
+						disabled={isBusy !== null || nleState.status !== "connected"}
+						onClearMarkers={deleteMarkers}
+						{header}
+					/>
+				</div>
+			</div>
+
+			{#if showDiskSettings && capabilities?.renderToDisk && !isBusy}
+				<div
+					class="mx-4 mb-4 flex flex-col gap-2 rounded-box border-2 border-dashed border-base-content/30 p-4"
+				>
+					<RenderToDisk {capabilities} bind:settings />
 				</div>
 			{/if}
 
-			<div
-				class="@md:col-span-2 @md:row-start-3 @3xl:col-span-1 @3xl:col-start-1 @3xl:row-span-2 @3xl:row-start-1 @3xl:grid"
-			>
-				<HostNode
-					hostName={capabilities?.hostName ?? null}
-					status={nleState.status}
-					error={nleState.status === "disconnected" ? nleState.error : null}
-					onRetry={connectNle}
-					thumbnailDataUrl={nleTimeline?.thumbnailDataUrl}
-					timelineName={nleTimeline?.name ?? null}
-					projectName={nleTimeline?.projectName ?? null}
-					disabled={isBusy !== null || nleState.status !== "connected"}
-					onClearMarkers={deleteMarkers}
-					{header}
-				/>
-			</div>
+			{#if !isBusy && log.length}
+				<div class="mx-4 mb-4 rounded-box border-2 border-base-content/50 p-3 text-sm">
+					{log.at(-1)}
+				</div>
+			{/if}
+
+			{#if error}
+				<div role="alert" class="mx-4 mb-4 alert alert-error">
+					<span>{error}</span>
+				</div>
+			{/if}
 		</div>
-
-		{#if showDiskSettings && capabilities?.renderToDisk && !isBusy}
-			<div
-				class="mx-4 mb-4 flex flex-col gap-2 rounded-box border-2 border-dashed border-base-content/30 p-4"
-			>
-				<RenderToDisk {capabilities} bind:settings />
-			</div>
-		{/if}
-
-		{#if !isBusy && log.length}
-			<div class="mx-4 mb-4 rounded-box border-2 border-base-content/50 p-3 text-sm">
-				{log.at(-1)}
-			</div>
-		{/if}
-
-		{#if error}
-			<div role="alert" class="mx-4 mb-4 alert alert-error">
-				<span>{error}</span>
-			</div>
-		{/if}
-	</div>
-</main>
+	</main>
+{/if}
