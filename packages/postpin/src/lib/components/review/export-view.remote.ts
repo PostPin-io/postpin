@@ -11,6 +11,7 @@ import { getPresignedUrl } from "@postpin-io/shared/storage";
 import { seekSpriteUrls, shotThumbnailUrls } from "#lib/server/media-assets.ts";
 import type { MovieBarcode } from "@postpin-io/shared/types/MovieBarcode";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
+import { can } from "#lib/roles.ts";
 
 /** Set by the share page: the call is a share-link guest's (see readExport / readMedia) */
 const shareToken = v.optional(v.string());
@@ -53,15 +54,21 @@ export const getExport = query(
 		});
 		if (!exp) error(404, "Not found");
 
-		const media = exp.media && {
-			...exp.media,
+		const withoutScores = ({ sceneScores, ...fields }: NonNullable<typeof exp.media>) => ({
+			...fields,
 			// the byte ranges are only for the playlist routes; the page polls this every second while processing
-			proxies: exp.media.proxies.map(({ hls, ...proxy }) => ({ ...proxy, hasHls: hls !== null })),
-		};
+			proxies: fields.proxies.map(({ hls, ...proxy }) => ({ ...proxy, hasHls: hls !== null })),
+			/** Web uploads: the cut sensitivity can be changed (setCutSensitivity) */
+			hasSceneScores: sceneScores != null,
+		});
+		const media = exp.media && withoutScores(exp.media);
 		const hideClips = reader.kind === "guest" && !reader.link.timelinePanelVisible;
 		return {
 			...exp,
 			media,
+			// the reader got here through authorize("export", "read"), so their grant covers the export
+			canChangeCuts:
+				reader.kind === "member" && can(reader.member.role, "export", "upload", { hasGrant: true }),
 			timelineSnapshot: (hideClips
 				? timingOnly(exp.timelineSnapshot)
 				: exp.timelineSnapshot) as typeof exp.timelineSnapshot,

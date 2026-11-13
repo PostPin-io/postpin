@@ -26,6 +26,8 @@ const VideoStream = v.object({
 	height: v.number(),
 	pix_fmt: v.optional(v.string()),
 	avg_frame_rate: fraction,
+	r_frame_rate: v.optional(fraction),
+	nb_frames: v.optional(num),
 	side_data_list: v.optional(v.array(v.looseObject({ rotation: v.optional(v.number()) }))),
 });
 
@@ -50,6 +52,7 @@ export const ProbeResult = v.object({
 		duration: v.optional(num),
 		size: v.optional(num),
 		bit_rate: v.optional(num),
+		tags: v.optional(v.record(v.string(), v.string())),
 	}),
 });
 export type ProbeResult = v.InferOutput<typeof ProbeResult>;
@@ -123,4 +126,19 @@ export function ffmpeg(args: string[], onProgress?: (fraction: number) => void) 
 	});
 
 	return { stdout: proc.stdout as Readable, done };
+}
+
+/**
+ * Start timecode of a probed file: QuickTime keeps it in a tmcd data stream, MXF and MP4 in the
+ * format or video stream tags. null if the file has none.
+ */
+export function probedTimecode(probe: ProbeResult): string | null {
+	const video = probe.streams.find((s) => s.codec_type === "video");
+	const candidates = [video?.tags, ...probe.streams.map((s) => s.tags), probe.format.tags];
+	for (const tags of candidates) {
+		const timecode = tags?.["timecode"];
+		if (timecode && /^\d{2}:\d{2}:\d{2}[:;.]\d{2}$/.test(timecode))
+			return timecode.replace(".", ":");
+	}
+	return null;
 }

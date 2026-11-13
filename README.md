@@ -3,6 +3,7 @@
 ## Getting Started
 
 See [Self-Hosting PostPin](docs/self-hosting.md) for instructions on how to install and run PostPin on your own server.
+[Web Upload](docs/web-upload.md) describes uploading videos from the browser instead of a plugin.
 
 ## System Architecture
 

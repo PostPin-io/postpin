@@ -2,6 +2,7 @@ import { building } from "$app/env";
 import * as env from "$app/env/private";
 import {
 	getFlowProducer,
+	getQueue,
 	JobLabels,
 	Queues,
 	type TypedFlowChildJob,
@@ -13,6 +14,7 @@ import { JobWeights } from "@postpin-io/shared/queue";
 import type { Prisma } from "@postpin-io/shared/db";
 
 const flowProducer = building ? (null as unknown as TypedFlowProducer) : getFlowProducer(env);
+const lightQueue = building ? null : getQueue(Queues.light, env);
 
 const KBits = 1000;
 
@@ -35,20 +37,46 @@ const transcodeJob = (
 	opts: { failParentOnFailure: true },
 });
 
-export async function startMediaProcessing(mediaId: string) {
+const lightJob = <N extends "probe" | "sceneDetect" | "shotThumbnails">(
+	name: N,
+	mediaId: string,
+	children?: TypedFlowChildJob[],
+) =>
+	({
+		name,
+		queueName: Queues.light,
+		data: { mediaId },
+		opts: { failParentOnFailure: true },
+		...(children && { children }),
+	}) as TypedFlowChildJob;
+
+/**
+ * Queues the processing of an uploaded original. Web uploads have an estimated snapshot that probe
+ * (and the cut detection) replace, so their shot thumbnails wait for those: probe → sceneDetect →
+ * shotThumbnails. Plugin snapshots are final, so everything runs side by side.
+ */
+export async function startMediaProcessing(
+	mediaId: string,
+	opts: { webUpload?: boolean; detectCuts?: boolean } = {},
+) {
 	const [r1080, r720, r480] = PROXY_RESOLUTIONS;
+	const probe = lightJob("probe", mediaId);
+	const shots = !opts.webUpload
+		? [probe, lightJob("shotThumbnails", mediaId)]
+		: [
+				lightJob(
+					"shotThumbnails",
+					mediaId,
+					opts.detectCuts ? [lightJob("sceneDetect", mediaId, [probe])] : [probe],
+				),
+			];
 	await flowProducer.add({
 		name: "setMediaProcessingDone",
 		queueName: Queues.light,
 		data: { mediaId },
 		opts: { jobId: mediaId },
 		children: [
-			{
-				name: "probe",
-				queueName: Queues.light,
-				data: { mediaId },
-				opts: { failParentOnFailure: true },
-			},
+			...shots.slice(0, 1),
 			{
 				name: "thumbnail",
 				queueName: Queues.light,
@@ -70,12 +98,7 @@ export async function startMediaProcessing(mediaId: string) {
 					},
 				],
 			},
-			{
-				name: "shotThumbnails",
-				data: { mediaId },
-				queueName: Queues.light,
-				opts: { failParentOnFailure: true },
-			},
+			...shots.slice(1),
 			transcodeJob(mediaId, r1080!),
 			transcodeJob(mediaId, r720!),
 		],
@@ -85,6 +108,16 @@ export async function startMediaProcessing(mediaId: string) {
 		where: { id: mediaId },
 		data: { status: "PROCESSING" },
 	});
+}
+
+/** Renders the shot thumbnails again, after the shots of the snapshot changed */
+export async function renderShotThumbnails(mediaId: string) {
+	await lightQueue!.add(
+		"shotThumbnails",
+		{ mediaId },
+		// unique: the processing flow's job may still be kept under the plain id
+		{ jobId: `shotThumbnails-${mediaId}-${Date.now()}`, removeOnComplete: 100, removeOnFail: 100 },
+	);
 }
 
 export async function getMediaJobs(mediaId: string) {

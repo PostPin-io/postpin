@@ -7,6 +7,7 @@ import {
 	AbortMultipartUploadCommand,
 	CompleteMultipartUploadCommand,
 	CreateMultipartUploadCommand,
+	ListPartsCommand,
 	UploadPartCommand,
 	type S3,
 } from "@aws-sdk/client-s3";
@@ -14,6 +15,9 @@ import {
 	abortMultipartUpload,
 	completeMultipartUpload,
 	createMultipartUpload,
+	listUploadedParts,
+	partLayout,
+	presignPartUrls,
 } from "../../src/storage/multipart.ts";
 import type { S3Env } from "../../src/env/index.ts";
 
@@ -131,5 +135,69 @@ describe("abortMultipartUpload", () => {
 		const command = send.mock.calls[0]![0];
 		expect(command).toBeInstanceOf(AbortMultipartUploadCommand);
 		expect(command.input).toEqual({ Bucket: "bucket", Key: "m/original", UploadId: "upload-1" });
+	});
+});
+
+describe("partLayout", () => {
+	it("matches the split createMultipartUpload signs", async () => {
+		const res = await createMultipartUpload(client, env, object, 100 * MiB);
+		expect(partLayout(100 * MiB)).toEqual({ partSize: res.partSize, partCount: res.parts.length });
+		expect(partLayout(1)).toEqual({ partSize: 32 * MiB, partCount: 1 });
+	});
+});
+
+describe("presignPartUrls", () => {
+	it("signs only the requested parts of the upload", async () => {
+		const urls = await presignPartUrls(client, env, object, "upload-1", [3, 5]);
+		expect(urls).toEqual([
+			{ partNumber: 3, url: "url-3" },
+			{ partNumber: 5, url: "url-5" },
+		]);
+		const command = presigner.getSignedUrl.mock.calls[0]![1] as UploadPartCommand;
+		expect(command.input).toEqual({
+			Bucket: "bucket",
+			Key: "m/original",
+			UploadId: "upload-1",
+			PartNumber: 3,
+		});
+	});
+});
+
+describe("listUploadedParts", () => {
+	it("pages through ListParts and returns the parts sorted, with ETag and size", async () => {
+		send
+			.mockReset()
+			.mockResolvedValueOnce({
+				Parts: [
+					{ PartNumber: 2, ETag: '"b"', Size: 10 },
+					{ PartNumber: 1, ETag: '"a"', Size: 10 },
+				],
+				IsTruncated: true,
+				NextPartNumberMarker: "2",
+			})
+			.mockResolvedValueOnce({
+				Parts: [{ PartNumber: 4, ETag: '"d"', Size: 3 }, { PartNumber: 5 }],
+			});
+
+		const parts = await listUploadedParts(client, env, object, "upload-1");
+		expect(parts).toEqual([
+			{ partNumber: 1, etag: '"a"', size: 10 },
+			{ partNumber: 2, etag: '"b"', size: 10 },
+			{ partNumber: 4, etag: '"d"', size: 3 },
+		]);
+		const [first, second] = send.mock.calls.map((c) => c[0] as ListPartsCommand);
+		expect(first).toBeInstanceOf(ListPartsCommand);
+		expect(first!.input).toEqual({
+			Bucket: "bucket",
+			Key: "m/original",
+			UploadId: "upload-1",
+			PartNumberMarker: undefined,
+		});
+		expect(second!.input.PartNumberMarker).toBe("2");
+	});
+
+	it("throws when the upload doesn't exist", async () => {
+		send.mockReset().mockRejectedValue(new Error("NoSuchUpload"));
+		await expect(listUploadedParts(client, env, object, "nope")).rejects.toThrow("NoSuchUpload");
 	});
 });

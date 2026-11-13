@@ -58,7 +58,7 @@
 		return {
 			latest,
 			exportHref: latest ? `${base}/${latest.id}` : null,
-			exportListHref: latest ? base : null,
+			exportListHref: base,
 		};
 	}
 
@@ -123,7 +123,7 @@
 {#snippet actionsMenu(
 	timeline: (typeof data.timelines)[number],
 	exportHref: string | null,
-	exportListHref: string | null,
+	exportListHref: string,
 )}
 	<button
 		type="button"
@@ -141,17 +141,17 @@
 		class="menu dropdown dropdown-end z-50 w-56 rounded-box bg-base-100 p-2 text-left shadow-lg"
 		style="position-anchor: --timeline-anchor-{timeline.id}"
 	>
+		<li>
+			<a href={exportListHref}>
+				<List class="size-4" />
+				All exports
+			</a>
+		</li>
 		{#if exportHref}
 			<li>
 				<a href={exportHref}>
 					<FileDown class="size-4" />
 					View latest export
-				</a>
-			</li>
-			<li>
-				<a href={exportListHref}>
-					<List class="size-4" />
-					All exports
 				</a>
 			</li>
 		{:else}

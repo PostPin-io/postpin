@@ -11,6 +11,8 @@ model Media {
   seekSprites        Json?
   shotThumbnails     Json?
   movieBarcode       Json?
+  /// Web uploads: picture changes the cut detection found, see SceneScores
+  sceneScores        Json?
   // bytes of the generated images in the bucket, measured once processing ends
   thumbnailSize      BigInt?
   seekSpritesSize    BigInt?

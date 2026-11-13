@@ -10,6 +10,7 @@ import { prisma } from "../../../../../../../../helpers/db.ts";
 import { expectStatus } from "../../../../../../../../helpers/expect.ts";
 import { signIn, signOut } from "../../../../../../../../helpers/request-event.ts";
 import { storedExport } from "../../../../../../../../helpers/storage.ts";
+import { fakes } from "../../../../../../../../helpers/fakes.ts";
 
 const { OWNER, ADMIN, MEMBER, REVIEWER } = Role;
 
@@ -41,7 +42,7 @@ describe("getExportList", () => {
 		await prisma.export.update({ where: { id: w.exp1b.id }, data: { createdAt: new Date(2000) } });
 		await signInAs(w.org, REVIEWER, [{ timelineId: w.tl1.id }]);
 
-		const list = await getExportList(w.tl1.id);
+		const { exports: list } = await getExportList(w.tl1.id);
 		expect(list.map((e) => e.id)).toEqual([w.exp1b.id, w.exp1.id]);
 		expect(list[1]!.media?.id).toBe(w.exp1.mediaId);
 		expect(list[0]!.media).toBeNull();
@@ -56,7 +57,7 @@ describe("getExportList", () => {
 		});
 		signIn(w.owner.user, w.org.id);
 
-		const list = await getExportList(w.tl2.id);
+		const { exports: list } = await getExportList(w.tl2.id);
 		expect(list.find((e) => e.id === exp.id)!.storage).toEqual({
 			files: [
 				{ label: "Original", size: 1000n },
@@ -82,10 +83,43 @@ describe("getExportList", () => {
 				g === "project" ? { projectId: w.projectA.id } : { timelineId: w.tl1.id },
 			),
 		);
-		const list = await getExportList(w.tl1.id);
+		const { exports: list } = await getExportList(w.tl1.id);
 		expect(list.map((e) => [e.canRename, e.canDelete])).toEqual([
 			[expected, expected],
 			[expected, expected],
 		]);
+	});
+
+	it.each([
+		[OWNER, [], true],
+		[MEMBER, ["timeline"], true],
+		[REVIEWER, ["timeline"], false],
+	] as const)("%s with %j grant: canUpload = %s", async (role, grants, expected) => {
+		await signInAs(
+			w.org,
+			role,
+			grants.map(() => ({ timelineId: w.tl1.id })),
+		);
+		expect((await getExportList(w.tl1.id)).canUpload).toBe(expected);
+	});
+
+	it("says what the worker is doing with an export that is processing", async () => {
+		const exp = await storedExport(w.tl2, { original: 10, status: "PROCESSING" });
+		fakes.getFlow = () => ({
+			job: { id: exp.mediaId },
+			children: [
+				{ job: { id: "a", name: "sceneDetect", data: {}, getState: async () => "active" } },
+			],
+		});
+		signIn(w.owner.user, w.org.id);
+		const { exports } = await getExportList(w.tl2.id);
+		expect(exports.find((e) => e.id === exp.id)!.processingStep).toBe("detecting-cuts");
+
+		fakes.getFlow = () => undefined;
+		const again = await getExportList(w.tl2.id);
+		expect(again.exports.find((e) => e.id === exp.id)!.processingStep).toBe("processing");
+		expect(
+			again.exports.filter((e) => e.id !== exp.id).every((e) => e.processingStep === null),
+		).toBe(true);
 	});
 });

@@ -8,17 +8,21 @@
 	import RenameExportModal from "#lib/components/exports/RenameExportModal.svelte";
 	import DeleteExportModal from "#lib/components/exports/DeleteExportModal.svelte";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
+	import UploadHintModal from "#lib/components/exports/UploadHintModal.svelte";
+	import UploadModal from "#lib/components/exports/UploadModal.svelte";
+	import ExportUploadStatus from "#lib/components/exports/ExportUploadStatus.svelte";
+	import { uploads } from "#lib/upload/uploads.svelte.ts";
 	import { formatByteSize } from "@postpin-io/shared/logic/bytes";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
-	import Apeture from "@lucide/svelte/icons/aperture";
 	import Ellipsis from "@lucide/svelte/icons/ellipsis";
 	import Info from "@lucide/svelte/icons/info";
 	import FileDown from "@lucide/svelte/icons/file-down";
 	import Link from "@lucide/svelte/icons/link";
 	import Pencil from "@lucide/svelte/icons/pencil";
 	import Trash2 from "@lucide/svelte/icons/trash-2";
+	import Upload from "@lucide/svelte/icons/upload";
 
 	let viewMode: "table" | "card" = $state("card");
 	// Tables don't fit on phones: show cards there, but keep the stored choice for desktop
@@ -38,8 +42,24 @@
 	let renameExportDialog: RenameExportModal | null = null;
 	let deleteExportDialog: DeleteExportModal | null = null;
 	let sharingDialog: SharingSetupModal | null = null;
+	let uploadHintDialog: UploadHintModal | null = $state(null);
+	let uploadDialog: UploadModal | null = $state(null);
 
-	let exports = $derived(await getExportList(page.params.timeline || ""));
+	const exportList = $derived(await getExportList(page.params.timeline || ""));
+	let exports = $derived(exportList.exports);
+
+	// Uploads and processing change the list on their own: look again every few seconds meanwhile
+	const busy = $derived(
+		exports.some((e) => e.media?.status === "PENDING" || e.media?.status === "PROCESSING") ||
+			uploads.running.some((u) => u.timelineId === page.params.timeline),
+	);
+	$effect(() => {
+		if (!busy) return;
+		const interval = setInterval(() => {
+			void getExportList(page.params.timeline || "").refresh();
+		}, 3000);
+		return () => clearInterval(interval);
+	});
 	let timelineName = $derived(await getTimelineName(page.params.timeline || ""));
 
 	function sortBy(field: typeof sortField) {
@@ -226,7 +246,19 @@
 		<header
 			class="flex flex-col gap-3 border-b border-base-300 pb-4 md:flex-row md:items-center md:justify-between"
 		>
-			<h1 class="text-2xl font-bold">Your Exports</h1>
+			<div class="flex gap-2">
+				<h1 class="text-2xl font-bold">Your Exports</h1>
+				{#if exportList.canUpload}
+					<button
+						class="btn rounded-full btn-sm"
+						aria-label="Upload a video"
+						title="Upload a video"
+						onclick={() => uploadHintDialog?.open()}
+					>
+						<Upload size={16} />
+					</button>
+				{/if}
+			</div>
 
 			<div class="flex flex-wrap items-baseline gap-3 max-md:w-full">
 				<div class="flex flex-wrap items-center gap-2 max-md:flex-1">
@@ -367,7 +399,7 @@
 							<tr class="hover:bg-base-200/60 [&>td]:align-middle">
 								<td class="w-44">
 									<div class="aspect-video w-36 overflow-hidden rounded-md bg-base-300">
-										{#if singleExport.media}
+										{#if singleExport.media?.status === "COMPLETED"}
 											<a
 												href={exportHref}
 												class="group relative block size-full"
@@ -381,9 +413,13 @@
 												/>
 											</a>
 										{:else}
-											<div class="flex size-full items-center justify-center text-base-content/30">
-												<Apeture />
-											</div>
+											<ExportUploadStatus
+												exportId={singleExport.id}
+												media={singleExport.media}
+												processingStep={singleExport.processingStep}
+												canUpload={exportList.canUpload}
+												compact
+											/>
 										{/if}
 									</div>
 								</td>
@@ -419,7 +455,7 @@
 
 					<article class="card h-full bg-base-100 shadow-xl">
 						<figure class="group relative aspect-video overflow-hidden bg-base-300">
-							{#if singleExport.media}
+							{#if singleExport.media?.status === "COMPLETED"}
 								<a href={exportHref} class="block size-full" aria-label="Open {singleExport.name}">
 									<img
 										src={await getUrl({ mediaId: singleExport.media.id, type: "thumbnail" })}
@@ -429,9 +465,12 @@
 									/>
 								</a>
 							{:else}
-								<div class="flex size-full items-center justify-center text-base-content/30">
-									<Apeture />
-								</div>
+								<ExportUploadStatus
+									exportId={singleExport.id}
+									media={singleExport.media}
+									processingStep={singleExport.processingStep}
+									canUpload={exportList.canUpload}
+								/>
 							{/if}
 						</figure>
 
@@ -470,3 +509,11 @@
 <RenameExportModal bind:this={renameExportDialog} />
 <DeleteExportModal bind:this={deleteExportDialog} />
 <SharingSetupModal bind:this={sharingDialog} />
+{#if exportList.canUpload}
+	<UploadHintModal bind:this={uploadHintDialog} onmanual={() => uploadDialog?.open()} />
+	<UploadModal
+		bind:this={uploadDialog}
+		projectId={page.params.project!}
+		timelineId={page.params.timeline!}
+	/>
+{/if}

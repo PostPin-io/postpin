@@ -1,6 +1,7 @@
 import { beforeEach, inject, vi } from "vitest";
 import { resetRequestEvent } from "../helpers/request-event.ts";
 import { fakes } from "../helpers/fakes.ts";
+import { uploadLimits } from "../helpers/upload-limits.ts";
 
 vi.mock("$app/env/private", () => ({
 	DATABASE_URL: inject("databaseUrl"),
@@ -27,6 +28,10 @@ vi.mock("$app/env/private", () => ({
 	STORAGE_DEFAULT_USER_QUOTA: undefined,
 	STORAGE_CAPACITY: 1_000_000_000n,
 	STORAGE_DISK_PATH: undefined,
+	// tests set it with setUploadMaxFileSize()
+	get UPLOAD_MAX_FILE_SIZE() {
+		return uploadLimits.maxFileSize;
+	},
 }));
 
 vi.mock("$app/env", () => ({ building: false, dev: true, browser: false, version: "test" }));
@@ -49,6 +54,7 @@ vi.mock("@postpin-io/shared/queue", async (importOriginal) => {
 beforeEach(async () => {
 	resetRequestEvent();
 	fakes.reset();
+	uploadLimits.maxFileSize = undefined;
 	const { truncateAll } = await import("../helpers/db.ts");
 	await truncateAll();
 });

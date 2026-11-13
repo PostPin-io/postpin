@@ -12,3 +12,13 @@ export async function apiAuthorize<A extends Area>(area: A, action: Action<A>, t
 		throw e;
 	}
 }
+
+/** Runs SvelteKit-throwing server code (e.g. #lib/server/export-upload.ts) for a controller */
+export async function apiCall<T>(promise: Promise<T>): Promise<T> {
+	try {
+		return await promise;
+	} catch (e) {
+		if (isHttpError(e)) throw new HttpError(e.status, e.body.message);
+		throw e;
+	}
+}

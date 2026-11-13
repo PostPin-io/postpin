@@ -13,3 +13,6 @@ packages/desktop/.dev-app.pid
 packages/desktop/release
 coverage
 .svelte-kit
+# rendered by packages/postpin/tests/fixtures/generate-upload-fixtures.ts
+packages/postpin/tests/fixtures/upload
+packages/worker/tests/fixtures/three-cuts.mp4

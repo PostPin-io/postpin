@@ -7,7 +7,7 @@ import { env as testEnv } from "../helpers.ts";
 export const prisma = {
 	media: { update: vi.fn() },
 	mediaFile: { findUniqueOrThrow: vi.fn(), upsert: vi.fn(), update: vi.fn() },
-	export: { findUniqueOrThrow: vi.fn() },
+	export: { findUniqueOrThrow: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
 	thumbnail: { upsert: vi.fn() },
 };
 

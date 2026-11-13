@@ -42,6 +42,8 @@
 	} from "#lib/components/review/export-view.ts";
 
 	import ProcessingJobs from "#lib/components/review/ProcessingJobs.svelte";
+	import EstimatedCuts from "#lib/components/review/EstimatedCuts.svelte";
+	import { isWebUpload } from "@postpin-io/shared/logic/web-upload";
 	import { isJobRunning } from "#lib/job-status.ts";
 
 	import { setShareContext, type ShareContext } from "./share-context.ts";
@@ -124,6 +126,13 @@
 	const media = $derived(exp?.media);
 
 	let isMounted = $state(false);
+	/** After the cut sensitivity changed: new shot thumbnails are on their way */
+	let awaitingShotThumbnails = $state(false);
+	$effect(() => {
+		if (awaitingShotThumbnails && exportQuery.current?.media?.shotThumbnails) {
+			awaitingShotThumbnails = false;
+		}
+	});
 	let isLayoutReady = $state(false);
 
 	// A boolean, so the refetches while processing don't count as a change and reset the layout
@@ -212,7 +221,12 @@
 				// while the sprite and thumbnail jobs still run, so keep going until every job has finished too.
 				const status = exportQuery.current?.media?.status;
 				const jobsRunning = processingJobsQuery?.current?.some(isJobRunning);
-				if (status === "PENDING" || status === "PROCESSING" || jobsRunning) {
+				if (
+					status === "PENDING" ||
+					status === "PROCESSING" ||
+					jobsRunning ||
+					awaitingShotThumbnails
+				) {
 					await Promise.all([exportQuery.refresh(), processingJobsQuery?.refresh()]);
 				}
 			} catch (error) {
@@ -403,6 +417,18 @@
 			{#snippet jobStatus()}
 				{#if processingJobsQuery?.current?.length}
 					<ProcessingJobs jobs={processingJobsQuery.current} variant="compact" />
+				{/if}
+				{#if isWebUpload(snapshot) && !share}
+					<EstimatedCuts
+						{exportId}
+						cutLevel={snapshot.metadata.cutLevel}
+						detected={!!media.hasSceneScores}
+						canChange={!!exp?.canChangeCuts && media.status === "COMPLETED"}
+						onchanged={async () => {
+							awaitingShotThumbnails = true;
+							await exportQuery.refresh();
+						}}
+					/>
 				{/if}
 			{/snippet}
 			{#snippet note()}

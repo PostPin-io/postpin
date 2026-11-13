@@ -7,6 +7,7 @@ export default mergeConfig(
 		test: {
 			name: "postpin:unit",
 			include: ["tests/unit/**/*.test.ts"],
+			globalSetup: ["tests/fixtures/generate-upload-fixtures.ts"],
 			coverage: {
 				provider: "v8",
 				include: ["src/**"],

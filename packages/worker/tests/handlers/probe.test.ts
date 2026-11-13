@@ -4,9 +4,13 @@ import { ffmpegLib, prisma, resetMocks, storage } from "./mocks.ts";
 
 vi.mock("../../src/lib/database.ts", async () => (await import("./mocks.ts")).database);
 vi.mock("../../src/lib/storage.ts", async () => (await import("./mocks.ts")).storage);
-vi.mock("../../src/lib/ffmpeg.ts", async () => (await import("./mocks.ts")).ffmpegLib);
+vi.mock("../../src/lib/ffmpeg.ts", async (importOriginal) => ({
+	...(await import("./mocks.ts")).ffmpegLib,
+	probedTimecode: (await importOriginal<typeof import("../../src/lib/ffmpeg.ts")>()).probedTimecode,
+}));
 
 import { probe } from "../../src/handlers/probe.ts";
+import { webUploadSnapshot } from "@postpin-io/shared/logic/web-upload";
 
 const job = () => fakeJob("probe", { mediaId: "m1" }) as never;
 
@@ -99,5 +103,102 @@ describe("probe", () => {
 		ffmpegLib.ffprobe.mockRejectedValue(new Error("ffprobe exited with code 1"));
 		await expect(probe(job())).rejects.toThrow("ffprobe exited");
 		expect(prisma.media.update).not.toHaveBeenCalled();
+	});
+});
+
+describe("probe of a web upload", () => {
+	const estimate = (userSet: ("frameRate" | "startFrameIndex")[] = []) =>
+		webUploadSnapshot({
+			id: "e1",
+			name: "Clip",
+			fileName: "clip.mov",
+			timing: {
+				frameRate: { fpsNumerator: 25, fpsDenominator: 1, dropFrame: false },
+				startFrameIndex: 0,
+				durationFrameCount: 100,
+			},
+			userSet,
+			cutLevel: "medium",
+		});
+
+	const mov = {
+		streams: [
+			{
+				index: 0,
+				codec_type: "video",
+				codec_name: "prores",
+				width: 1920,
+				height: 1080,
+				avg_frame_rate: 29.97002997,
+				r_frame_rate: 29.97002997,
+				nb_frames: 60,
+				duration: 2.002,
+			},
+			// QuickTime keeps the timecode in a tmcd data stream
+			{ index: 1, codec_type: "data", tags: { timecode: "00:59:58;00" } },
+		],
+		format: { format_name: "mov,mp4,m4a,3gp,3g2,mj2", duration: 2.002 },
+	};
+
+	it("replaces the form's estimates with the file's rate, timecode and length", async () => {
+		ffmpegLib.ffprobe.mockResolvedValue(mov);
+		prisma.export.findUnique.mockResolvedValue({ id: "e1", timelineSnapshot: estimate() });
+		await probe(job());
+
+		expect(prisma.export.findUnique).toHaveBeenCalledWith({
+			where: { mediaId: "m1" },
+			select: { id: true, timelineSnapshot: true },
+		});
+		const { where, data } = prisma.export.update.mock.calls[0]![0];
+		expect(where).toEqual({ id: "e1" });
+		expect(data.timelineSnapshot).toMatchObject({
+			frameRate: { fpsNumerator: 30000, fpsDenominator: 1001, dropFrame: true },
+			startFrameIndex: 107832,
+			durationFrameCount: 60,
+		});
+	});
+
+	it("keeps the values the uploader set", async () => {
+		ffmpegLib.ffprobe.mockResolvedValue(mov);
+		prisma.export.findUnique.mockResolvedValue({
+			id: "e1",
+			timelineSnapshot: estimate(["frameRate", "startFrameIndex"]),
+		});
+		await probe(job());
+		expect(prisma.export.update.mock.calls[0]![0].data.timelineSnapshot).toMatchObject({
+			frameRate: { fpsNumerator: 25, fpsDenominator: 1, dropFrame: false },
+			startFrameIndex: 0,
+			durationFrameCount: 60,
+		});
+	});
+
+	it("MXF: reads the timecode from the format tags and computes the length", async () => {
+		ffmpegLib.ffprobe.mockResolvedValue({
+			streams: [
+				{
+					index: 0,
+					codec_type: "video",
+					codec_name: "mpeg2video",
+					width: 1920,
+					height: 1080,
+					avg_frame_rate: 25,
+				},
+			],
+			format: { format_name: "mxf", duration: 4, tags: { timecode: "01:00:00:00" } },
+		});
+		prisma.export.findUnique.mockResolvedValue({ id: "e1", timelineSnapshot: estimate() });
+		await probe(job());
+		expect(prisma.export.update.mock.calls[0]![0].data.timelineSnapshot).toMatchObject({
+			frameRate: { fpsNumerator: 25, fpsDenominator: 1 },
+			startFrameIndex: 90000,
+			durationFrameCount: 100,
+		});
+	});
+
+	it("leaves plugin snapshots alone", async () => {
+		ffmpegLib.ffprobe.mockResolvedValue(mov);
+		prisma.export.findUnique.mockResolvedValue({ id: "e1", timelineSnapshot: { metadata: {} } });
+		await probe(job());
+		expect(prisma.export.update).not.toHaveBeenCalled();
 	});
 });

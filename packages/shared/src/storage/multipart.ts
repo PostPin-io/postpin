@@ -2,6 +2,7 @@ import {
 	AbortMultipartUploadCommand,
 	CompleteMultipartUploadCommand,
 	CreateMultipartUploadCommand,
+	ListPartsCommand,
 	UploadPartCommand,
 	type S3,
 } from "@aws-sdk/client-s3";
@@ -33,6 +34,39 @@ export interface UploadedPart {
 	etag: string;
 }
 
+/** How a file of `fileSize` bytes is split into parts. The same size always gives the same split. */
+export function partLayout(fileSize: number): { partSize: number; partCount: number } {
+	const partSize = Math.max(MIN_PART_SIZE, Math.ceil(fileSize / MAX_PART_COUNT / MiB) * MiB);
+	return { partSize, partCount: Math.max(1, Math.ceil(fileSize / partSize)) };
+}
+
+/** Presigned PUT URLs for the given part numbers, valid for one day */
+export function presignPartUrls(
+	presignClient: S3,
+	env: S3Env,
+	object: S3Object,
+	uploadId: string,
+	partNumbers: number[],
+): Promise<MultipartUploadPartUrl[]> {
+	const key = getS3ObjectPath(object);
+	return Promise.all(
+		partNumbers.map(async (partNumber) => ({
+			partNumber,
+			url: await getSignedUrl(
+				presignClient,
+				new UploadPartCommand({
+					Bucket: env.S3_BUCKET,
+					Key: key,
+					UploadId: uploadId,
+					PartNumber: partNumber,
+				}),
+				// Large renders over slow connections take a while
+				{ expiresIn: 24 * 60 * 60 },
+			),
+		})),
+	);
+}
+
 export async function createMultipartUpload(
 	s3Client: S3,
 	env: S3Env,
@@ -47,23 +81,13 @@ export async function createMultipartUpload(
 	);
 	if (!UploadId) throw new Error("S3 did not return an upload id");
 
-	const partSize = Math.max(MIN_PART_SIZE, Math.ceil(fileSize / MAX_PART_COUNT / MiB) * MiB);
-	const partCount = Math.max(1, Math.ceil(fileSize / partSize));
-	const parts = await Promise.all(
-		Array.from({ length: partCount }, async (_, i) => ({
-			partNumber: i + 1,
-			url: await getSignedUrl(
-				presignClient,
-				new UploadPartCommand({
-					Bucket: env.S3_BUCKET,
-					Key: key,
-					UploadId,
-					PartNumber: i + 1,
-				}),
-				// Large renders over slow connections take a while
-				{ expiresIn: 24 * 60 * 60 },
-			),
-		})),
+	const { partSize, partCount } = partLayout(fileSize);
+	const parts = await presignPartUrls(
+		presignClient,
+		env,
+		object,
+		UploadId,
+		Array.from({ length: partCount }, (_, i) => i + 1),
 	);
 
 	return { uploadId: UploadId, partSize, parts };
@@ -103,4 +127,32 @@ export async function abortMultipartUpload(
 			UploadId: uploadId,
 		}),
 	);
+}
+
+/** Parts S3 already has for an unfinished upload, with their ETags. Throws if the upload is gone. */
+export async function listUploadedParts(
+	s3Client: S3,
+	env: S3Env,
+	object: S3Object,
+	uploadId: string,
+): Promise<(UploadedPart & { size: number })[]> {
+	const parts: (UploadedPart & { size: number })[] = [];
+	let marker: string | undefined;
+	do {
+		const res = await s3Client.send(
+			new ListPartsCommand({
+				Bucket: env.S3_BUCKET,
+				Key: getS3ObjectPath(object),
+				UploadId: uploadId,
+				PartNumberMarker: marker,
+			}),
+		);
+		for (const p of res.Parts ?? []) {
+			if (p.PartNumber && p.ETag) {
+				parts.push({ partNumber: p.PartNumber, etag: p.ETag, size: p.Size ?? 0 });
+			}
+		}
+		marker = res.IsTruncated ? res.NextPartNumberMarker : undefined;
+	} while (marker);
+	return parts.sort((a, b) => a.partNumber - b.partNumber);
 }

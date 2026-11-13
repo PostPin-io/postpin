@@ -47,3 +47,7 @@ export interface ShotThumbnailsMessage {
 export interface MovieBarcodeMessage {
 	mediaId: string;
 }
+
+export interface SceneDetectMessage {
+	mediaId: string;
+}

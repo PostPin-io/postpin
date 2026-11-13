@@ -7,6 +7,7 @@ import { setMediaProcessingDone } from "../handlers/setMediaProcessingDone.ts";
 import { seekSprites } from "../handlers/seekSprites.ts";
 import { shotThumbnails } from "../handlers/shotThumbnails.ts";
 import { movieBarcode } from "../handlers/movieBarcode.ts";
+import { sceneDetect } from "../handlers/sceneDetect.ts";
 
 export const heavyHandlers: JobHandlers<typeof Queues.heavy> = {
 	transcode,
@@ -19,4 +20,5 @@ export const lightHandlers: JobHandlers<typeof Queues.light> = {
 	seekSprites,
 	shotThumbnails,
 	movieBarcode,
+	sceneDetect,
 };

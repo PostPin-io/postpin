@@ -1,24 +1,16 @@
-import * as env from "$app/env/private";
 import { prisma } from "#lib/server/database.ts";
-import { startMediaProcessing } from "#lib/server/media.ts";
-import { s3Client, s3PresignClient } from "#lib/server/storage.ts";
 import {
-	abortMultipartUpload,
-	completeMultipartUpload,
-	createMultipartUpload,
-	type MultipartUpload,
-	type UploadedPart,
-} from "@postpin-io/shared/storage";
+	abortUpload,
+	completeUpload,
+	createExport,
+	initUpload,
+	type InitUploadResponse,
+} from "#lib/server/export-upload.ts";
+import type { UploadedPart } from "@postpin-io/shared/storage";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 import { Body, Controller, Get, Path, Post, Response, Route, Security } from "@tsoa/runtime";
 import { HttpError } from "../HttpError.ts";
-import type { Prisma } from "@postpin-io/shared/db";
-import { apiAuthorize } from "../access.ts";
-import { assertQuota, QuotaExceededError } from "#lib/server/storage-usage.ts";
-
-interface InitUploadResponse extends MultipartUpload {
-	mediaId: string;
-}
+import { apiAuthorize, apiCall } from "../access.ts";
 
 @Security("session")
 @Route("v1/projects/{projectId}/timelines/{timelineId}/exports")
@@ -52,61 +44,7 @@ export class ExportController extends Controller {
 		@Path() timelineId: string,
 		@Body() body: { nleTimelineId: string | null; nleProjectId: string | null },
 	): Promise<{ id: string }> {
-		const { member } = await apiAuthorize("export", "upload", { type: "timeline", id: timelineId });
-		const timeline = await prisma.timeline.findFirst({
-			where: { id: timelineId, projectId },
-			include: { project: { select: { nleProjectId: true } } },
-		});
-		if (!timeline) {
-			throw new HttpError(404, "Timeline not found");
-		}
-
-		return prisma.$transaction(async (tx) => {
-			if (body.nleTimelineId !== timeline.nleTimelineId) {
-				if (body.nleTimelineId) {
-					await tx.timeline.updateMany({
-						where: {
-							id: { not: timelineId },
-							nleTimelineId: body.nleTimelineId,
-							project: { organizationId: member.organizationId },
-						},
-						data: { nleTimelineId: null },
-					});
-				}
-				await tx.timeline.update({
-					where: { id: timelineId },
-					data: {
-						nleTimelineId: body.nleTimelineId,
-					},
-				});
-			}
-			if (body.nleProjectId !== timeline.project.nleProjectId) {
-				if (body.nleProjectId) {
-					await tx.project.updateMany({
-						where: {
-							id: { not: projectId },
-							nleProjectId: body.nleProjectId,
-							organizationId: member.organizationId,
-						},
-						data: { nleProjectId: null },
-					});
-				}
-				await tx.project.update({
-					where: { id: projectId },
-					data: {
-						nleProjectId: body.nleProjectId,
-					},
-				});
-			}
-			return tx.export.create({
-				data: {
-					timelineId,
-					uploadedById: member.userId,
-					name: `Export ${new Date().toISOString()}`,
-				},
-				select: { id: true },
-			});
-		});
+		return apiCall(createExport({ projectId, timelineId, nle: body }));
 	}
 
 	/**
@@ -117,76 +55,16 @@ export class ExportController extends Controller {
 	@Response(400, "Invalid file size")
 	@Response(404, "Export not found")
 	@Response(409, "Export media was already uploaded")
-	@Response(413, "Storage quota exceeded")
+	@Response(413, "File too large or storage quota exceeded")
 	public async initUpload(
 		@Path() projectId: string,
 		@Path() timelineId: string,
 		@Path() exportId: string,
 		@Body() body: { fileSize: number },
 	): Promise<InitUploadResponse> {
-		if (!Number.isInteger(body.fileSize) || body.fileSize <= 0) {
-			throw new HttpError(400, "fileSize must be a positive integer");
-		}
-		const { member } = await apiAuthorize("export", "upload", { type: "export", id: exportId });
-
-		const exp = await prisma.export.findFirst({
-			where: { id: exportId, timelineId, timeline: { projectId } },
-			include: { media: true },
-		});
-		if (!exp) {
-			throw new HttpError(404, "Export not found");
-		}
-
-		if (exp.media && exp.media.status !== "PENDING") {
-			throw new HttpError(409, "Export media was already uploaded");
-		}
-
-		try {
-			await assertQuota({
-				orgId: member.organizationId,
-				// whoever started the export pays for it, even if someone else retries the upload
-				userId: exp.uploadedById ?? member.userId,
-				additional: BigInt(body.fileSize),
-				// a retry replaces its own reservation
-				excludeMediaId: exp.media?.id,
-			});
-		} catch (e) {
-			if (e instanceof QuotaExceededError) throw new HttpError(413, e.message);
-			throw e;
-		}
-
-		let media = exp.media;
-		if (!media) {
-			({ media } = await prisma.export.update({
-				where: { id: exportId },
-				data: {
-					media: {
-						create: {
-							status: "PENDING",
-							// reserves the space until probe stores the real size
-							original: { create: { size: BigInt(body.fileSize) } },
-						},
-					},
-				},
-				include: { media: true },
-			}));
-		} else {
-			// retry, possibly with a different file
-			await prisma.mediaFile.update({
-				where: { id: media.originalId },
-				data: { size: BigInt(body.fileSize) },
-			});
-		}
-
-		const upload = await createMultipartUpload(
-			s3Client,
-			env,
-			{ mediaId: media!.id, type: "original" },
-			body.fileSize,
-			// the plugin PUTs the parts, so they're signed for the public endpoint
-			s3PresignClient,
+		return apiCall(
+			initUpload({ exportId, path: { projectId, timelineId }, fileSize: body.fileSize }),
 		);
-		return { mediaId: media!.id, ...upload };
 	}
 
 	/**
@@ -202,28 +80,7 @@ export class ExportController extends Controller {
 		@Path() exportId: string,
 		@Body() body: { uploadId: string; parts: UploadedPart[]; timelineSnapshot: TimelineSnapshot },
 	): Promise<void> {
-		await apiAuthorize("export", "upload", { type: "export", id: exportId });
-		const media = await this.getPendingMedia(projectId, timelineId, exportId);
-
-		const uploaded = await completeMultipartUpload(
-			s3Client,
-			env,
-			{ mediaId: media.id, type: "original" },
-			body.uploadId,
-			body.parts,
-		)
-			.then(() => true)
-			.catch(() => false);
-		if (!uploaded) {
-			throw new HttpError(409, "Export file has not been fully uploaded");
-		}
-
-		await prisma.export.update({
-			where: { id: exportId },
-			data: { timelineSnapshot: body.timelineSnapshot as unknown as Prisma.JsonObject },
-		});
-
-		await startMediaProcessing(media.id);
+		await apiCall(completeUpload({ exportId, path: { projectId, timelineId }, ...body }));
 	}
 
 	/** Discards an unfinished multipart upload, so its parts don't linger in storage. */
@@ -236,28 +93,8 @@ export class ExportController extends Controller {
 		@Path() exportId: string,
 		@Body() body: { uploadId: string },
 	): Promise<void> {
-		await apiAuthorize("export", "upload", { type: "export", id: exportId });
-		const media = await this.getPendingMedia(projectId, timelineId, exportId);
-		await abortMultipartUpload(
-			s3Client,
-			env,
-			{ mediaId: media.id, type: "original" },
-			body.uploadId,
+		await apiCall(
+			abortUpload({ exportId, path: { projectId, timelineId }, uploadId: body.uploadId }),
 		);
-		await prisma.mediaFile.update({ where: { id: media.originalId }, data: { size: 0n } });
-	}
-
-	private async getPendingMedia(projectId: string, timelineId: string, exportId: string) {
-		const exp = await prisma.export.findFirst({
-			where: { id: exportId, timelineId, timeline: { projectId } },
-			include: { media: true },
-		});
-		if (!exp?.media) {
-			throw new HttpError(404, "Export not found");
-		}
-		if (exp.media.status !== "PENDING") {
-			throw new HttpError(409, "Export media is already processing");
-		}
-		return exp.media;
 	}
 }

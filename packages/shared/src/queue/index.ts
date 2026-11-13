@@ -13,6 +13,7 @@ import type { RedisEnv } from "../env/index.ts";
 import type {
 	MovieBarcodeMessage,
 	ProbeMessage,
+	SceneDetectMessage,
 	SeekSpritesMessage,
 	SetMediaProcessingDoneMessage,
 	ShotThumbnailsMessage,
@@ -31,6 +32,7 @@ export const JobWeights: {
 	seekSprites: 50,
 	shotThumbnails: 50,
 	movieBarcode: 50,
+	sceneDetect: 50,
 };
 
 export const JobLabels: {
@@ -43,6 +45,7 @@ export const JobLabels: {
 	seekSprites: "Seek Thumbnails",
 	shotThumbnails: "Shot Thumbnails",
 	movieBarcode: "Movie Barcode",
+	sceneDetect: "Detecting cuts",
 };
 
 export const Queues = { heavy: "media-heavy", light: "media-light" } as const;
@@ -58,6 +61,7 @@ export interface QueueJobs {
 		seekSprites: SeekSpritesMessage;
 		shotThumbnails: ShotThumbnailsMessage;
 		movieBarcode: MovieBarcodeMessage;
+		sceneDetect: SceneDetectMessage;
 	};
 }
 

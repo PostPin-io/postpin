@@ -50,6 +50,7 @@ export const variables = defineEnvVars(
 		STORAGE_DEFAULT_ORG_QUOTA: { schema: envByteSize }, // empty = unlimited
 		STORAGE_DEFAULT_USER_QUOTA: { schema: envByteSize }, // empty = unlimited
 		STORAGE_CAPACITY: { schema: envByteSize }, // empty = unlimited
+		UPLOAD_MAX_FILE_SIZE: { schema: envByteSize }, // empty = only the quotas limit uploads
 		STORAGE_DISK_PATH: {
 			schema: v.pipe(
 				v.optional(v.string()),

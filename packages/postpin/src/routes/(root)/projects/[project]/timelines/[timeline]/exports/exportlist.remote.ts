@@ -1,4 +1,5 @@
 import { prisma } from "#lib/server/database.ts";
+import { getMediaJobs } from "#lib/server/media.ts";
 import { accessChecker, accessibleExports, authorize } from "#lib/server/org-access.ts";
 import { query } from "$app/server";
 
@@ -37,15 +38,30 @@ export const getExportList = query(valibot.string(), async (timelineId) => {
 		},
 	});
 
-	return exports.map(({ media, ...e }) => ({
-		...e,
-		media: media && { id: media.id, status: media.status },
-		storage: media && storageOf(media),
-		canRename: allowed("export", "rename", { projectId: target.projectId, timelineId }),
-		canDelete: allowed("export", "delete", { projectId: target.projectId, timelineId }),
-		canShare: allowed("shareLink", "create", { projectId: target.projectId, timelineId }),
-	}));
+	const scope = { projectId: target.projectId, timelineId };
+	return {
+		exports: await Promise.all(
+			exports.map(async ({ media, ...e }) => ({
+				...e,
+				media: media && { id: media.id, status: media.status },
+				storage: media && storageOf(media),
+				processingStep: media?.status === "PROCESSING" ? await processingStep(media.id) : null,
+				canRename: allowed("export", "rename", scope),
+				canDelete: allowed("export", "delete", scope),
+				canShare: allowed("shareLink", "create", scope),
+			})),
+		),
+		canUpload: allowed("export", "upload", scope),
+	};
 });
+
+/** What the list says while the worker is busy with an export */
+async function processingStep(mediaId: string): Promise<"processing" | "detecting-cuts"> {
+	const jobs = await getMediaJobs(mediaId).catch(() => []);
+	return jobs.some((j) => j.label === "Detecting cuts" && j.state === "active")
+		? "detecting-cuts"
+		: "processing";
+}
 
 type StoredMedia = {
 	original: { size: bigint | null };

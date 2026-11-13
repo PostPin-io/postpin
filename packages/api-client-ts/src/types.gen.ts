@@ -482,7 +482,7 @@ export type InitUploadErrors = {
 	 */
 	409: unknown;
 	/**
-	 * Storage quota exceeded
+	 * File too large or storage quota exceeded
 	 */
 	413: unknown;
 };

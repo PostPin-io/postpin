@@ -109,6 +109,7 @@ See [Storage Limits](#storage-limits-1) for how quotas are counted and enforced.
 | `STORAGE_DEFAULT_USER_QUOTA` | (empty, unlimited)                | Default quota per user, counted over the exports they uploaded in all organizations.                                                 |
 | `STORAGE_CAPACITY`           | (empty)                           | Total storage shown in the admin storage chart. Takes precedence over `STORAGE_DISK_PATH`. Set it to your rustfs bucket quota.       |
 | `STORAGE_DISK_PATH`          | _set by compose.yml_ (`/storage`) | A path on the storage disk; the chart shows its size and free space. Leave both this and `STORAGE_CAPACITY` empty to hide the chart. |
+| `UPLOAD_MAX_FILE_SIZE`       | (empty, no limit)                 | Largest file one upload may have, e.g. `20 GB`, for the editor plugins and the web upload alike. Bigger uploads get HTTP 413.        |
 
 ### Queue
 
@@ -236,8 +237,9 @@ CORS rule manually (methods `GET, PUT, POST, DELETE, HEAD`, exposed headers
 
 Every export counts towards the quota of its organization and of the user who uploaded it. Both
 apply: an upload is rejected (HTTP 413, shown in the editor plugin) as soon as it would exceed
-either one. The plugin announces the file size before uploading, so PostPin rejects an upload up
-front instead of after the transfer.
+either one. The plugin and the web upload announce the file size before uploading, so PostPin
+rejects an upload up front instead of after the transfer. `UPLOAD_MAX_FILE_SIZE` additionally
+limits the size of a single file, independent of the quotas.
 
 - **What counts:** the original, its proxies, and the generated images (thumbnail, seek images,
   shot thumbnails). Unfinished uploads reserve their announced size for 24 hours.

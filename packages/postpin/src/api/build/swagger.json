@@ -1084,7 +1084,7 @@
 						"description": "Export media was already uploaded"
 					},
 					"413": {
-						"description": "Storage quota exceeded"
+						"description": "File too large or storage quota exceeded"
 					}
 				},
 				"description": "Starts a multipart upload of the export's original file. PUT each part's bytes to its URL,\nkeep the ETag response headers and pass them to complete-upload.",
