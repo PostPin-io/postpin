@@ -1,0 +1,114 @@
+name: ffmpeg
+on:
+  push:
+    tags: ["ffmpeg-v*"]
+  pull_request:
+    paths: ["tools/ffmpeg/**", "packages/shared/src/media/**"]
+
+jobs:
+  # Builds and tests without secrets, so it also runs for pull requests
+  macos:
+    runs-on: macos-latest # Apple Silicon
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: brew install nasm # x86_64 assembly for x264/ffmpeg
+      - uses: actions/cache@v4
+        with:
+          path: tools/ffmpeg/.work/src
+          key: ffmpeg-src-${{ hashFiles('tools/ffmpeg/versions.json') }}
+      - run: tools/ffmpeg/build.sh macos-arm64
+      - run: tools/ffmpeg/build.sh macos-x64
+      - name: Universal binaries
+        working-directory: tools/ffmpeg
+        run: |
+          mkdir -p out/macos-universal
+          for b in ffmpeg ffprobe; do lipo -create out/macos-arm64/$b out/macos-x64/$b -output out/macos-universal/$b; done
+          cp out/macos-arm64/BUILDCONF.txt out/macos-universal/
+      - run: node tools/ffmpeg/test/run.mjs tools/ffmpeg/out/macos-universal --universal
+      - name: x86_64 slice under Rosetta
+        run: |
+          arch -x86_64 /usr/bin/true 2>/dev/null || softwareupdate --install-rosetta --agree-to-license
+          FFMPEG_ARCH=x86_64 node tools/ffmpeg/test/run.mjs tools/ffmpeg/out/macos-universal
+      - uses: actions/upload-artifact@v7
+        with: { name: ffmpeg-macos-unsigned, path: tools/ffmpeg/out/macos-universal }
+
+  # Tags only: signs and notarizes what the macos job built and tested
+  macos-sign:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: macos
+    runs-on: macos-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@v8
+        with: { name: ffmpeg-macos-unsigned, path: ffmpeg-bin }
+      - run: chmod +x ffmpeg-bin/ffmpeg ffmpeg-bin/ffprobe # artifacts lose the executable bit
+      - uses: ./.github/actions/signing-keychain
+        with:
+          p12-base64: ${{ secrets.MAC_CERTS_P12_BASE64 }}
+          password: ${{ secrets.MAC_CERTS_PASSWORD }}
+      - name: Sign and notarize
+        env:
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: tools/ffmpeg/sign-macos.sh ffmpeg-bin
+      - run: node tools/ffmpeg/test/run.mjs ffmpeg-bin --universal --signed
+      - uses: actions/upload-artifact@v7
+        with: { name: ffmpeg-macos-universal, path: ffmpeg-bin }
+
+  windows-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: sudo apt-get update && sudo apt-get install -y mingw-w64 nasm pkg-config
+      - uses: actions/cache@v4
+        with:
+          path: tools/ffmpeg/.work/src
+          key: ffmpeg-src-${{ hashFiles('tools/ffmpeg/versions.json') }}
+      - run: tools/ffmpeg/build.sh windows-x64
+      - name: Only system DLLs
+        run: |
+          x86_64-w64-mingw32-objdump -p tools/ffmpeg/out/windows-x64/ffmpeg.exe | grep "DLL Name" | tee dlls.txt
+          ! grep -Ei "winpthread|zlib|libgcc|libstdc" dlls.txt
+      - uses: actions/upload-artifact@v7
+        with: { name: ffmpeg-windows-x64, path: tools/ffmpeg/out/windows-x64 }
+
+  windows-test:
+    needs: windows-build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@v8
+        with: { name: ffmpeg-windows-x64, path: ffmpeg-bin }
+      - run: node tools/ffmpeg/test/run.mjs ffmpeg-bin
+        shell: bash
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [macos-sign, windows-test]
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with: { path: dist, pattern: "ffmpeg-{macos-universal,windows-x64}" }
+      - name: Package, checksums, sources
+        run: |
+          tag=${GITHUB_REF_NAME}                 # ffmpeg-v9.0.2-1
+          base=ffmpeg-${tag#ffmpeg-v}            # ffmpeg-9.0.2-1
+          cp tools/ffmpeg/LICENSE.md dist/ffmpeg-macos-universal/ && cp tools/ffmpeg/LICENSE.md dist/ffmpeg-windows-x64/
+          chmod +x dist/ffmpeg-macos-universal/ff*   # artifacts lose the executable bit
+          tar -C dist/ffmpeg-macos-universal -cJf "$base-macos-universal.tar.xz" .
+          (cd dist/ffmpeg-windows-x64 && zip -9 -r "../../$base-windows-x64.zip" .)
+          # GPL: the exact sources next to the binaries
+          for s in ffmpeg x264 zlib; do curl -fsSLo "source-$s.$(node -p "require('./tools/ffmpeg/versions.json').$s.url.split('.').slice(-2).join('.')")" "$(node -p "require('./tools/ffmpeg/versions.json').$s.url")"; done
+          shasum -a 256 "$base"-* source-* > SHA256SUMS
+      # --latest=false: "latest" must stay the PostPin release, Desktop's updater and the
+      # self-hosting docs (releases/latest/download/compose.yml) read it
+      - run: gh release create "$GITHUB_REF_NAME" --latest=false ffmpeg-*.tar.xz ffmpeg-*.zip source-* SHA256SUMS tools/ffmpeg/versions.json --title "$GITHUB_REF_NAME" --notes "Minimal ffmpeg for the PostPin plugins, see tools/ffmpeg"
+        env: { GH_TOKEN: "${{ github.token }}" }
