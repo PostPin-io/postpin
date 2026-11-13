@@ -7,10 +7,15 @@ import { env as testEnv } from "../helpers.ts";
 export const prisma = {
 	// array form only, like the handlers use it
 	$transaction: vi.fn(),
+	$disconnect: vi.fn(),
 	media: { update: vi.fn() },
 	mediaFile: { findUniqueOrThrow: vi.fn(), upsert: vi.fn(), update: vi.fn() },
 	export: { findUniqueOrThrow: vi.fn() },
 	thumbnail: { upsert: vi.fn() },
+	session: { deleteMany: vi.fn() },
+	deviceCode: { deleteMany: vi.fn() },
+	verification: { deleteMany: vi.fn() },
+	invitation: { deleteMany: vi.fn() },
 };
 
 export const s3Client = { putObject: vi.fn() };
@@ -59,10 +64,11 @@ export const libStorage = {
 export function resetMocks() {
 	vi.clearAllMocks();
 	uploads.length = 0;
-	const { $transaction, ...models } = prisma;
+	const { $transaction, $disconnect, ...models } = prisma;
 	for (const model of Object.values(models)) {
 		for (const fn of Object.values(model)) fn.mockReset().mockResolvedValue({});
 	}
+	$disconnect.mockReset().mockResolvedValue(undefined);
 	$transaction
 		.mockReset()
 		.mockImplementation((operations: Promise<unknown>[]) => Promise.all(operations));

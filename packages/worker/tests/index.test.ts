@@ -13,6 +13,16 @@ vi.mock("../src/lib/worker.ts", async () => {
 vi.mock("../src/lib/queue.ts", () => ({
 	heavyHandlers: { heavy: true },
 	lightHandlers: { light: true },
+	maintenanceHandlers: { maintenance: true },
+}));
+// The real getQueue would connect to Redis
+const maintenanceQueue = vi.hoisted(() => ({
+	upsertJobScheduler: vi.fn(async () => {}),
+	close: vi.fn(async () => {}),
+}));
+vi.mock("@postpin-io/shared/queue", async (importOriginal) => ({
+	...(await importOriginal<typeof import("@postpin-io/shared/queue")>()),
+	getQueue: vi.fn(() => maintenanceQueue),
 }));
 vi.mock("../src/lib/database.ts", async () => (await import("./handlers/mocks.ts")).database);
 vi.mock("../src/lib/env.ts", async () => (await import("./handlers/mocks.ts")).env);
@@ -24,11 +34,12 @@ vi.mock("../src/lib/shutdown.ts", () => ({
 	SHUTDOWN_TIMEOUT_MS: 25_000,
 }));
 
-import { heavyWorker, lightWorker } from "../src/index.ts";
+import { heavyWorker, lightWorker, maintenanceWorker } from "../src/index.ts";
 import { registerShutdown } from "../src/lib/shutdown.ts";
 
 // Captured before beforeEach clears all mocks
 const shutdownOptions = vi.mocked(registerShutdown).mock.calls[0]?.[0];
+const schedulerCalls = [...maintenanceQueue.upsertJobScheduler.mock.calls];
 
 type FakeWorker = EventEmitter & { name: string; handlers: object; opts: object };
 const light = lightWorker as unknown as FakeWorker;
@@ -52,6 +63,21 @@ describe("worker entry", () => {
 			handlers: { light: true },
 			opts: { concurrency: 8 },
 		});
+		expect(maintenanceWorker).toMatchObject({
+			name: "maintenance",
+			handlers: { maintenance: true },
+			opts: { concurrency: 1 },
+		});
+	});
+
+	it("schedules the cleanup once a day under a fixed id, so restarts don't add more", () => {
+		expect(schedulerCalls).toEqual([
+			[
+				"cleanup-daily",
+				{ pattern: "0 3 * * *", tz: "Europe/Berlin" },
+				expect.objectContaining({ name: "cleanup", data: {} }),
+			],
+		]);
 	});
 
 	it("marks the media as failed when its setMediaProcessingDone job fails", async () => {
@@ -70,11 +96,16 @@ describe("worker entry", () => {
 		expect(storeImageSizes).not.toHaveBeenCalled();
 	});
 
-	it("shuts both workers down gracefully on SIGTERM", () => {
+	it("shuts all workers down gracefully on SIGTERM", () => {
 		expect(shutdownOptions).toMatchObject({
-			workers: [heavyWorker, lightWorker],
+			workers: [heavyWorker, lightWorker, maintenanceWorker],
 			timeoutMs: 25_000,
 		});
-		expect(shutdownOptions?.cleanup).toBeTypeOf("function");
+	});
+
+	it("closes the maintenance queue and the database on shutdown", async () => {
+		await shutdownOptions?.cleanup?.();
+		expect(maintenanceQueue.close).toHaveBeenCalled();
+		expect(prisma.$disconnect).toHaveBeenCalled();
 	});
 });

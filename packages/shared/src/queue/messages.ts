@@ -47,3 +47,5 @@ export interface ShotThumbnailsMessage {
 export interface MovieBarcodeMessage {
 	mediaId: string;
 }
+
+export type CleanupMessage = Record<string, never>;

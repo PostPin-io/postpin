@@ -11,6 +11,7 @@ import {
 } from "bullmq";
 import type { RedisEnv } from "../env/index.ts";
 import type {
+	CleanupMessage,
 	MovieBarcodeMessage,
 	ProbeMessage,
 	SeekSpritesMessage,
@@ -34,7 +35,12 @@ export const JobWeights: {
 };
 
 export const JobLabels: {
-	[N in keyof QueueJobs["media-heavy"] | keyof QueueJobs["media-light"]]: string;
+	[
+		N in
+			| keyof QueueJobs["media-heavy"]
+			| keyof QueueJobs["media-light"]
+			| keyof QueueJobs["maintenance"]
+	]: string;
 } = {
 	transcode: "Transcode",
 	thumbnail: "Generate Thumbnail",
@@ -43,9 +49,14 @@ export const JobLabels: {
 	seekSprites: "Seek Thumbnails",
 	shotThumbnails: "Shot Thumbnails",
 	movieBarcode: "Movie Barcode",
+	cleanup: "Cleanup",
 };
 
-export const Queues = { heavy: "media-heavy", light: "media-light" } as const;
+export const Queues = {
+	heavy: "media-heavy",
+	light: "media-light",
+	maintenance: "maintenance",
+} as const;
 
 export type QueueName = (typeof Queues)[keyof typeof Queues];
 
@@ -59,6 +70,7 @@ export interface QueueJobs {
 		shotThumbnails: ShotThumbnailsMessage;
 		movieBarcode: MovieBarcodeMessage;
 	};
+	[Queues.maintenance]: { cleanup: CleanupMessage };
 }
 
 export type JobName<Q extends QueueName> = keyof QueueJobs[Q] & string;
