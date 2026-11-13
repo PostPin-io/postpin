@@ -21,22 +21,19 @@ const PROXY_RESOLUTIONS = [
 	{ width: 1280, height: 720, bitRate: 3500 * KBits },
 	{ width: 854, height: 480, bitRate: 1200 * KBits },
 ];
-const transcodeJob = (
-	mediaId: string,
-	rendition: (typeof PROXY_RESOLUTIONS)[number],
-): TypedFlowChildJob => ({
+// one job for all renditions: ffmpeg decodes the original once and encodes them side by side
+const transcodeJob = (mediaId: string): TypedFlowChildJob => ({
 	name: "transcode",
 	queueName: Queues.heavy,
 	data: {
 		mediaId,
 		audio: { bitRate: 128_000, codec: "aac" },
-		video: { ...rendition, codec: "h264" },
+		renditions: PROXY_RESOLUTIONS.map((rendition) => ({ ...rendition, codec: "h264" })),
 	},
 	opts: { failParentOnFailure: true },
 });
 
 export async function startMediaProcessing(mediaId: string) {
-	const [r1080, r720, r480] = PROXY_RESOLUTIONS;
 	await flowProducer.add({
 		name: "setMediaProcessingDone",
 		queueName: Queues.light,
@@ -66,7 +63,8 @@ export async function startMediaProcessing(mediaId: string) {
 						queueName: Queues.light,
 						data: { mediaId },
 						opts: { failParentOnFailure: true },
-						children: [transcodeJob(mediaId, r480!)],
+						// the transcode returns its smallest proxy, which sprites and barcode read
+						children: [transcodeJob(mediaId)],
 					},
 				],
 			},
@@ -76,8 +74,6 @@ export async function startMediaProcessing(mediaId: string) {
 				queueName: Queues.light,
 				opts: { failParentOnFailure: true },
 			},
-			transcodeJob(mediaId, r1080!),
-			transcodeJob(mediaId, r720!),
 		],
 	});
 
@@ -106,7 +102,7 @@ export async function getMediaJobs(mediaId: string) {
 		await Promise.all(
 			flatten(flow?.children).map(async ({ job }) => ({
 				id: job.id,
-				label: `${JobLabels[job.name as keyof typeof JobLabels] ?? job.name}${job.name === "transcode" ? ` ${job.data.video.height}p` : ""}`,
+				label: JobLabels[job.name as keyof typeof JobLabels] ?? job.name,
 				state: await job.getState(),
 				progress: typeof job.progress === "number" ? job.progress : 0,
 				failedReason: job.failedReason,

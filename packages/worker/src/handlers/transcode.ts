@@ -7,53 +7,56 @@ import { Upload } from "@aws-sdk/lib-storage";
 import { getS3ObjectPath } from "@postpin-io/shared/storage";
 import { prisma } from "../lib/database.ts";
 
+/** Encodes all renditions of a media in one ffmpeg run, which decodes the original only once */
 export async function transcode(job: TypedJob<typeof Queues.heavy, "transcode">) {
-	const proxy = await prisma.mediaFile.upsert({
-		where: {
-			proxyOfId_width_height_bitrate: {
-				proxyOfId: job.data.mediaId,
-				width: job.data.video.width,
-				height: job.data.video.height,
-				bitrate: job.data.video.bitRate,
-			},
-		},
-		update: {
-			status: "PROCESSING",
-		},
-		create: {
-			proxyOfId: job.data.mediaId,
-			contentType: "video/mp4",
-			bitrate: job.data.video.bitRate,
-			videoCodec: job.data.video.codec,
-			width: job.data.video.width,
-			height: job.data.video.height,
-			audioCodec: job.data.audio.codec,
-			status: "PROCESSING",
-		},
-	});
-	const presignedSourceUrl = await getOriginalUrl(job.data.mediaId);
-	const targetPath = getS3ObjectPath({
-		mediaId: job.data.mediaId,
-		type: "proxy",
-		proxyId: proxy.id,
-	});
+	const { mediaId, renditions, audio } = job.data;
+	if (renditions.length === 0) throw new Error("transcode needs at least one rendition");
+
+	const proxies = await prisma.$transaction(
+		renditions.map((rendition) =>
+			prisma.mediaFile.upsert({
+				where: {
+					proxyOfId_width_height_bitrate: {
+						proxyOfId: mediaId,
+						width: rendition.width,
+						height: rendition.height,
+						bitrate: rendition.bitRate,
+					},
+				},
+				update: {
+					status: "PROCESSING",
+				},
+				create: {
+					proxyOfId: mediaId,
+					contentType: "video/mp4",
+					bitrate: rendition.bitRate,
+					videoCodec: rendition.codec,
+					width: rendition.width,
+					height: rendition.height,
+					audioCodec: audio.codec,
+					status: "PROCESSING",
+				},
+			}),
+		),
+	);
+	const presignedSourceUrl = await getOriginalUrl(mediaId);
 	// ffmpeg reports progress several times a second; only forward it to Redis once a second
 	let lastProgressUpdate = 0;
-	const result = await encodeHls(
+	const results = await encodeHls(
 		presignedSourceUrl,
-		{
-			width: job.data.video.width,
-			height: job.data.video.height,
-			videoBitRate: job.data.video.bitRate,
-			audioBitRate: job.data.audio.bitRate,
-		},
+		renditions.map((rendition) => ({
+			width: rendition.width,
+			height: rendition.height,
+			videoBitRate: rendition.bitRate,
+			audioBitRate: audio.bitRate,
+		})),
 		// lib-storage aborts the multipart upload itself when the body stream errors
-		(body) =>
+		(index, body) =>
 			new Upload({
 				client: s3Client,
 				params: {
 					Bucket: env.S3_BUCKET,
-					Key: targetPath,
+					Key: getS3ObjectPath({ mediaId, type: "proxy", proxyId: proxies[index]!.id }),
 					Body: body,
 					ContentType: "video/mp4",
 				},
@@ -65,20 +68,28 @@ export async function transcode(job: TypedJob<typeof Queues.heavy, "transcode">)
 			job.updateProgress(progress).catch(console.error);
 		},
 	);
-	await prisma.mediaFile.update({
-		where: {
-			id: proxy.id,
-		},
-		data: {
-			status: "COMPLETED",
-			hls: result.hls,
-			codecs: result.codecs,
-			size: BigInt(result.bytes),
-			duration: result.hls.segments.reduce((sum, segment) => sum + segment.duration, 0),
-			audioCodec: result.hasAudio ? job.data.audio.codec : null,
-		},
-	});
+	await prisma.$transaction(
+		results.map((result, i) =>
+			prisma.mediaFile.update({
+				where: {
+					id: proxies[i]!.id,
+				},
+				data: {
+					status: "COMPLETED",
+					hls: result.hls,
+					codecs: result.codecs,
+					size: BigInt(result.bytes),
+					duration: result.hls.segments.reduce((sum, segment) => sum + segment.duration, 0),
+					audioCodec: result.hasAudio ? audio.codec : null,
+				},
+			}),
+		),
+	);
 	await job.updateProgress(1);
-	// parent jobs (seek sprites) read the proxy they depend on from this
-	return { proxyId: proxy.id };
+	// parent jobs (seek sprites, barcode) work off the smallest proxy, it's the quickest to read
+	const smallest = renditions.reduce(
+		(min, rendition, i) => (rendition.height < renditions[min]!.height ? i : min),
+		0,
+	);
+	return { proxyId: proxies[smallest]!.id };
 }

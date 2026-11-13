@@ -5,10 +5,10 @@ interface TrackConfig {
 
 export interface TranscodeMessage {
 	mediaId: string;
-	video: TrackConfig & {
+	renditions: (TrackConfig & {
 		width: number;
 		height: number;
-	};
+	})[];
 	audio: TrackConfig;
 }
 

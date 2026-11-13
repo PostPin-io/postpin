@@ -99,12 +99,14 @@ function parseTimestamp(timestamp: string) {
 	return hours * 3600 + minutes * 60 + seconds;
 }
 
-export function ffmpeg(args: string[], onProgress?: (fraction: number) => void) {
+export function ffmpeg(args: string[], onProgress?: (fraction: number) => void, outputs = 0) {
 	// data goes to stdout, progress goes to stderr
-	const proc = childProcess.spawn("ffmpeg", args);
+	const proc = childProcess.spawn("ffmpeg", args, {
+		stdio: ["ignore", "pipe", "pipe", ...Array<"pipe">(outputs).fill("pipe")],
+	});
 
 	let duration = 0;
-	proc.stderr.on("data", (data: Buffer) => {
+	proc.stderr!.on("data", (data: Buffer) => {
 		const text = data.toString();
 		console.log(text);
 		const durationMatch = text.match(/Duration: (\d+:\d+:[\d.]+)/);
@@ -122,5 +124,5 @@ export function ffmpeg(args: string[], onProgress?: (fraction: number) => void) 
 		);
 	});
 
-	return { stdout: proc.stdout as Readable, done };
+	return { stdout: proc.stdout as Readable, outputs: proc.stdio.slice(3) as Readable[], done };
 }

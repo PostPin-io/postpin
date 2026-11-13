@@ -14,7 +14,10 @@ import { transcode } from "../../src/handlers/transcode.ts";
 
 const data = {
 	mediaId: "m1",
-	video: { codec: "h264", bitRate: 1_000_000, width: 854, height: 480 },
+	renditions: [
+		{ codec: "h264", bitRate: 3_500_000, width: 1280, height: 720 },
+		{ codec: "h264", bitRate: 1_000_000, width: 854, height: 480 },
+	],
 	audio: { codec: "aac", bitRate: 128_000 },
 };
 const hls = {
@@ -25,86 +28,117 @@ const hls = {
 		{ duration: 0.5, offset: 200, length: 10 },
 	],
 };
+const result = (bytes: number, hasAudio = true) => ({
+	hls,
+	bytes,
+	codecs: hasAudio ? "avc1.64002a,mp4a.40.2" : "avc1.64002a",
+	hasAudio,
+});
 
-type Sink = (body: Readable) => Promise<unknown>;
+type Sink = (index: number, body: Readable) => Promise<unknown>;
 type OnProgress = (fraction: number) => void;
 
 beforeEach(() => {
 	resetMocks();
-	prisma.mediaFile.upsert.mockResolvedValue({ id: "proxy-1" });
+	// proxy-720 and proxy-480, in rendition order
+	prisma.mediaFile.upsert.mockImplementation(
+		async ({ where }: { where: { proxyOfId_width_height_bitrate: { height: number } } }) => ({
+			id: `proxy-${where.proxyOfId_width_height_bitrate.height}`,
+		}),
+	);
 	hlsLib.encodeHls
 		.mockReset()
 		.mockImplementation(async (_input: string, _r: unknown, sink: Sink) => {
-			await sink(Readable.from([Buffer.from("fmp4")]));
-			return { hls, bytes: 210, codecs: "avc1.64002a,mp4a.40.2", hasAudio: true };
+			await Promise.all([
+				sink(0, Readable.from([Buffer.from("fmp4-720")])),
+				sink(1, Readable.from([Buffer.from("fmp4-480")])),
+			]);
+			return [result(720), result(480)];
 		});
 });
 afterEach(() => vi.useRealTimers());
 
 describe("transcode", () => {
-	it("upserts the proxy record by its rendition and marks it processing", async () => {
+	it("upserts a proxy record per rendition and marks them processing in one transaction", async () => {
 		await transcode(fakeJob("transcode", data) as never);
-		expect(prisma.mediaFile.upsert).toHaveBeenCalledWith({
-			where: {
-				proxyOfId_width_height_bitrate: {
-					proxyOfId: "m1",
-					width: 854,
-					height: 480,
-					bitrate: 1_000_000,
+		expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+		expect(prisma.mediaFile.upsert.mock.calls.map(([arg]) => arg)).toEqual(
+			data.renditions.map(({ width, height, bitRate }) => ({
+				where: {
+					proxyOfId_width_height_bitrate: { proxyOfId: "m1", width, height, bitrate: bitRate },
 				},
-			},
-			update: { status: "PROCESSING" },
-			create: {
-				proxyOfId: "m1",
-				contentType: "video/mp4",
-				bitrate: 1_000_000,
-				videoCodec: "h264",
-				width: 854,
-				height: 480,
-				audioCodec: "aac",
-				status: "PROCESSING",
-			},
-		});
+				update: { status: "PROCESSING" },
+				create: {
+					proxyOfId: "m1",
+					contentType: "video/mp4",
+					bitrate: bitRate,
+					videoCodec: "h264",
+					width,
+					height,
+					audioCodec: "aac",
+					status: "PROCESSING",
+				},
+			})),
+		);
 	});
 
-	it("encodes the original with the job's rendition and uploads it to the proxy key", async () => {
+	it("encodes all renditions at once and uploads each to its proxy key", async () => {
 		await transcode(fakeJob("transcode", data) as never);
+		expect(hlsLib.encodeHls).toHaveBeenCalledTimes(1);
 		expect(hlsLib.encodeHls).toHaveBeenCalledWith(
 			"https://s3/m1/original",
-			{ width: 854, height: 480, videoBitRate: 1_000_000, audioBitRate: 128_000 },
+			[
+				{ width: 1280, height: 720, videoBitRate: 3_500_000, audioBitRate: 128_000 },
+				{ width: 854, height: 480, videoBitRate: 1_000_000, audioBitRate: 128_000 },
+			],
 			expect.any(Function),
 			expect.any(Function),
 		);
-		expect(uploads).toHaveLength(1);
-		expect(uploads[0]!.params).toMatchObject({
-			Bucket: "bucket",
-			Key: "m1/proxy-proxy-1",
-			ContentType: "video/mp4",
-		});
-		expect(uploads[0]!.body).toEqual(Buffer.from("fmp4"));
+		expect(
+			uploads.map(({ params, body }) => [params.Bucket, params.Key, params.ContentType, `${body}`]),
+		).toEqual([
+			["bucket", "m1/proxy-proxy-720", "video/mp4", "fmp4-720"],
+			["bucket", "m1/proxy-proxy-480", "video/mp4", "fmp4-480"],
+		]);
 	});
 
-	it("completes the proxy with the playlist, total duration and size, and returns its id", async () => {
+	it("completes every proxy with its playlist, duration and size, and returns the smallest", async () => {
 		const job = fakeJob("transcode", data);
-		await expect(transcode(job as never)).resolves.toEqual({ proxyId: "proxy-1" });
-		expect(prisma.mediaFile.update).toHaveBeenCalledWith({
-			where: { id: "proxy-1" },
-			data: {
-				status: "COMPLETED",
-				hls,
-				codecs: "avc1.64002a,mp4a.40.2",
-				size: 210n,
-				duration: 4.5,
-				audioCodec: "aac",
-			},
-		});
+		await expect(transcode(job as never)).resolves.toEqual({ proxyId: "proxy-480" });
+		expect(prisma.mediaFile.update.mock.calls.map(([arg]) => arg)).toEqual(
+			[
+				["proxy-720", 720n],
+				["proxy-480", 480n],
+			].map(([id, size]) => ({
+				where: { id },
+				data: {
+					status: "COMPLETED",
+					hls,
+					codecs: "avc1.64002a,mp4a.40.2",
+					size,
+					duration: 4.5,
+					audioCodec: "aac",
+				},
+			})),
+		);
 		expect(job.updateProgress).toHaveBeenLastCalledWith(1);
 	});
 
 	it("stores no audio codec when the source has no audio", async () => {
-		hlsLib.encodeHls.mockResolvedValue({ hls, bytes: 1, codecs: "avc1.64002a", hasAudio: false });
+		hlsLib.encodeHls.mockResolvedValue([result(1, false), result(1, false)]);
 		await transcode(fakeJob("transcode", data) as never);
-		expect(prisma.mediaFile.update.mock.calls[0]![0].data.audioCodec).toBeNull();
+		expect(prisma.mediaFile.update.mock.calls.map(([arg]) => arg.data.audioCodec)).toEqual([
+			null,
+			null,
+		]);
+	});
+
+	it("rejects a job without renditions before touching anything", async () => {
+		await expect(
+			transcode(fakeJob("transcode", { ...data, renditions: [] }) as never),
+		).rejects.toThrow("at least one rendition");
+		expect(prisma.mediaFile.upsert).not.toHaveBeenCalled();
+		expect(hlsLib.encodeHls).not.toHaveBeenCalled();
 	});
 
 	it("forwards progress at most once a second", async () => {
@@ -121,7 +155,7 @@ describe("transcode", () => {
 				onProgress(0.4); // dropped
 				vi.setSystemTime(12_000);
 				onProgress(0.5);
-				return { hls, bytes: 1, codecs: "", hasAudio: true };
+				return [result(1), result(1)];
 			},
 		);
 		const job = fakeJob("transcode", data);
@@ -134,16 +168,16 @@ describe("transcode", () => {
 		hlsLib.encodeHls.mockImplementation(
 			async (_i: string, _r: unknown, _s: Sink, onProgress: OnProgress) => {
 				onProgress(0.5);
-				return { hls, bytes: 1, codecs: "", hasAudio: true };
+				return [result(1), result(1)];
 			},
 		);
 		const job = fakeJob("transcode", data);
 		job.updateProgress.mockRejectedValueOnce(new Error("redis gone"));
-		await expect(transcode(job as never)).resolves.toEqual({ proxyId: "proxy-1" });
+		await expect(transcode(job as never)).resolves.toEqual({ proxyId: "proxy-480" });
 		await vi.waitFor(() => expect(console.error).toHaveBeenCalled());
 	});
 
-	it("leaves the proxy unfinished when encoding fails", async () => {
+	it("leaves the proxies unfinished when encoding fails", async () => {
 		hlsLib.encodeHls.mockRejectedValue(new Error("ffmpeg exited with code 1"));
 		await expect(transcode(fakeJob("transcode", data) as never)).rejects.toThrow("ffmpeg exited");
 		expect(prisma.mediaFile.update).not.toHaveBeenCalled();

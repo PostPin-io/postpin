@@ -5,6 +5,8 @@ import { vi } from "vitest";
 import { env as testEnv } from "../helpers.ts";
 
 export const prisma = {
+	// array form only, like the handlers use it
+	$transaction: vi.fn(),
 	media: { update: vi.fn() },
 	mediaFile: { findUniqueOrThrow: vi.fn(), upsert: vi.fn(), update: vi.fn() },
 	export: { findUniqueOrThrow: vi.fn() },
@@ -57,9 +59,13 @@ export const libStorage = {
 export function resetMocks() {
 	vi.clearAllMocks();
 	uploads.length = 0;
-	for (const model of Object.values(prisma)) {
+	const { $transaction, ...models } = prisma;
+	for (const model of Object.values(models)) {
 		for (const fn of Object.values(model)) fn.mockReset().mockResolvedValue({});
 	}
+	$transaction
+		.mockReset()
+		.mockImplementation((operations: Promise<unknown>[]) => Promise.all(operations));
 	s3Client.putObject.mockReset().mockResolvedValue({});
 	ffmpegLib.ffmpeg.mockReset();
 	ffmpegLib.ffprobe.mockReset();
