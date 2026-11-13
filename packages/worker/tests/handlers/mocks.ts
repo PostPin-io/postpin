@@ -9,7 +9,14 @@ export const prisma = {
 	$transaction: vi.fn(),
 	$disconnect: vi.fn(),
 	media: { update: vi.fn(), updateMany: vi.fn() },
-	mediaFile: { findUniqueOrThrow: vi.fn(), upsert: vi.fn(), update: vi.fn() },
+	mediaFile: {
+		findUniqueOrThrow: vi.fn(),
+		findFirstOrThrow: vi.fn(),
+		findMany: vi.fn(),
+		deleteMany: vi.fn(),
+		upsert: vi.fn(),
+		update: vi.fn(),
+	},
 	export: { findUniqueOrThrow: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
 	thumbnail: { upsert: vi.fn() },
 	session: { deleteMany: vi.fn() },
@@ -41,6 +48,7 @@ export const sharedStorage = {
 	}) =>
 		`${o.mediaId}/${o.type}${o.proxyId ? `-${o.proxyId}` : ""}${o.generation ? `-${o.generation}` : ""}${o.index !== undefined ? `-${o.index}` : ""}`,
 	deleteShotThumbnails: vi.fn(async () => 0),
+	deleteObject: vi.fn(async () => {}),
 };
 
 export interface UploadParams {
@@ -81,6 +89,7 @@ export function resetMocks() {
 		.mockImplementation((operations: Promise<unknown>[]) => Promise.all(operations));
 	s3Client.putObject.mockReset().mockResolvedValue({});
 	sharedStorage.deleteShotThumbnails.mockReset().mockResolvedValue(0);
+	sharedStorage.deleteObject.mockReset().mockResolvedValue(undefined);
 	uploadDone.mockReset().mockResolvedValue(undefined);
 	ffmpegLib.ffmpeg.mockReset();
 	ffmpegLib.ffprobe.mockReset();

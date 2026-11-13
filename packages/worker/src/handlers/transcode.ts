@@ -6,10 +6,26 @@ import { env } from "../lib/env.ts";
 import { Upload } from "@aws-sdk/lib-storage";
 import { getS3ObjectPath } from "@postpin-io/shared/storage";
 import { prisma } from "../lib/database.ts";
+import { ffprobe } from "../lib/ffmpeg.ts";
+import { displaySize, hlsDuration, selectRenditions } from "@postpin-io/shared/media/hls";
 
-/** Encodes all renditions of a media in one ffmpeg run, which decodes the original only once */
+/**
+ * Encodes the renditions of a media in one ffmpeg run, which decodes the original only once.
+ * Renditions larger than the original are skipped, so a 720p export gets 720p and 480p only.
+ */
 export async function transcode(job: TypedJob<typeof Queues.heavy, "transcode">) {
-	const { mediaId, renditions, audio } = job.data;
+	const { mediaId, audio } = job.data;
+	const presignedSourceUrl = await getOriginalUrl(mediaId);
+	const { streams } = await ffprobe(presignedSourceUrl);
+	const video = streams.find((stream) => stream.codec_type === "video");
+	if (!video) throw new Error("The original has no video stream");
+	const hasAudio = streams.some((stream) => stream.codec_type === "audio");
+	const size = displaySize({
+		width: video.width,
+		height: video.height,
+		rotation: video.side_data_list?.find((data) => data.rotation !== undefined)?.rotation,
+	});
+	const renditions = selectRenditions(size, job.data.renditions);
 	if (renditions.length === 0) throw new Error("transcode needs at least one rendition");
 
 	const proxies = await prisma.$transaction(
@@ -39,17 +55,10 @@ export async function transcode(job: TypedJob<typeof Queues.heavy, "transcode">)
 			}),
 		),
 	);
-	const presignedSourceUrl = await getOriginalUrl(mediaId);
 	// ffmpeg reports progress several times a second; only forward it to Redis once a second
 	let lastProgressUpdate = 0;
 	const results = await encodeHls(
-		presignedSourceUrl,
-		renditions.map((rendition) => ({
-			width: rendition.width,
-			height: rendition.height,
-			videoBitRate: rendition.bitRate,
-			audioBitRate: audio.bitRate,
-		})),
+		{ input: presignedSourceUrl, renditions, hasAudio, audioBitRate: audio.bitRate },
 		// lib-storage aborts the multipart upload itself when the body stream errors
 		(index, body) =>
 			new Upload({
@@ -79,7 +88,7 @@ export async function transcode(job: TypedJob<typeof Queues.heavy, "transcode">)
 					hls: result.hls,
 					codecs: result.codecs,
 					size: BigInt(result.bytes),
-					duration: result.hls.segments.reduce((sum, segment) => sum + segment.duration, 0),
+					duration: hlsDuration(result.hls),
 					audioCodec: result.hasAudio ? audio.codec : null,
 				},
 			}),

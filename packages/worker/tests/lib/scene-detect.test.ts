@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { cutFrames } from "@postpin-io/shared/logic/web-upload";
-import { parseSceneScores, sceneDetectArgs } from "../../src/lib/scene-detect.ts";
+import { parseSceneScores, sceneDetectArgs } from "@postpin-io/shared/media/scene-detect";
 
 const FPS_24 = { fpsNumerator: 24, fpsDenominator: 1, dropFrame: false };
 const fixture = (name: string) => fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url));

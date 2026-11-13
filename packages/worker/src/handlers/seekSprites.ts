@@ -17,10 +17,15 @@ const ROWS = 10;
 /** Timeline hover previews: one tile per keyframe of the 480p proxy, 100 tiles per JPEG sheet */
 export async function seekSprites(job: TypedJob<typeof Queues.light, "seekSprites">) {
 	const { mediaId } = job.data;
-	// the 480p transcode is this job's child and returns the proxy it wrote
+	// the transcode is this job's child when the server encodes, and returns its smallest proxy
 	const [child] = Object.values(await job.getChildrenValues()) as { proxyId: string }[];
-	if (!child) throw new Error("seekSprites needs its transcode child");
-	const proxy = await prisma.mediaFile.findUniqueOrThrow({ where: { id: child.proxyId } });
+	// without a transcode child the plugin uploaded the proxies already
+	const proxy = child
+		? await prisma.mediaFile.findUniqueOrThrow({ where: { id: child.proxyId } })
+		: await prisma.mediaFile.findFirstOrThrow({
+				where: { proxyOfId: mediaId, status: "COMPLETED" },
+				orderBy: { height: "asc" },
+			});
 	const hls = v.parse(hlsInfo, proxy.hls);
 
 	// width/height are the rendition's 16:9 box; tiles keep that shape and letterbox other aspect ratios

@@ -6,7 +6,7 @@ import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot
 import type { TypedJob } from "../lib/worker.ts";
 import { prisma } from "../lib/database.ts";
 import { ffmpeg } from "../lib/ffmpeg.ts";
-import { parseSceneScores, sceneDetectArgs } from "../lib/scene-detect.ts";
+import { parseSceneScores, sceneDetectArgs } from "@postpin-io/shared/media/scene-detect";
 import { getOriginalUrl } from "../lib/storage.ts";
 
 /**

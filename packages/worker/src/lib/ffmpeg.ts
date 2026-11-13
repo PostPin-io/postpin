@@ -25,6 +25,10 @@ const VideoStream = v.object({
 	width: v.number(),
 	height: v.number(),
 	pix_fmt: v.optional(v.string()),
+	/** e.g. "High"; verifyProxies checks it */
+	profile: v.optional(v.string()),
+	/** H.264 level times ten, e.g. 42 for 4.2 */
+	level: v.optional(v.number()),
 	avg_frame_rate: fraction,
 	r_frame_rate: v.optional(fraction),
 	nb_frames: v.optional(num),
