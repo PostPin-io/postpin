@@ -10,6 +10,11 @@ export const shotThumbnails = v.object({
 	count: v.number(),
 	/** Missing on thumbnails rendered before generations existed: their keys have none */
 	generation: v.optional(v.string()),
+	/**
+	 * While the render runs: the shots 0 … ready - 1 have their image, the others not yet.
+	 * Missing once every image is there.
+	 */
+	ready: v.optional(v.number()),
 });
 
 export type ShotThumbnails = v.InferOutput<typeof shotThumbnails>;
@@ -24,4 +29,21 @@ export function newShotThumbnailsGeneration(now = Date.now()): string {
 		.toString(36)
 		.padStart(4, "0");
 	return `${time}${random}`;
+}
+
+/** How many shots have their image, counted from the first: all once the render is done */
+export const readyShotThumbnails = (t: ShotThumbnails) => Math.min(t.ready ?? t.count, t.count);
+
+/**
+ * Whether shot thumbnails are on their way: a render was requested that isn't published yet (the
+ * cuts changed: the requested generation differs from the published one), or the published one
+ * is still rendering. Media from before generations have neither, so nothing is pending for them.
+ */
+export function shotThumbnailsPending(media: {
+	shotThumbnailsGeneration: string | null;
+	shotThumbnails: unknown;
+}): boolean {
+	const published = media.shotThumbnails as ShotThumbnails | null;
+	if ((media.shotThumbnailsGeneration ?? null) !== (published?.generation ?? null)) return true;
+	return !!published && readyShotThumbnails(published) < published.count;
 }

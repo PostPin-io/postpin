@@ -10,7 +10,7 @@ import * as $runtime from "@prisma/client/runtime/client";
  * @param excludeMediaId skip this media (re-initialized upload)
  */
 export const getStorageUsage = $runtime.makeTypedQueryFactory(
-	'SELECT p."organizationId"   AS "orgId",\ne."uploadedById"     AS "userId",\nSUM(s.size)::bigint  AS "used"\nFROM media_storage s\nJOIN media m    ON m.id = s."mediaId"\nJOIN export e   ON e."mediaId" = m.id\nJOIN timeline t ON t.id = e."timelineId"\nJOIN project p  ON p.id = t."projectId"\nWHERE (m.status <> \'PENDING\' OR m."createdAt" > now() - interval \'24 hours\')\nAND ($1::text IS NULL OR p."organizationId" = $1)\nAND ($2::text IS NULL OR e."uploadedById" = $2)\nAND ($3::text IS NULL OR m.id <> $3)\nGROUP BY p."organizationId", e."uploadedById"',
+	'SELECT p."organizationId"   AS "orgId",\ne."uploadedById"     AS "userId",\nSUM(s.size)::bigint  AS "used"\nFROM media_storage s\nJOIN media m    ON m.id = s."mediaId"\nJOIN export e   ON e."mediaId" = m.id\nJOIN timeline t ON t.id = e."timelineId"\nJOIN project p  ON p.id = t."projectId"\nWHERE (m.status <> \'PENDING\' OR m."reservedUntil" > now())\nAND ($1::text IS NULL OR p."organizationId" = $1)\nAND ($2::text IS NULL OR e."uploadedById" = $2)\nAND ($3::text IS NULL OR m.id <> $3)\nGROUP BY p."organizationId", e."uploadedById"',
 ) as (
 	orgId: string | null,
 	userId: string | null,

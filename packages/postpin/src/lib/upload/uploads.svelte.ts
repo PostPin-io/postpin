@@ -1,8 +1,9 @@
 // Uploads from the browser, straight to S3 with presigned part URLs. One manager for the whole
 // tab: an upload keeps running while the user moves around in the app, and the export list and
-// the indicator in the layout show its progress. What is needed to continue an interrupted upload
-// is kept in localStorage; after a reload the user has to choose the same file again, because
-// browsers don't let a page reopen a file by itself.
+// the indicator in the layout show its progress. What is needed to continue or cancel an upload is
+// kept in memory and in localStorage; after a reload the user has to choose the same file again,
+// because browsers don't let a page reopen a file by itself. Without localStorage (private mode,
+// full) it only lasts as long as the tab.
 import type { UploadForm } from "#lib/components/exports/upload.remote.ts";
 import type { MultipartUploadPartUrl, UploadedPart } from "@postpin-io/shared/storage";
 
@@ -122,6 +123,14 @@ function sleep(ms: number, signal: AbortSignal) {
 	});
 }
 
+/** The server has nothing left to abort: the upload is gone (404) or already complete (409) */
+const nothingToAbort = (e: unknown) => {
+	const status = (e as { status?: number })?.status;
+	return status === 404 || status === 409;
+};
+
+export const CANCEL_FAILED = "Cancelling failed. Try again.";
+
 const errorMessage = (e: unknown) =>
 	(e as { body?: { message?: string } })?.body?.message ??
 	(e instanceof Error ? e.message : "Upload failed");
@@ -150,6 +159,12 @@ export class UploadManager {
 	// bookkeeping, not state: nothing renders from it
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	#controllers = new Map<string, AbortController>();
+	/**
+	 * What localStorage keeps, for this tab: cancelling needs the upload id even when the
+	 * browser didn't store it. By export id.
+	 */
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	#entries = new Map<string, StoredUpload>();
 
 	constructor(
 		private api: () => Promise<Api>,
@@ -165,16 +180,18 @@ export class UploadManager {
 		);
 	}
 
-	/** An interrupted upload of this export that can be continued with the same file */
+	/** An unfinished upload of this export: it can be continued with the same file, or cancelled */
 	stored(exportId: string): StoredUpload | undefined {
-		return this.storage.read()[exportId];
+		return this.#entries.get(exportId) ?? this.storage.read()[exportId];
 	}
 
 	#store(entry: StoredUpload) {
+		this.#entries.set(entry.exportId, entry);
 		this.storage.write({ ...this.storage.read(), [entry.exportId]: entry });
 	}
 
 	forget(exportId: string) {
+		this.#entries.delete(exportId);
 		const rest = this.storage.read();
 		delete rest[exportId];
 		this.storage.write(rest);
@@ -237,22 +254,56 @@ export class UploadManager {
 		if (!this.isSameFile(exportId, file)) {
 			throw new Error(`Please choose the same file: ${entry.fileName}`);
 		}
+		// from localStorage after a reload: keep it for this tab too
+		this.#entries.set(exportId, entry);
 		const api = await this.api();
 		const { uploaded, parts } = await api.resumeWebUpload({ exportId, uploadId: entry.uploadId });
 		void this.#run(entry, file, parts, uploaded);
 	}
 
-	/** Stops the upload and deletes what S3 already has; the export stays, without a file */
-	async cancel(exportId: string) {
+	/**
+	 * Stops the upload and deletes what S3 already has; the export stays, without a file. The
+	 * upload id is only forgotten once the server aborted it: otherwise its parts and the
+	 * reserved space would stay with no way to get rid of them. Resolves with whether it worked.
+	 */
+	async cancel(exportId: string): Promise<boolean> {
 		this.#controllers.get(exportId)?.abort();
 		const entry = this.stored(exportId);
-		this.forget(exportId);
+		// hides the progress right away; a failure below turns it into "interrupted"
 		if (this.uploads[exportId]) this.uploads[exportId].status = "cancelled";
 		if (entry) {
-			const api = await this.api();
-			await api.abortWebUpload({ exportId, uploadId: entry.uploadId }).catch(() => {});
+			try {
+				const api = await this.api();
+				await api.abortWebUpload({ exportId, uploadId: entry.uploadId });
+			} catch (e) {
+				if (!nothingToAbort(e)) {
+					this.uploads[exportId] = {
+						...this.#stateOf(entry),
+						loaded: this.uploads[exportId]?.loaded ?? 0,
+						status: "interrupted",
+						error: CANCEL_FAILED,
+					};
+					await this.onChange();
+					return false;
+				}
+			}
 		}
+		this.forget(exportId);
 		await this.onChange();
+		return true;
+	}
+
+	#stateOf(entry: StoredUpload): Upload {
+		return {
+			exportId: entry.exportId,
+			projectId: entry.projectId,
+			timelineId: entry.timelineId,
+			name: entry.name,
+			fileName: entry.fileName,
+			size: entry.size,
+			loaded: 0,
+			status: "uploading",
+		};
 	}
 
 	async #run(
@@ -278,16 +329,7 @@ export class UploadManager {
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const inFlight = new Map<number, number>();
 
-		this.uploads[exportId] = {
-			exportId,
-			projectId: entry.projectId,
-			timelineId: entry.timelineId,
-			name: entry.name,
-			fileName: entry.fileName,
-			size: entry.size,
-			loaded: doneBytes,
-			status: "uploading",
-		};
+		this.uploads[exportId] = { ...this.#stateOf(entry), loaded: doneBytes };
 		const state = this.uploads[exportId]!;
 		const report = () => {
 			state.loaded = doneBytes + [...inFlight.values()].reduce((a, b) => a + b, 0);

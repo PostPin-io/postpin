@@ -44,13 +44,9 @@
 		<span class="max-sm:hidden"></span>
 	</summary>
 	<div class="dropdown-content z-20 mb-2 w-72 rounded-box bg-base-100 p-3 text-sm shadow-lg">
-		<p class="font-semibold">Estimated timeline</p>
-		<p class="mt-1 text-base-content/70">
-			This video was uploaded in the browser. Its shots were detected from the picture, not taken
-			from an editing software, so a cut may be missing or one too many.
-		</p>
+		<p class="mb-2 font-semibold">Estimate Cuts</p>
+
 		{#if canChange}
-			<p class="mt-3 mb-1 text-xs font-medium tracking-wide text-base-content/60 uppercase">Cuts</p>
 			<div class="join w-full" role="radiogroup" aria-label="Cut sensitivity">
 				{#each LEVELS as level (level)}
 					<button

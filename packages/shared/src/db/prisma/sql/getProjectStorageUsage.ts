@@ -8,7 +8,7 @@ import * as $runtime from "@prisma/client/runtime/client";
  * @param orgId
  */
 export const getProjectStorageUsage = $runtime.makeTypedQueryFactory(
-	'SELECT p.id                AS "id",\np.name              AS "name",\nSUM(s.size)::bigint AS "used"\nFROM media_storage s\nJOIN media m    ON m.id = s."mediaId"\nJOIN export e   ON e."mediaId" = m.id\nJOIN timeline t ON t.id = e."timelineId"\nJOIN project p  ON p.id = t."projectId"\nWHERE (m.status <> \'PENDING\' OR m."createdAt" > now() - interval \'24 hours\')\nAND p."organizationId" = $1\nGROUP BY p.id, p.name\nORDER BY "used" DESC NULLS LAST',
+	'SELECT p.id                AS "id",\np.name              AS "name",\nSUM(s.size)::bigint AS "used"\nFROM media_storage s\nJOIN media m    ON m.id = s."mediaId"\nJOIN export e   ON e."mediaId" = m.id\nJOIN timeline t ON t.id = e."timelineId"\nJOIN project p  ON p.id = t."projectId"\nWHERE (m.status <> \'PENDING\' OR m."reservedUntil" > now())\nAND p."organizationId" = $1\nGROUP BY p.id, p.name\nORDER BY "used" DESC NULLS LAST',
 ) as (
 	orgId: string,
 ) => $runtime.TypedSql<getProjectStorageUsage.Parameters, getProjectStorageUsage.Result>;

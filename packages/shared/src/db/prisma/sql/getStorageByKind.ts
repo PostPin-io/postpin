@@ -7,7 +7,7 @@ import * as $runtime from "@prisma/client/runtime/client";
 /**
  */
 export const getStorageByKind = $runtime.makeTypedQueryFactory(
-	'SELECT s.kind              AS "kind",\nSUM(s.size)::bigint AS "used"\nFROM media_storage s\nJOIN media m  ON m.id = s."mediaId"\nJOIN export e ON e."mediaId" = m.id\nWHERE (m.status <> \'PENDING\' OR m."createdAt" > now() - interval \'24 hours\')\nGROUP BY s.kind',
+	'SELECT s.kind              AS "kind",\nSUM(s.size)::bigint AS "used"\nFROM media_storage s\nJOIN media m  ON m.id = s."mediaId"\nJOIN export e ON e."mediaId" = m.id\nWHERE (m.status <> \'PENDING\' OR m."reservedUntil" > now())\nGROUP BY s.kind',
 ) as () => $runtime.TypedSql<getStorageByKind.Parameters, getStorageByKind.Result>;
 
 export namespace getStorageByKind {

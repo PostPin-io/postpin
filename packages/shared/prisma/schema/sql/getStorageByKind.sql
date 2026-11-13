@@ -5,5 +5,6 @@ SELECT s.kind              AS "kind",
 FROM media_storage s
 JOIN media m  ON m.id = s."mediaId"
 JOIN export e ON e."mediaId" = m.id
-WHERE (m.status <> 'PENDING' OR m."createdAt" > now() - interval '24 hours')
+-- same rule as getStorageUsage.sql
+WHERE (m.status <> 'PENDING' OR m."reservedUntil" > now())
 GROUP BY s.kind

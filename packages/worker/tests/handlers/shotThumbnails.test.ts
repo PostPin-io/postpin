@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeFfmpegRun, fakeJob } from "../helpers.ts";
 import {
 	ffmpegLib,
@@ -16,8 +16,10 @@ vi.mock("../../src/lib/env.ts", async () => (await import("./mocks.ts")).env);
 vi.mock("../../src/lib/ffmpeg.ts", async () => (await import("./mocks.ts")).ffmpegLib);
 vi.mock("@postpin-io/shared/storage", async () => (await import("./mocks.ts")).sharedStorage);
 vi.mock("@aws-sdk/lib-storage", async () => (await import("./mocks.ts")).libStorage);
+const storeImageSizes = vi.hoisted(() => vi.fn(async () => {}));
+vi.mock("../../src/lib/image-sizes.ts", () => ({ storeImageSizes }));
 
-import { shotThumbnails } from "../../src/handlers/shotThumbnails.ts";
+import { PROGRESS_INTERVAL_MS, shotThumbnails } from "../../src/handlers/shotThumbnails.ts";
 
 /** A snapshot at 25 fps starting at 01:00:00:00 with one 50-frame clip per shot */
 function snapshot(shotCount: number) {
@@ -62,12 +64,140 @@ const seekArgs = () =>
 
 beforeEach(() => {
 	resetMocks();
+	storeImageSizes.mockReset().mockResolvedValue(undefined);
 	prisma.export.findUniqueOrThrow.mockResolvedValue(exportRow(3));
 	prisma.media.updateMany.mockResolvedValue({ count: 1 });
 	ffmpegLib.ffmpeg.mockImplementation(() => fakeFfmpegRun([Buffer.from("jpg")]));
 });
 
+afterEach(() => {
+	vi.restoreAllMocks();
+});
+
+/** A clock that moves on by more than the progress interval every time it is read */
+const fastClock = () => {
+	let now = 0;
+	vi.spyOn(Date, "now").mockImplementation(() => (now += PROGRESS_INTERVAL_MS + 1));
+};
+const publishedReady = () =>
+	prisma.media.updateMany.mock.calls.map(
+		([arg]: [{ data: { shotThumbnails: { ready?: number } } }]) => arg.data.shotThumbnails.ready,
+	);
+
+describe("shotThumbnails: the images ready so far", () => {
+	it("are published while it renders, counted from the first shot, and the end without `ready`", async () => {
+		fastClock();
+		prisma.export.findUniqueOrThrow.mockResolvedValue(exportRow(8));
+		await shotThumbnails(job() as never);
+
+		const readies = publishedReady();
+		expect(readies.at(-1)).toBeUndefined();
+		const progress = readies.slice(0, -1) as number[];
+		expect(progress.length).toBeGreaterThan(0);
+		for (const [i, ready] of progress.entries()) {
+			expect(ready).toBeGreaterThan(i === 0 ? 0 : progress[i - 1]!);
+			expect(ready).toBeLessThan(8);
+		}
+		for (const [arg] of prisma.media.updateMany.mock.calls) {
+			expect(arg.where).toEqual({ id: "m1", shotThumbnailsGeneration: "g2" });
+		}
+	});
+
+	it("only count the unbroken run from the first shot", async () => {
+		fastClock();
+		prisma.export.findUniqueOrThrow.mockResolvedValue(exportRow(10));
+		// shot 0 takes longest: everything after it is done first, but can't be shown in order
+		uploadDone.mockImplementation(async (key?: string) => {
+			if (key?.endsWith("-0")) await new Promise((resolve) => setTimeout(resolve, 30));
+		});
+		await shotThumbnails(job() as never);
+		expect(publishedReady()).toEqual([undefined]);
+	});
+
+	it("are not published more often than every PROGRESS_INTERVAL_MS", async () => {
+		// the real clock: rendering the test's shots takes far less than a second
+		prisma.export.findUniqueOrThrow.mockResolvedValue(exportRow(8));
+		await shotThumbnails(job() as never);
+		expect(publishedReady()).toEqual([undefined]);
+	});
+
+	it("stop being rendered once a newer render took over", async () => {
+		fastClock();
+		prisma.export.findUniqueOrThrow.mockResolvedValue(exportRow(40));
+		prisma.media.updateMany.mockResolvedValue({ count: 0 });
+		await shotThumbnails(job("g2") as never);
+
+		expect(ffmpegLib.ffmpeg.mock.calls.length).toBeLessThan(40);
+		const matches = sharedStorage.deleteShotThumbnails.mock.calls[0]![3] as unknown as (
+			g: string | null,
+		) => boolean;
+		expect(["g1", "g2", "g3"].filter(matches)).toEqual(["g2"]);
+		expect(storeImageSizes).not.toHaveBeenCalled();
+	});
+});
+
 describe("shotThumbnails", () => {
+	it("measures the images after publishing, once the old generation is deleted", async () => {
+		const order: string[] = [];
+		sharedStorage.deleteShotThumbnails.mockImplementation(async () => {
+			order.push("delete old");
+			return 3;
+		});
+		storeImageSizes.mockImplementation(async () => {
+			order.push("measure");
+		});
+		await shotThumbnails(job() as never);
+		expect(storeImageSizes).toHaveBeenCalledWith("m1");
+		expect(order).toEqual(["delete old", "measure"]);
+	});
+
+	it("measures even when deleting the old generation failed", async () => {
+		vi.spyOn(console, "error").mockImplementation(() => {});
+		sharedStorage.deleteShotThumbnails.mockRejectedValue(new Error("S3 down"));
+		await shotThumbnails(job() as never);
+		expect(storeImageSizes).toHaveBeenCalledWith("m1");
+	});
+
+	it("a failed measurement doesn't fail the job", async () => {
+		const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+		storeImageSizes.mockRejectedValue(new Error("S3 down"));
+		await expect(shotThumbnails(job() as never)).resolves.toBeUndefined();
+		expect(logged).toHaveBeenCalledWith("Measuring the images of m1 failed", expect.any(Error));
+	});
+
+	it("a job from before generations renders for media without one, under the old keys", async () => {
+		prisma.export.findUniqueOrThrow.mockResolvedValue({
+			timelineSnapshot: snapshot(2),
+			media: { shotThumbnailsGeneration: null },
+		});
+		await shotThumbnails(fakeJob("shotThumbnails", { mediaId: "m1" } as never) as never);
+		expect(uploads.map((u) => u.params.Key).sort()).toEqual([
+			"m1/shotThumbnails-0",
+			"m1/shotThumbnails-1",
+		]);
+		expect(prisma.media.updateMany).toHaveBeenCalledWith({
+			where: { id: "m1", shotThumbnailsGeneration: null },
+			data: { shotThumbnails: { count: 2, width: 320, height: 180 } },
+		});
+		// its own images are the keys without a generation: nothing to clean up
+		expect(sharedStorage.deleteShotThumbnails).not.toHaveBeenCalled();
+		expect(storeImageSizes).toHaveBeenCalledWith("m1");
+	});
+
+	it("a job from before generations is skipped once the media has a generation", async () => {
+		await shotThumbnails(fakeJob("shotThumbnails", { mediaId: "m1" } as never) as never);
+		expect(ffmpegLib.ffmpeg).not.toHaveBeenCalled();
+		expect(prisma.media.updateMany).not.toHaveBeenCalled();
+	});
+
+	it("doesn't measure when it was overtaken or never started", async () => {
+		prisma.media.updateMany.mockResolvedValue({ count: 0 });
+		await shotThumbnails(job("g2") as never);
+		prisma.export.findUniqueOrThrow.mockResolvedValue(exportRow(3, "g3"));
+		await shotThumbnails(job("g2") as never);
+		expect(storeImageSizes).not.toHaveBeenCalled();
+	});
+
 	it("needs a timeline snapshot on the export", async () => {
 		prisma.export.findUniqueOrThrow.mockResolvedValue(exportRow(null));
 		await expect(shotThumbnails(job() as never)).rejects.toThrow(

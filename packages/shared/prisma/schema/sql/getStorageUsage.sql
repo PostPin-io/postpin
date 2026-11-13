@@ -9,8 +9,8 @@ JOIN media m    ON m.id = s."mediaId"
 JOIN export e   ON e."mediaId" = m.id
 JOIN timeline t ON t.id = e."timelineId"
 JOIN project p  ON p.id = t."projectId"
--- unfinished uploads only reserve space while their part URLs are valid (24 h)
-WHERE (m.status <> 'PENDING' OR m."createdAt" > now() - interval '24 hours')
+-- unfinished uploads only reserve space while their part URLs are valid, see Media.reservedUntil
+WHERE (m.status <> 'PENDING' OR m."reservedUntil" > now())
   AND ($1::text IS NULL OR p."organizationId" = $1)
   AND ($2::text IS NULL OR e."uploadedById" = $2)
   AND ($3::text IS NULL OR m.id <> $3)

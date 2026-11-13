@@ -44,7 +44,7 @@ export interface UploadParams {
 }
 /** Every lib-storage upload created, with what its body contained */
 export const uploads: { params: UploadParams; body?: Buffer }[] = [];
-export const uploadDone = vi.fn(async () => {});
+export const uploadDone = vi.fn(async (_key?: string) => {});
 export const libStorage = {
 	Upload: class {
 		entry: (typeof uploads)[number];
@@ -56,7 +56,7 @@ export const libStorage = {
 			const chunks: Buffer[] = [];
 			for await (const chunk of this.entry.params.Body) chunks.push(chunk as Buffer);
 			this.entry.body = Buffer.concat(chunks);
-			return uploadDone();
+			return uploadDone(this.entry.params.Key);
 		}
 	},
 };
@@ -69,6 +69,7 @@ export function resetMocks() {
 	}
 	s3Client.putObject.mockReset().mockResolvedValue({});
 	sharedStorage.deleteShotThumbnails.mockReset().mockResolvedValue(0);
+	uploadDone.mockReset().mockResolvedValue(undefined);
 	ffmpegLib.ffmpeg.mockReset();
 	ffmpegLib.ffprobe.mockReset();
 }

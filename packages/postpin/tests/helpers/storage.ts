@@ -1,6 +1,8 @@
 import { prisma } from "./db.ts";
 import * as f from "./factories.ts";
 
+const HOUR = 60 * 60 * 1000;
+
 /**
  * Export with media whose files take up storage: an original of `original` bytes, one proxy
  * per entry of `proxies` and the measured image sizes in `images`. Media is COMPLETED unless
@@ -15,14 +17,20 @@ export async function storedExport(
 		uploadedBy?: { id: string };
 		status?: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
 		createdAt?: Date;
+		/** PENDING only; default: reserved for another day */
+		reservedUntil?: Date;
 	},
 ) {
 	const exp = await f.createExport(timeline, { media: true });
+	const status = data.status ?? "COMPLETED";
 	const media = await prisma.media.update({
 		where: { id: exp.mediaId! },
 		data: {
-			status: data.status ?? "COMPLETED",
+			status,
 			...(data.createdAt && { createdAt: data.createdAt }),
+			...(status === "PENDING" && {
+				reservedUntil: data.reservedUntil ?? new Date(Date.now() + 24 * HOUR),
+			}),
 			original: { update: { size: BigInt(data.original) } },
 			...(data.images && {
 				thumbnailSize: BigInt(data.images.thumbnail ?? 0),

@@ -107,7 +107,16 @@ export const getSeekSprites = query(
 );
 
 export const getShotThumbnails = query(
-	v.object({ mediaId: v.string(), shareToken }),
+	v.object({
+		mediaId: v.string(),
+		shareToken,
+		/**
+		 * The published generation the caller saw on the export. Not read here: it makes every
+		 * generation its own cached query, so a new render never shows the URLs of the one before,
+		 * whose images are deleted.
+		 */
+		generation: v.optional(v.string()),
+	}),
 	async ({ mediaId, shareToken }) => {
 		const reader = await readMedia(mediaId, shareToken);
 		requireTimeline(reader);

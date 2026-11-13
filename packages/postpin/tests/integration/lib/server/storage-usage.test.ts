@@ -69,20 +69,27 @@ describe("usage", () => {
 		expect(sumBy(await storageUsageRows(), "userId").size).toBe(0);
 	});
 
-	it("counts pending uploads for 24 hours only", async () => {
+	it("counts pending uploads while their reservation lasts", async () => {
 		await storedExport(tlA, { original: 10, status: "PENDING" });
 		await storedExport(tlA, {
 			original: 1000,
 			status: "PENDING",
-			createdAt: new Date(Date.now() - 25 * HOUR),
+			reservedUntil: new Date(Date.now() - HOUR),
 		});
-		// failed processing still occupies its files
+		// an old upload whose reservation was renewed (resume-upload) still counts
+		await storedExport(tlA, {
+			original: 20,
+			status: "PENDING",
+			createdAt: new Date(Date.now() - 25 * HOUR),
+			reservedUntil: new Date(Date.now() + HOUR),
+		});
+		// failed processing still occupies its files, however old
 		await storedExport(tlA, {
 			original: 5,
 			status: "FAILED",
 			createdAt: new Date(Date.now() - 25 * HOUR),
 		});
-		expect(await getOrgUsage(orgA.id)).toBe(15n);
+		expect(await getOrgUsage(orgA.id)).toBe(35n);
 	});
 
 	it("leaves out the excluded media", async () => {

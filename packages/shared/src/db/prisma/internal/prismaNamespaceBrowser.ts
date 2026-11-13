@@ -214,6 +214,7 @@ export const MediaScalarFieldEnum = {
 	createdAt: "createdAt",
 	updatedAt: "updatedAt",
 	status: "status",
+	reservedUntil: "reservedUntil",
 	originalId: "originalId",
 	seekSprites: "seekSprites",
 	shotThumbnails: "shotThumbnails",

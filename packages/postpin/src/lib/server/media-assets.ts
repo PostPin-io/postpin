@@ -2,7 +2,7 @@ import * as env from "$app/env/private";
 import * as v from "valibot";
 import { getPresignedUrl } from "@postpin-io/shared/storage";
 import { seekSprites, type SeekSprites } from "@postpin-io/shared/types/SeekSprites";
-import type { ShotThumbnails } from "@postpin-io/shared/types/ShotThumbnails";
+import { readyShotThumbnails, type ShotThumbnails } from "@postpin-io/shared/types/ShotThumbnails";
 import { prisma } from "#lib/server/database.ts";
 import { s3PresignClient } from "#lib/server/storage.ts";
 
@@ -34,20 +34,25 @@ export async function shotThumbnailUrls(mediaId: string, lifetime = DEFAULT_LIFE
 		select: { shotThumbnails: true },
 	});
 	if (!media?.shotThumbnails) return null;
-	const { count, width, height, generation } = media.shotThumbnails as ShotThumbnails;
+	const thumbnails = media.shotThumbnails as ShotThumbnails;
+	const { count, width, height, generation } = thumbnails;
+	// while the render runs, only the shots that have their image; null for the others
+	const ready = readyShotThumbnails(thumbnails);
 	return {
 		count,
 		width,
 		height,
 		urls: await Promise.all(
 			Array.from({ length: count }, (_, index) =>
-				getPresignedUrl(
-					s3PresignClient,
-					env,
-					{ mediaId, type: "shotThumbnails", generation, index },
-					"get",
-					lifetime,
-				),
+				index < ready
+					? getPresignedUrl(
+							s3PresignClient,
+							env,
+							{ mediaId, type: "shotThumbnails", generation, index },
+							"get",
+							lifetime,
+						)
+					: null,
 			),
 		),
 	};

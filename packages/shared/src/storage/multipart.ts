@@ -2,6 +2,8 @@ import {
 	AbortMultipartUploadCommand,
 	CompleteMultipartUploadCommand,
 	CreateMultipartUploadCommand,
+	DeleteObjectCommand,
+	HeadObjectCommand,
 	ListPartsCommand,
 	UploadPartCommand,
 	type S3,
@@ -38,6 +40,75 @@ export interface UploadedPart {
 export function partLayout(fileSize: number): { partSize: number; partCount: number } {
 	const partSize = Math.max(MIN_PART_SIZE, Math.ceil(fileSize / MAX_PART_COUNT / MiB) * MiB);
 	return { partSize, partCount: Math.max(1, Math.ceil(fileSize / partSize)) };
+}
+
+/** The size part `partNumber` (1-based) must have in a file of `fileSize` bytes */
+export function expectedPartSize(partNumber: number, fileSize: number): number {
+	const { partSize, partCount } = partLayout(fileSize);
+	return partNumber < partCount ? partSize : fileSize - partSize * (partCount - 1);
+}
+
+export type PartsCheck =
+	| { ok: true }
+	/** A part is bigger than the layout allows: the file is larger than what was reserved */
+	| { ok: false; reason: "too-large"; message: string }
+	/** Missing, duplicate, unknown or too small parts, or ETags S3 doesn't know */
+	| { ok: false; reason: "incomplete"; message: string };
+
+const unquote = (etag: string) => etag.replace(/^"|"$/g, "");
+
+/**
+ * Whether the parts a client wants to complete are exactly the file of `fileSize` bytes that was
+ * reserved: every part of partLayout(fileSize) once, as S3 has it (same ETag), each of its
+ * expected size. The presigned part URLs don't limit the body size, so S3's word counts, not
+ * the client's.
+ */
+export function checkUploadedParts(
+	listed: (UploadedPart & { size: number })[],
+	claimed: UploadedPart[],
+	fileSize: number,
+): PartsCheck {
+	const { partCount } = partLayout(fileSize);
+	const byNumber = new Map(listed.map((p) => [p.partNumber, p]));
+	const numbers = new Set(claimed.map((p) => p.partNumber));
+	if (numbers.size !== claimed.length) {
+		return { ok: false, reason: "incomplete", message: "A part was sent twice" };
+	}
+
+	let total = 0;
+	for (const part of claimed) {
+		if (part.partNumber < 1 || part.partNumber > partCount) {
+			return {
+				ok: false,
+				reason: "incomplete",
+				message: `Part ${part.partNumber} doesn't belong to the file`,
+			};
+		}
+		const stored = byNumber.get(part.partNumber);
+		if (!stored || unquote(stored.etag) !== unquote(part.etag)) {
+			return {
+				ok: false,
+				reason: "incomplete",
+				message: `Part ${part.partNumber} has not been uploaded`,
+			};
+		}
+		const expected = expectedPartSize(part.partNumber, fileSize);
+		if (stored.size > expected) {
+			return {
+				ok: false,
+				reason: "too-large",
+				message: "The uploaded file is larger than announced",
+			};
+		}
+		if (stored.size < expected) {
+			return { ok: false, reason: "incomplete", message: `Part ${part.partNumber} is incomplete` };
+		}
+		total += stored.size;
+	}
+	if (numbers.size !== partCount || total !== fileSize) {
+		return { ok: false, reason: "incomplete", message: "Export file has not been fully uploaded" };
+	}
+	return { ok: true };
 }
 
 /** Presigned PUT URLs for the given part numbers, valid for one day */
@@ -155,4 +226,22 @@ export async function listUploadedParts(
 		marker = res.IsTruncated ? res.NextPartNumberMarker : undefined;
 	} while (marker);
 	return parts.sort((a, b) => a.partNumber - b.partNumber);
+}
+
+/** Size of a stored object in bytes, null if S3 doesn't say */
+export async function getObjectSize(
+	s3Client: S3,
+	env: S3Env,
+	object: S3Object,
+): Promise<number | null> {
+	const res = await s3Client.send(
+		new HeadObjectCommand({ Bucket: env.S3_BUCKET, Key: getS3ObjectPath(object) }),
+	);
+	return res.ContentLength ?? null;
+}
+
+export async function deleteObject(s3Client: S3, env: S3Env, object: S3Object): Promise<void> {
+	await s3Client.send(
+		new DeleteObjectCommand({ Bucket: env.S3_BUCKET, Key: getS3ObjectPath(object) }),
+	);
 }

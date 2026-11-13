@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+	CANCEL_FAILED,
 	PartError,
 	UploadManager,
 	partRange,
@@ -33,7 +34,24 @@ function memoryStorage() {
 const urls = (n: number, from = 1) =>
 	Array.from({ length: n }, (_, i) => ({ partNumber: from + i, url: `put-${from + i}` }));
 
-function setup(put: PutPart, partSize = 10, parts = 3) {
+/** localStorage that throws everything away, like in private mode or when it is full */
+const forgetfulStorage = () => ({ read: () => ({}), write: () => {} });
+
+/** A PUT that only ends when the upload is cancelled */
+const hangingPut: PutPart = (_url, _body, _progress, signal) =>
+	new Promise((_, reject) =>
+		signal.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError"))),
+	);
+
+function setup(
+	put: PutPart,
+	partSize = 10,
+	parts = 3,
+	storage: {
+		read(): Record<string, StoredUpload>;
+		write(v: Record<string, StoredUpload>): void;
+	} = memoryStorage(),
+) {
 	const api = {
 		createWebExport: vi.fn(async () => ({ id: "e1" })),
 		initWebUpload: vi.fn(async () => ({ uploadId: "u1", partSize, parts: urls(parts) })),
@@ -41,7 +59,6 @@ function setup(put: PutPart, partSize = 10, parts = 3) {
 		completeWebUpload: vi.fn(async (input: { parts: unknown[] }) => void input),
 		abortWebUpload: vi.fn(async () => {}),
 	};
-	const storage = memoryStorage();
 	const onChange = vi.fn();
 	const manager = new UploadManager(async () => api, put, storage, onChange);
 	return { api, storage, onChange, manager };
@@ -214,6 +231,76 @@ describe("UploadManager", () => {
 		expect(storage.read()).toEqual({});
 		expect(api.completeWebUpload).not.toHaveBeenCalled();
 	});
+
+	it("cancels without localStorage: the upload id is kept in memory", async () => {
+		const { api, manager } = setup(hangingPut, 10, 3, forgetfulStorage());
+		await start(manager);
+		expect(manager.stored("e1")).toMatchObject({ uploadId: "u1" });
+
+		expect(await manager.cancel("e1")).toBe(true);
+		expect(api.abortWebUpload).toHaveBeenCalledWith({ exportId: "e1", uploadId: "u1" });
+		expect(manager.stored("e1")).toBeUndefined();
+	});
+
+	it("resume keeps the entry from localStorage in memory, for when the browser loses it", async () => {
+		const storage = memoryStorage();
+		const first = setup(async () => "e", 10, 3, storage);
+		first.api.completeWebUpload.mockRejectedValue(new Error("offline"));
+		await start(first.manager);
+		await settled(first.manager);
+		expect(storage.read()["e1"]).toBeDefined();
+
+		// a new tab: the entry only comes from localStorage
+		const { api, manager } = setup(hangingPut, 10, 3, storage);
+		api.resumeWebUpload.mockResolvedValue({ partSize: 10, uploaded: [], parts: urls(3) });
+		await manager.resume("e1", file(25));
+		storage.write({});
+		await manager.cancel("e1");
+		expect(api.abortWebUpload).toHaveBeenCalledWith({ exportId: "e1", uploadId: "u1" });
+	});
+
+	it("keeps the upload when cancelling fails, so it can be tried again", async () => {
+		const { api, manager, onChange, storage } = setup(hangingPut);
+		await start(manager);
+		api.abortWebUpload.mockRejectedValueOnce(
+			Object.assign(new Error("x"), { status: 500, body: { message: "Internal Error" } }),
+		);
+
+		expect(await manager.cancel("e1")).toBe(false);
+		expect(manager.stored("e1")).toMatchObject({ uploadId: "u1" });
+		expect(storage.read()["e1"]).toMatchObject({ uploadId: "u1" });
+		expect(manager.uploads["e1"]).toMatchObject({ status: "interrupted", error: CANCEL_FAILED });
+		expect(manager.running).toHaveLength(0);
+		expect(onChange).toHaveBeenCalled();
+
+		expect(await manager.cancel("e1")).toBe(true);
+		expect(api.abortWebUpload).toHaveBeenCalledTimes(2);
+		expect(api.abortWebUpload).toHaveBeenLastCalledWith({ exportId: "e1", uploadId: "u1" });
+		expect(manager.stored("e1")).toBeUndefined();
+		expect(storage.read()).toEqual({});
+		expect(manager.uploads["e1"]!.status).toBe("cancelled");
+	});
+
+	it("a network error while cancelling keeps the upload too", async () => {
+		const { api, manager } = setup(hangingPut);
+		await start(manager);
+		api.abortWebUpload.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+		expect(await manager.cancel("e1")).toBe(false);
+		expect(manager.stored("e1")).toBeDefined();
+	});
+
+	it.each([404, 409])(
+		"%s while cancelling: nothing left to abort, so it is forgotten",
+		async (status) => {
+			const { api, manager, storage } = setup(hangingPut);
+			await start(manager);
+			api.abortWebUpload.mockRejectedValueOnce(Object.assign(new Error("x"), { status }));
+			expect(await manager.cancel("e1")).toBe(true);
+			expect(manager.stored("e1")).toBeUndefined();
+			expect(storage.read()).toEqual({});
+			expect(manager.uploads["e1"]!.status).toBe("cancelled");
+		},
+	);
 
 	it("reports the bytes in flight as progress", async () => {
 		let release!: () => void;

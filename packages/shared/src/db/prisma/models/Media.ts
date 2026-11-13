@@ -42,6 +42,7 @@ export type MediaMinAggregateOutputType = {
 	createdAt: Date | null;
 	updatedAt: Date | null;
 	status: $Enums.MediaStatus | null;
+	reservedUntil: Date | null;
 	originalId: string | null;
 	shotThumbnailsGeneration: string | null;
 	thumbnailSize: bigint | null;
@@ -54,6 +55,7 @@ export type MediaMaxAggregateOutputType = {
 	createdAt: Date | null;
 	updatedAt: Date | null;
 	status: $Enums.MediaStatus | null;
+	reservedUntil: Date | null;
 	originalId: string | null;
 	shotThumbnailsGeneration: string | null;
 	thumbnailSize: bigint | null;
@@ -66,6 +68,7 @@ export type MediaCountAggregateOutputType = {
 	createdAt: number;
 	updatedAt: number;
 	status: number;
+	reservedUntil: number;
 	originalId: number;
 	seekSprites: number;
 	shotThumbnails: number;
@@ -95,6 +98,7 @@ export type MediaMinAggregateInputType = {
 	createdAt?: true;
 	updatedAt?: true;
 	status?: true;
+	reservedUntil?: true;
 	originalId?: true;
 	shotThumbnailsGeneration?: true;
 	thumbnailSize?: true;
@@ -107,6 +111,7 @@ export type MediaMaxAggregateInputType = {
 	createdAt?: true;
 	updatedAt?: true;
 	status?: true;
+	reservedUntil?: true;
 	originalId?: true;
 	shotThumbnailsGeneration?: true;
 	thumbnailSize?: true;
@@ -119,6 +124,7 @@ export type MediaCountAggregateInputType = {
 	createdAt?: true;
 	updatedAt?: true;
 	status?: true;
+	reservedUntil?: true;
 	originalId?: true;
 	seekSprites?: true;
 	shotThumbnails?: true;
@@ -223,6 +229,7 @@ export type MediaGroupByOutputType = {
 	createdAt: Date;
 	updatedAt: Date;
 	status: $Enums.MediaStatus;
+	reservedUntil: Date | null;
 	originalId: string;
 	seekSprites: runtime.JsonValue | null;
 	shotThumbnails: runtime.JsonValue | null;
@@ -259,6 +266,7 @@ export type MediaWhereInput = {
 	createdAt?: Prisma.DateTimeFilter<"Media"> | Date | string;
 	updatedAt?: Prisma.DateTimeFilter<"Media"> | Date | string;
 	status?: Prisma.EnumMediaStatusFilter<"Media"> | $Enums.MediaStatus;
+	reservedUntil?: Prisma.DateTimeNullableFilter<"Media"> | Date | string | null;
 	originalId?: Prisma.StringFilter<"Media"> | string;
 	seekSprites?: Prisma.JsonNullableFilter<"Media">;
 	shotThumbnails?: Prisma.JsonNullableFilter<"Media">;
@@ -282,6 +290,7 @@ export type MediaOrderByWithRelationInput = {
 	createdAt?: Prisma.SortOrder;
 	updatedAt?: Prisma.SortOrder;
 	status?: Prisma.SortOrder;
+	reservedUntil?: Prisma.SortOrderInput | Prisma.SortOrder;
 	originalId?: Prisma.SortOrder;
 	seekSprites?: Prisma.SortOrderInput | Prisma.SortOrder;
 	shotThumbnails?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -307,6 +316,7 @@ export type MediaWhereUniqueInput = Prisma.AtLeast<
 		createdAt?: Prisma.DateTimeFilter<"Media"> | Date | string;
 		updatedAt?: Prisma.DateTimeFilter<"Media"> | Date | string;
 		status?: Prisma.EnumMediaStatusFilter<"Media"> | $Enums.MediaStatus;
+		reservedUntil?: Prisma.DateTimeNullableFilter<"Media"> | Date | string | null;
 		seekSprites?: Prisma.JsonNullableFilter<"Media">;
 		shotThumbnails?: Prisma.JsonNullableFilter<"Media">;
 		shotThumbnailsGeneration?: Prisma.StringNullableFilter<"Media"> | string | null;
@@ -331,6 +341,7 @@ export type MediaOrderByWithAggregationInput = {
 	createdAt?: Prisma.SortOrder;
 	updatedAt?: Prisma.SortOrder;
 	status?: Prisma.SortOrder;
+	reservedUntil?: Prisma.SortOrderInput | Prisma.SortOrder;
 	originalId?: Prisma.SortOrder;
 	seekSprites?: Prisma.SortOrderInput | Prisma.SortOrder;
 	shotThumbnails?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -355,6 +366,7 @@ export type MediaScalarWhereWithAggregatesInput = {
 	createdAt?: Prisma.DateTimeWithAggregatesFilter<"Media"> | Date | string;
 	updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Media"> | Date | string;
 	status?: Prisma.EnumMediaStatusWithAggregatesFilter<"Media"> | $Enums.MediaStatus;
+	reservedUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"Media"> | Date | string | null;
 	originalId?: Prisma.StringWithAggregatesFilter<"Media"> | string;
 	seekSprites?: Prisma.JsonNullableWithAggregatesFilter<"Media">;
 	shotThumbnails?: Prisma.JsonNullableWithAggregatesFilter<"Media">;
@@ -371,6 +383,7 @@ export type MediaCreateInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	reservedUntil?: Date | string | null;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnailsGeneration?: string | null;
@@ -390,6 +403,7 @@ export type MediaUncheckedCreateInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	reservedUntil?: Date | string | null;
 	originalId: string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
@@ -409,6 +423,7 @@ export type MediaUpdateInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	reservedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -428,6 +443,7 @@ export type MediaUncheckedUpdateInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	reservedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	originalId?: Prisma.StringFieldUpdateOperationsInput | string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
@@ -447,6 +463,7 @@ export type MediaCreateManyInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	reservedUntil?: Date | string | null;
 	originalId: string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
@@ -463,6 +480,7 @@ export type MediaUpdateManyMutationInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	reservedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -478,6 +496,7 @@ export type MediaUncheckedUpdateManyInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	reservedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	originalId?: Prisma.StringFieldUpdateOperationsInput | string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
@@ -494,6 +513,7 @@ export type MediaCountOrderByAggregateInput = {
 	createdAt?: Prisma.SortOrder;
 	updatedAt?: Prisma.SortOrder;
 	status?: Prisma.SortOrder;
+	reservedUntil?: Prisma.SortOrder;
 	originalId?: Prisma.SortOrder;
 	seekSprites?: Prisma.SortOrder;
 	shotThumbnails?: Prisma.SortOrder;
@@ -516,6 +536,7 @@ export type MediaMaxOrderByAggregateInput = {
 	createdAt?: Prisma.SortOrder;
 	updatedAt?: Prisma.SortOrder;
 	status?: Prisma.SortOrder;
+	reservedUntil?: Prisma.SortOrder;
 	originalId?: Prisma.SortOrder;
 	shotThumbnailsGeneration?: Prisma.SortOrder;
 	thumbnailSize?: Prisma.SortOrder;
@@ -528,6 +549,7 @@ export type MediaMinOrderByAggregateInput = {
 	createdAt?: Prisma.SortOrder;
 	updatedAt?: Prisma.SortOrder;
 	status?: Prisma.SortOrder;
+	reservedUntil?: Prisma.SortOrder;
 	originalId?: Prisma.SortOrder;
 	shotThumbnailsGeneration?: Prisma.SortOrder;
 	thumbnailSize?: Prisma.SortOrder;
@@ -698,6 +720,7 @@ export type MediaCreateWithoutOriginalInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	reservedUntil?: Date | string | null;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnailsGeneration?: string | null;
@@ -716,6 +739,7 @@ export type MediaUncheckedCreateWithoutOriginalInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	reservedUntil?: Date | string | null;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnailsGeneration?: string | null;
@@ -742,6 +766,7 @@ export type MediaCreateWithoutProxiesInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	reservedUntil?: Date | string | null;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnailsGeneration?: string | null;
@@ -760,6 +785,7 @@ export type MediaUncheckedCreateWithoutProxiesInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	reservedUntil?: Date | string | null;
 	originalId: string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
@@ -806,6 +832,7 @@ export type MediaUpdateWithoutOriginalInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	reservedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -824,6 +851,7 @@ export type MediaUncheckedUpdateWithoutOriginalInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	reservedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -862,6 +890,7 @@ export type MediaUpdateWithoutProxiesInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	reservedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -880,6 +909,7 @@ export type MediaUncheckedUpdateWithoutProxiesInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	reservedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	originalId?: Prisma.StringFieldUpdateOperationsInput | string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
@@ -898,6 +928,7 @@ export type MediaCreateWithoutThumbnailInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	reservedUntil?: Date | string | null;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnailsGeneration?: string | null;
@@ -916,6 +947,7 @@ export type MediaUncheckedCreateWithoutThumbnailInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	reservedUntil?: Date | string | null;
 	originalId: string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
@@ -962,6 +994,7 @@ export type MediaUpdateWithoutThumbnailInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	reservedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -980,6 +1013,7 @@ export type MediaUncheckedUpdateWithoutThumbnailInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	reservedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	originalId?: Prisma.StringFieldUpdateOperationsInput | string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
@@ -998,6 +1032,7 @@ export type MediaCreateWithoutExportInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	reservedUntil?: Date | string | null;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnailsGeneration?: string | null;
@@ -1016,6 +1051,7 @@ export type MediaUncheckedCreateWithoutExportInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	status?: $Enums.MediaStatus;
+	reservedUntil?: Date | string | null;
 	originalId: string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
@@ -1062,6 +1098,7 @@ export type MediaUpdateWithoutExportInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	reservedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1080,6 +1117,7 @@ export type MediaUncheckedUpdateWithoutExportInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
+	reservedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	originalId?: Prisma.StringFieldUpdateOperationsInput | string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
@@ -1136,6 +1174,7 @@ export type MediaSelect<
 		createdAt?: boolean;
 		updatedAt?: boolean;
 		status?: boolean;
+		reservedUntil?: boolean;
 		originalId?: boolean;
 		seekSprites?: boolean;
 		shotThumbnails?: boolean;
@@ -1162,6 +1201,7 @@ export type MediaSelectCreateManyAndReturn<
 		createdAt?: boolean;
 		updatedAt?: boolean;
 		status?: boolean;
+		reservedUntil?: boolean;
 		originalId?: boolean;
 		seekSprites?: boolean;
 		shotThumbnails?: boolean;
@@ -1184,6 +1224,7 @@ export type MediaSelectUpdateManyAndReturn<
 		createdAt?: boolean;
 		updatedAt?: boolean;
 		status?: boolean;
+		reservedUntil?: boolean;
 		originalId?: boolean;
 		seekSprites?: boolean;
 		shotThumbnails?: boolean;
@@ -1203,6 +1244,7 @@ export type MediaSelectScalar = {
 	createdAt?: boolean;
 	updatedAt?: boolean;
 	status?: boolean;
+	reservedUntil?: boolean;
 	originalId?: boolean;
 	seekSprites?: boolean;
 	shotThumbnails?: boolean;
@@ -1221,6 +1263,7 @@ export type MediaOmit<
 	| "createdAt"
 	| "updatedAt"
 	| "status"
+	| "reservedUntil"
 	| "originalId"
 	| "seekSprites"
 	| "shotThumbnails"
@@ -1268,6 +1311,11 @@ export type $MediaPayload<
 			createdAt: Date;
 			updatedAt: Date;
 			status: $Enums.MediaStatus;
+			/**
+			 * Unfinished uploads: their original's size counts against the quotas until then. Renewed
+			 * by init-upload and resume-upload, as long as the part URLs they hand out are valid
+			 */
+			reservedUntil: Date | null;
 			originalId: string;
 			seekSprites: runtime.JsonValue | null;
 			shotThumbnails: runtime.JsonValue | null;
@@ -1879,6 +1927,7 @@ export interface MediaFieldRefs {
 	readonly createdAt: Prisma.FieldRef<"Media", "DateTime">;
 	readonly updatedAt: Prisma.FieldRef<"Media", "DateTime">;
 	readonly status: Prisma.FieldRef<"Media", "MediaStatus">;
+	readonly reservedUntil: Prisma.FieldRef<"Media", "DateTime">;
 	readonly originalId: Prisma.FieldRef<"Media", "String">;
 	readonly seekSprites: Prisma.FieldRef<"Media", "Json">;
 	readonly shotThumbnails: Prisma.FieldRef<"Media", "Json">;

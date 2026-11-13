@@ -168,7 +168,8 @@ describe("probe of a web upload", () => {
 		expect(prisma.export.update.mock.calls[0]![0].data.timelineSnapshot).toMatchObject({
 			frameRate: { fpsNumerator: 25, fpsDenominator: 1, dropFrame: false },
 			startFrameIndex: 0,
-			durationFrameCount: 60,
+			// the file's 60 frames at 29.97 last 2.002 s, which are 50 frames at the chosen 25
+			durationFrameCount: 50,
 		});
 	});
 

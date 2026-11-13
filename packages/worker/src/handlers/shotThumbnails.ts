@@ -5,6 +5,7 @@ import { deleteShotThumbnails, getPresignedUrl, getS3ObjectPath } from "@postpin
 import { ffmpeg } from "../lib/ffmpeg.ts";
 import { s3Client } from "../lib/storage.ts";
 import { env } from "../lib/env.ts";
+import { storeImageSizes } from "../lib/image-sizes.ts";
 import { getShots, type Shot } from "@postpin-io/shared/logic/shots";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 import { Upload } from "@aws-sdk/lib-storage";
@@ -15,6 +16,8 @@ const WIDTH = 320;
 const HEIGHT = 180;
 // each ffmpeg only range-requests around its seek point, so a few in parallel stay cheap
 const CONCURRENCY = 4;
+/** How often the images that are ready so far are published, so the page can show them */
+export const PROGRESS_INTERVAL_MS = 1000;
 
 /**
  * One JPEG per shot of the export's timeline snapshot, letterboxed into a fixed 16:9 box.
@@ -25,12 +28,15 @@ const CONCURRENCY = 4;
  * generation are read together and changed together, so the shots always fit the generation.
  */
 export async function shotThumbnails(job: TypedJob<typeof Queues.light, "shotThumbnails">) {
-	const { mediaId, generation } = job.data;
+	const { mediaId } = job.data;
+	// Jobs queued before generations existed (an update while media were processing) have none.
+	// They belong to media without one and use the keys without a generation, as before.
+	const generation: string | null = job.data.generation ?? null;
 	const exprt = await prisma.export.findUniqueOrThrow({
 		where: { mediaId },
 		select: { timelineSnapshot: true, media: { select: { shotThumbnailsGeneration: true } } },
 	});
-	if (exprt.media?.shotThumbnailsGeneration !== generation) {
+	if ((exprt.media?.shotThumbnailsGeneration ?? null) !== generation) {
 		console.log(`Shot thumbnails ${generation} of ${mediaId} were overtaken, skipped`);
 		return;
 	}
@@ -65,7 +71,12 @@ export async function shotThumbnails(job: TypedJob<typeof Queues.light, "shotThu
 				client: s3Client,
 				params: {
 					Bucket: env.S3_BUCKET,
-					Key: getS3ObjectPath({ mediaId, type: "shotThumbnails", generation, index: shot.index }),
+					Key: getS3ObjectPath({
+						mediaId,
+						type: "shotThumbnails",
+						generation: generation ?? undefined,
+						index: shot.index,
+					}),
 					Body: thumbnailStream.stdout,
 					ContentType: "image/jpeg",
 				},
@@ -74,29 +85,58 @@ export async function shotThumbnails(job: TypedJob<typeof Queues.light, "shotThu
 		]);
 	}
 
+	/**
+	 * Conditional: a newer render may have been requested while this one ran. `ready` while it
+	 * still runs. Resolves with whether this render is still the current one.
+	 */
+	const publish = async (ready?: number) => {
+		const { count } = await prisma.media.updateMany({
+			where: { id: mediaId, shotThumbnailsGeneration: generation },
+			data: {
+				shotThumbnails: {
+					count: shots.length,
+					width: WIDTH,
+					height: HEIGHT,
+					...(generation && { generation }),
+					...(ready !== undefined && { ready }),
+				} satisfies ShotThumbnails,
+			},
+		});
+		return count > 0;
+	};
+
+	// The shots are taken in order, but finish in any order: what the page can show is the
+	// unbroken run from the first shot, at most CONCURRENCY - 1 behind
 	let next = 0;
 	let done = 0;
+	const finished = new Set<number>();
+	let ready = 0;
+	let publishedReady = 0;
+	let lastPublish = Date.now();
+	let overtaken = false;
+	const reportProgress = async () => {
+		while (finished.has(ready)) ready++;
+		if (ready === publishedReady || ready === shots.length) return;
+		if (Date.now() - lastPublish < PROGRESS_INTERVAL_MS) return;
+		lastPublish = Date.now();
+		publishedReady = ready;
+		// a newer render took over: stop rendering images nobody will see
+		if (!(await publish(ready))) overtaken = true;
+	};
+
 	await Promise.all(
 		Array.from({ length: Math.min(CONCURRENCY, shots.length) }, async () => {
-			while (next < shots.length) {
-				await render(shots[next++]!);
+			while (next < shots.length && !overtaken) {
+				const shot = shots[next++]!;
+				await render(shot);
+				finished.add(shot.index);
 				await job.updateProgress(++done / shots.length);
+				await reportProgress();
 			}
 		}),
 	);
 
-	// conditional: a newer render may have been requested while this one ran
-	const { count: published } = await prisma.media.updateMany({
-		where: { id: mediaId, shotThumbnailsGeneration: generation },
-		data: {
-			shotThumbnails: {
-				count: shots.length,
-				width: WIDTH,
-				height: HEIGHT,
-				generation,
-			} satisfies ShotThumbnails,
-		},
-	});
+	const published = !overtaken && (await publish());
 	if (!published) {
 		console.log(`Shot thumbnails ${generation} of ${mediaId} were overtaken, deleting them`);
 		// leftovers only cost space; the job itself did nothing wrong
@@ -106,8 +146,16 @@ export async function shotThumbnails(job: TypedJob<typeof Queues.light, "shotThu
 		return;
 	}
 	// Only older generations: a newer render that is running keeps its images. Keys without a
-	// generation are from before generations existed.
-	await deleteShotThumbnails(s3Client, env, mediaId, (g) => g === null || g < generation).catch(
-		(err: unknown) => console.error(`Deleting old shot thumbnails of ${mediaId} failed`, err),
+	// generation are from before generations existed (nothing is older than those).
+	if (generation !== null) {
+		await deleteShotThumbnails(s3Client, env, mediaId, (g) => g === null || g < generation).catch(
+			(err: unknown) => console.error(`Deleting old shot thumbnails of ${mediaId} failed`, err),
+		);
+	}
+	// After the cleanup, so the old images aren't counted. setMediaProcessingDone measures after
+	// the first processing, but a render after changing the cuts runs on its own. A failed
+	// measurement only leaves the storage stats behind; the thumbnails are fine.
+	await storeImageSizes(mediaId).catch((err: unknown) =>
+		console.error(`Measuring the images of ${mediaId} failed`, err),
 	);
 }

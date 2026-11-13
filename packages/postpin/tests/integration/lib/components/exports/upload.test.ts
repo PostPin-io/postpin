@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Role } from "@postpin-io/shared/db/enums";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 import {
@@ -15,6 +15,7 @@ import { expectHttpError, signInApi } from "../../../../helpers/api.ts";
 import { contentWorld, signInAs, type ContentWorld } from "../../../../helpers/content-world.ts";
 import { prisma } from "../../../../helpers/db.ts";
 import { expectStatus } from "../../../../helpers/expect.ts";
+import { fakeMultipart } from "../../../../helpers/fake-bucket.ts";
 import { fakes, type S3Call } from "../../../../helpers/fakes.ts";
 import { signIn, signOut } from "../../../../helpers/request-event.ts";
 import { storedExport } from "../../../../helpers/storage.ts";
@@ -24,11 +25,11 @@ const { OWNER, MEMBER, REVIEWER } = Role;
 const MiB = 1024 * 1024;
 
 let w: ContentWorld;
+let bucket: ReturnType<typeof fakeMultipart>;
 
 beforeEach(async () => {
 	w = await contentWorld();
-	fakes.s3Respond = (call) =>
-		call.command === "CreateMultipartUploadCommand" ? { UploadId: "upload-1" } : {};
+	bucket = fakeMultipart();
 });
 
 const FPS_24 = { fpsNumerator: 24, fpsDenominator: 1, dropFrame: false };
@@ -185,7 +186,11 @@ describe("UPLOAD_MAX_FILE_SIZE for plugins", () => {
 });
 
 describe("completeWebUpload", () => {
-	const parts = [{ partNumber: 1, etag: '"a"' }];
+	// every part of startedUpload()'s 100 MiB file: 3 × 32 MiB and 4 MiB
+	let parts: { partNumber: number; etag: string }[];
+	beforeEach(() => {
+		parts = bucket.putFile(100 * MiB);
+	});
 
 	it("stores the preliminary snapshot and queues the processing with cut detection", async () => {
 		signIn(w.owner.user, w.org.id);
@@ -304,15 +309,177 @@ describe("completeWebUpload", () => {
 	it("409 when S3 can't assemble the file", async () => {
 		signIn(w.owner.user, w.org.id);
 		const { id, upload } = await startedUpload();
+		const respond = fakes.s3Respond;
 		fakes.s3Respond = (call) => {
 			if (call.command === "CompleteMultipartUploadCommand") throw new Error("InvalidPart");
-			return {};
+			return respond(call);
 		};
 		await expectStatus(
 			completeWebUpload({ exportId: id, uploadId: upload.uploadId, parts, form: form() }),
 			409,
 		);
 		expect(flows()).toEqual([]);
+	});
+});
+
+describe("completeWebUpload checks what S3 really has", () => {
+	const fileSize = 100 * MiB;
+	const complete = (id: string, parts: { partNumber: number; etag: string }[]) =>
+		completeWebUpload({ exportId: id, uploadId: "upload-1", parts, form: form() });
+	const commands = (name: string) => fakes.s3.filter((c) => c.command === name);
+
+	beforeEach(() => signIn(w.owner.user, w.org.id));
+
+	it("413 for a part larger than announced: the upload is dropped and the space given back", async () => {
+		const { id } = await startedUpload(fileSize);
+		const parts = bucket.putFile(fileSize);
+		// the last part should have 4 MiB; the presigned URL took 40
+		parts[3] = bucket.put(4, 40 * MiB);
+
+		await expectStatus(complete(id, parts), 413);
+		expect(commands("CompleteMultipartUploadCommand")).toEqual([]);
+		expect(commands("AbortMultipartUploadCommand")).toHaveLength(1);
+		expect(await reservedSize(id)).toBe(0n);
+		expect(await snapshotOf(id)).toBeNull();
+		expect(flows()).toEqual([]);
+		// nothing to continue; starting again works
+		await expectStatus(resumeWebUpload({ exportId: id, uploadId: "upload-1" }), 409);
+		await initWebUpload({ exportId: id, fileSize });
+	});
+
+	it("409 for a missing part; the upload stays and can be continued", async () => {
+		const { id } = await startedUpload(fileSize);
+		const parts = bucket.putFile(fileSize).filter((p) => p.partNumber !== 2);
+
+		await expectStatus(complete(id, parts), 409);
+		expect(commands("CompleteMultipartUploadCommand")).toEqual([]);
+		expect(commands("AbortMultipartUploadCommand")).toEqual([]);
+		expect(await reservedSize(id)).toBe(BigInt(fileSize));
+		expect(flows()).toEqual([]);
+	});
+
+	it("409 for a part the client names but S3 doesn't have", async () => {
+		const { id } = await startedUpload(fileSize);
+		const parts = bucket.putFile(fileSize);
+		const named = [...parts.slice(0, 3), { partNumber: 4, etag: '"never-uploaded"' }];
+
+		await expectStatus(complete(id, named), 409);
+		expect(commands("CompleteMultipartUploadCommand")).toEqual([]);
+	});
+
+	it("409 when the parts don't add up to the file: a part is short", async () => {
+		const { id } = await startedUpload(fileSize);
+		const parts = bucket.putFile(fileSize);
+		parts[3] = bucket.put(4, 1 * MiB);
+
+		await expectStatus(complete(id, parts), 409);
+		expect(commands("CompleteMultipartUploadCommand")).toEqual([]);
+		expect(await reservedSize(id)).toBe(BigInt(fileSize));
+	});
+
+	it("409 for a part number outside the file and for a part sent twice", async () => {
+		const { id } = await startedUpload(fileSize);
+		const parts = bucket.putFile(fileSize);
+		await expectStatus(complete(id, [...parts, bucket.put(5, 1)]), 409);
+		await expectStatus(complete(id, [...parts, parts[0]!]), 409);
+		expect(commands("CompleteMultipartUploadCommand")).toEqual([]);
+	});
+
+	it("ETags count with and without quotes", async () => {
+		const { id } = await startedUpload(fileSize);
+		const parts = bucket.putFile(fileSize).map((p) => ({ ...p, etag: p.etag.replaceAll('"', "") }));
+		await complete(id, parts);
+		expect(commands("CompleteMultipartUploadCommand")).toHaveLength(1);
+	});
+
+	it("413 when the assembled object is larger after all: it is deleted", async () => {
+		const { id } = await startedUpload(fileSize);
+		const parts = bucket.putFile(fileSize);
+		bucket.onComplete((size) => size + 1);
+
+		await expectStatus(complete(id, parts), 413);
+		expect(commands("DeleteObjectCommand")).toHaveLength(1);
+		expect(bucket.objectSize()).toBeNull();
+		expect(await reservedSize(id)).toBe(0n);
+		expect(await snapshotOf(id)).toBeNull();
+		expect(flows()).toEqual([]);
+	});
+
+	it("409 when the assembled object is smaller: it is deleted", async () => {
+		const { id } = await startedUpload(fileSize);
+		const parts = bucket.putFile(fileSize);
+		bucket.onComplete((size) => size - 1);
+
+		await expectStatus(complete(id, parts), 409);
+		expect(commands("DeleteObjectCommand")).toHaveLength(1);
+		expect(await reservedSize(id)).toBe(0n);
+		expect(flows()).toEqual([]);
+	});
+
+	it("keeps the file when S3 doesn't answer its size: the parts were checked", async () => {
+		vi.spyOn(console, "error").mockImplementation(() => {});
+		const { id } = await startedUpload(fileSize);
+		const parts = bucket.putFile(fileSize);
+		const respond = fakes.s3Respond;
+		fakes.s3Respond = (call) => {
+			if (call.command === "HeadObjectCommand") throw new Error("Timeout");
+			return respond(call);
+		};
+
+		await complete(id, parts);
+		expect(commands("DeleteObjectCommand")).toEqual([]);
+		expect(await reservedSize(id)).toBe(BigInt(fileSize));
+		expect(flows()).toHaveLength(1);
+	});
+
+	it("409 for a second complete that arrives while the first one assembles the file", async () => {
+		const { id } = await startedUpload(fileSize);
+		const parts = bucket.putFile(fileSize);
+		const respond = fakes.s3Respond;
+		let raced = false;
+		fakes.s3Respond = async (call) => {
+			// the first complete finishes while this one waits for S3
+			if (call.command === "HeadObjectCommand" && !raced) {
+				raced = true;
+				await prisma.media.updateMany({
+					where: { export: { id } },
+					data: { status: "PROCESSING" },
+				});
+			}
+			return respond(call);
+		};
+
+		await expectStatus(complete(id, parts), 409);
+		// the file and the first one's processing stay untouched
+		expect(commands("DeleteObjectCommand")).toEqual([]);
+		expect(await reservedSize(id)).toBe(BigInt(fileSize));
+		expect(await snapshotOf(id)).toBeNull();
+		expect(flows()).toEqual([]);
+		const media = await prisma.media.findFirstOrThrow({ where: { export: { id } } });
+		expect(media.status).toBe("PROCESSING");
+	});
+
+	it("back to an unfinished upload when the processing can't be queued", async () => {
+		const { id } = await startedUpload(fileSize);
+		const parts = bucket.putFile(fileSize);
+		// a snapshot Postgres can't store makes the step after the claim fail
+		const failing = completeWebUpload({
+			exportId: id,
+			uploadId: "upload-1",
+			parts,
+			form: form({ fileName: "bad\u0000name.mov" }),
+		});
+		await expect(failing).rejects.toThrow();
+		const media = await prisma.media.findFirstOrThrow({ where: { export: { id } } });
+		expect(media.status).toBe("PENDING");
+		expect(flows()).toEqual([]);
+	});
+
+	it("409 after the upload was cancelled", async () => {
+		const { id } = await startedUpload(fileSize);
+		const parts = bucket.putFile(fileSize);
+		await abortWebUpload({ exportId: id, uploadId: "upload-1" });
+		await expectStatus(complete(id, parts), 409);
 	});
 });
 
@@ -335,6 +502,36 @@ describe("abortWebUpload", () => {
 		});
 		expect(await reservedSize(id)).toBe(0n);
 		await initWebUpload({ exportId: second.id, fileSize: 100 });
+	});
+
+	it("S3 not knowing the upload any more counts as aborted, and the space is given back", async () => {
+		signIn(w.owner.user, w.org.id);
+		const { id, upload } = await startedUpload(100);
+		const respond = fakes.s3Respond;
+		fakes.s3Respond = (call) => {
+			if (call.command === "AbortMultipartUploadCommand") {
+				throw Object.assign(new Error("The specified upload does not exist."), {
+					name: "NoSuchUpload",
+				});
+			}
+			return respond(call);
+		};
+		await abortWebUpload({ exportId: id, uploadId: upload.uploadId });
+		expect(await reservedSize(id)).toBe(0n);
+	});
+
+	it("other storage errors fail, and the reservation stays for another try", async () => {
+		signIn(w.owner.user, w.org.id);
+		const { id, upload } = await startedUpload(100);
+		fakes.s3Respond = (call) => {
+			if (call.command === "AbortMultipartUploadCommand") throw new Error("SlowDown");
+			return {};
+		};
+		// SvelteKit answers 500 for it, without the details
+		await expect(abortWebUpload({ exportId: id, uploadId: upload.uploadId })).rejects.toThrow(
+			"SlowDown",
+		);
+		expect(await reservedSize(id)).toBe(100n);
 	});
 
 	it("403 for a reviewer", async () => {
@@ -402,7 +599,7 @@ describe("resumeWebUpload", () => {
 		await completeWebUpload({
 			exportId: other.id,
 			uploadId: other.upload.uploadId,
-			parts: [{ partNumber: 1, etag: '"a"' }],
+			parts: bucket.putFile(100 * MiB),
 			form: form(),
 		});
 		await expectStatus(resumeWebUpload({ exportId: other.id, uploadId: "upload-1" }), 409);
@@ -413,6 +610,83 @@ describe("resumeWebUpload", () => {
 		const { id, upload } = await startedUpload();
 		await signInAs(w.org, REVIEWER, [{ timelineId: w.tl1.id }]);
 		await expectStatus(resumeWebUpload({ exportId: id, uploadId: upload.uploadId }), 403);
+	});
+});
+
+describe("resumeWebUpload renews the reservation", () => {
+	/** Lets the upload's reservation run out, as after a pause of more than a day */
+	const expire = (exportId: string) =>
+		prisma.media.updateMany({
+			where: { export: { id: exportId } },
+			data: { reservedUntil: new Date(Date.now() - 1000) },
+		});
+	const reservedUntil = async (exportId: string) =>
+		(await prisma.media.findFirstOrThrow({ where: { export: { id: exportId } } })).reservedUntil!;
+	const DAY = 24 * 60 * 60 * 1000;
+
+	beforeEach(() => signIn(w.owner.user, w.org.id));
+
+	it("413 when the space was taken while the reservation had run out, and nothing is renewed", async () => {
+		await prisma.organization.update({ where: { id: w.org.id }, data: { storageQuota: 150n } });
+		const { id, upload } = await startedUpload(100);
+		await expire(id);
+		// meanwhile someone else fills the organization
+		await storedExport(w.tl2, { original: 100 });
+
+		await expectStatus(resumeWebUpload({ exportId: id, uploadId: upload.uploadId }), 413);
+		expect((await reservedUntil(id)).getTime()).toBeLessThan(Date.now());
+	});
+
+	it("an expired reservation doesn't count for others, until it is renewed", async () => {
+		await prisma.organization.update({ where: { id: w.org.id }, data: { storageQuota: 150n } });
+		const { id, upload } = await startedUpload(100);
+		const other = await createWebExport({
+			projectId: w.projectA.id,
+			timelineId: w.tl1.id,
+			name: "other",
+		});
+		await expectStatus(initWebUpload({ exportId: other.id, fileSize: 100 }), 413);
+
+		await expire(id);
+		await initWebUpload({ exportId: other.id, fileSize: 100 });
+		// now the first one doesn't fit any more
+		await expectStatus(resumeWebUpload({ exportId: id, uploadId: upload.uploadId }), 413);
+	});
+
+	it("renews the reservation for another day when it still fits", async () => {
+		const { id, upload } = await startedUpload(100 * MiB);
+		await expire(id);
+
+		const res = await resumeWebUpload({ exportId: id, uploadId: upload.uploadId });
+		expect(res.parts.length).toBe(4);
+		expect((await reservedUntil(id)).getTime()).toBeGreaterThan(Date.now() + DAY - 60_000);
+	});
+
+	it("its own reservation doesn't count against it", async () => {
+		await prisma.organization.update({ where: { id: w.org.id }, data: { storageQuota: 100n } });
+		const { id, upload } = await startedUpload(100);
+		// fills the quota exactly, with itself
+		await resumeWebUpload({ exportId: id, uploadId: upload.uploadId });
+	});
+
+	it("the export's uploader pays, also when someone else continues", async () => {
+		const { id, upload } = await startedUpload(100);
+		await prisma.user.update({ where: { id: w.owner.user.id }, data: { storageQuota: 50n } });
+		await signInAs(w.org, MEMBER, [{ timelineId: w.tl1.id }]);
+		await expectStatus(resumeWebUpload({ exportId: id, uploadId: upload.uploadId }), 413);
+	});
+
+	it("413 when UPLOAD_MAX_FILE_SIZE was lowered meanwhile", async () => {
+		const { id, upload } = await startedUpload(100 * MiB);
+		setUploadMaxFileSize(50 * MiB);
+		await expectStatus(resumeWebUpload({ exportId: id, uploadId: upload.uploadId }), 413);
+	});
+
+	it("init-upload again starts a new reservation", async () => {
+		const { id } = await startedUpload(100);
+		await expire(id);
+		await initWebUpload({ exportId: id, fileSize: 100 });
+		expect((await reservedUntil(id)).getTime()).toBeGreaterThan(Date.now() + DAY - 60_000);
 	});
 });
 

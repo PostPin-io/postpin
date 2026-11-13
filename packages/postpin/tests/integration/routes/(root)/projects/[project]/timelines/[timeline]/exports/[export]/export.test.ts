@@ -240,9 +240,26 @@ describe("getShotThumbnails", () => {
 
 		const res = await getShotThumbnails({ mediaId });
 		expect(res).toMatchObject({ count: 3, width: 320, height: 180 });
-		expect(res.urls.map((u) => new URL(u).pathname)).toEqual(
+		expect(res.urls.map((u) => new URL(u!).pathname)).toEqual(
 			[0, 1, 2].map((i) => `/postpin-test/${mediaId}/shotThumbnails-${i}`),
 		);
+	});
+
+	it("while the render runs, URLs only for the shots whose image is ready", async () => {
+		await prisma.media.update({
+			where: { id: mediaId },
+			data: { shotThumbnails: { count: 4, width: 320, height: 180, generation: "g7", ready: 2 } },
+		});
+		signIn(w.owner.user, w.org.id);
+
+		const res = await getShotThumbnails({ mediaId });
+		expect(res.count).toBe(4);
+		expect(res.urls.map((u) => u && new URL(u).pathname)).toEqual([
+			`/postpin-test/${mediaId}/shotThumbnails-g7-0`,
+			`/postpin-test/${mediaId}/shotThumbnails-g7-1`,
+			null,
+			null,
+		]);
 	});
 
 	it("points at the published generation's keys", async () => {
@@ -253,7 +270,7 @@ describe("getShotThumbnails", () => {
 		signIn(w.owner.user, w.org.id);
 
 		const res = await getShotThumbnails({ mediaId });
-		expect(res.urls.map((u) => new URL(u).pathname)).toEqual(
+		expect(res.urls.map((u) => new URL(u!).pathname)).toEqual(
 			[0, 1].map((i) => `/postpin-test/${mediaId}/shotThumbnails-g7-${i}`),
 		);
 	});

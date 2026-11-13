@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, tick } from "svelte";
+	import { onMount, tick, untrack } from "svelte";
 	import { MediaQuery } from "svelte/reactivity";
 
 	import { handleReviewShortcut } from "#lib/components/review/review-shortcuts.ts";
@@ -44,6 +44,12 @@
 	import ProcessingJobs from "#lib/components/review/ProcessingJobs.svelte";
 	import EstimatedCuts from "#lib/components/review/EstimatedCuts.svelte";
 	import { isWebUpload } from "@postpin-io/shared/logic/web-upload";
+	import {
+		readyShotThumbnails,
+		shotThumbnailsPending,
+		type ShotThumbnails,
+	} from "@postpin-io/shared/types/ShotThumbnails";
+	import { mergeShotUrls } from "./shot-thumbnail-urls.ts";
 	import { isJobRunning } from "#lib/job-status.ts";
 
 	import { setShareContext, type ShareContext } from "./share-context.ts";
@@ -126,13 +132,10 @@
 	const media = $derived(exp?.media);
 
 	let isMounted = $state(false);
-	/** After the cut sensitivity changed: new shot thumbnails are on their way */
-	let awaitingShotThumbnails = $state(false);
-	$effect(() => {
-		if (awaitingShotThumbnails && exportQuery.current?.media?.shotThumbnails) {
-			awaitingShotThumbnails = false;
-		}
-	});
+	// A render of the shot thumbnails that fails never publishes its generation; stop polling for
+	// it at some point. Not state: only the polling interval reads it
+	const SHOT_THUMBNAILS_MAX_WAIT = 5 * 60 * 1000;
+	let shotThumbnailsWaitStart: number | null = null;
 	let isLayoutReady = $state(false);
 
 	// A boolean, so the refetches while processing don't count as a change and reset the layout
@@ -161,12 +164,45 @@
 	const hasThumbnail = $derived(!!media?.thumbnail);
 	const hasSeekSprites = $derived(!!media?.seekSprites);
 
-	// the query 404s until the job is done, so only ask once the polled export says it is
+	// The query 404s until the job published something, so only ask once the polled export says
+	// it did. While the render runs, the job publishes how many images are ready.
+	const publishedShots = $derived(media?.shotThumbnails as ShotThumbnails | null | undefined);
 	const shotThumbnails = $derived(
-		media?.shotThumbnails && isTimelineVisible
-			? getShotThumbnails({ mediaId: media.id, shareToken })
+		publishedShots && isTimelineVisible
+			? getShotThumbnails({ mediaId: media!.id, shareToken, generation: publishedShots.generation })
 			: undefined,
 	);
+	const shotsKey = $derived(publishedShots ? `${media!.id}:${publishedShots.generation}` : null);
+	const shotsReady = $derived(publishedShots ? readyShotThumbnails(publishedShots) : 0);
+	// More images are ready: ask the same query again; it shows the previous answer meanwhile.
+	// Plain variable: only this effect reads it
+	let askedFor: { key: string; ready: number } | null = null;
+	$effect(() => {
+		const key = shotsKey;
+		const ready = shotsReady;
+		untrack(() => {
+			if (!key || !shotThumbnails) return void (askedFor = null);
+			// the first answer of this generation is on its way already
+			if (askedFor?.key === key && askedFor.ready !== ready) void shotThumbnails.refresh();
+			askedFor = { key, ready };
+		});
+	});
+	/** Per shot, null while its image is missing; the URLs of images already shown stay */
+	let shotUrls = $state<(string | null)[] | undefined>();
+	let shotUrlsKey: string | null = null;
+	$effect(() => {
+		const urls = shotThumbnails?.current?.urls;
+		const key = shotsKey;
+		untrack(() => {
+			if (!key) {
+				shotUrls = undefined;
+				shotUrlsKey = null;
+			} else if (urls) {
+				shotUrls = mergeShotUrls(shotUrlsKey === key ? shotUrls : undefined, urls);
+				shotUrlsKey = key;
+			}
+		});
+	});
 
 	$effect(() => {
 		const id = mediaId;
@@ -219,14 +255,17 @@
 				// The export carries the media status, proxies, thumbnail, seek sprites and shot thumbnails, so it
 				// has to be refetched until processing is done. The media is marked COMPLETED as soon as it can play,
 				// while the sprite and thumbnail jobs still run, so keep going until every job has finished too.
-				const status = exportQuery.current?.media?.status;
+				// After the cuts changed, the shot thumbnails of the new generation are on their way. Read
+				// from the refreshed export, so it ends exactly when that generation is published.
+				const current = exportQuery.current?.media;
+				const status = current?.status;
 				const jobsRunning = processingJobsQuery?.current?.some(isJobRunning);
-				if (
-					status === "PENDING" ||
-					status === "PROCESSING" ||
-					jobsRunning ||
-					awaitingShotThumbnails
-				) {
+				const shotsPending = !!current && shotThumbnailsPending(current);
+				if (!shotsPending) shotThumbnailsWaitStart = null;
+				else shotThumbnailsWaitStart ??= Date.now();
+				const awaitingShots =
+					shotsPending && Date.now() - shotThumbnailsWaitStart! < SHOT_THUMBNAILS_MAX_WAIT;
+				if (status === "PENDING" || status === "PROCESSING" || jobsRunning || awaitingShots) {
 					await Promise.all([exportQuery.refresh(), processingJobsQuery?.refresh()]);
 				}
 			} catch (error) {
@@ -427,7 +466,7 @@
 						detected={!!media.hasSceneScores}
 						canChange={!!exp?.canChangeCuts && media.status === "COMPLETED"}
 						onchanged={async () => {
-							awaitingShotThumbnails = true;
+							// brings the new generation; polling runs until it is published
 							await exportQuery.refresh();
 						}}
 					/>
@@ -442,12 +481,7 @@
 				class={compact ? "aspect-video w-full overflow-hidden" : "min-h-0 flex-1 overflow-hidden"}
 			>
 				{#if viewMode === "shot-grid" && snapshot}
-					<ShotGrid
-						{snapshot}
-						thumbnailUrls={shotThumbnails?.current?.urls}
-						{currentFrame}
-						onSeek={seekToFrame}
-					/>
+					<ShotGrid {snapshot} thumbnailUrls={shotUrls} {currentFrame} onSeek={seekToFrame} />
 				{:else if media.status !== "PENDING" && videoSource && snapshot}
 					<!-- A fresh player when the source switches between the original and HLS -->
 					{#key videoSource.type}

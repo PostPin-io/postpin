@@ -257,6 +257,91 @@ describe("applyProbe", () => {
 	});
 });
 
+describe("applyProbe: length at the uploader's frame rate", () => {
+	const FPS_23976 = rate(24000, 1001);
+	const userRate = (frameRate: ReturnType<typeof rate>) =>
+		snapshot({ frameRate, startFrameIndex: 0, durationFrameCount: 1 }, ["frameRate"]);
+
+	it("24 fps file, 25 chosen: the same seconds at 25, not the file's frame count", () => {
+		const probed = applyProbe(userRate(FPS_25), {
+			fps: 24,
+			timecode: null,
+			frameCount: 192,
+			durationSeconds: 8,
+		});
+		expect(probed).toMatchObject({ frameRate: FPS_25, durationFrameCount: 200 });
+		expect(probed.tracks[0]!.clips.at(-1)).toMatchObject({ durationFrameCount: 200 });
+	});
+
+	it("23.976 file, 24 chosen: counted from the duration, the rates differ", () => {
+		const probed = applyProbe(userRate(FPS_24), {
+			fps: 24000 / 1001,
+			timecode: null,
+			frameCount: 2400,
+			durationSeconds: 100.1,
+		});
+		// 2400 frames at 23.976 last 100.1 s, which are 2402 frames at 24
+		expect(probed).toMatchObject({ frameRate: FPS_24, durationFrameCount: 2402 });
+	});
+
+	it("the same rate as the file: the file's frame count, even if the duration says otherwise", () => {
+		const probed = applyProbe(userRate(FPS_24), {
+			fps: 24,
+			timecode: null,
+			frameCount: 192,
+			durationSeconds: 8.04,
+		});
+		expect(probed.durationFrameCount).toBe(192);
+	});
+
+	it("a measured rate that rounds to the chosen one counts as the same", () => {
+		const probed = applyProbe(userRate(FPS_24), {
+			fps: 23.999,
+			timecode: null,
+			frameCount: 192,
+			durationSeconds: 8.04,
+		});
+		expect(probed.durationFrameCount).toBe(192);
+	});
+
+	it("a variable rate is only an average: the length comes from the duration", () => {
+		// 27.3 fps on average rounds to 25, but its 273 frames last 10 s, not 273 / 25
+		const probed = applyProbe(
+			snapshot({ frameRate: FPS_24, startFrameIndex: 0, durationFrameCount: 1 }),
+			{ fps: 27.3, timecode: null, frameCount: 273, durationSeconds: 10 },
+		);
+		expect(probed).toMatchObject({ frameRate: FPS_25, durationFrameCount: 250 });
+	});
+
+	it("without a duration, the file's frames are converted to the chosen rate", () => {
+		const probed = applyProbe(userRate(FPS_25), {
+			fps: 24,
+			timecode: null,
+			frameCount: 192,
+			durationSeconds: null,
+		});
+		expect(probed.durationFrameCount).toBe(200);
+	});
+
+	it("neither duration nor rate known: the file's frame count is the best there is", () => {
+		const probed = applyProbe(userRate(FPS_25), {
+			fps: null,
+			timecode: null,
+			frameCount: 192,
+			durationSeconds: null,
+		});
+		expect(probed.durationFrameCount).toBe(192);
+	});
+
+	it("rate not chosen by the uploader: it follows the file, and so does the frame count", () => {
+		const probed = applyProbe(
+			snapshot({ frameRate: FPS_25, startFrameIndex: 0, durationFrameCount: 1 }),
+			{ fps: 24000 / 1001, timecode: null, frameCount: 2400, durationSeconds: 100.1 },
+		);
+		expect(probed).toMatchObject({ frameRate: FPS_23976, durationFrameCount: 2400 });
+	});
+});
+
 describe("applyCuts", () => {
 	const scores = {
 		scores: [

@@ -257,14 +257,37 @@ export function applyProbe(
 	// a start the uploader set at another rate may not exist at this one
 	if (startFrameIndex >= framesPerDay(frameRate)) startFrameIndex = 0;
 
-	const durationFrameCount =
-		probed.frameCount && probed.frameCount > 0
-			? probed.frameCount
-			: probed.durationSeconds && probed.durationSeconds > 0
-				? Math.max(1, Math.round(probed.durationSeconds * fps(frameRate)))
-				: snapshot.durationFrameCount;
+	const durationFrameCount = probedFrameCount(probed, frameRate) ?? snapshot.durationFrameCount;
 
 	return withTiming(snapshot, { frameRate, startFrameIndex, durationFrameCount });
+}
+
+const positive = (n: number | null) => (n !== null && n > 0 ? n : null);
+const sameRate = (a: FrameRate, b: FrameRate) =>
+	a.fpsNumerator === b.fpsNumerator && a.fpsDenominator === b.fpsDenominator;
+
+/**
+ * The length in frames of the timeline's rate. The file's frame count only is that when the
+ * timeline runs at the file's own, constant rate: an uploader who chose 25 for a 24 fps file gets
+ * a timeline at 25, and the video plays as many seconds as before, so it is seconds × 25.
+ */
+function probedFrameCount(probed: ProbedTiming, frameRate: FrameRate): number | null {
+	const frames = positive(probed.frameCount);
+	const seconds = positive(probed.durationSeconds);
+	const fileFps = positive(probed.fps);
+	// a variable rate is only the average: its frames don't last 1 / rate each
+	const measured = fileFps !== null ? roundFrameRate(fileFps) : null;
+	const atFileRate =
+		measured !== null && !measured.variable && sameRate(measured.frameRate, frameRate);
+
+	if (frames !== null && atFileRate) return frames;
+	if (seconds !== null) return Math.max(1, Math.round(seconds * fps(frameRate)));
+	// no length in seconds, but the frames last frames / fps of the file
+	if (frames !== null && fileFps !== null) {
+		return Math.max(1, Math.round((frames / fileFps) * fps(frameRate)));
+	}
+	// the file's rate is unknown too: its frame count is the best there is
+	return frames;
 }
 
 /** Rebuilds the clips from the stored scene scores for `level`, and remembers the level. */

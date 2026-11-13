@@ -7,14 +7,20 @@ import {
 	AbortMultipartUploadCommand,
 	CompleteMultipartUploadCommand,
 	CreateMultipartUploadCommand,
+	DeleteObjectCommand,
+	HeadObjectCommand,
 	ListPartsCommand,
 	UploadPartCommand,
 	type S3,
 } from "@aws-sdk/client-s3";
 import {
 	abortMultipartUpload,
+	checkUploadedParts,
 	completeMultipartUpload,
 	createMultipartUpload,
+	deleteObject,
+	expectedPartSize,
+	getObjectSize,
 	listUploadedParts,
 	partLayout,
 	presignPartUrls,
@@ -199,5 +205,84 @@ describe("listUploadedParts", () => {
 	it("throws when the upload doesn't exist", async () => {
 		send.mockReset().mockRejectedValue(new Error("NoSuchUpload"));
 		await expect(listUploadedParts(client, env, object, "nope")).rejects.toThrow("NoSuchUpload");
+	});
+});
+
+describe("expectedPartSize", () => {
+	it("full parts, then the rest", () => {
+		const file = 100 * MiB;
+		expect([1, 2, 3, 4].map((n) => expectedPartSize(n, file))).toEqual([
+			32 * MiB,
+			32 * MiB,
+			32 * MiB,
+			4 * MiB,
+		]);
+		// a file that fills its parts exactly has no short last part
+		expect(expectedPartSize(2, 64 * MiB)).toBe(32 * MiB);
+		expect(expectedPartSize(1, 10)).toBe(10);
+	});
+});
+
+describe("checkUploadedParts", () => {
+	const fileSize = 100 * MiB;
+	const sizes = [32 * MiB, 32 * MiB, 32 * MiB, 4 * MiB];
+	const stored = (sizeOf = (n: number) => sizes[n - 1]!) =>
+		[1, 2, 3, 4].map((n) => ({ partNumber: n, etag: `"e${n}"`, size: sizeOf(n) }));
+	const claimed = [1, 2, 3, 4].map((n) => ({ partNumber: n, etag: `"e${n}"` }));
+
+	it("accepts exactly the file, in any order and with or without quotes around the ETag", () => {
+		expect(checkUploadedParts(stored(), [...claimed].reverse(), fileSize)).toEqual({ ok: true });
+		const unquoted = claimed.map((p) => ({ ...p, etag: p.etag.replaceAll('"', "") }));
+		expect(checkUploadedParts(stored(), unquoted, fileSize)).toEqual({ ok: true });
+	});
+
+	it("ignores stored parts the client doesn't name", () => {
+		const extra = [...stored(), { partNumber: 5, etag: '"x"', size: 999 * MiB }];
+		expect(checkUploadedParts(extra, claimed, fileSize)).toEqual({ ok: true });
+	});
+
+	it.each([
+		["a part larger than its share", stored((n) => (n === 4 ? 5 * MiB : sizes[n - 1]!)), claimed],
+		["a middle part larger", stored((n) => (n === 2 ? 33 * MiB : sizes[n - 1]!)), claimed],
+	])("too-large: %s", (_, listed, parts) => {
+		expect(checkUploadedParts(listed, parts, fileSize)).toMatchObject({
+			ok: false,
+			reason: "too-large",
+		});
+	});
+
+	it.each([
+		["a missing part", stored(), claimed.slice(0, 3)],
+		["a part S3 doesn't have", stored().slice(0, 3), claimed],
+		["another ETag", stored(), [...claimed.slice(0, 3), { partNumber: 4, etag: '"other"' }]],
+		["a short part", stored((n) => (n === 1 ? MiB : sizes[n - 1]!)), claimed],
+		["a part twice", stored(), [...claimed, claimed[0]!]],
+		["a part number past the file", stored(), [...claimed, { partNumber: 5, etag: '"e5"' }]],
+		["part number 0", stored(), [{ partNumber: 0, etag: '"e0"' }, ...claimed]],
+		["no parts at all", stored(), []],
+	])("incomplete: %s", (_, listed, parts) => {
+		expect(checkUploadedParts(listed, parts, fileSize)).toMatchObject({
+			ok: false,
+			reason: "incomplete",
+		});
+	});
+});
+
+describe("getObjectSize and deleteObject", () => {
+	it("HEAD answers the size, null without one", async () => {
+		send.mockResolvedValueOnce({ ContentLength: 42 }).mockResolvedValueOnce({});
+		expect(await getObjectSize(client, env, object)).toBe(42);
+		expect(await getObjectSize(client, env, object)).toBeNull();
+		const head = send.mock.calls[0]![0];
+		expect(head).toBeInstanceOf(HeadObjectCommand);
+		expect(head.input).toEqual({ Bucket: "bucket", Key: "m/original" });
+	});
+
+	it("deletes the object", async () => {
+		send.mockResolvedValueOnce({});
+		await deleteObject(client, env, object);
+		const del = send.mock.calls[0]![0];
+		expect(del).toBeInstanceOf(DeleteObjectCommand);
+		expect(del.input).toEqual({ Bucket: "bucket", Key: "m/original" });
 	});
 });

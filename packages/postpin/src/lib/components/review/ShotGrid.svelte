@@ -5,8 +5,8 @@
 
 	interface Props {
 		snapshot: TimelineSnapshot;
-		/** One per shot, by shot index; undefined while they are being made or loaded */
-		thumbnailUrls: string[] | undefined;
+		/** One per shot, by shot index; null or undefined while it is being made or loaded */
+		thumbnailUrls: (string | null)[] | undefined;
 		currentFrame: number;
 		onSeek(frame: number): void;
 	}

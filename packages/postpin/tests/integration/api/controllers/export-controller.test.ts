@@ -4,6 +4,7 @@ import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot
 import { ExportController } from "../../../../src/api/controllers/ExportController.ts";
 import { prisma } from "../../../helpers/db.ts";
 import * as f from "../../../helpers/factories.ts";
+import { fakeMultipart } from "../../../helpers/fake-bucket.ts";
 import { fakes } from "../../../helpers/fakes.ts";
 import { expectHttpError, signInApi } from "../../../helpers/api.ts";
 import { apiWorld, signInAs, type ApiWorld } from "../../../helpers/api-world.ts";
@@ -298,13 +299,27 @@ describe("initUpload", () => {
 // ─── completeUpload ─────────────────────────────────────────────────────────
 
 describe("completeUpload", () => {
+	// a 40 MiB file: 32 MiB and 8 MiB, in the order a plugin may send them
+	const MiB = 1024 * 1024;
 	const parts = [
 		{ partNumber: 2, etag: '"b"' },
 		{ partNumber: 1, etag: '"a"' },
 	];
+	/** An export whose upload of 40 MiB is reserved and fully in S3 */
+	async function uploadedExport() {
+		const exp = await exportWithMedia("PENDING");
+		await prisma.mediaFile.updateMany({
+			where: { originalOf: { id: exp.mediaId! } },
+			data: { size: BigInt(40 * MiB) },
+		});
+		const bucket = fakeMultipart();
+		bucket.put(1, 32 * MiB, '"a"');
+		bucket.put(2, 8 * MiB, '"b"');
+		return { exp, bucket };
+	}
 
 	it("completes the upload, stores the snapshot and queues processing", async () => {
-		const exp = await exportWithMedia("PENDING");
+		const { exp } = await uploadedExport();
 		await signInAs(w, MEMBER, { timelineId: w.tl1.id });
 		await controller.completeUpload(w.projectA.id, w.tl1.id, exp.id, {
 			uploadId: "upload-1",
@@ -312,21 +327,24 @@ describe("completeUpload", () => {
 			timelineSnapshot: snapshot,
 		});
 
-		expect(fakes.s3).toEqual([
-			{
-				command: "CompleteMultipartUploadCommand",
-				input: expect.objectContaining({
-					Key: `${exp.mediaId}/original`,
-					UploadId: "upload-1",
-					MultipartUpload: {
-						Parts: [
-							{ PartNumber: 1, ETag: '"a"' },
-							{ PartNumber: 2, ETag: '"b"' },
-						],
-					},
-				}),
-			},
+		// checks the parts, assembles them, measures the result
+		expect(fakes.s3.map((c) => c.command)).toEqual([
+			"ListPartsCommand",
+			"CompleteMultipartUploadCommand",
+			"HeadObjectCommand",
 		]);
+		expect(fakes.s3[1]!.input).toEqual(
+			expect.objectContaining({
+				Key: `${exp.mediaId}/original`,
+				UploadId: "upload-1",
+				MultipartUpload: {
+					Parts: [
+						{ PartNumber: 1, ETag: '"a"' },
+						{ PartNumber: 2, ETag: '"b"' },
+					],
+				},
+			}),
+		);
 		const saved = await prisma.export.findUniqueOrThrow({
 			where: { id: exp.id },
 			include: { media: true },
@@ -348,15 +366,32 @@ describe("completeUpload", () => {
 		);
 	});
 
+	it("413 for a part larger than reserved; nothing is queued", async () => {
+		const { exp, bucket } = await uploadedExport();
+		bucket.put(2, 9 * MiB, '"b"');
+		await signInApi(w.owner.user, w.org.id);
+		await expectHttpError(
+			controller.completeUpload(w.projectA.id, w.tl1.id, exp.id, {
+				uploadId: "upload-1",
+				parts,
+				timelineSnapshot: snapshot,
+			}),
+			413,
+		);
+		expect(fakes.queue).toEqual([]);
+	});
+
 	it("409 when S3 can't complete the upload; nothing is queued", async () => {
-		const exp = await exportWithMedia("PENDING");
-		fakes.s3Respond = () => {
-			throw new Error("InvalidPart");
+		const { exp } = await uploadedExport();
+		const respond = fakes.s3Respond;
+		fakes.s3Respond = (call) => {
+			if (call.command === "CompleteMultipartUploadCommand") throw new Error("InvalidPart");
+			return respond(call);
 		};
 		await signInApi(w.owner.user, w.org.id);
 		await expectHttpError(
 			controller.completeUpload(w.projectA.id, w.tl1.id, exp.id, {
-				uploadId: "u",
+				uploadId: "upload-1",
 				parts,
 				timelineSnapshot: snapshot,
 			}),
