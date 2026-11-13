@@ -4,10 +4,15 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"build": "vite build && vite build -c vite.ui.config.ts",
+		"build": "pnpm run build:ui && pnpm run build:native",
+		"build:ui": "vite build && vite build -c vite.ui.config.ts",
+		"build:native": "./native/build-mac.sh",
+		"ffmpeg": "pnpm run ffmpeg:mac && pnpm run ffmpeg:win",
+		"ffmpeg:mac": "node ../../tools/ffmpeg/fetch.mjs macos-universal dist/bin/mac",
+		"ffmpeg:win": "node ../../tools/ffmpeg/fetch.mjs windows-x64 dist/bin/win",
 		"dev": "concurrently --kill-others-on-fail \"vite build --watch --mode development\" \"vite build -c vite.ui.config.ts --watch --mode development\"",
 		"check": "tsc --noEmit -p tsconfig.json",
-		"dist": "pnpm run build && ./scripts/build-ccx.sh",
+		"dist": "pnpm run build && pnpm run ffmpeg && ./scripts/build-ccx.sh",
 		"test": "vitest run"
 	},
 	"devDependencies": {

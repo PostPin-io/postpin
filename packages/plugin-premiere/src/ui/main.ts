@@ -19,14 +19,27 @@ window.addEventListener("message", (event) => {
 	if (msg) rpc.handle(msg);
 });
 
-mount(App, {
-	target: document.getElementById("app")!,
-	props: {
-		nle: rpc.proxy<NleBridge>("nle"),
-		host: rpc.proxy<HostBridge>("host"),
-		// Premiere draws the panel frame, there are no window buttons to make room for
-		titleBarInset: false,
-		// macOS blocks http in the webview and the server has no CORS, so the panel fetches
-		fetch: createPanelFetch(rpc.proxy<NetBridge>("net")),
-	},
-});
+/** The host's optional functions; the panel tells which exist (its proxy answers every name) */
+const OPTIONAL = ["updater", "probe", "transcode", "removeFile"] as const;
+
+async function start() {
+	const present = new Set(
+		await rpc.proxy<{ hostFeatures(): Promise<string[]> }>("features").hostFeatures(),
+	);
+	mount(App, {
+		target: document.getElementById("app")!,
+		props: {
+			nle: rpc.proxy<NleBridge>("nle"),
+			// Premiere doesn't update itself; probe/transcode/removeFile exist when the addon loaded
+			host: rpc.proxy<HostBridge>("host", {
+				absent: OPTIONAL.filter((name) => !present.has(name)),
+			}),
+			// Premiere draws the panel frame, there are no window buttons to make room for
+			titleBarInset: false,
+			// macOS blocks http in the webview and the server has no CORS, so the panel fetches
+			fetch: createPanelFetch(rpc.proxy<NetBridge>("net")),
+		},
+	});
+}
+
+void start();

@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => ({
 		minify: mode !== "development",
 		sourcemap: mode === "development" ? "inline" : false,
 		lib: { entry: "src/main.ts", formats: ["cjs"], fileName: () => "main.js" },
-		// provided by UXP at runtime
-		rolldownOptions: { external: ["premierepro", "uxp", "fs", "os"] },
+		// provided by UXP at runtime; the addon is resolved through manifest.json's "addon"
+		rolldownOptions: { external: ["premierepro", "uxp", "fs", "os", "postpin-process.uxpaddon"] },
 	},
 }));

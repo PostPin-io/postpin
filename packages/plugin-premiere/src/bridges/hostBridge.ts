@@ -34,6 +34,11 @@ export function createHostBridge(): HostBridge {
 		getFileSize,
 		uploadFile,
 		openInBrowser: async (path) => {
+			// absolute https URLs open as they are, e.g. a release download
+			if (/^https:\/\//.test(path)) {
+				await uxp.shell.openExternal(path);
+				return;
+			}
 			const serverUrl = await auth.getServerUrl();
 			await uxp.shell.openExternal(`${serverUrl}${path.startsWith("/") ? "" : "/"}${path}`);
 		},
