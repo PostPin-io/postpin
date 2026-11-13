@@ -34,13 +34,9 @@ export const JobWeights: {
 	movieBarcode: 50,
 };
 
+// media jobs only: these feed the processing progress shown for a video
 export const JobLabels: {
-	[
-		N in
-			| keyof QueueJobs["media-heavy"]
-			| keyof QueueJobs["media-light"]
-			| keyof QueueJobs["maintenance"]
-	]: string;
+	[N in keyof QueueJobs["media-heavy"] | keyof QueueJobs["media-light"]]: string;
 } = {
 	transcode: "Transcode",
 	thumbnail: "Generate Thumbnail",
@@ -49,7 +45,6 @@ export const JobLabels: {
 	seekSprites: "Seek Thumbnails",
 	shotThumbnails: "Shot Thumbnails",
 	movieBarcode: "Movie Barcode",
-	cleanup: "Cleanup",
 };
 
 export const Queues = {
