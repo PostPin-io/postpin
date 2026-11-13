@@ -1,4 +1,4 @@
-# PostPin for self-hosting. See docs/self-hosting.md.
+# PostPin for self-hosting. See https://docs.postpin.io/self-hosting.
 #
 #   cp env.example .env     # release asset; in the repository it's deploy/.env.example
 #   docker compose up -d    # after filling in every change-me in .env

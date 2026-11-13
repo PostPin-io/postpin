@@ -2,12 +2,13 @@
 
 ## Getting Started
 
-See [Self-Hosting PostPin](docs/self-hosting.md) for instructions on how to install and run PostPin on your own server.
-[Web Upload](docs/web-upload.md) describes uploading videos from the browser instead of a plugin.
+The documentation lives at [docs.postpin.io](https://docs.postpin.io): the user guide, the editor
+plugins, the REST API and [self-hosting PostPin](https://docs.postpin.io/self-hosting) on your own
+server.
 
 ## System Architecture
 
-![System Architecture](./docs/architecture/architecture.svg)
+![System Architecture](./architecture/architecture.svg)
 
 ## Development
 
