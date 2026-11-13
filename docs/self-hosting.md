@@ -128,6 +128,12 @@ See [Storage Limits](#storage-limits-1) for how quotas are counted and enforced.
 | `STORAGE_DISK_PATH`          | _set by compose.yml_ (`/storage`) | A path on the storage disk; the chart shows its size and free space. Leave both this and `STORAGE_CAPACITY` empty to hide the chart. |
 | `UPLOAD_MAX_FILE_SIZE`       | (empty, no limit)                 | Largest file one upload may have, e.g. `20 GB`, for the editor plugins and the web upload alike. Bigger uploads get HTTP 413.        |
 
+### Transcoding
+
+| Variable         | Default  | Description                                                                                                                                                                                                                                                    |
+| ---------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TRANSCODE_MODE` | `plugin` | Who encodes the review versions (1080p, 720p, 480p, never larger than the export). `plugin`: the NLE plugins encode them on the editor's machine and upload them with the export; the server encodes when a plugin can't. `server`: the worker always encodes. |
+
 ### Queue
 
 | Variable        | Default                        | Description                |
@@ -298,7 +304,7 @@ PostPin will run database migrations automatically on startup, so you can update
 docker compose pull && docker compose up -d
 ```
 
-This can be automated by Watchtower or similar tools. The app and worker images share the same version, so always update both at the same time. Pin `POSTPIN_VERSION` to a version like `1.4.2` if you want to decide yourself when to update. If you set `SKIP_MIGRATIONS` to `true`, PostPin will skip migrations and may fail to start if the database is not up-to-date.
+This can be automated by Watchtower or similar tools. The app and worker images share the same version, so always update both at the same time. The NLE plugins must speak the server's API version. Not every release changes it, but when one does, a plugin with another API version gets an error that names both, so update the plugins then too. Pin `POSTPIN_VERSION` to a version like `1.4.2` if you want to decide yourself when to update. If you set `SKIP_MIGRATIONS` to `true`, PostPin will skip migrations and may fail to start if the database is not up-to-date.
 
 When the worker is stopped, it stops taking new jobs and gives the ones it is working on up to 25
 seconds to finish. Jobs that take longer, like transcoding a long video, are put back into the

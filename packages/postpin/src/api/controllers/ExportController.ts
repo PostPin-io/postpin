@@ -3,8 +3,13 @@ import {
 	abortUpload,
 	completeUpload,
 	createExport,
+	initProxyUploads,
 	initUpload,
+	type CompleteUploadResponse,
 	type InitUploadResponse,
+	type ProxyUpload,
+	type ProxyUploadRequest,
+	type UploadedProxy,
 } from "#lib/server/export-upload.ts";
 import type { UploadedPart } from "@postpin-io/shared/storage";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
@@ -56,20 +61,52 @@ export class ExportController extends Controller {
 	@Response(404, "Export not found")
 	@Response(409, "Export media was already uploaded")
 	@Response(413, "File too large or storage quota exceeded")
+	@Response(422, "Invalid proxies, or the server transcodes itself")
 	public async initUpload(
 		@Path() projectId: string,
 		@Path() timelineId: string,
 		@Path() exportId: string,
-		@Body() body: { fileSize: number },
+		/**
+		 * `proxies`: the review proxies the plugin encoded, when GET /v1/config says `plugin`.
+		 * Left out, the server encodes them.
+		 */
+		@Body() body: { fileSize: number; proxies?: ProxyUploadRequest[] },
 	): Promise<InitUploadResponse> {
 		return apiCall(
-			initUpload({ exportId, path: { projectId, timelineId }, fileSize: body.fileSize }),
+			initUpload({
+				exportId,
+				path: { projectId, timelineId },
+				fileSize: body.fileSize,
+				proxies: body.proxies,
+			}),
 		);
 	}
 
 	/**
-	 * Call after all parts were PUT: assembles the original in storage, stores the timeline
-	 * snapshot and queues transcoding, probing and thumbnailing.
+	 * Uploads for the review proxies the plugin encoded, after init-upload started the original
+	 * without them: the plugin uploads the original while it still encodes. One per proxy, in
+	 * request order; a second call replaces the first one's. Then pass them to complete-upload.
+	 */
+	@Post("{exportId}/init-proxy-uploads")
+	@Response(404, "Export not found")
+	@Response(409, "Media already processing or upload cancelled")
+	@Response(413, "Storage quota exceeded")
+	@Response(422, "Invalid proxies, or the server transcodes itself")
+	public async initProxyUploads(
+		@Path() projectId: string,
+		@Path() timelineId: string,
+		@Path() exportId: string,
+		@Body() body: { proxies: ProxyUploadRequest[] },
+	): Promise<{ proxies: ProxyUpload[] }> {
+		return apiCall(
+			initProxyUploads({ exportId, path: { projectId, timelineId }, proxies: body.proxies }),
+		);
+	}
+
+	/**
+	 * Call after all parts were PUT: assembles the original (and the proxies) in storage, stores the
+	 * timeline snapshot and queues probing, thumbnailing and, without usable proxies, transcoding.
+	 * Proxies that don't check out are dropped and the server encodes instead.
 	 */
 	@Post("{exportId}/complete-upload")
 	@Response(404, "Export not found")
@@ -78,9 +115,16 @@ export class ExportController extends Controller {
 		@Path() projectId: string,
 		@Path() timelineId: string,
 		@Path() exportId: string,
-		@Body() body: { uploadId: string; parts: UploadedPart[]; timelineSnapshot: TimelineSnapshot },
-	): Promise<void> {
-		await apiCall(completeUpload({ exportId, path: { projectId, timelineId }, ...body }));
+		@Body()
+		body: {
+			uploadId: string;
+			parts: UploadedPart[];
+			timelineSnapshot: TimelineSnapshot;
+			/** every proxy init-upload returned, after its parts were PUT */
+			proxies?: UploadedProxy[];
+		},
+	): Promise<CompleteUploadResponse> {
+		return apiCall(completeUpload({ exportId, path: { projectId, timelineId }, ...body }));
 	}
 
 	/** Discards an unfinished multipart upload, so its parts don't linger in storage. */
@@ -91,10 +135,15 @@ export class ExportController extends Controller {
 		@Path() projectId: string,
 		@Path() timelineId: string,
 		@Path() exportId: string,
-		@Body() body: { uploadId: string },
+		@Body() body: { uploadId: string; proxies?: { proxyId: string; uploadId: string }[] },
 	): Promise<void> {
 		await apiCall(
-			abortUpload({ exportId, path: { projectId, timelineId }, uploadId: body.uploadId }),
+			abortUpload({
+				exportId,
+				path: { projectId, timelineId },
+				uploadId: body.uploadId,
+				proxies: body.proxies,
+			}),
 		);
 	}
 }

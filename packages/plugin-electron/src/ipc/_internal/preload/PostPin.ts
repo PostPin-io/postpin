@@ -13,6 +13,12 @@ import {
 	Settings,
 	LoginConfig,
 	LoginCode,
+	ProbedMedia,
+	Rendition,
+	HlsRange,
+	HlsSegment,
+	HlsInfo,
+	EncodedProxy,
 	ICommonAPIImpl,
 	ICommonAPIRenderer,
 	TimelineInfo,
@@ -30,9 +36,15 @@ import {
 	$eipc_validator$_Settings,
 	$eipc_validator$_LoginConfig,
 	$eipc_validator$_LoginCode,
+	$eipc_validator$_ProbedMedia,
+	$eipc_validator$_Rendition,
+	$eipc_validator$_HlsRange,
+	$eipc_validator$_HlsSegment,
+	$eipc_validator$_HlsInfo,
+	$eipc_validator$_EncodedProxy,
 	$eipc_validator$_TimelineInfo,
 } from "../common-runtime/PostPin.js";
-const $$ipcPrefix$$ = "$eipc_message$_601f24a5ef2d943ede763307ffc97034_$_PostPin_$_";
+const $$ipcPrefix$$ = "$eipc_message$_d189e49b54d277201894f5c9d4e5f531_$_PostPin_$_";
 import { webFrame } from "electron/renderer";
 function $eipc_event_validator$_App() {
 	if (
@@ -106,6 +118,26 @@ export const CommonAPI: Partial<ICommonAPIRenderer> = {
 	},
 	setProgress(fraction: number) {
 		return ipcRenderer.invoke($$ipcPrefix$$ + "CommonAPI_$_setProgress", fraction);
+	},
+	canTranscode() {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "CommonAPI_$_canTranscode");
+	},
+	probe(path: string) {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "CommonAPI_$_probe", path);
+	},
+	transcode(input: string, renditions: Rendition[], hasAudio: boolean) {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "CommonAPI_$_transcode", input, renditions, hasAudio);
+	},
+	onTranscodeProgress(fn: (fraction: number) => void) {
+		const handler = (e: unknown, fraction: number) => fn(fraction);
+		const $$channel$$ = $$ipcPrefix$$ + "CommonAPI_$_transcodeProgress";
+		ipcRenderer.on($$channel$$, handler);
+		return () => {
+			ipcRenderer.removeListener($$channel$$, handler);
+		};
+	},
+	removeFile(path: string) {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "CommonAPI_$_removeFile", path);
 	},
 };
 const $eipc_impl$__init_CommonAPI = (localBridged: Record<string, any>) => {

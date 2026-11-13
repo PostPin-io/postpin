@@ -4,6 +4,10 @@ import { fakes } from "../helpers/fakes.ts";
 import { uploadLimits } from "../helpers/upload-limits.ts";
 
 vi.mock("$app/env/private", () => ({
+	// tests switch it through fakes.transcodeMode
+	get TRANSCODE_MODE() {
+		return fakes.transcodeMode;
+	},
 	DATABASE_URL: inject("databaseUrl"),
 	BETTER_AUTH_SECRET: "test-secret-test-secret-test-secret",
 	BETTER_AUTH_URL: "http://localhost:5173",

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Readable } from "node:stream";
 import { fakeJob } from "../helpers.ts";
-import { prisma, resetMocks, uploads } from "./mocks.ts";
+import { ffmpegLib, prisma, resetMocks, uploads } from "./mocks.ts";
 
 const hlsLib = vi.hoisted(() => ({ encodeHls: vi.fn() }));
 vi.mock("../../src/lib/hls.ts", () => hlsLib);
@@ -9,6 +9,7 @@ vi.mock("../../src/lib/database.ts", async () => (await import("./mocks.ts")).da
 vi.mock("../../src/lib/storage.ts", async () => (await import("./mocks.ts")).storage);
 vi.mock("../../src/lib/env.ts", async () => (await import("./mocks.ts")).env);
 vi.mock("@aws-sdk/lib-storage", async () => (await import("./mocks.ts")).libStorage);
+vi.mock("../../src/lib/ffmpeg.ts", async () => (await import("./mocks.ts")).ffmpegLib);
 
 import { transcode } from "../../src/handlers/transcode.ts";
 
@@ -38,23 +39,44 @@ const result = (bytes: number, hasAudio = true) => ({
 type Sink = (index: number, body: Readable) => Promise<unknown>;
 type OnProgress = (fraction: number) => void;
 
+/** What ffprobe reports for the original */
+function original(
+	{ width = 1920, height = 1080, rotation, audio = true } = {} as {
+		width?: number;
+		height?: number;
+		rotation?: number;
+		audio?: boolean;
+	},
+) {
+	ffmpegLib.ffprobe.mockResolvedValue({
+		streams: [
+			{
+				codec_type: "video",
+				width,
+				height,
+				...(rotation !== undefined ? { side_data_list: [{ rotation }] } : {}),
+			},
+			...(audio ? [{ codec_type: "audio" }] : []),
+		],
+	});
+}
+
 beforeEach(() => {
 	resetMocks();
+	original();
 	// proxy-720 and proxy-480, in rendition order
 	prisma.mediaFile.upsert.mockImplementation(
 		async ({ where }: { where: { proxyOfId_width_height_bitrate: { height: number } } }) => ({
 			id: `proxy-${where.proxyOfId_width_height_bitrate.height}`,
 		}),
 	);
-	hlsLib.encodeHls
-		.mockReset()
-		.mockImplementation(async (_input: string, _r: unknown, sink: Sink) => {
-			await Promise.all([
-				sink(0, Readable.from([Buffer.from("fmp4-720")])),
-				sink(1, Readable.from([Buffer.from("fmp4-480")])),
-			]);
-			return [result(720), result(480)];
-		});
+	hlsLib.encodeHls.mockReset().mockImplementation(async (_options: unknown, sink: Sink) => {
+		await Promise.all([
+			sink(0, Readable.from([Buffer.from("fmp4-720")])),
+			sink(1, Readable.from([Buffer.from("fmp4-480")])),
+		]);
+		return [result(720), result(480)];
+	});
 });
 afterEach(() => vi.useRealTimers());
 
@@ -85,12 +107,14 @@ describe("transcode", () => {
 	it("encodes all renditions at once and uploads each to its proxy key", async () => {
 		await transcode(fakeJob("transcode", data) as never);
 		expect(hlsLib.encodeHls).toHaveBeenCalledTimes(1);
+		expect(ffmpegLib.ffprobe).toHaveBeenCalledWith("https://s3/m1/original");
 		expect(hlsLib.encodeHls).toHaveBeenCalledWith(
-			"https://s3/m1/original",
-			[
-				{ width: 1280, height: 720, videoBitRate: 3_500_000, audioBitRate: 128_000 },
-				{ width: 854, height: 480, videoBitRate: 1_000_000, audioBitRate: 128_000 },
-			],
+			{
+				input: "https://s3/m1/original",
+				renditions: data.renditions,
+				hasAudio: true,
+				audioBitRate: 128_000,
+			},
 			expect.any(Function),
 			expect.any(Function),
 		);
@@ -124,9 +148,37 @@ describe("transcode", () => {
 		expect(job.updateProgress).toHaveBeenLastCalledWith(1);
 	});
 
+	it("skips renditions larger than the original", async () => {
+		original({ width: 1000, height: 562 });
+		hlsLib.encodeHls.mockResolvedValue([result(480)]);
+		await expect(transcode(fakeJob("transcode", data) as never)).resolves.toEqual({
+			proxyId: "proxy-480",
+		});
+		expect(prisma.mediaFile.upsert).toHaveBeenCalledTimes(1);
+		expect(hlsLib.encodeHls.mock.calls[0]![0].renditions).toEqual([data.renditions[1]]);
+		expect(prisma.mediaFile.update.mock.calls.map(([arg]) => arg.where.id)).toEqual(["proxy-480"]);
+	});
+
+	it("compares the size the player shows, after rotation", async () => {
+		// stored as 562x1000, which fits the 720p box at 405x720; shown rotated as 1000x562 it doesn't
+		original({ width: 562, height: 1000, rotation: -90 });
+		hlsLib.encodeHls.mockResolvedValue([result(480)]);
+		await transcode(fakeJob("transcode", data) as never);
+		expect(hlsLib.encodeHls.mock.calls[0]![0].renditions).toEqual([data.renditions[1]]);
+	});
+
+	it("fails for an original without video, before creating proxies", async () => {
+		ffmpegLib.ffprobe.mockResolvedValue({ streams: [{ codec_type: "audio" }] });
+		await expect(transcode(fakeJob("transcode", data) as never)).rejects.toThrow("no video stream");
+		expect(prisma.mediaFile.upsert).not.toHaveBeenCalled();
+		expect(hlsLib.encodeHls).not.toHaveBeenCalled();
+	});
+
 	it("stores no audio codec when the source has no audio", async () => {
+		original({ audio: false });
 		hlsLib.encodeHls.mockResolvedValue([result(1, false), result(1, false)]);
 		await transcode(fakeJob("transcode", data) as never);
+		expect(hlsLib.encodeHls.mock.calls[0]![0].hasAudio).toBe(false);
 		expect(prisma.mediaFile.update.mock.calls.map(([arg]) => arg.data.audioCodec)).toEqual([
 			null,
 			null,
@@ -144,20 +196,18 @@ describe("transcode", () => {
 	it("forwards progress at most once a second", async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(10_000);
-		hlsLib.encodeHls.mockImplementation(
-			async (_i: string, _r: unknown, _s: Sink, onProgress: OnProgress) => {
-				onProgress(0.1);
-				vi.setSystemTime(10_500);
-				onProgress(0.2); // dropped
-				vi.setSystemTime(11_000);
-				onProgress(0.3);
-				vi.setSystemTime(11_999);
-				onProgress(0.4); // dropped
-				vi.setSystemTime(12_000);
-				onProgress(0.5);
-				return [result(1), result(1)];
-			},
-		);
+		hlsLib.encodeHls.mockImplementation(async (_o: unknown, _s: Sink, onProgress: OnProgress) => {
+			onProgress(0.1);
+			vi.setSystemTime(10_500);
+			onProgress(0.2); // dropped
+			vi.setSystemTime(11_000);
+			onProgress(0.3);
+			vi.setSystemTime(11_999);
+			onProgress(0.4); // dropped
+			vi.setSystemTime(12_000);
+			onProgress(0.5);
+			return [result(1), result(1)];
+		});
 		const job = fakeJob("transcode", data);
 		await transcode(job as never);
 		expect(job.updateProgress.mock.calls.map(([p]) => p)).toEqual([0.1, 0.3, 0.5, 1]);
@@ -165,12 +215,10 @@ describe("transcode", () => {
 
 	it("does not fail the job when a progress update fails", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
-		hlsLib.encodeHls.mockImplementation(
-			async (_i: string, _r: unknown, _s: Sink, onProgress: OnProgress) => {
-				onProgress(0.5);
-				return [result(1), result(1)];
-			},
-		);
+		hlsLib.encodeHls.mockImplementation(async (_o: unknown, _s: Sink, onProgress: OnProgress) => {
+			onProgress(0.5);
+			return [result(1), result(1)];
+		});
 		const job = fakeJob("transcode", data);
 		job.updateProgress.mockRejectedValueOnce(new Error("redis gone"));
 		await expect(transcode(job as never)).resolves.toEqual({ proxyId: "proxy-480" });

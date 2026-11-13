@@ -6,6 +6,7 @@ import { uxp } from "./host";
 import { setupMenu } from "./menu";
 import { createPremiereBridge } from "./premiere";
 import { createRpcServer, parseMessage } from "./rpc";
+import { loadTranscodeBridge } from "./bridges/transcode";
 
 // set by vite.config.ts
 declare const DEV: boolean;
@@ -33,6 +34,20 @@ setupMenu();
 
 const nle = createPremiereBridge();
 const host = createHostBridge();
+// probe/transcode/removeFile join the host bridge once the native addon has loaded
+const transcodeReady = loadTranscodeBridge().then((bridge) => {
+	if (bridge) Object.assign(host, bridge);
+	console.log(`[PostPin] review versions are encoded ${bridge ? "in Premiere" : "by the server"}`);
+});
+// The webview asks which of the host's optional functions exist: its proxy answers every name
+const features = {
+	hostFeatures: async () => {
+		await transcodeReady;
+		return Object.keys(host).filter(
+			(name) => typeof (host as unknown as Record<string, unknown>)[name] === "function",
+		);
+	},
+};
 
 const webview = document.createElement("webview") as HTMLElement & {
 	postMessage(message: unknown, targetOrigin?: string): void;
@@ -46,7 +61,7 @@ webview.addEventListener("loaderror", (e: any) =>
 );
 document.getElementById("app")!.appendChild(webview);
 
-const handle = createRpcServer({ nle, host, net: createNetBridge() }, (msg) =>
+const handle = createRpcServer({ nle, host, net: createNetBridge(), features }, (msg) =>
 	webview.postMessage(msg, "*"),
 );
 window.addEventListener("message", (event: MessageEvent) => {

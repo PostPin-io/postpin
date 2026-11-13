@@ -140,6 +140,92 @@ export function $eipc_validator$_LoginCode(value: any): boolean {
 	if (!(typeof value.verificationUri === "string")) return false;
 	return true;
 }
+export function $eipc_validator$_ProbedMedia(value: any): boolean {
+	if (!value || typeof value !== "object") return false;
+
+	// ProbedMedia.width
+	if (!(typeof value.width === "number")) return false;
+
+	// ProbedMedia.height
+	if (!(typeof value.height === "number")) return false;
+
+	// ProbedMedia.rotation
+	if (typeof value.rotation !== "undefined") {
+		if (!(typeof value.rotation === "number")) return false;
+	}
+
+	// ProbedMedia.hasAudio
+	if (!(typeof value.hasAudio === "boolean")) return false;
+
+	// ProbedMedia.duration
+	if (typeof value.duration !== "undefined") {
+		if (!(typeof value.duration === "number")) return false;
+	}
+	return true;
+}
+export function $eipc_validator$_Rendition(value: any): boolean {
+	if (!value || typeof value !== "object") return false;
+
+	// Rendition.width
+	if (!(typeof value.width === "number")) return false;
+
+	// Rendition.height
+	if (!(typeof value.height === "number")) return false;
+
+	// Rendition.bitRate
+	if (!(typeof value.bitRate === "number")) return false;
+	return true;
+}
+export function $eipc_validator$_HlsRange(value: any): boolean {
+	if (!value || typeof value !== "object") return false;
+
+	// HlsRange.offset
+	if (!(typeof value.offset === "number")) return false;
+
+	// HlsRange.length
+	if (!(typeof value.length === "number")) return false;
+	return true;
+}
+export function $eipc_validator$_HlsSegment(value: any): boolean {
+	if (!value || typeof value !== "object") return false;
+
+	// HlsSegment.duration
+	if (!(typeof value.duration === "number")) return false;
+
+	// HlsSegment.offset
+	if (!(typeof value.offset === "number")) return false;
+
+	// HlsSegment.length
+	if (!(typeof value.length === "number")) return false;
+	return true;
+}
+export function $eipc_validator$_HlsInfo(value: any): boolean {
+	if (!value || typeof value !== "object") return false;
+
+	// HlsInfo.init
+	if (!$eipc_validator$_HlsRange(value.init)) return false;
+
+	// HlsInfo.segments
+	if (!(
+		Array.isArray(value.segments) &&
+		value.segments.every((v: any) => $eipc_validator$_HlsSegment(v))
+	))
+		return false;
+	return true;
+}
+export function $eipc_validator$_EncodedProxy(value: any): boolean {
+	if (!value || typeof value !== "object") return false;
+
+	// EncodedProxy.path
+	if (!(typeof value.path === "string")) return false;
+
+	// EncodedProxy.hls
+	if (!$eipc_validator$_HlsInfo(value.hls)) return false;
+
+	// EncodedProxy.bytes
+	if (!(typeof value.bytes === "number")) return false;
+	return true;
+}
 export function $eipc_validator$_TimelineInfo(value: any): boolean {
 	if (!value || typeof value !== "object") return false;
 

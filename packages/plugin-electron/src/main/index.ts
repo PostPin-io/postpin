@@ -9,6 +9,8 @@ import { fromWireMarker, toWireCapabilities, toWireMarker } from "../wire";
 import { createAuth, type AuthOptions } from "./auth";
 import { createSettings } from "./settings";
 import { uploadFile } from "./upload";
+import { killAll, probe, removeFile, transcode } from "./transcode";
+import { findFfmpeg, type FfmpegPaths } from "./ffmpeg";
 
 export interface WindowOptions {
 	// bundled preload script, which imports @postpin-io/plugin-electron/preload
@@ -23,6 +25,10 @@ export interface WindowOptions {
 	iconPath?: string;
 	width?: number;
 	height?: number;
+}
+
+export interface HostBridgeOptions extends AuthOptions {
+	ffmpegDir?: string;
 }
 
 export function createWindow({
@@ -63,9 +69,20 @@ export function createWindow({
 	return win;
 }
 
-export function exposeHostBridge(win: BrowserWindow, options: AuthOptions) {
+export function exposeHostBridge(win: BrowserWindow, options: HostBridgeOptions) {
 	const auth = createAuth(options);
 	const settings = createSettings();
+
+	let ffmpeg: FfmpegPaths | null = null;
+	try {
+		if (options.ffmpegDir) {
+			ffmpeg = findFfmpeg(options.ffmpegDir);
+		}
+	} catch (error) {
+		console.warn("[postpin] no ffmpeg, the server encodes:", error);
+	}
+	const needFfmpeg = () => ffmpeg ?? Promise.reject(new Error("This host has no ffmpeg"));
+	win.on("closed", killAll);
 
 	const dispatcher = CommonAPI.for(win.webContents).setImplementation({
 		getServerUrl: async () => auth.getServerUrl(),
@@ -93,7 +110,12 @@ export function exposeHostBridge(win: BrowserWindow, options: AuthOptions) {
 		uploadFile: (path, partSize, parts) =>
 			uploadFile(path, partSize, parts, (progress) => dispatcher.dispatchUploadProgress(progress)),
 		openInBrowser: async (path) => {
-			await shell.openExternal(`${auth.getServerUrl()}${path.startsWith("/") ? "" : "/"}${path}`);
+			// absolute https URLs open as they are, e.g. a release download
+			await shell.openExternal(
+				/^https:\/\//.test(path)
+					? path
+					: `${auth.getServerUrl()}${path.startsWith("/") ? "" : "/"}${path}`,
+			);
 			return true;
 		},
 		pickDirectory: async () => {
@@ -108,6 +130,26 @@ export function exposeHostBridge(win: BrowserWindow, options: AuthOptions) {
 			return true;
 		},
 		getToken: async () => auth.getToken(),
+		canTranscode: async () => ffmpeg !== null,
+		probe: async (file) => {
+			const media = await probe(await needFfmpeg(), file);
+			// eipc: optional fields are left out, not null
+			return {
+				width: media.width,
+				height: media.height,
+				hasAudio: media.hasAudio,
+				...(media.rotation !== null && { rotation: media.rotation }),
+				...(media.duration !== null && { duration: media.duration }),
+			};
+		},
+		transcode: async (input, renditions, hasAudio) =>
+			transcode(await needFfmpeg(), input, renditions, hasAudio, (f) =>
+				dispatcher.dispatchTranscodeProgress(f),
+			),
+		removeFile: async (file) => {
+			await removeFile(file);
+			return true;
+		},
 	});
 }
 

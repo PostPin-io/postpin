@@ -20,6 +20,7 @@ import type {
 	ShotThumbnailsMessage,
 	ThumbnailMessage,
 	TranscodeMessage,
+	VerifyProxiesMessage,
 } from "./messages.ts";
 export type * from "./messages.ts";
 
@@ -27,6 +28,7 @@ export const JobWeights: {
 	[N in keyof QueueJobs["media-heavy"] | keyof QueueJobs["media-light"]]: number;
 } = {
 	transcode: 100,
+	verifyProxies: 10,
 	thumbnail: 10,
 	probe: 10,
 	setMediaProcessingDone: 1,
@@ -41,6 +43,7 @@ export const JobLabels: {
 	[N in keyof QueueJobs["media-heavy"] | keyof QueueJobs["media-light"]]: string;
 } = {
 	transcode: "Transcode",
+	verifyProxies: "Verify Review Versions",
 	thumbnail: "Generate Thumbnail",
 	probe: "Analyze Media",
 	setMediaProcessingDone: "Done",
@@ -65,6 +68,7 @@ export interface QueueJobs {
 		probe: ProbeMessage;
 		setMediaProcessingDone: SetMediaProcessingDoneMessage;
 		seekSprites: SeekSpritesMessage;
+		verifyProxies: VerifyProxiesMessage;
 		shotThumbnails: ShotThumbnailsMessage;
 		movieBarcode: MovieBarcodeMessage;
 		sceneDetect: SceneDetectMessage;

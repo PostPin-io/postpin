@@ -19,3 +19,18 @@ export interface IDesktopAPIRenderer {
 	getSelectedHost(): Promise<string>;
 	selectHost(id: string): Promise<boolean>;
 }
+export interface AvailableUpdate {
+	version: string;
+	apiVersion?: number;
+}
+export interface IUpdaterAPIImpl {
+	checkForUpdate(): Promise<AvailableUpdate | null> | AvailableUpdate | null;
+	downloadUpdate(): Promise<boolean> | boolean;
+	installUpdate(): Promise<boolean> | boolean;
+}
+export interface IUpdaterAPIRenderer {
+	checkForUpdate(): Promise<AvailableUpdate | null>;
+	downloadUpdate(): Promise<boolean>;
+	installUpdate(): Promise<boolean>;
+	onUpdateProgress(fn: (fraction: number) => void): () => void;
+}

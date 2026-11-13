@@ -12,5 +12,11 @@ export {
 	$eipc_validator$_Settings,
 	$eipc_validator$_LoginConfig,
 	$eipc_validator$_LoginCode,
+	$eipc_validator$_ProbedMedia,
+	$eipc_validator$_Rendition,
+	$eipc_validator$_HlsRange,
+	$eipc_validator$_HlsSegment,
+	$eipc_validator$_HlsInfo,
+	$eipc_validator$_EncodedProxy,
 	$eipc_validator$_TimelineInfo,
 } from "../_internal/common-runtime/PostPin.js";

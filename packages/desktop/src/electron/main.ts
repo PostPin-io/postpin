@@ -1,12 +1,12 @@
 // NOTE: Follow the security guide while implementing the app https://www.electronjs.org/docs/tutorial/security
 
 import { createWindow, exposeHostBridge, exposeNleBridge } from "@postpin-io/plugin-electron/main";
-import { autoUpdater } from "electron-updater";
 import { app, BrowserWindow } from "electron";
 import path from "path";
 import { ADAPTERS, createSwitchBridge, getSelectedHost } from "../adapters";
 import { DesktopAPI } from "../ipc/browser/PostPinDesktop";
 import { restoreSelectedHost, selectAndSaveHost } from "./hostSelection";
+import { exposeUpdater } from "./updater";
 
 declare const DEV_SERVER_URL: string;
 declare const DEFAULT_SERVER_URL: string;
@@ -27,8 +27,15 @@ function openWindow() {
 		url: path.join(__dirname, "ui/index.html"),
 	});
 
-	exposeHostBridge(win, { clientId: CLIENT_ID, defaultServerUrl: DEFAULT_SERVER_URL });
+	exposeHostBridge(win, {
+		clientId: CLIENT_ID,
+		defaultServerUrl: DEFAULT_SERVER_URL,
+		ffmpegDir: app.isPackaged
+			? path.join(process.resourcesPath, "bin")
+			: path.join(__dirname, "../bin", process.platform === "darwin" ? "mac" : "win"),
+	});
 	exposeNleBridge(win, nle);
+	exposeUpdater(win);
 	DesktopAPI.for(win.webContents).setImplementation({
 		listHosts: () => ADAPTERS.map(({ id, name }) => ({ id, name })),
 		getSelectedHost: () => getSelectedHost() ?? "",
@@ -43,7 +50,8 @@ app.whenReady().then(() => {
 	if (process.platform === "darwin" && !app.isPackaged) app.dock?.setIcon(ICON_PATH);
 	restoreSelectedHost();
 	openWindow();
-	if (app.isPackaged) autoUpdater.checkForUpdatesAndNotify();
+	// No update check here: the UI checks once the server's API version is known (autoUpdate.ts in
+	// plugin-core), and a downloaded update installs when the app quits (see updater.ts)
 });
 
 app.on("window-all-closed", () => {

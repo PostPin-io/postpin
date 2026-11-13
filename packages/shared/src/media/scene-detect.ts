@@ -1,6 +1,6 @@
-import { SCENE_SCORE_FLOOR } from "@postpin-io/shared/logic/web-upload";
-import type { SceneScores } from "@postpin-io/shared/types/SceneScores";
-import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
+import { SCENE_SCORE_FLOOR } from "../logic/web-upload.ts";
+import type { SceneScores } from "../types/SceneScores.ts";
+import type { FrameRate } from "../types/TimelineSnapshot.ts";
 
 /**
  * ffmpeg arguments that print a scene score for every frame that differs from the one before by at

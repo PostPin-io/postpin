@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Role } from "@postpin-io/shared/db/enums";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 import { ExportController } from "../../../../src/api/controllers/ExportController.ts";
@@ -365,7 +365,7 @@ describe("completeUpload", () => {
 		const all = (n: Node): Node[] => [n, ...(n.children ?? []).flatMap(all)];
 		const transcodes = all(flow).filter((n) => n.name === "transcode");
 		expect(transcodes).toHaveLength(1);
-		expect((transcodes[0]!.data as { renditions: unknown[] }).renditions).toHaveLength(3);
+		expect((transcodes[0]!.data as { renditions: unknown[] }).renditions).toHaveLength(4);
 	});
 
 	it("413 for a part larger than reserved; nothing is queued", async () => {
@@ -582,5 +582,434 @@ describe("abortUpload", () => {
 			403,
 		);
 		expect(s3Commands()).toEqual([]);
+	});
+});
+
+// ─── proxies uploaded by the plugin ─────────────────────────────────────────
+
+describe("proxy uploads", () => {
+	const r1080 = { width: 1920, height: 1080, bitRate: 8_000_000 };
+	const r480 = { width: 854, height: 480, bitRate: 1_200_000 };
+	const hls = {
+		init: { offset: 0, length: 100 },
+		segments: [
+			{ duration: 2, offset: 100, length: 400 },
+			{ duration: 1.5, offset: 500, length: 500 },
+		],
+	};
+	const parts = [{ partNumber: 1, etag: '"a"' }];
+
+	const ORIGINAL_SIZE = 5000;
+
+	/**
+	 * S3: upload ids per key, the original's one part is in S3 complete, and every stored proxy is
+	 * `proxySize` bytes long (the playlist below ends at 1000)
+	 */
+	function s3WithProxies({
+		proxySize = 1000,
+		failProxyComplete = false,
+	}: { proxySize?: number; failProxyComplete?: boolean } = {}) {
+		fakes.s3Respond = (call) => {
+			const original = String(call.input.Key).endsWith("/original");
+			switch (call.command) {
+				case "CreateMultipartUploadCommand":
+					return { UploadId: `up-${call.input.Key}` };
+				case "ListPartsCommand":
+					return { Parts: [{ PartNumber: 1, ETag: '"a"', Size: ORIGINAL_SIZE }] };
+				case "CompleteMultipartUploadCommand":
+					if (!original && failProxyComplete) throw new Error("InvalidPart");
+					return {};
+				case "HeadObjectCommand":
+					return { ContentLength: original ? ORIGINAL_SIZE : proxySize };
+				case "ListMultipartUploadsCommand":
+					return { Uploads: unfinished };
+				default:
+					return {};
+			}
+		};
+	}
+	/** Unfinished uploads S3 lists, see dropProxies */
+	let unfinished: { Key: string; UploadId: string }[] = [];
+
+	async function init(
+		proxies = [
+			{ ...r1080, fileSize: 1000 },
+			{ ...r480, fileSize: 1000 },
+		],
+	) {
+		await signInApi(w.owner.user, w.org.id);
+		return controller.initUpload(w.projectA.id, w.tl1.id, w.exp1.id, {
+			fileSize: ORIGINAL_SIZE,
+			proxies,
+		});
+	}
+
+	async function complete(res: Awaited<ReturnType<typeof init>>, overrides: object = {}) {
+		return controller.completeUpload(w.projectA.id, w.tl1.id, w.exp1.id, {
+			uploadId: res.uploadId,
+			parts,
+			timelineSnapshot: snapshot,
+			proxies: res.proxies!.map((p) => ({
+				proxyId: p.proxyId,
+				uploadId: p.uploadId,
+				parts,
+				hls,
+				hasAudio: true,
+				...overrides,
+			})),
+		});
+	}
+
+	const proxyRows = (mediaId: string) =>
+		prisma.mediaFile.findMany({ where: { proxyOfId: mediaId }, orderBy: { height: "desc" } });
+	const transcodes = () => {
+		type Node = { name: string; children?: Node[] };
+		const all = (n: Node): Node[] => [n, ...(n.children ?? []).flatMap(all)];
+		return all(fakes.queue[0]!.args[0] as Node).filter((n) => n.name === "transcode");
+	};
+
+	beforeEach(() => {
+		unfinished = [];
+		s3WithProxies();
+	});
+
+	it("init creates a pending proxy row and a multipart upload per proxy, in request order", async () => {
+		const res = await init();
+		const rows = await proxyRows(res.mediaId);
+		expect(rows.map((r) => [r.width, r.height, r.bitrate, r.status, r.size])).toEqual([
+			[1920, 1080, 8_000_000, "PENDING", 1000n],
+			[854, 480, 1_200_000, "PENDING", 1000n],
+		]);
+		expect(res.proxies!.map((p) => [p.proxyId, p.height, p.uploadId])).toEqual([
+			[rows[0]!.id, 1080, `up-${res.mediaId}/proxy-${rows[0]!.id}`],
+			[rows[1]!.id, 480, `up-${res.mediaId}/proxy-${rows[1]!.id}`],
+		]);
+		expect(new URL(res.proxies![0]!.parts[0]!.url).pathname).toBe(
+			`/postpin-test/${res.mediaId}/proxy-${rows[0]!.id}`,
+		);
+	});
+
+	it("init without proxies returns none", async () => {
+		await signInApi(w.owner.user, w.org.id);
+		const res = await controller.initUpload(w.projectA.id, w.tl1.id, w.exp1.id, { fileSize: 1 });
+		expect(res).not.toHaveProperty("proxies");
+	});
+
+	it("a retried init replaces the proxies of the attempt before", async () => {
+		const first = await init();
+		const second = await init([{ ...r480, fileSize: 2000 }]);
+		const rows = await proxyRows(second.mediaId);
+		expect(rows.map((r) => [r.height, r.size])).toEqual([[480, 2000n]]);
+		expect(rows[0]!.id).not.toBe(first.proxies![1]!.proxyId);
+	});
+
+	it("init counts the proxies into the storage quota", async () => {
+		await prisma.organization.update({ where: { id: w.org.id }, data: { storageQuota: 6000n } });
+		await expectHttpError(init(), 413);
+		expect(await prisma.mediaFile.count({ where: { proxyOfId: { not: null } } })).toBe(0);
+	});
+
+	it.each([
+		["an unknown rendition", [{ width: 2560, height: 1440, bitRate: 12_000_000, fileSize: 1 }]],
+		["a changed bitrate", [{ ...r1080, bitRate: 9_000_000, fileSize: 1 }]],
+		[
+			"a rendition twice",
+			[
+				{ ...r480, fileSize: 1 },
+				{ ...r480, fileSize: 1 },
+			],
+		],
+		["an invalid fileSize", [{ ...r480, fileSize: 0 }]],
+	])("422 for %s, before touching anything", async (_name, proxies) => {
+		await expectHttpError(init(proxies), 422);
+		expect(fakes.s3).toEqual([]);
+		expect(await prisma.media.count()).toBe(0);
+	});
+
+	it("422 for proxies when the server encodes itself", async () => {
+		fakes.transcodeMode = "server";
+		const err = await expectHttpError(init(), 422);
+		expect(err.message).toContain("encodes the review proxies itself");
+	});
+
+	it("complete accepts the proxies: completed with playlist and size, no transcode job", async () => {
+		const res = await init();
+		await expect(complete(res)).resolves.toEqual({ transcodedBy: "plugin" });
+
+		const rows = await proxyRows(res.mediaId);
+		expect(rows.map((r) => r.status)).toEqual(["COMPLETED", "COMPLETED"]);
+		expect(rows[0]).toMatchObject({
+			hls,
+			size: 1000n,
+			duration: 3.5,
+			codecs: "avc1.64002a,mp4a.40.2",
+			audioCodec: "aac",
+			videoCodec: "h264",
+			contentType: "video/mp4",
+		});
+		expect(transcodes()).toEqual([]);
+		const completed = fakes.s3.filter((c) => c.command === "CompleteMultipartUploadCommand");
+		expect(completed.map((c) => c.input.Key)).toEqual([
+			`${res.mediaId}/original`,
+			...rows.map((r) => `${res.mediaId}/proxy-${r.id}`),
+		]);
+	});
+
+	it("stores no audio codec for proxies without audio", async () => {
+		const res = await init();
+		await complete(res, { hasAudio: false });
+		const rows = await proxyRows(res.mediaId);
+		expect(rows.map((r) => [r.codecs, r.audioCodec])).toEqual([
+			["avc1.64002a", null],
+			["avc1.64002a", null],
+		]);
+	});
+
+	async function expectServerFallback(res: Awaited<ReturnType<typeof init>>) {
+		expect(await proxyRows(res.mediaId)).toEqual([]);
+		expect(transcodes()).toHaveLength(1);
+		const media = await prisma.media.findUniqueOrThrow({ where: { id: res.mediaId } });
+		expect(media.status).toBe("PROCESSING");
+	}
+
+	it("drops the proxies and lets the server encode when a playlist doesn't match the file", async () => {
+		vi.spyOn(console, "warn").mockImplementation(() => {});
+		const res = await init();
+		s3WithProxies({ proxySize: 999 });
+		await expect(complete(res)).resolves.toEqual({ transcodedBy: "server" });
+		await expectServerFallback(res);
+		// what was stored of them is deleted
+		const deleted = fakes.s3.filter((c) => c.command === "DeleteObjectCommand");
+		expect(deleted).toHaveLength(2);
+	});
+
+	it("falls back to the server for a malformed playlist", async () => {
+		vi.spyOn(console, "warn").mockImplementation(() => {});
+		const res = await init();
+		await expect(complete(res, { hls: { init: hls.init, segments: "nope" } })).resolves.toEqual({
+			transcodedBy: "server",
+		});
+		await expectServerFallback(res);
+	});
+
+	it("falls back to the server when not every proxy of init-upload comes back", async () => {
+		vi.spyOn(console, "warn").mockImplementation(() => {});
+		const res = await init();
+		await expect(
+			controller.completeUpload(w.projectA.id, w.tl1.id, w.exp1.id, {
+				uploadId: res.uploadId,
+				parts,
+				timelineSnapshot: snapshot,
+				proxies: [{ proxyId: res.proxies![0]!.proxyId, uploadId: "u", parts, hls, hasAudio: true }],
+			}),
+		).resolves.toEqual({ transcodedBy: "server" });
+		await expectServerFallback(res);
+	});
+
+	it("falls back to the server when S3 can't complete a proxy, and aborts its upload", async () => {
+		vi.spyOn(console, "warn").mockImplementation(() => {});
+		const res = await init();
+		s3WithProxies({ failProxyComplete: true });
+		await expect(complete(res)).resolves.toEqual({ transcodedBy: "server" });
+		await expectServerFallback(res);
+		const aborted = fakes.s3.filter((c) => c.command === "AbortMultipartUploadCommand");
+		expect(aborted.map((c) => c.input.UploadId)).toEqual(res.proxies!.map((p) => p.uploadId));
+	});
+
+	it("complete without proxies drops the ones init created, the server encodes", async () => {
+		const res = await init();
+		await expect(
+			controller.completeUpload(w.projectA.id, w.tl1.id, w.exp1.id, {
+				uploadId: res.uploadId,
+				parts,
+				timelineSnapshot: snapshot,
+			}),
+		).resolves.toEqual({ transcodedBy: "server" });
+		await expectServerFallback(res);
+	});
+
+	it("falls back to the server when it switched to server mode after init", async () => {
+		vi.spyOn(console, "warn").mockImplementation(() => {});
+		const res = await init();
+		fakes.transcodeMode = "server";
+		await expect(complete(res)).resolves.toEqual({ transcodedBy: "server" });
+		await expectServerFallback(res);
+	});
+
+	it("abort aborts the proxies' uploads and deletes their rows", async () => {
+		const res = await init();
+		fakes.s3.length = 0;
+		await controller.abortUpload(w.projectA.id, w.tl1.id, w.exp1.id, {
+			uploadId: res.uploadId,
+			proxies: res.proxies!.map(({ proxyId, uploadId }) => ({ proxyId, uploadId })),
+		});
+		expect(await proxyRows(res.mediaId)).toEqual([]);
+		const aborted = fakes.s3.filter((c) => c.command === "AbortMultipartUploadCommand");
+		expect(aborted.map((c) => c.input.UploadId).sort()).toEqual(
+			[res.uploadId, ...res.proxies!.map((p) => p.uploadId)].sort(),
+		);
+	});
+});
+
+describe("2160p proxy uploads", () => {
+	it("stores level 5.2 codecs for a 2160p proxy", async () => {
+		const hls = {
+			init: { offset: 0, length: 10 },
+			segments: [{ duration: 2, offset: 10, length: 90 }],
+		};
+		// a 1-byte original in one part, a 100-byte proxy
+		fakes.s3Respond = (call) => {
+			const original = String(call.input.Key).endsWith("/original");
+			if (call.command === "CreateMultipartUploadCommand") return { UploadId: "u" };
+			if (call.command === "ListPartsCommand")
+				return { Parts: [{ PartNumber: 1, ETag: '"a"', Size: 1 }] };
+			if (call.command === "HeadObjectCommand") return { ContentLength: original ? 1 : 100 };
+			return {};
+		};
+		await signInApi(w.owner.user, w.org.id);
+		const res = await controller.initUpload(w.projectA.id, w.tl1.id, w.exp1.id, {
+			fileSize: 1,
+			proxies: [{ width: 3840, height: 2160, bitRate: 20_000_000, fileSize: 100 }],
+		});
+		await controller.completeUpload(w.projectA.id, w.tl1.id, w.exp1.id, {
+			uploadId: "u",
+			parts: [{ partNumber: 1, etag: '"a"' }],
+			timelineSnapshot: snapshot,
+			proxies: [
+				{ proxyId: res.proxies![0]!.proxyId, uploadId: "u", parts: [], hls, hasAudio: true },
+			],
+		});
+		const proxy = await prisma.mediaFile.findUniqueOrThrow({
+			where: { id: res.proxies![0]!.proxyId },
+		});
+		expect(proxy.codecs).toBe("avc1.640034,mp4a.40.2");
+	});
+});
+
+// ─── proxies requested after the original started uploading ────────────────
+
+describe("initProxyUploads", () => {
+	const r720 = { width: 1280, height: 720, bitRate: 3_500_000 };
+	const r480 = { width: 854, height: 480, bitRate: 1_200_000 };
+	const hls = {
+		init: { offset: 0, length: 100 },
+		segments: [{ duration: 2, offset: 100, length: 900 }],
+	};
+	const parts = [{ partNumber: 1, etag: '"a"' }];
+	let unfinished: { Key: string; UploadId: string }[] = [];
+
+	beforeEach(() => {
+		unfinished = [];
+		fakes.s3Respond = (call) => {
+			const original = String(call.input.Key).endsWith("/original");
+			switch (call.command) {
+				case "CreateMultipartUploadCommand":
+					return { UploadId: `up-${call.input.Key}` };
+				case "ListPartsCommand":
+					return { Parts: [{ PartNumber: 1, ETag: '"a"', Size: 5000 }] };
+				case "HeadObjectCommand":
+					return { ContentLength: original ? 5000 : 1000 };
+				case "ListMultipartUploadsCommand":
+					return { Uploads: unfinished };
+				default:
+					return {};
+			}
+		};
+	});
+
+	/** init-upload for the original alone, like a plugin that still encodes */
+	async function startOriginal() {
+		await signInApi(w.owner.user, w.org.id);
+		return controller.initUpload(w.projectA.id, w.tl1.id, w.exp1.id, { fileSize: 5000 });
+	}
+	const requestProxies = (
+		proxies = [
+			{ ...r720, fileSize: 1000 },
+			{ ...r480, fileSize: 1000 },
+		],
+	) => controller.initProxyUploads(w.projectA.id, w.tl1.id, w.exp1.id, { proxies });
+
+	it("adds the proxies' uploads to a started upload, and complete-upload accepts them", async () => {
+		const original = await startOriginal();
+		const { proxies } = await requestProxies();
+		expect(proxies.map((p) => [p.height, p.uploadId])).toEqual([
+			[720, `up-${original.mediaId}/proxy-${proxies[0]!.proxyId}`],
+			[480, `up-${original.mediaId}/proxy-${proxies[1]!.proxyId}`],
+		]);
+		await expect(
+			controller.completeUpload(w.projectA.id, w.tl1.id, w.exp1.id, {
+				uploadId: original.uploadId,
+				parts,
+				timelineSnapshot: snapshot,
+				proxies: proxies.map((p) => ({
+					proxyId: p.proxyId,
+					uploadId: p.uploadId,
+					parts,
+					hls,
+					hasAudio: true,
+				})),
+			}),
+		).resolves.toEqual({ transcodedBy: "plugin" });
+		const rows = await prisma.mediaFile.findMany({ where: { proxyOfId: original.mediaId } });
+		expect(rows.map((r) => r.status)).toEqual(["COMPLETED", "COMPLETED"]);
+	});
+
+	it("a second call replaces the first one's proxies", async () => {
+		const original = await startOriginal();
+		await requestProxies();
+		const { proxies } = await requestProxies([{ ...r480, fileSize: 2000 }]);
+		const rows = await prisma.mediaFile.findMany({ where: { proxyOfId: original.mediaId } });
+		expect(rows.map((r) => [r.id, r.height, r.size])).toEqual([[proxies[0]!.proxyId, 480, 2000n]]);
+	});
+
+	it("counts the original and the proxies against the quota", async () => {
+		await startOriginal();
+		await prisma.organization.update({ where: { id: w.org.id }, data: { storageQuota: 6500n } });
+		await expectHttpError(requestProxies(), 413);
+		await expect(requestProxies([{ ...r480, fileSize: 1000 }])).resolves.toBeDefined();
+	});
+
+	it("409 once the upload was cancelled or the media processes", async () => {
+		const original = await startOriginal();
+		await controller.abortUpload(w.projectA.id, w.tl1.id, w.exp1.id, {
+			uploadId: original.uploadId,
+		});
+		await expectHttpError(requestProxies(), 409);
+		await prisma.media.update({ where: { id: original.mediaId }, data: { status: "PROCESSING" } });
+		await expectHttpError(requestProxies(), 409);
+	});
+
+	it("422 for no proxies, or when the server encodes itself", async () => {
+		await startOriginal();
+		await expectHttpError(requestProxies([]), 422);
+		fakes.transcodeMode = "server";
+		await expectHttpError(requestProxies(), 422);
+	});
+
+	it("404 without init-upload", async () => {
+		await signInApi(w.owner.user, w.org.id);
+		await expectHttpError(requestProxies(), 404);
+	});
+
+	it("complete-upload without them aborts the proxies' unfinished uploads it wasn't told about", async () => {
+		const original = await startOriginal();
+		const { proxies } = await requestProxies();
+		// the plugin gave up on the proxies; S3 still has their parts
+		unfinished = proxies.map((p) => ({
+			Key: `${original.mediaId}/proxy-${p.proxyId}`,
+			UploadId: p.uploadId,
+		}));
+		await expect(
+			controller.completeUpload(w.projectA.id, w.tl1.id, w.exp1.id, {
+				uploadId: original.uploadId,
+				parts,
+				timelineSnapshot: snapshot,
+			}),
+		).resolves.toEqual({ transcodedBy: "server" });
+		const aborted = fakes.s3.filter((c) => c.command === "AbortMultipartUploadCommand");
+		expect(aborted.map((c) => c.input.UploadId).sort()).toEqual(
+			proxies.map((p) => p.uploadId).sort(),
+		);
+		expect(await prisma.mediaFile.count({ where: { proxyOfId: original.mediaId } })).toBe(0);
 	});
 });

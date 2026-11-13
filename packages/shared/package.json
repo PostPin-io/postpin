@@ -8,6 +8,8 @@
 		"./env": "./src/env/index.ts",
 		"./queue": "./src/queue/index.ts",
 		"./queue/*": "./src/queue/*.ts",
+		"./media/*": "./src/media/*.ts",
+		"./api-version": "./src/api-version.ts",
 		"./storage": "./src/storage/index.ts",
 		"./db": "./src/db/index.ts",
 		"./db/enums": "./src/db/prisma/enums.ts",

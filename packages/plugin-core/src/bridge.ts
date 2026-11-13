@@ -1,4 +1,7 @@
+import type { Rendition } from "@postpin-io/shared/media/hls";
+import type { HlsInfo } from "@postpin-io/shared/types/HlsIndex";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
+import { type ProbedMedia } from "@postpin-io/shared/media/probe";
 
 export interface PaletteColor {
 	id: string;
@@ -138,6 +141,9 @@ export interface HostBridge {
 		parts: UploadPartUrl[],
 		onProgress: (progress: UploadProgress) => void,
 	): Promise<UploadedPart[]>;
+	/**
+	 * a path on the PostPin server, or an absolute https URL elsewhere (e.g. a release download)
+	 */
 	openInBrowser(path: string): Promise<void>;
 	pickDirectory(): Promise<string>;
 	/**
@@ -146,4 +152,49 @@ export interface HostBridge {
 	setProgress(fraction: number | null): Promise<void>;
 	/** Session token for the api, null if not signed in */
 	getToken(): Promise<string | null>;
+
+	// Encoding the review proxies with the bundled ffmpeg. Hosts without it leave these out, then
+	// the server encodes.
+	/** size, rotation and audio of a rendered file */
+	probe?(path: string): Promise<ProbedMedia>;
+	/**
+	 * encodes `input` with hlsArgs() into temporary files, one per rendition in the same order;
+	 * `onProgress` gets 0 to 1
+	 */
+	transcode?(
+		input: string,
+		renditions: Rendition[],
+		hasAudio: boolean,
+		onProgress: (fraction: number) => void,
+	): Promise<EncodedProxy[]>;
+	/** deletes a file transcode() wrote */
+	removeFile?(path: string): Promise<void>;
+
+	/** Only for hosts that update themselves (PostPin Desktop) */
+	updater?: Updater;
+}
+
+export type { ProbedMedia };
+
+export interface EncodedProxy {
+	path: string;
+	/** byte ranges from the playlist, see parseHlsPlaylist() */
+	hls: HlsInfo;
+	bytes: number;
+}
+
+export interface AvailableUpdate {
+	/** release, e.g. "1.4.2" */
+	version: string;
+	/** the API version the release speaks, null when it couldn't be read */
+	apiVersion: number | null;
+}
+
+export interface Updater {
+	/** the newest release when it's newer than the running one, else null */
+	check(): Promise<AvailableUpdate | null>;
+	/** downloads the update check() found */
+	download(onProgress: (fraction: number) => void): Promise<void>;
+	/** quits and restarts into the downloaded update */
+	install(): Promise<void>;
 }

@@ -4,10 +4,12 @@
 
 	interface Props {
 		renderProgress: RenderProgress | null;
+		/** encoding the review versions, 0 to 1 */
+		transcodeProgress?: number | null;
 		uploadProgress: UploadProgress | null;
 	}
 
-	let { renderProgress, uploadProgress }: Props = $props();
+	let { renderProgress, transcodeProgress = null, uploadProgress }: Props = $props();
 </script>
 
 {#if renderProgress && renderProgress.percent < 100}
@@ -24,6 +26,16 @@
 			{#if renderProgress.estimatedTimeRemainingMs > 0}
 				· {formatDuration(renderProgress.estimatedTimeRemainingMs)} left
 			{/if}
+		</span>
+	</div>
+{/if}
+
+<!-- encoding runs while the render uploads: both bars at once -->
+{#if transcodeProgress !== null && transcodeProgress < 1}
+	<div class="flex items-center gap-2">
+		<progress class="progress progress-primary" value={transcodeProgress} max="1"></progress>
+		<span class="text-sm whitespace-nowrap tabular-nums">
+			Encoding {Math.floor(transcodeProgress * 100)}%
 		</span>
 	</div>
 {/if}

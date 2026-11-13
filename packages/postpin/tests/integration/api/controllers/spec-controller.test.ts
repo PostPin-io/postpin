@@ -16,6 +16,7 @@ it("serves the generated OpenAPI spec with every API route", async () => {
 			"/v1/projects/{projectId}/categories",
 			"/v1/projects/{projectId}/timelines/{timelineId}/exports",
 			"/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers",
+			"/v1/config",
 		]),
 	);
 });

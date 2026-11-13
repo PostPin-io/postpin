@@ -193,7 +193,12 @@
 		if (type === HLS) {
 			// a changed URL makes the element fetch the playlists again, with freshly signed URLs
 			const url = attempt ? `${src}${src.includes("?") ? "&" : "?"}reload=${attempt}` : src;
-			el.source = { src: url, type, preferPlayback: "mse" };
+			el.source = {
+				src: url,
+				type,
+				preferPlayback: "mse",
+				engine: { hlsJs: { capLevelToPlayerSize: true } },
+			};
 		} else {
 			el.source = { src, type };
 		}

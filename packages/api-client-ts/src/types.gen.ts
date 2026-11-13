@@ -106,6 +106,19 @@ export type MultipartUploadPartUrl = {
 	url: string;
 };
 
+export type ProxyUpload = {
+	uploadId: string;
+	/**
+	 * Size of every part except the last one, in bytes.
+	 */
+	partSize: number;
+	parts: Array<MultipartUploadPartUrl>;
+	proxyId: string;
+	width: number;
+	height: number;
+	bitRate: number;
+};
+
 export type InitUploadResponse = {
 	uploadId: string;
 	/**
@@ -114,6 +127,30 @@ export type InitUploadResponse = {
 	partSize: number;
 	parts: Array<MultipartUploadPartUrl>;
 	mediaId: string;
+	/**
+	 * one per requested proxy, same order
+	 */
+	proxies?: Array<ProxyUpload>;
+};
+
+/**
+ * A review proxy the plugin encoded with hlsArgs() and wants to upload
+ */
+export type ProxyUploadRequest = {
+	/**
+	 * a rendition from GET /v1/config, unchanged
+	 */
+	width: number;
+	height: number;
+	bitRate: number;
+	fileSize: number;
+};
+
+export type CompleteUploadResponse = {
+	/**
+	 * who encodes the review proxies: the plugin's were accepted, or the server encodes them
+	 */
+	transcodedBy: "plugin" | "server";
 };
 
 export type UploadedPart = {
@@ -203,6 +240,65 @@ export type TimelineSnapshot = {
 	tracks: Array<Track>;
 	name: string;
 	id: string;
+};
+
+export type UploadedProxy = {
+	proxyId: string;
+	uploadId: string;
+	parts: Array<UploadedPart>;
+	/**
+	 * byte ranges from the playlist ffmpeg wrote, see parseHlsPlaylist()
+	 */
+	hls: {
+		segments: Array<{
+			length: number;
+			offset: number;
+			duration: number;
+		}>;
+		init: {
+			length: number;
+			offset: number;
+		};
+	};
+	hasAudio: boolean;
+};
+
+export type ProxyRendition = {
+	/**
+	 * the box the video is fitted into, keeping its aspect ratio
+	 */
+	width: number;
+	height: number;
+	/**
+	 * video bits per second
+	 */
+	bitRate: number;
+};
+
+export type ClientConfig = {
+	/**
+	 * Plugins must speak exactly this API version, the API rejects others with 426
+	 */
+	apiVersion: number;
+	/**
+	 * Release the server runs, e.g. `1.4.2`; its plugins speak its API version
+	 */
+	serverRelease: string;
+	transcode: {
+		audio: {
+			bitRate: number;
+			codec: string;
+		};
+		/**
+		 * Largest first. Encode only those selectRenditions() picks for the render's size.
+		 */
+		renditions: Array<ProxyRendition>;
+		/**
+		 * `plugin`: plugins encode the review proxies with hlsArgs() and upload them with the original.
+		 * The server still encodes when a plugin can't. `server`: the server always encodes.
+		 */
+		mode: "plugin" | "server";
+	};
 };
 
 export type DefaultSelection36CategoryPayload = {
@@ -462,7 +558,12 @@ export type CreateExportResponses = {
 export type CreateExportResponse = CreateExportResponses[keyof CreateExportResponses];
 
 export type InitUploadData = {
+	/**
+	 * `proxies`: the review proxies the plugin encoded, when GET /v1/config says `plugin`.
+	 * Left out, the server encodes them.
+	 */
 	body: {
+		proxies?: Array<ProxyUploadRequest>;
 		fileSize: number;
 	};
 	path: {
@@ -491,6 +592,10 @@ export type InitUploadErrors = {
 	 * File too large or storage quota exceeded
 	 */
 	413: unknown;
+	/**
+	 * Invalid proxies, or the server transcodes itself
+	 */
+	422: unknown;
 };
 
 export type InitUploadResponses = {
@@ -502,8 +607,55 @@ export type InitUploadResponses = {
 
 export type InitUploadResponse2 = InitUploadResponses[keyof InitUploadResponses];
 
+export type InitProxyUploadsData = {
+	body: {
+		proxies: Array<ProxyUploadRequest>;
+	};
+	path: {
+		projectId: string;
+		timelineId: string;
+		exportId: string;
+	};
+	query?: never;
+	url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/init-proxy-uploads";
+};
+
+export type InitProxyUploadsErrors = {
+	/**
+	 * Export not found
+	 */
+	404: unknown;
+	/**
+	 * Media already processing or upload cancelled
+	 */
+	409: unknown;
+	/**
+	 * Storage quota exceeded
+	 */
+	413: unknown;
+	/**
+	 * Invalid proxies, or the server transcodes itself
+	 */
+	422: unknown;
+};
+
+export type InitProxyUploadsResponses = {
+	/**
+	 * Ok
+	 */
+	200: {
+		proxies: Array<ProxyUpload>;
+	};
+};
+
+export type InitProxyUploadsResponse = InitProxyUploadsResponses[keyof InitProxyUploadsResponses];
+
 export type CompleteUploadData = {
 	body: {
+		/**
+		 * every proxy init-upload returned, after its parts were PUT
+		 */
+		proxies?: Array<UploadedProxy>;
 		timelineSnapshot: TimelineSnapshot;
 		parts: Array<UploadedPart>;
 		uploadId: string;
@@ -530,15 +682,19 @@ export type CompleteUploadErrors = {
 
 export type CompleteUploadResponses = {
 	/**
-	 * No content
+	 * Ok
 	 */
-	204: void;
+	200: CompleteUploadResponse;
 };
 
-export type CompleteUploadResponse = CompleteUploadResponses[keyof CompleteUploadResponses];
+export type CompleteUploadResponse2 = CompleteUploadResponses[keyof CompleteUploadResponses];
 
 export type AbortUploadData = {
 	body: {
+		proxies?: Array<{
+			uploadId: string;
+			proxyId: string;
+		}>;
 		uploadId: string;
 	};
 	path: {
@@ -569,6 +725,22 @@ export type AbortUploadResponses = {
 };
 
 export type AbortUploadResponse = AbortUploadResponses[keyof AbortUploadResponses];
+
+export type GetConfigData = {
+	body?: never;
+	path?: never;
+	query?: never;
+	url: "/v1/config";
+};
+
+export type GetConfigResponses = {
+	/**
+	 * Ok
+	 */
+	200: ClientConfig;
+};
+
+export type GetConfigResponse = GetConfigResponses[keyof GetConfigResponses];
 
 export type GetCategoriesData = {
 	body?: never;

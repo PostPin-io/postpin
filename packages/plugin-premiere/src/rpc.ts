@@ -59,10 +59,19 @@ export function createRpcClient(send: (msg: RpcMessage) => void) {
 		}
 	}
 
-	function proxy<T extends object>(target: string): T {
+	/**
+	 * A proxy answers every name with a function, so optional members (`host.updater?`) would look
+	 * present. List those the panel doesn't implement in `absent`: they read as undefined.
+	 */
+	function proxy<T extends object>(
+		target: string,
+		{ absent = [] }: { absent?: (keyof T)[] } = {},
+	): T {
+		const missing = new Set<PropertyKey>(absent);
 		return new Proxy({} as T, {
 			get: (_, method) => {
-				if (typeof method !== "string" || method === "then") return undefined;
+				if (typeof method !== "string" || method === "then" || missing.has(method))
+					return undefined;
 				return (...args: unknown[]) => {
 					const id = nextId++;
 					const ownCallbacks: number[] = [];

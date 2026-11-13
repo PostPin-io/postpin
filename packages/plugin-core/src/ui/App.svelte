@@ -4,6 +4,7 @@
 	import { setBridges } from "./context";
 	import Login from "./Login.svelte";
 	import MainScreen from "./MainScreen.svelte";
+	import DragBar from "./DragBar.svelte";
 	import { errorMessage } from "../errors";
 
 	interface Props {
@@ -41,18 +42,23 @@
 </script>
 
 {#if loading}
+	<DragBar />
 	<main class="w-screen h-screen flex items-center justify-center">
 		<span class="loading loading-lg loading-spinner"></span>
 	</main>
 {:else if loggedIn}
 	<svelte:boundary>
 		{#snippet failed(error: unknown, reset: () => void)}
-			An error occurred:<br />
-			<pre class="whitespace-pre-wrap">{errorMessage(error)}</pre>
-			<button class="btn btn-sm" onclick={reset}>Restart</button>
+			<DragBar />
+			<div class="p-4 pt-10">
+				An error occurred:<br />
+				<pre class="whitespace-pre-wrap">{errorMessage(error)}</pre>
+				<button class="btn btn-sm" onclick={reset}>Restart</button>
+			</div>
 		{/snippet}
 		<MainScreen {header} {titleBarInset} {fetch} />
 	</svelte:boundary>
 {:else}
+	<DragBar />
 	<Login />
 {/if}

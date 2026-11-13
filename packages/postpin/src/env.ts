@@ -73,6 +73,7 @@ export const variables = defineEnvVars(
 				v.transform((s) => s?.trim() || undefined),
 			),
 		}, // empty = disabled
+		TRANSCODE_MODE: { schema: v.optional(v.picklist(["plugin", "server"]), "plugin") },
 		// Legal links in the footer, on sign-up and on share links. Public: rendered in the browser.
 		IMPRINT_URL: { schema: envLinkUrl, public: true },
 		PRIVACY_URL: { schema: envLinkUrl, public: true },

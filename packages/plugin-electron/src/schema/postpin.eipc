@@ -64,6 +64,42 @@ structure LoginCode {
   verificationUri: string
 }
 
+structure ProbedMedia {
+  width: number
+  height: number
+  rotation?: number
+  hasAudio: boolean
+  duration?: number
+}
+
+structure Rendition {
+  width: number
+  height: number
+  bitRate: number
+}
+
+structure HlsRange {
+  offset: number
+  length: number
+}
+
+structure HlsSegment {
+  duration: number
+  offset: number
+  length: number
+}
+
+structure HlsInfo {
+  init: HlsRange
+  segments: HlsSegment[]
+}
+
+structure EncodedProxy {
+  path: string
+  hls: HlsInfo
+  bytes: number
+}
+
 [RendererAPI]
 [ContextBridge]
 [Validator=App]
@@ -88,6 +124,14 @@ interface CommonAPI {
   pickDirectory() -> string
   // progress bar on the dock / taskbar icon, 0 to 1, negative removes it
   setProgress(fraction: number) -> boolean
+
+  // false when this host has no ffmpeg; then the other three throw
+  canTranscode() -> boolean
+  probe(path: string) -> ProbedMedia
+  transcode(input: string, renditions: Rendition[], hasAudio: boolean) -> EncodedProxy[]
+  [Event]
+  transcodeProgress(fraction: number)
+  removeFile(path: string) -> boolean
 }
 
 structure TimelineInfo {

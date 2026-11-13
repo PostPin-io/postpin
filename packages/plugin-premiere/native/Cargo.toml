@@ -1,0 +1,31 @@
+[package]
+name = "postpin-process"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+# cdylib: a C dynamic library (.dylib/.dll), renamed to .uxpaddon by the build scripts;
+# rlib: so tests/ can use the process module
+crate-type = ["cdylib", "rlib"]
+
+# for tests/process_windows.rs (CARGO_BIN_EXE_echo-args); build-*.sh copy only the library
+[[bin]]
+name = "echo-args"
+path = "src/bin/echo-args.rs"
+test = false
+doc = false
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"   # kill() on a process group; std only offers SIGKILL
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_JobObjects", "Win32_System_Threading", "Win32_Security"] }
+
+[build-dependencies]
+bindgen = "0.73"
+
+[profile.release]
+panic = "unwind"   # needed: every export catches panics (uxp.rs::guarded); "abort" would kill Premiere
+lto = true
+strip = true

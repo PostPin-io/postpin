@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Role } from "@postpin-io/shared/db/enums";
+import { POSTPIN_API_VERSION } from "@postpin-io/shared/api-version";
 import { handleApiRequest } from "../../../src/api/index.ts";
 import { prisma } from "../../helpers/db.ts";
 import * as f from "../../helpers/factories.ts";
@@ -61,6 +62,75 @@ describe("authentication", () => {
 		const docs = await call("/api/v1/docs");
 		expect(docs.status).toBe(200);
 		expect(docs.body).toContain("PostPin OpenAPI Docs");
+	});
+});
+
+describe("API version check", () => {
+	const current = String(POSTPIN_API_VERSION);
+	const older = String(POSTPIN_API_VERSION - 1);
+	const newer = String(POSTPIN_API_VERSION + 1);
+
+	it("426 for an older plugin, with both versions and CORS headers", async () => {
+		await signInApi(w.owner.user, w.org.id);
+		const { res, status, body } = await call("/api/v1/projects", {
+			headers: { "x-postpin-api-version": older, origin: "null" },
+		});
+		expect(status).toBe(426);
+		expect(body).toMatchObject({
+			name: "HttpError",
+			serverApiVersion: POSTPIN_API_VERSION,
+			serverRelease: "test",
+			clientApiVersion: POSTPIN_API_VERSION - 1,
+		});
+		expect(body.message).toContain("Update the plugin.");
+		expect(res.headers.get("access-control-allow-origin")).toBeTruthy();
+	});
+
+	it("426 for a newer plugin asks for a server update", async () => {
+		const { status, body } = await call("/api/v1/projects", {
+			headers: { "x-postpin-api-version": newer },
+		});
+		expect(status).toBe(426);
+		expect(body.message).toContain("Update the PostPin server");
+	});
+
+	it("426 for a version that isn't an integer", async () => {
+		const { status, body } = await call("/api/v1/projects", {
+			headers: { "x-postpin-api-version": "1.0.0" },
+		});
+		expect(status).toBe(426);
+		expect(body.clientApiVersion).toBe("1.0.0");
+	});
+
+	it("426 comes before authentication, so a plugin learns it before signing in", async () => {
+		const { status } = await call("/api/v1/projects", {
+			headers: { "x-postpin-api-version": older },
+		});
+		expect(status).toBe(426);
+	});
+
+	it("passes the same API version and requests without the header", async () => {
+		await signInApi(w.owner.user, w.org.id);
+		expect(
+			(await call("/api/v1/projects", { headers: { "x-postpin-api-version": current } })).status,
+		).toBe(200);
+		expect((await call("/api/v1/projects")).status).toBe(200);
+	});
+
+	it("CORS preflights allow the API version header", async () => {
+		const event = fakeRequestEvent("/api/v1/projects", {
+			method: "OPTIONS",
+			headers: {
+				origin: "null",
+				"access-control-request-method": "GET",
+				"access-control-request-headers": "authorization,x-postpin-api-version",
+			},
+		});
+		const res = await handleApiRequest(event);
+		expect(res.status).toBe(200);
+		expect(res.headers.get("access-control-allow-headers")?.toLowerCase()).toContain(
+			"x-postpin-api-version",
+		);
 	});
 });
 

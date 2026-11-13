@@ -29,9 +29,21 @@ beforeEach(() => {
 });
 
 describe("seekSprites", () => {
-	it("needs the proxy from its transcode child", async () => {
+	it("without a transcode child, reads the smallest finished proxy the plugin uploaded", async () => {
+		prisma.mediaFile.findFirstOrThrow.mockResolvedValue(proxy(150));
+		await seekSprites(fakeJob("seekSprites", { mediaId: "m1" }) as never);
+		expect(prisma.mediaFile.findFirstOrThrow).toHaveBeenCalledWith({
+			where: { proxyOfId: "m1", status: "COMPLETED" },
+			orderBy: { height: "asc" },
+		});
+		expect(prisma.mediaFile.findUniqueOrThrow).not.toHaveBeenCalled();
+		expect(ffmpegLib.ffmpeg).toHaveBeenCalled();
+	});
+
+	it("fails without a child and without a finished proxy", async () => {
+		prisma.mediaFile.findFirstOrThrow.mockRejectedValue(new Error("No MediaFile found"));
 		await expect(seekSprites(fakeJob("seekSprites", { mediaId: "m1" }) as never)).rejects.toThrow(
-			"seekSprites needs its transcode child",
+			"No MediaFile found",
 		);
 		expect(ffmpegLib.ffmpeg).not.toHaveBeenCalled();
 	});

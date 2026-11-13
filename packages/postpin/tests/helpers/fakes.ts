@@ -19,12 +19,15 @@ export const fakes = {
 	s3Respond: (() => ({})) as S3Responder,
 	/** Override per test for flowProducer.getFlow() */
 	getFlow: (() => undefined) as (opts: unknown) => unknown,
+	/** TRANSCODE_MODE of the mocked env */
+	transcodeMode: "plugin" as "plugin" | "server",
 	reset() {
 		this.emails.length = 0;
 		this.s3.length = 0;
 		this.queue.length = 0;
 		this.s3Respond = () => ({});
 		this.getFlow = () => undefined;
+		this.transcodeMode = "plugin";
 	},
 };
 

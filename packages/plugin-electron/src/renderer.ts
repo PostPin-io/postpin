@@ -1,6 +1,6 @@
 import type { HostBridge, NleBridge } from "@postpin-io/plugin-core/bridge";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
-import { CommonAPI, NleAPI } from "./ipc/renderer/PostPin";
+import { CommonAPI, NleAPI, type Rendition } from "./ipc/renderer/PostPin";
 import { fromWireCapabilities, fromWireMarker, toWireMarker } from "./wire";
 
 // The preload exposes every method, Partial only reflects that eipc can't prove it
@@ -53,8 +53,28 @@ async function withEvents<T, E>(
 	}
 }
 
-export function connectHostBridge(): HostBridge {
+export async function connectHostBridge(): Promise<HostBridge> {
 	const api = exposed(CommonAPI, "CommonAPI");
+	const transcoding = (await api.canTranscode())
+		? {
+				probe: async (file: string) => {
+					const m = await api.probe(file);
+					return { ...m, rotation: m.rotation ?? null, duration: m.duration ?? null };
+				},
+				transcode: (
+					input: string,
+					renditions: Rendition[],
+					hasAudio: boolean,
+					onProgress: (f: number) => void,
+				) =>
+					withEvents(api.onTranscodeProgress, onProgress, () =>
+						api.transcode(input, renditions, hasAudio),
+					),
+				removeFile: async (file: string) => {
+					await api.removeFile(file);
+				},
+			}
+		: {};
 	return withCleanErrors<HostBridge>({
 		getServerUrl: () => api.getServerUrl(),
 		getDefaultServerUrl: () => api.getDefaultServerUrl(),
@@ -81,6 +101,7 @@ export function connectHostBridge(): HostBridge {
 			await api.setProgress(fraction ?? -1);
 		},
 		getToken: () => api.getToken(),
+		...transcoding,
 	});
 }
 
