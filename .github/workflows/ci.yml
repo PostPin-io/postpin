@@ -85,6 +85,34 @@ jobs:
           if [ -n "$(git status --porcelain)" ]; then
             git status; git diff; exit 1
           fi
+  # Premiere's native addon (Rust): the process tests on both platforms, lints on macOS
+  addon:
+    name: addon (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    defaults:
+      run:
+        working-directory: packages/plugin-premiere/native
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/plugin-premiere/native
+      - name: libclang for bindgen (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: echo "LIBCLANG_PATH=C:\Program Files\LLVM\bin" >> "$GITHUB_ENV"
+      - run: cargo fmt --check
+        if: runner.os == 'macOS'
+      - run: cargo clippy --all-targets -- -D warnings
+        if: runner.os == 'macOS'
+      - run: cargo test
   docker:
     name: docker (${{ matrix.image }})
     runs-on: ubuntu-latest

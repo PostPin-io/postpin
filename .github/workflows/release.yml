@@ -171,6 +171,11 @@ jobs:
           export APPLE_API_KEY="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY_ID}.p8"
           printf '%s' "$APPLE_API_KEY_P8" > "$APPLE_API_KEY"
           pnpm run dist -c.mac.notarize=true
+      # the bundled ffmpeg: universal, signed by electron-builder, and doing what the app needs
+      - name: Check the bundled ffmpeg
+        run: |
+          app=$(find packages/desktop/release -maxdepth 2 -name "*.app" -type d | head -1)
+          node tools/ffmpeg/test/run.mjs "$app/Contents/Resources/bin" --universal --signed
       - uses: actions/upload-artifact@v7
         with:
           name: desktop-mac
@@ -201,6 +206,9 @@ jobs:
       - name: Build
         working-directory: packages/desktop
         run: pnpm run dist
+      # also the first run of the Windows ffmpeg build on Windows
+      - name: Check the bundled ffmpeg
+        run: node tools/ffmpeg/test/run.mjs packages/desktop/release/win-unpacked/resources/bin
       - uses: actions/upload-artifact@v7
         with:
           name: desktop-win
@@ -250,6 +258,13 @@ jobs:
           export APPLE_API_KEY="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY_ID}.p8"
           printf '%s' "$APPLE_API_KEY_P8" > "$APPLE_API_KEY"
           pnpm run dist
+      # what the installer installs: ffmpeg executable, universal and signed
+      - name: Check ffmpeg in the .pkg
+        run: |
+          pkgutil --expand-full packages/plugin-resolve/release/*.pkg "$RUNNER_TEMP/pkg"
+          bin=$(find "$RUNNER_TEMP/pkg" -type d -path "*Payload/bin" | head -1)
+          test -x "$bin/ffmpeg" && test -x "$bin/ffprobe"
+          node tools/ffmpeg/test/run.mjs "$bin" --universal --signed
       - uses: actions/upload-artifact@v7
         with:
           name: resolve-mac
@@ -272,6 +287,8 @@ jobs:
       - name: Build installer
         working-directory: packages/plugin-resolve
         run: pnpm run dist:win
+      - name: ffmpeg is bundled
+        run: test -f packages/plugin-resolve/dist/bin/ffmpeg.exe && test -f packages/plugin-resolve/dist/bin/ffprobe.exe
       - uses: actions/upload-artifact@v7
         with:
           name: resolve-win
@@ -279,23 +296,94 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  # Premiere plugin: .ccx (a zip of dist/), no signing for distribution outside the Marketplace
+  # Premiere's native addon (packages/plugin-premiere/native, Rust) for both Mac architectures,
+  # signed + notarized. Artifact names must not start with "premiere-": the release uploads those.
+  addon-premiere-mac:
+    runs-on: macos-latest
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/plugin-premiere/native
+      - name: Build and test
+        run: packages/plugin-premiere/native/build-mac.sh
+      - uses: ./.github/actions/signing-keychain
+        with:
+          p12-base64: ${{ secrets.MAC_CERTS_P12_BASE64 }}
+          password: ${{ secrets.MAC_CERTS_PASSWORD }}
+      - name: Sign and notarize
+        env:
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: packages/plugin-premiere/native/sign-macos.sh
+      - uses: actions/upload-artifact@v7
+        with:
+          name: addon-premiere-mac
+          path: packages/plugin-premiere/dist/mac
+          if-no-files-found: error
+          retention-days: 1
+
+  # The addon for Windows: unsigned for now, like the other Windows builds
+  addon-premiere-win:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/plugin-premiere/native
+      - name: Build and test
+        shell: pwsh
+        # bindgen needs libclang; the runner image has LLVM
+        env:
+          LIBCLANG_PATH: C:\Program Files\LLVM\bin
+        run: packages/plugin-premiere/native/build-win.ps1
+      - uses: actions/upload-artifact@v7
+        with:
+          name: addon-premiere-win
+          path: packages/plugin-premiere/dist/win
+          if-no-files-found: error
+          retention-days: 1
+
+  # Premiere plugin: .ccx (a zip of dist/) with both addons and ffmpeg for both platforms.
+  # No .ccx signing for distribution outside the Marketplace.
   premiere:
+    needs: [addon-premiere-mac, addon-premiere-win]
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
-      - name: Build
-        working-directory: packages/plugin-premiere
-        run: pnpm run build
       - name: Set version from tag
         working-directory: packages/plugin-premiere
         run: npm pkg set version="${GITHUB_REF_NAME#v}"
-      - name: Build .ccx
+      - name: Build panel and UI
         working-directory: packages/plugin-premiere
-        run: pnpm run dist
+        run: pnpm run build:ui
+      # UXP loads mac/<arch>/ and win/x64/ next to manifest.json; a missing one fails validation
+      - uses: actions/download-artifact@v8
+        with: { name: addon-premiere-mac, path: packages/plugin-premiere/dist/mac }
+      - uses: actions/download-artifact@v8
+        with: { name: addon-premiere-win, path: packages/plugin-premiere/dist/win }
+      - name: Bundle ffmpeg and build .ccx
+        working-directory: packages/plugin-premiere
+        run: |
+          pnpm run ffmpeg
+          for f in dist/mac/arm64 dist/mac/x64 dist/win/x64; do test -f "$f/postpin-process.uxpaddon"; done
+          test -x dist/bin/mac/ffmpeg && test -f dist/bin/win/ffmpeg.exe
+          ./scripts/build-ccx.sh
       - uses: actions/upload-artifact@v7
         with:
           name: premiere-ccx
@@ -332,7 +420,11 @@ jobs:
         # GitHub renames assets whose name starts with a dot, so .env.example ships as env.example
         run: |
           cp deploy/.env.example "$RUNNER_TEMP/env.example"
+          # the API version this release speaks, so PostPin Desktop checks it before auto-updating
+          api_version=$(sed -nE 's/^export const POSTPIN_API_VERSION = ([0-9]+);$/\1/p' packages/shared/src/api-version.ts)
+          if [[ -z "$api_version" ]]; then echo "POSTPIN_API_VERSION not found" >&2; exit 1; fi
+          echo "{\"apiVersion\": $api_version}" > "$RUNNER_TEMP/api-version.json"
           prerelease=()
           if [[ "$TAG" == *-* ]]; then prerelease=(--prerelease); fi
-          gh release create "$TAG" deploy/compose.yml "$RUNNER_TEMP/env.example" "$RUNNER_TEMP"/desktop/* \
+          gh release create "$TAG" deploy/compose.yml "$RUNNER_TEMP/env.example" "$RUNNER_TEMP/api-version.json" "$RUNNER_TEMP"/desktop/* \
             --title "$TAG" --generate-notes --verify-tag "${prerelease[@]}"
