@@ -23,8 +23,6 @@
 
 		isLoading = true;
 
-		console.log("Signing up with:", { firstName, lastName, email, password });
-
 		await authClient.signUp.email(
 			{
 				email, // user email address

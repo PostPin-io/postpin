@@ -18,8 +18,6 @@
 		if (isLoading) return; // Prevent multiple submissions
 		isLoading = true;
 
-		console.log("Logging in with:", { email, password });
-
 		await authClient.signIn.email(
 			{
 				email, // user email address
