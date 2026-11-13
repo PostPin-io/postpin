@@ -88,13 +88,24 @@ async function cachedAsset() {
 	return file;
 }
 
-/** Unpacks .tar.xz and .zip; bsdtar (macOS, Windows 10+) reads both, GNU tar on Linux no zip */
+/**
+ * Unpacks .tar.xz and .zip. macOS's tar (bsdtar) reads both; Linux's GNU tar no zip, so unzip.
+ * Windows: its own bsdtar from System32, not whatever "tar" is first on PATH. Git Bash's GNU tar
+ * reads C:\... as a remote host ("Cannot connect to C: resolve failed") and can't read zip.
+ */
 function unpack(archive, into) {
-	const zipOnLinux = archive.endsWith(".zip") && process.platform === "linux";
-	const [cmd, args] = zipOnLinux
-		? ["unzip", ["-q", archive, "-d", into]]
-		: ["tar", ["-xf", archive, "-C", into]];
+	const zip = archive.endsWith(".zip");
+	const [cmd, args] =
+		process.platform === "win32"
+			? [
+					path.join(process.env.SystemRoot ?? "C:\\Windows", "System32", "tar.exe"),
+					["-xf", archive, "-C", into],
+				]
+			: zip && process.platform === "linux"
+				? ["unzip", ["-q", archive, "-d", into]]
+				: ["tar", ["-xf", archive, "-C", into]];
 	const res = spawnSync(cmd, args, { stdio: "inherit" });
+	if (res.error) fail(`unpacking ${archive}: ${cmd} couldn't run (${res.error.message})`);
 	if (res.status !== 0) fail(`unpacking ${archive} with ${cmd} failed`);
 }
 

@@ -87,6 +87,12 @@ jobs:
         with: { name: ffmpeg-windows-x64, path: ffmpeg-bin }
       - run: node tools/ffmpeg/test/run.mjs ffmpeg-bin
         shell: bash
+      # what desktop-win does in release.yml: fetch.mjs in Git Bash, from the pinned release
+      - name: fetch.mjs unpacks the pinned release
+        shell: bash
+        run: |
+          node tools/ffmpeg/fetch.mjs host "$RUNNER_TEMP/fetched"
+          node tools/ffmpeg/test/run.mjs "$RUNNER_TEMP/fetched"
 
   release:
     if: startsWith(github.ref, 'refs/tags/')
