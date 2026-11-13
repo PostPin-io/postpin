@@ -1,0 +1,32 @@
+name: Signing keychain
+description: >-
+  Imports the Developer ID certificates into a temporary keychain that codesign and productbuild
+  can use without a prompt (macOS runners only).
+inputs:
+  p12-base64:
+    description: The certificates as a base64-encoded .p12
+    required: true
+  password:
+    description: The .p12's password
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        P12_BASE64: ${{ inputs.p12-base64 }}
+        P12_PASSWORD: ${{ inputs.password }}
+      run: |
+        kc="$RUNNER_TEMP/signing.keychain-db"
+        kc_pw=$(openssl rand -hex 16)
+        security create-keychain -p "$kc_pw" "$kc"
+        security set-keychain-settings -lut 21600 "$kc"
+        security unlock-keychain -p "$kc_pw" "$kc"
+        printf '%s' "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/certs.p12"
+        # every tool that signs must be listed, otherwise the keychain asks and the job hangs
+        security import "$RUNNER_TEMP/certs.p12" -k "$kc" -P "$P12_PASSWORD" \
+          -T /usr/bin/codesign -T /usr/bin/productbuild
+        rm "$RUNNER_TEMP/certs.p12"
+        security set-key-partition-list -S apple-tool:,apple: -s -k "$kc_pw" "$kc" > /dev/null
+        # shellcheck disable=SC2046
+        security list-keychains -d user -s "$kc" $(security list-keychains -d user | tr -d '"')
