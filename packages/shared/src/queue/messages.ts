@@ -54,4 +54,8 @@ export interface SceneDetectMessage {
 	mediaId: string;
 }
 
+export interface CutListMessage {
+	mediaId: string;
+}
+
 export type CleanupMessage = Record<string, never>;

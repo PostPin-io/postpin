@@ -63,9 +63,12 @@ export const getExport = query(
 		});
 		const media = exp.media && withoutScores(exp.media);
 		const hideClips = reader.kind === "guest" && !reader.link.timelinePanelVisible;
+		// where the cut list lies is the server's business; whether it worked is the team's
+		const { cutListKey, cutListError, ...fields } = exp;
 		return {
-			...exp,
+			...fields,
 			media,
+			cutList: cutListKey === null || reader.kind === "guest" ? null : { error: cutListError },
 			// the reader got here through authorize("export", "read"), so their grant covers the export
 			canChangeCuts:
 				reader.kind === "member" && can(reader.member.role, "export", "upload", { hasGrant: true }),

@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { Role } from "@postpin-io/shared/db/enums";
 import { webUploadSnapshot } from "@postpin-io/shared/logic/web-upload";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
-import { setCutSensitivity } from "#lib/components/review/cuts.remote.ts";
+import type { CutList } from "@postpin-io/shared/logic/cut-list";
+import { importCutList, setCutSensitivity } from "#lib/components/review/cuts.remote.ts";
 import { contentWorld, signInAs, type ContentWorld } from "../../../../helpers/content-world.ts";
 import { prisma } from "../../../../helpers/db.ts";
 import { expectStatus } from "../../../../helpers/expect.ts";
@@ -110,6 +111,22 @@ describe("setCutSensitivity", () => {
 		});
 	});
 
+	it("409 when the tracks come from a cut list: nothing is estimated to change", async () => {
+		signIn(w.owner.user, w.org.id);
+		await webUpload();
+		const s = snapshot();
+		await prisma.export.update({
+			where: { id: w.exp1.id },
+			data: { timelineSnapshot: { ...s, metadata: { ...s.metadata, cutsFrom: "edl" } } as never },
+		});
+		const res = await expectStatus(
+			setCutSensitivity({ exportId: w.exp1.id, level: "medium" }),
+			409,
+		);
+		expect(res.body.message).toMatch(/editing software/);
+		expect(fakes.queue).toEqual([]);
+	});
+
 	it("409 for a level without scores, while processing and for plugin exports", async () => {
 		signIn(w.owner.user, w.org.id);
 		await webUpload(null);
@@ -139,5 +156,189 @@ describe("setCutSensitivity", () => {
 	it("400 for an unknown level", async () => {
 		signIn(w.owner.user, w.org.id);
 		await expectStatus(setCutSensitivity({ exportId: w.exp1.id, level: "extreme" as "none" }), 400);
+	});
+});
+
+describe("importCutList", () => {
+	// exp1 as a processed web upload at 24 fps, 8 s (192 frames) from 00:00:00:00
+	const event = (name: string, from: string, to: string) => ({
+		name,
+		in: from,
+		out: to,
+		sourceIn: "00:00:10:00",
+	});
+	const marker = (name: string, at: string, label = "Blue") => ({
+		name,
+		note: "a note",
+		at,
+		duration: 0,
+		host: "Resolve" as const,
+		label,
+	});
+	const LIST: CutList = {
+		format: "fcpxml",
+		title: "Trailer",
+		frameRate: FPS_24,
+		tracks: [
+			{
+				type: "video",
+				name: "Video 1",
+				events: [
+					event("A001.mov", "00:00:00:00", "00:00:03:00"),
+					event("B002.mov", "00:00:03:00", "00:00:08:00"),
+				],
+			},
+			{
+				type: "audio",
+				name: "Audio 1",
+				events: [event("Music.wav", "00:00:00:00", "00:00:08:00")],
+			},
+		],
+		markers: [marker("Fix the grade", "00:00:01:00"), marker("Too loud", "00:00:02:00", "Red")],
+	};
+	const markersOf = () =>
+		prisma.marker.findMany({
+			where: { exportId: w.exp1.id },
+			include: { category: true },
+			orderBy: { frame: "asc" },
+		});
+
+	it("markers only: added as the importer's, in a category per color; the clips stay", async () => {
+		await webUpload();
+		const member = await signInAs(w.org, MEMBER, [{ timelineId: w.tl1.id }]);
+		const before = await clipsOf();
+
+		expect(
+			await importCutList({ exportId: w.exp1.id, cutList: LIST, replaceTracks: false }),
+		).toEqual({
+			markers: 2,
+			clips: null,
+		});
+		const markers = await markersOf();
+		expect(
+			markers.map((m) => [m.name, m.frame, m.category.name, m.category.color, m.authorId]),
+		).toEqual([
+			["Fix the grade", 24, "Resolve Blue", "#008feb", member.user.id],
+			["Too loud", 48, "Resolve Red", "#fc0000", member.user.id],
+		]);
+		expect(await clipsOf()).toEqual(before);
+		expect(fakes.queue).toEqual([]);
+	});
+
+	it("the same markers again are skipped, and an existing category is used", async () => {
+		await webUpload();
+		await signInAs(w.org, MEMBER, [{ timelineId: w.tl1.id }]);
+		await prisma.category.create({
+			data: { projectId: w.projectA.id, name: "Resolve Blue", color: "#123456" },
+		});
+		await importCutList({ exportId: w.exp1.id, cutList: LIST, replaceTracks: false });
+
+		const again = { ...LIST, markers: [...LIST.markers, marker("New", "00:00:03:00")] };
+		expect(
+			await importCutList({ exportId: w.exp1.id, cutList: again, replaceTracks: false }),
+		).toMatchObject({
+			markers: 1,
+		});
+		const markers = await markersOf();
+		expect(markers).toHaveLength(3);
+		expect(markers[0]!.category.color).toBe("#123456");
+	});
+
+	it("replace the timeline: its tracks, its markers, and the shot thumbnails again", async () => {
+		await webUpload();
+		await signInAs(w.org, MEMBER, [{ timelineId: w.tl1.id }]);
+
+		expect(
+			await importCutList({ exportId: w.exp1.id, cutList: LIST, replaceTracks: true }),
+		).toEqual({
+			markers: 2,
+			clips: 2,
+		});
+		const exp = await prisma.export.findUniqueOrThrow({
+			where: { id: w.exp1.id },
+			include: { media: true },
+		});
+		const snap = exp.timelineSnapshot as unknown as TimelineSnapshot;
+		expect(snap.metadata.cutsFrom).toBe("fcpxml");
+		expect(snap.tracks.map((t) => [t.id, t.clips.map((c) => [c.name, c.startFrameIndex])])).toEqual(
+			[
+				[
+					"V1",
+					[
+						["A001.mov", 0],
+						["B002.mov", 72],
+					],
+				],
+				["A1", [["Music.wav", 0]]],
+			],
+		);
+		expect(exp.cutListKey).toBe(`${exp.mediaId}/cutList`);
+		expect(exp.media!.shotThumbnails).toBeNull();
+		expect(fakes.queue).toEqual([
+			{
+				queue: "media-light",
+				method: "add",
+				args: [
+					"shotThumbnails",
+					{ mediaId: exp.mediaId, generation: exp.media!.shotThumbnailsGeneration },
+					expect.anything(),
+				],
+			},
+		]);
+		// estimated cuts can't be changed any more: they are the editing software's now
+		await expectStatus(setCutSensitivity({ exportId: w.exp1.id, level: "medium" }), 409);
+	});
+
+	it.each([
+		["replace with a list without video clips", { ...LIST, tracks: [] }, true, /no video clips/],
+		["markers from a list without markers", { ...LIST, markers: [] }, false, /no markers/],
+		[
+			"a timecode the video's rate doesn't have",
+			{ ...LIST, frameRate: null, markers: [marker("x", "00:00:01:25")] },
+			false,
+			/doesn't fit/,
+		],
+		[
+			"markers outside the video",
+			{ ...LIST, markers: [marker("x", "00:00:30:00")] },
+			false,
+			/No marker/,
+		],
+	])("400 for %s", async (_, cutList, replaceTracks, message) => {
+		await webUpload();
+		await signInAs(w.org, MEMBER, [{ timelineId: w.tl1.id }]);
+		const res = await expectStatus(
+			importCutList({ exportId: w.exp1.id, cutList, replaceTracks }),
+			400,
+		);
+		expect(res.body.message).toMatch(message);
+		expect(await markersOf()).toEqual([]);
+	});
+
+	it("409 while processing and for plugin exports; 403 for a reviewer", async () => {
+		await webUpload(SCORES, "PROCESSING" as "COMPLETED");
+		signIn(w.owner.user, w.org.id);
+		await expectStatus(
+			importCutList({ exportId: w.exp1.id, cutList: LIST, replaceTracks: false }),
+			409,
+		);
+
+		await prisma.export.update({
+			where: { id: w.exp1.id },
+			data: { timelineSnapshot: { ...snapshot(), metadata: {} } as never },
+		});
+		await prisma.media.update({ where: { id: w.exp1.mediaId! }, data: { status: "COMPLETED" } });
+		await expectStatus(
+			importCutList({ exportId: w.exp1.id, cutList: LIST, replaceTracks: false }),
+			409,
+		);
+
+		await webUpload();
+		await signInAs(w.org, REVIEWER, [{ timelineId: w.tl1.id }]);
+		await expectStatus(
+			importCutList({ exportId: w.exp1.id, cutList: LIST, replaceTracks: false }),
+			403,
+		);
+		expect(await markersOf()).toEqual([]);
 	});
 });

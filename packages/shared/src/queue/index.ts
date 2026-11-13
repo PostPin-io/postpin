@@ -15,6 +15,7 @@ import type {
 	MovieBarcodeMessage,
 	ProbeMessage,
 	SceneDetectMessage,
+	CutListMessage,
 	SeekSpritesMessage,
 	SetMediaProcessingDoneMessage,
 	ShotThumbnailsMessage,
@@ -34,6 +35,7 @@ export const JobWeights: {
 	shotThumbnails: 50,
 	movieBarcode: 50,
 	sceneDetect: 50,
+	cutList: 10,
 };
 
 // media jobs only: these feed the processing progress shown for a video
@@ -48,6 +50,7 @@ export const JobLabels: {
 	shotThumbnails: "Shot Thumbnails",
 	movieBarcode: "Movie Barcode",
 	sceneDetect: "Detecting cuts",
+	cutList: "Reading the timeline data",
 };
 
 export const Queues = {
@@ -68,6 +71,7 @@ export interface QueueJobs {
 		shotThumbnails: ShotThumbnailsMessage;
 		movieBarcode: MovieBarcodeMessage;
 		sceneDetect: SceneDetectMessage;
+		cutList: CutListMessage;
 	};
 	[Queues.maintenance]: { cleanup: CleanupMessage };
 }

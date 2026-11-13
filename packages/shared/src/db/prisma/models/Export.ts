@@ -31,6 +31,8 @@ export type ExportMinAggregateOutputType = {
 	timelineId: string | null;
 	mediaId: string | null;
 	timelineSnapshotHash: string | null;
+	cutListKey: string | null;
+	cutListError: string | null;
 	uploadedById: string | null;
 };
 
@@ -42,6 +44,8 @@ export type ExportMaxAggregateOutputType = {
 	timelineId: string | null;
 	mediaId: string | null;
 	timelineSnapshotHash: string | null;
+	cutListKey: string | null;
+	cutListError: string | null;
 	uploadedById: string | null;
 };
 
@@ -54,6 +58,8 @@ export type ExportCountAggregateOutputType = {
 	mediaId: number;
 	timelineSnapshot: number;
 	timelineSnapshotHash: number;
+	cutListKey: number;
+	cutListError: number;
 	uploadedById: number;
 	_all: number;
 };
@@ -66,6 +72,8 @@ export type ExportMinAggregateInputType = {
 	timelineId?: true;
 	mediaId?: true;
 	timelineSnapshotHash?: true;
+	cutListKey?: true;
+	cutListError?: true;
 	uploadedById?: true;
 };
 
@@ -77,6 +85,8 @@ export type ExportMaxAggregateInputType = {
 	timelineId?: true;
 	mediaId?: true;
 	timelineSnapshotHash?: true;
+	cutListKey?: true;
+	cutListError?: true;
 	uploadedById?: true;
 };
 
@@ -89,6 +99,8 @@ export type ExportCountAggregateInputType = {
 	mediaId?: true;
 	timelineSnapshot?: true;
 	timelineSnapshotHash?: true;
+	cutListKey?: true;
+	cutListError?: true;
 	uploadedById?: true;
 	_all?: true;
 };
@@ -175,6 +187,8 @@ export type ExportGroupByOutputType = {
 	mediaId: string | null;
 	timelineSnapshot: runtime.JsonValue | null;
 	timelineSnapshotHash: string | null;
+	cutListKey: string | null;
+	cutListError: string | null;
 	uploadedById: string | null;
 	_count: ExportCountAggregateOutputType | null;
 	_min: ExportMinAggregateOutputType | null;
@@ -205,6 +219,8 @@ export type ExportWhereInput = {
 	mediaId?: Prisma.StringNullableFilter<"Export"> | string | null;
 	timelineSnapshot?: Prisma.JsonNullableFilter<"Export">;
 	timelineSnapshotHash?: Prisma.StringNullableFilter<"Export"> | string | null;
+	cutListKey?: Prisma.StringNullableFilter<"Export"> | string | null;
+	cutListError?: Prisma.StringNullableFilter<"Export"> | string | null;
 	uploadedById?: Prisma.StringNullableFilter<"Export"> | string | null;
 	timeline?: Prisma.XOR<Prisma.TimelineScalarRelationFilter, Prisma.TimelineWhereInput>;
 	media?: Prisma.XOR<Prisma.MediaNullableScalarRelationFilter, Prisma.MediaWhereInput> | null;
@@ -222,6 +238,8 @@ export type ExportOrderByWithRelationInput = {
 	mediaId?: Prisma.SortOrderInput | Prisma.SortOrder;
 	timelineSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder;
 	timelineSnapshotHash?: Prisma.SortOrderInput | Prisma.SortOrder;
+	cutListKey?: Prisma.SortOrderInput | Prisma.SortOrder;
+	cutListError?: Prisma.SortOrderInput | Prisma.SortOrder;
 	uploadedById?: Prisma.SortOrderInput | Prisma.SortOrder;
 	timeline?: Prisma.TimelineOrderByWithRelationInput;
 	media?: Prisma.MediaOrderByWithRelationInput;
@@ -243,6 +261,8 @@ export type ExportWhereUniqueInput = Prisma.AtLeast<
 		timelineId?: Prisma.StringFilter<"Export"> | string;
 		timelineSnapshot?: Prisma.JsonNullableFilter<"Export">;
 		timelineSnapshotHash?: Prisma.StringNullableFilter<"Export"> | string | null;
+		cutListKey?: Prisma.StringNullableFilter<"Export"> | string | null;
+		cutListError?: Prisma.StringNullableFilter<"Export"> | string | null;
 		uploadedById?: Prisma.StringNullableFilter<"Export"> | string | null;
 		timeline?: Prisma.XOR<Prisma.TimelineScalarRelationFilter, Prisma.TimelineWhereInput>;
 		media?: Prisma.XOR<Prisma.MediaNullableScalarRelationFilter, Prisma.MediaWhereInput> | null;
@@ -262,6 +282,8 @@ export type ExportOrderByWithAggregationInput = {
 	mediaId?: Prisma.SortOrderInput | Prisma.SortOrder;
 	timelineSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder;
 	timelineSnapshotHash?: Prisma.SortOrderInput | Prisma.SortOrder;
+	cutListKey?: Prisma.SortOrderInput | Prisma.SortOrder;
+	cutListError?: Prisma.SortOrderInput | Prisma.SortOrder;
 	uploadedById?: Prisma.SortOrderInput | Prisma.SortOrder;
 	_count?: Prisma.ExportCountOrderByAggregateInput;
 	_max?: Prisma.ExportMaxOrderByAggregateInput;
@@ -280,6 +302,8 @@ export type ExportScalarWhereWithAggregatesInput = {
 	mediaId?: Prisma.StringNullableWithAggregatesFilter<"Export"> | string | null;
 	timelineSnapshot?: Prisma.JsonNullableWithAggregatesFilter<"Export">;
 	timelineSnapshotHash?: Prisma.StringNullableWithAggregatesFilter<"Export"> | string | null;
+	cutListKey?: Prisma.StringNullableWithAggregatesFilter<"Export"> | string | null;
+	cutListError?: Prisma.StringNullableWithAggregatesFilter<"Export"> | string | null;
 	uploadedById?: Prisma.StringNullableWithAggregatesFilter<"Export"> | string | null;
 };
 
@@ -290,6 +314,8 @@ export type ExportCreateInput = {
 	updatedAt?: Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
 	timeline: Prisma.TimelineCreateNestedOneWithoutExportsInput;
 	media?: Prisma.MediaCreateNestedOneWithoutExportInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutExportInput;
@@ -306,6 +332,8 @@ export type ExportUncheckedCreateInput = {
 	mediaId?: string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
 	uploadedById?: string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutExportInput;
@@ -318,6 +346,8 @@ export type ExportUpdateInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timeline?: Prisma.TimelineUpdateOneRequiredWithoutExportsNestedInput;
 	media?: Prisma.MediaUpdateOneWithoutExportNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutExportNestedInput;
@@ -334,6 +364,8 @@ export type ExportUncheckedUpdateInput = {
 	mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutExportNestedInput;
@@ -348,6 +380,8 @@ export type ExportCreateManyInput = {
 	mediaId?: string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
 	uploadedById?: string | null;
 };
 
@@ -358,6 +392,8 @@ export type ExportUpdateManyMutationInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
 export type ExportUncheckedUpdateManyInput = {
@@ -369,6 +405,8 @@ export type ExportUncheckedUpdateManyInput = {
 	mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
@@ -401,6 +439,8 @@ export type ExportCountOrderByAggregateInput = {
 	mediaId?: Prisma.SortOrder;
 	timelineSnapshot?: Prisma.SortOrder;
 	timelineSnapshotHash?: Prisma.SortOrder;
+	cutListKey?: Prisma.SortOrder;
+	cutListError?: Prisma.SortOrder;
 	uploadedById?: Prisma.SortOrder;
 };
 
@@ -412,6 +452,8 @@ export type ExportMaxOrderByAggregateInput = {
 	timelineId?: Prisma.SortOrder;
 	mediaId?: Prisma.SortOrder;
 	timelineSnapshotHash?: Prisma.SortOrder;
+	cutListKey?: Prisma.SortOrder;
+	cutListError?: Prisma.SortOrder;
 	uploadedById?: Prisma.SortOrder;
 };
 
@@ -423,6 +465,8 @@ export type ExportMinOrderByAggregateInput = {
 	timelineId?: Prisma.SortOrder;
 	mediaId?: Prisma.SortOrder;
 	timelineSnapshotHash?: Prisma.SortOrder;
+	cutListKey?: Prisma.SortOrder;
+	cutListError?: Prisma.SortOrder;
 	uploadedById?: Prisma.SortOrder;
 };
 
@@ -713,6 +757,8 @@ export type ExportCreateWithoutUploadedByInput = {
 	updatedAt?: Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
 	timeline: Prisma.TimelineCreateNestedOneWithoutExportsInput;
 	media?: Prisma.MediaCreateNestedOneWithoutExportInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutExportInput;
@@ -728,6 +774,8 @@ export type ExportUncheckedCreateWithoutUploadedByInput = {
 	mediaId?: string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutExportInput;
 };
@@ -785,6 +833,8 @@ export type ExportScalarWhereInput = {
 	mediaId?: Prisma.StringNullableFilter<"Export"> | string | null;
 	timelineSnapshot?: Prisma.JsonNullableFilter<"Export">;
 	timelineSnapshotHash?: Prisma.StringNullableFilter<"Export"> | string | null;
+	cutListKey?: Prisma.StringNullableFilter<"Export"> | string | null;
+	cutListError?: Prisma.StringNullableFilter<"Export"> | string | null;
 	uploadedById?: Prisma.StringNullableFilter<"Export"> | string | null;
 };
 
@@ -795,6 +845,8 @@ export type ExportCreateWithoutMarkersInput = {
 	updatedAt?: Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
 	timeline: Prisma.TimelineCreateNestedOneWithoutExportsInput;
 	media?: Prisma.MediaCreateNestedOneWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkCreateNestedManyWithoutExportInput;
@@ -810,6 +862,8 @@ export type ExportUncheckedCreateWithoutMarkersInput = {
 	mediaId?: string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
 	uploadedById?: string | null;
 	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutExportInput;
 };
@@ -849,6 +903,8 @@ export type ExportUpdateWithoutMarkersInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timeline?: Prisma.TimelineUpdateOneRequiredWithoutExportsNestedInput;
 	media?: Prisma.MediaUpdateOneWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUpdateManyWithoutExportNestedInput;
@@ -864,6 +920,8 @@ export type ExportUncheckedUpdateWithoutMarkersInput = {
 	mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutExportNestedInput;
 };
@@ -875,6 +933,8 @@ export type ExportCreateWithoutMediaInput = {
 	updatedAt?: Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
 	timeline: Prisma.TimelineCreateNestedOneWithoutExportsInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkCreateNestedManyWithoutExportInput;
@@ -889,6 +949,8 @@ export type ExportUncheckedCreateWithoutMediaInput = {
 	timelineId: string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
 	uploadedById?: string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutExportInput;
@@ -929,6 +991,8 @@ export type ExportUpdateWithoutMediaInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timeline?: Prisma.TimelineUpdateOneRequiredWithoutExportsNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUpdateManyWithoutExportNestedInput;
@@ -943,6 +1007,8 @@ export type ExportUncheckedUpdateWithoutMediaInput = {
 	timelineId?: Prisma.StringFieldUpdateOperationsInput | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutExportNestedInput;
@@ -955,6 +1021,8 @@ export type ExportCreateWithoutTimelineInput = {
 	updatedAt?: Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
 	media?: Prisma.MediaCreateNestedOneWithoutExportInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkCreateNestedManyWithoutExportInput;
@@ -969,6 +1037,8 @@ export type ExportUncheckedCreateWithoutTimelineInput = {
 	mediaId?: string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
 	uploadedById?: string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutExportInput;
@@ -1022,6 +1092,8 @@ export type ExportCreateWithoutShareLinksInput = {
 	updatedAt?: Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
 	timeline: Prisma.TimelineCreateNestedOneWithoutExportsInput;
 	media?: Prisma.MediaCreateNestedOneWithoutExportInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutExportInput;
@@ -1037,6 +1109,8 @@ export type ExportUncheckedCreateWithoutShareLinksInput = {
 	mediaId?: string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
 	uploadedById?: string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutExportInput;
 };
@@ -1076,6 +1150,8 @@ export type ExportUpdateWithoutShareLinksInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timeline?: Prisma.TimelineUpdateOneRequiredWithoutExportsNestedInput;
 	media?: Prisma.MediaUpdateOneWithoutExportNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutExportNestedInput;
@@ -1091,6 +1167,8 @@ export type ExportUncheckedUpdateWithoutShareLinksInput = {
 	mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutExportNestedInput;
 };
@@ -1104,6 +1182,8 @@ export type ExportCreateManyUploadedByInput = {
 	mediaId?: string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
 };
 
 export type ExportUpdateWithoutUploadedByInput = {
@@ -1113,6 +1193,8 @@ export type ExportUpdateWithoutUploadedByInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timeline?: Prisma.TimelineUpdateOneRequiredWithoutExportsNestedInput;
 	media?: Prisma.MediaUpdateOneWithoutExportNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutExportNestedInput;
@@ -1128,6 +1210,8 @@ export type ExportUncheckedUpdateWithoutUploadedByInput = {
 	mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutExportNestedInput;
 };
@@ -1141,6 +1225,8 @@ export type ExportUncheckedUpdateManyWithoutUploadedByInput = {
 	mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
 export type ExportCreateManyTimelineInput = {
@@ -1151,6 +1237,8 @@ export type ExportCreateManyTimelineInput = {
 	mediaId?: string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
 	uploadedById?: string | null;
 };
 
@@ -1161,6 +1249,8 @@ export type ExportUpdateWithoutTimelineInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	media?: Prisma.MediaUpdateOneWithoutExportNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUpdateManyWithoutExportNestedInput;
@@ -1175,6 +1265,8 @@ export type ExportUncheckedUpdateWithoutTimelineInput = {
 	mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutExportNestedInput;
@@ -1188,6 +1280,8 @@ export type ExportUncheckedUpdateManyWithoutTimelineInput = {
 	mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
@@ -1249,6 +1343,8 @@ export type ExportSelect<
 		mediaId?: boolean;
 		timelineSnapshot?: boolean;
 		timelineSnapshotHash?: boolean;
+		cutListKey?: boolean;
+		cutListError?: boolean;
 		uploadedById?: boolean;
 		timeline?: boolean | Prisma.TimelineDefaultArgs<ExtArgs>;
 		media?: boolean | Prisma.Export$mediaArgs<ExtArgs>;
@@ -1272,6 +1368,8 @@ export type ExportSelectCreateManyAndReturn<
 		mediaId?: boolean;
 		timelineSnapshot?: boolean;
 		timelineSnapshotHash?: boolean;
+		cutListKey?: boolean;
+		cutListError?: boolean;
 		uploadedById?: boolean;
 		timeline?: boolean | Prisma.TimelineDefaultArgs<ExtArgs>;
 		media?: boolean | Prisma.Export$mediaArgs<ExtArgs>;
@@ -1292,6 +1390,8 @@ export type ExportSelectUpdateManyAndReturn<
 		mediaId?: boolean;
 		timelineSnapshot?: boolean;
 		timelineSnapshotHash?: boolean;
+		cutListKey?: boolean;
+		cutListError?: boolean;
 		uploadedById?: boolean;
 		timeline?: boolean | Prisma.TimelineDefaultArgs<ExtArgs>;
 		media?: boolean | Prisma.Export$mediaArgs<ExtArgs>;
@@ -1309,6 +1409,8 @@ export type ExportSelectScalar = {
 	mediaId?: boolean;
 	timelineSnapshot?: boolean;
 	timelineSnapshotHash?: boolean;
+	cutListKey?: boolean;
+	cutListError?: boolean;
 	uploadedById?: boolean;
 };
 
@@ -1323,6 +1425,8 @@ export type ExportOmit<
 	| "mediaId"
 	| "timelineSnapshot"
 	| "timelineSnapshotHash"
+	| "cutListKey"
+	| "cutListError"
 	| "uploadedById",
 	ExtArgs["result"]["export"]
 >;
@@ -1372,6 +1476,16 @@ export type $ExportPayload<
 			mediaId: string | null;
 			timelineSnapshot: runtime.JsonValue | null;
 			timelineSnapshotHash: string | null;
+			/**
+			 * Web uploads: the tracks of the editing software's timeline (from an EDL or FCPXML), uploaded
+			 * with the video into the media's bucket folder; they become the snapshot's tracks once the
+			 * worker knows the frame rate. See cut-list.ts
+			 */
+			cutListKey: string | null;
+			/**
+			 * Why the worker couldn't use the cut list; the cuts are estimated then
+			 */
+			cutListError: string | null;
 			uploadedById: string | null;
 		},
 		ExtArgs["result"]["export"]
@@ -1984,6 +2098,8 @@ export interface ExportFieldRefs {
 	readonly mediaId: Prisma.FieldRef<"Export", "String">;
 	readonly timelineSnapshot: Prisma.FieldRef<"Export", "Json">;
 	readonly timelineSnapshotHash: Prisma.FieldRef<"Export", "String">;
+	readonly cutListKey: Prisma.FieldRef<"Export", "String">;
+	readonly cutListError: Prisma.FieldRef<"Export", "String">;
 	readonly uploadedById: Prisma.FieldRef<"Export", "String">;
 }
 

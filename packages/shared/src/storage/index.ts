@@ -4,6 +4,7 @@ export * from "./paths.ts";
 export * from "./multipart.ts";
 export * from "./measure.ts";
 export * from "./shot-thumbnails.ts";
+export * from "./objects.ts";
 
 function buildClient(env: S3Env, endpoint: string | undefined): S3 {
 	return new S3({

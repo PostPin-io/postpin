@@ -12,6 +12,7 @@
 		"./db": "./src/db/index.ts",
 		"./db/enums": "./src/db/prisma/enums.ts",
 		"./db/sql": "./src/db/prisma/sql.ts",
+		"./db/cut-list-markers": "./src/db/cut-list-markers.ts",
 		"./types/*": "./src/types/*.ts",
 		"./logic/*": "./src/logic/*.ts"
 	},

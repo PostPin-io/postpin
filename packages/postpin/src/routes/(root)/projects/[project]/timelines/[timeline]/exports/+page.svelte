@@ -357,7 +357,7 @@
 
 		{#if shownView === "table"}
 			<div class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 shadow">
-				<table class="table table-zebra">
+				<table class="table w-full table-zebra">
 					<thead>
 						<tr>
 							<th class="w-44"><span class="sr-only">Thumbnail</span></th>
@@ -400,11 +400,7 @@
 								<td class="w-44">
 									<div class="aspect-video w-36 overflow-hidden rounded-md bg-base-300">
 										{#if singleExport.media?.status === "COMPLETED"}
-											<a
-												href={exportHref}
-												class="group relative block size-full"
-												aria-label="Open {singleExport.name}"
-											>
+											<a href={exportHref} class="group relative block size-full">
 												<img
 													src={await getUrl({ mediaId: singleExport.media.id, type: "thumbnail" })}
 													alt="Thumbnail of {singleExport.name}"
@@ -424,7 +420,7 @@
 									</div>
 								</td>
 
-								<td class="font-medium">{singleExport.name}</td>
+								<td class="font-medium break-words whitespace-normal">{singleExport.name}</td>
 								<td class="whitespace-nowrap text-base-content/70">
 									{new Date(singleExport.createdAt).toLocaleDateString()}
 								</td>

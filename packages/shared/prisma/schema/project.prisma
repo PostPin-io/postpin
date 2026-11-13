@@ -52,6 +52,12 @@ model Export {
   mediaId              String?     @unique
   timelineSnapshot     Json?
   timelineSnapshotHash String?
+  /// Web uploads: the tracks of the editing software's timeline (from an EDL or FCPXML), uploaded
+  /// with the video into the media's bucket folder; they become the snapshot's tracks once the
+  /// worker knows the frame rate. See cut-list.ts
+  cutListKey           String?
+  /// Why the worker couldn't use the cut list; the cuts are estimated then
+  cutListError         String?
   markers              Marker[]
   shareLinks           ShareLink[]
   uploadedBy           User?       @relation("ExportUploader", fields: [uploadedById], references: [id], onDelete: SetNull)

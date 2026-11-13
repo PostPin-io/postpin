@@ -468,6 +468,13 @@
 						cutLevel={snapshot.metadata.cutLevel}
 						detected={!!media.hasSceneScores}
 						canChange={!!exp?.canChangeCuts && media.status === "COMPLETED"}
+						cutsFrom={snapshot.metadata.cutsFrom ?? null}
+						trackCount={snapshot.tracks.length}
+						clipCount={snapshot.tracks
+							.filter((t) => t.type === "video")
+							.reduce((n, t) => n + t.clips.length, 0)}
+						cutListError={exp?.cutList?.error ?? null}
+						frameRate={snapshot.frameRate}
 						onchanged={async () => {
 							// brings the new generation; polling runs until it is published
 							await exportQuery.refresh();

@@ -6,6 +6,7 @@ import * as v from "valibot";
 import { prisma } from "#lib/server/database.ts";
 import {
 	abortUpload,
+	attachCutList,
 	completeUpload,
 	createExport,
 	initUpload,
@@ -13,6 +14,7 @@ import {
 	uploadLimits,
 } from "#lib/server/export-upload.ts";
 import { authorize } from "#lib/server/org-access.ts";
+import { cutListSchema } from "@postpin-io/shared/logic/cut-list";
 import { framesPerDay } from "@postpin-io/shared/logic/timecode";
 import {
 	cutLevel,
@@ -100,6 +102,12 @@ export const completeWebUpload = command(
 			processing: { webUpload: true, detectCuts: form.cutLevel !== "none" },
 		});
 	},
+);
+
+/** The tracks of the video's timeline (EDL, FCPXML), sent after init and before the parts */
+export const attachWebUploadCutList = command(
+	v.object({ exportId: id, cutList: cutListSchema }),
+	async (data) => await attachCutList(data),
 );
 
 export const abortWebUpload = command(

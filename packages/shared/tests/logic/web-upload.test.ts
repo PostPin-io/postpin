@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { getShots } from "../../src/logic/shots.ts";
+import { CutListError, type CutList } from "../../src/logic/cut-list.ts";
 import {
 	applyCuts,
+	applyCutList,
 	applyProbe,
 	cutFrames,
 	frameRateLabel,
@@ -373,5 +375,241 @@ describe("applyCuts", () => {
 
 	it("without scores the video stays one clip", () => {
 		expect(applyCuts(snapshot(), null, "medium").tracks[0]!.clips).toHaveLength(1);
+	});
+});
+
+describe("applyCutList", () => {
+	const applyTracks = (...a: Parameters<typeof applyCutList>) => applyCutList(...a).snapshot;
+	// 25 fps, 01:00:00:00 = 90000, 200 frames long
+	const base = () =>
+		snapshot({ frameRate: FPS_25, startFrameIndex: 90000, durationFrameCount: 200 });
+	const event = (name: string | null, from: string, to: string) => ({
+		name,
+		in: from,
+		out: to,
+		sourceIn: "00:10:00:00",
+	});
+	const list = (tracks: CutList["tracks"], frameRate: CutList["frameRate"] = null): CutList => ({
+		format: "edl",
+		title: "x",
+		frameRate,
+		tracks,
+		markers: [],
+	});
+	const v = (...events: ReturnType<typeof event>[]) => ({
+		type: "video" as const,
+		name: "Video",
+		events,
+	});
+	const a = (...events: ReturnType<typeof event>[]) => ({
+		type: "audio" as const,
+		name: "Audio",
+		events,
+	});
+	const clipsOf = (s: ReturnType<typeof applyCutList>) =>
+		s.tracks.map((t) => [
+			t.id,
+			t.type,
+			t.clips.map((c) => [c.name, c.startFrameIndex, c.durationFrameCount]),
+		]);
+
+	it("the list's tracks become the snapshot's, so the topmost video clips are the shots", () => {
+		const s = applyTracks(
+			base(),
+			list([
+				v(event("A001.mov", "01:00:00:00", "01:00:08:00")),
+				v(event("B-roll.mov", "01:00:02:00", "01:00:03:00")),
+				a(event("Music.wav", "01:00:00:00", "01:00:08:00")),
+			]),
+		);
+		expect(clipsOf(s)).toEqual([
+			["V1", "video", [["A001.mov", 90000, 200]]],
+			["V2", "video", [["B-roll.mov", 90050, 25]]],
+			["A1", "audio", [["Music.wav", 90000, 200]]],
+		]);
+		expect(s.metadata.cutsFrom).toBe("edl");
+		expect(getShots(s).map((shot) => [shot.name, shot.startFrameIndex])).toEqual([
+			["A001.mov", 90000],
+			["B-roll.mov", 90050],
+			["A001.mov", 90075],
+		]);
+		// a part of the uploaded video; the source timecode is metadata
+		expect(s.tracks[0]!.clips[0]).toMatchObject({
+			mediaId: "upload",
+			sourceStartFrameIndex: 90000,
+			metadata: { sourceTimecode: "00:10:00:00" },
+		});
+	});
+
+	it("names clips without a name after their place", () => {
+		const s = applyTracks(base(), list([v(event(null, "01:00:00:00", "01:00:08:00"))]));
+		expect(s.tracks[0]!.clips[0]!.name).toBe("Clip 1");
+	});
+
+	it("moves a list that starts outside the video to the video's start, every track alike", () => {
+		// a file without timecode starts at 0, the list at 01:00:00:00
+		const s = applyTracks(
+			snapshot({ frameRate: FPS_25, startFrameIndex: 0, durationFrameCount: 200 }),
+			list([
+				v(event("A", "01:00:00:00", "01:00:04:00"), event("B", "01:00:04:00", "01:00:08:00")),
+				a(event("S", "01:00:01:00", "01:00:02:00")),
+			]),
+		);
+		expect(clipsOf(s)).toEqual([
+			[
+				"V1",
+				"video",
+				[
+					["A", 0, 100],
+					["B", 100, 100],
+				],
+			],
+			["A1", "audio", [["S", 25, 25]]],
+		]);
+	});
+
+	it("sorts, cuts overlaps on a track and what runs past the end, and drops empty tracks", () => {
+		const s = applyTracks(
+			base(),
+			list([
+				v(event("2", "01:00:04:00", "01:00:12:00"), event("1", "01:00:00:00", "01:00:04:20")),
+				a(event("late", "01:00:20:00", "01:00:21:00")),
+			]),
+		);
+		expect(clipsOf(s)).toEqual([
+			[
+				"V1",
+				"video",
+				[
+					["1", 90000, 120],
+					["2", 90120, 80],
+				],
+			],
+		]);
+	});
+
+	it("an FCPXML at another rate: the clips are placed by time", () => {
+		// 24 fps timecodes on a 25 fps video: 01:00:04:00 is 4 s in, 100 frames at 25
+		const s = applyTracks(
+			base(),
+			list(
+				[v(event("A", "01:00:00:00", "01:00:04:00"), event("B", "01:00:04:00", "01:00:08:00"))],
+				FPS_24,
+			),
+		);
+		expect(clipsOf(s)).toEqual([
+			[
+				"V1",
+				"video",
+				[
+					["A", 90000, 100],
+					["B", 90100, 100],
+				],
+			],
+		]);
+	});
+
+	it.each([
+		[
+			"a timecode that doesn't exist at the rate",
+			[v(event("A", "01:00:00:29", "01:00:01:00"))],
+			/doesn't fit/,
+		],
+		["no video clip with a length", [v(event("A", "01:00:01:00", "01:00:01:00"))], /No video clip/],
+	])("throws for %s", (_, tracks, message) => {
+		expect(() => applyTracks(base(), list(tracks))).toThrow(CutListError);
+		expect(() => applyTracks(base(), list(tracks))).toThrow(message);
+	});
+
+	describe("markers", () => {
+		const marker = (at: string, over: Partial<CutList["markers"][number]> = {}) => ({
+			name: "Fix",
+			note: "too warm",
+			at,
+			duration: 0,
+			host: "Resolve" as const,
+			label: "Blue",
+			...over,
+		});
+		const withMarkers = (
+			markers: CutList["markers"],
+			tracks = [v(event("A", "01:00:00:00", "01:00:08:00"))],
+		) => ({
+			...list(tracks),
+			markers,
+		});
+
+		it("are placed on the video with their category", () => {
+			const { markers } = applyCutList(
+				base(),
+				withMarkers([
+					marker("01:00:02:00"),
+					marker("01:00:04:00", { duration: 50, host: "Avid", label: "RED", note: null }),
+				]),
+			);
+			expect(markers).toEqual([
+				{
+					index: 0,
+					name: "Fix",
+					description: "too warm",
+					frame: 90050,
+					duration: 0,
+					category: { name: "Resolve Blue", color: "#008feb" },
+				},
+				{
+					index: 1,
+					name: "Fix",
+					description: null,
+					frame: 90100,
+					duration: 50,
+					category: { name: "Avid Red", color: "#ff0000" },
+				},
+			]);
+		});
+
+		it("move with the clips, and outside the video they are left out; a range ends with it", () => {
+			const s = snapshot({ frameRate: FPS_25, startFrameIndex: 0, durationFrameCount: 200 });
+			const { markers } = applyCutList(
+				s,
+				withMarkers([
+					marker("01:00:01:00"),
+					marker("01:00:07:00", { duration: 100 }),
+					marker("01:00:09:00"),
+				]),
+			);
+			expect(markers.map((m) => [m.index, m.frame, m.duration])).toEqual([
+				[0, 25, 0],
+				[1, 175, 25],
+			]);
+		});
+
+		it("an FCPXML at another rate: placed by time", () => {
+			const { markers } = applyCutList(base(), {
+				...withMarkers([marker("01:00:04:00", { duration: 24 })]),
+				frameRate: FPS_24,
+			});
+			expect(markers.map((m) => [m.frame, m.duration])).toEqual([[90100, 25]]);
+		});
+
+		it("a list with only markers keeps the tracks, and moves by whole hours", () => {
+			// a file without timecode starts at 0, the markers are in the list's first hour
+			const s = snapshot({ frameRate: FPS_25, startFrameIndex: 0, durationFrameCount: 200 });
+			const applied = applyCutList(s, withMarkers([marker("01:00:03:00")], []));
+			expect(applied.snapshot).toBe(s);
+			expect(applied.markers.map((m) => m.frame)).toEqual([75]);
+		});
+
+		it("throws when neither a clip nor a marker is inside the video", () => {
+			// the video is 8 s long; the marker is in its hour, after its end
+			expect(() => applyCutList(base(), withMarkers([marker("01:00:30:00")], []))).toThrow(
+				/No marker/,
+			);
+		});
+
+		it("throws for a marker whose timecode doesn't fit the rate", () => {
+			expect(() => applyCutList(base(), withMarkers([marker("01:00:00:29")]))).toThrow(
+				'Marker "Fix": 01:00:00:29 doesn\'t fit',
+			);
+		});
 	});
 });

@@ -53,6 +53,20 @@ describe("getExport", () => {
 		},
 	);
 
+	it("tells the team whether the cut list was used, without where it is stored", async () => {
+		signIn(w.owner.user, w.org.id);
+		expect((await getExport(ids())).cutList).toBeNull();
+
+		await prisma.export.update({
+			where: { id: w.exp1.id },
+			data: { cutListKey: "m/cutList", cutListError: "Video 1, clip 2: 01:00:00:29 doesn't fit" },
+		});
+		const res = await getExport(ids());
+		expect(res.cutList).toEqual({ error: "Video 1, clip 2: 01:00:00:29 doesn't fit" });
+		expect(res).not.toHaveProperty("cutListKey");
+		expect(res).not.toHaveProperty("cutListError");
+	});
+
 	it.each([
 		["project", () => ({ projectId: w.projectB.id })],
 		["timeline", () => ({ timelineId: w.tl2.id })],

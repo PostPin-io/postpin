@@ -1,23 +1,8 @@
+import { RESOLVE_MARKER_COLORS } from "@postpin-io/shared/logic/marker-categories";
 import type { ClipColor, MarkerColor } from "./resolve";
 
-export const MARKER_PALETTE: Record<MarkerColor, string> = {
-	Blue: "#008feb",
-	Cyan: "#00dad7",
-	Green: "#00ba00",
-	Yellow: "#ffa000",
-	Red: "#fc0000",
-	Pink: "#ff27d2",
-	Purple: "#a800ff",
-	Fuchsia: "#db067b",
-	Rose: "#ffa4c1",
-	Lavender: "#ad9dd1",
-	Sky: "#80eaff",
-	Mint: "#50e300",
-	Lemon: "#dfec53",
-	Sand: "#d59863",
-	Cocoa: "#80594a",
-	Cream: "#f9ede4",
-};
+// the same colors name the categories of markers from a Resolve EDL (see shared's cut lists)
+export const MARKER_PALETTE: Record<MarkerColor, string> = RESOLVE_MARKER_COLORS;
 
 export const CLIP_PALETTE: Record<ClipColor, string> = {
 	Orange: "#ff6c00",

@@ -5,6 +5,7 @@
 // because browsers don't let a page reopen a file by itself. Without localStorage (private mode,
 // full) it only lasts as long as the tab.
 import type { UploadForm } from "#lib/components/exports/upload.remote.ts";
+import type { CutList } from "@postpin-io/shared/logic/cut-list";
 import type { MultipartUploadPartUrl, UploadedPart } from "@postpin-io/shared/storage";
 
 /** Parts uploaded at the same time */
@@ -57,6 +58,7 @@ type Api = {
 		form: UploadForm;
 	}): Promise<void>;
 	abortWebUpload(a: { exportId: string; uploadId: string }): Promise<void>;
+	attachWebUploadCutList(a: { exportId: string; cutList: CutList }): Promise<void>;
 };
 
 /** PUTs one part, reports its uploaded bytes and resolves with the ETag S3 answered */
@@ -204,6 +206,8 @@ export class UploadManager {
 		timelineId: string;
 		name: string;
 		form: UploadForm;
+		/** Tracks of the video's timeline (from an EDL or FCPXML), see attachCutList */
+		cutList?: CutList | null;
 	}): Promise<string> {
 		const api = await this.api();
 		const { id: exportId } = await api.createWebExport({
@@ -218,6 +222,17 @@ export class UploadManager {
 				await this.onChange();
 				throw e;
 			});
+		if (a.cutList) {
+			// before the parts: the server keeps it, so a resumed upload has it too
+			await api
+				.attachWebUploadCutList({ exportId, cutList: a.cutList })
+				.catch(async (e: unknown) => {
+					// the user fixes the list and starts again; the parts S3 has are dropped
+					await api.abortWebUpload({ exportId, uploadId: upload.uploadId }).catch(() => {});
+					await this.onChange();
+					throw e;
+				});
+		}
 		const entry: StoredUpload = {
 			exportId,
 			projectId: a.projectId,

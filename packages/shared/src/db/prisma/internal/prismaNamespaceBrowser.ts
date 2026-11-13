@@ -369,6 +369,8 @@ export const ExportScalarFieldEnum = {
 	mediaId: "mediaId",
 	timelineSnapshot: "timelineSnapshot",
 	timelineSnapshotHash: "timelineSnapshotHash",
+	cutListKey: "cutListKey",
+	cutListError: "cutListError",
 	uploadedById: "uploadedById",
 } as const;
 
