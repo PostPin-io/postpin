@@ -70,16 +70,36 @@ describe("setCutSensitivity", () => {
 
 		const media = await prisma.media.findUniqueOrThrow({ where: { id: w.exp1.mediaId! } });
 		expect(media.shotThumbnails).toBeNull();
+		// a new generation, stored with the shots: older renders still running don't publish
+		expect(media.shotThumbnailsGeneration).toEqual(expect.any(String));
 		expect(fakes.queue).toEqual([
 			{
 				queue: "media-light",
 				method: "add",
-				args: ["shotThumbnails", { mediaId: w.exp1.mediaId }, expect.anything()],
+				args: [
+					"shotThumbnails",
+					{ mediaId: w.exp1.mediaId, generation: media.shotThumbnailsGeneration },
+					expect.anything(),
+				],
 			},
 		]);
 
 		await setCutSensitivity({ exportId: w.exp1.id, level: "insensitive" });
 		expect((await clipsOf()).map((c) => c.startFrameIndex)).toEqual([0, 48, 144]);
+	});
+
+	it("every change is a newer generation than the one before", async () => {
+		await webUpload();
+		await signInAs(w.org, MEMBER, [{ timelineId: w.tl1.id }]);
+		const generation = async () =>
+			(await prisma.media.findUniqueOrThrow({ where: { id: w.exp1.mediaId! } }))
+				.shotThumbnailsGeneration!;
+
+		await setCutSensitivity({ exportId: w.exp1.id, level: "sensitive" });
+		const first = await generation();
+		await new Promise((resolve) => setTimeout(resolve, 2));
+		await setCutSensitivity({ exportId: w.exp1.id, level: "insensitive" });
+		expect((await generation()) > first).toBe(true);
 	});
 
 	it("'none' makes it one clip, even without scores", async () => {

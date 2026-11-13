@@ -23,12 +23,14 @@ describe("measureMediaImages", () => {
 					{ Key: "m1/sprite-1", Size: 50 },
 					{ Key: "m1/shotThumbnails-0", Size: 7 },
 					{ Key: "m1/shotThumbnails-12", Size: 3 },
+					// with a generation in the key, still a shot thumbnail
+					{ Key: "m1/shotThumbnails-0mhx3k2a9b7c1-0", Size: 10 },
 				],
 			});
 
 		const sizes = await measureMediaImages({ listObjectsV2 } as unknown as S3, env, "m1");
 
-		expect(sizes).toEqual({ thumbnailSize: 40n, seekSpritesSize: 150n, shotThumbnailsSize: 10n });
+		expect(sizes).toEqual({ thumbnailSize: 40n, seekSpritesSize: 150n, shotThumbnailsSize: 20n });
 		expect(listObjectsV2).toHaveBeenNthCalledWith(1, {
 			Bucket: "bucket",
 			Prefix: "m1/",

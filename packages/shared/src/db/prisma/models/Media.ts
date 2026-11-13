@@ -43,6 +43,7 @@ export type MediaMinAggregateOutputType = {
 	updatedAt: Date | null;
 	status: $Enums.MediaStatus | null;
 	originalId: string | null;
+	shotThumbnailsGeneration: string | null;
 	thumbnailSize: bigint | null;
 	seekSpritesSize: bigint | null;
 	shotThumbnailsSize: bigint | null;
@@ -54,6 +55,7 @@ export type MediaMaxAggregateOutputType = {
 	updatedAt: Date | null;
 	status: $Enums.MediaStatus | null;
 	originalId: string | null;
+	shotThumbnailsGeneration: string | null;
 	thumbnailSize: bigint | null;
 	seekSpritesSize: bigint | null;
 	shotThumbnailsSize: bigint | null;
@@ -67,6 +69,7 @@ export type MediaCountAggregateOutputType = {
 	originalId: number;
 	seekSprites: number;
 	shotThumbnails: number;
+	shotThumbnailsGeneration: number;
 	movieBarcode: number;
 	sceneScores: number;
 	thumbnailSize: number;
@@ -93,6 +96,7 @@ export type MediaMinAggregateInputType = {
 	updatedAt?: true;
 	status?: true;
 	originalId?: true;
+	shotThumbnailsGeneration?: true;
 	thumbnailSize?: true;
 	seekSpritesSize?: true;
 	shotThumbnailsSize?: true;
@@ -104,6 +108,7 @@ export type MediaMaxAggregateInputType = {
 	updatedAt?: true;
 	status?: true;
 	originalId?: true;
+	shotThumbnailsGeneration?: true;
 	thumbnailSize?: true;
 	seekSpritesSize?: true;
 	shotThumbnailsSize?: true;
@@ -117,6 +122,7 @@ export type MediaCountAggregateInputType = {
 	originalId?: true;
 	seekSprites?: true;
 	shotThumbnails?: true;
+	shotThumbnailsGeneration?: true;
 	movieBarcode?: true;
 	sceneScores?: true;
 	thumbnailSize?: true;
@@ -220,6 +226,7 @@ export type MediaGroupByOutputType = {
 	originalId: string;
 	seekSprites: runtime.JsonValue | null;
 	shotThumbnails: runtime.JsonValue | null;
+	shotThumbnailsGeneration: string | null;
 	movieBarcode: runtime.JsonValue | null;
 	sceneScores: runtime.JsonValue | null;
 	thumbnailSize: bigint | null;
@@ -255,6 +262,7 @@ export type MediaWhereInput = {
 	originalId?: Prisma.StringFilter<"Media"> | string;
 	seekSprites?: Prisma.JsonNullableFilter<"Media">;
 	shotThumbnails?: Prisma.JsonNullableFilter<"Media">;
+	shotThumbnailsGeneration?: Prisma.StringNullableFilter<"Media"> | string | null;
 	movieBarcode?: Prisma.JsonNullableFilter<"Media">;
 	sceneScores?: Prisma.JsonNullableFilter<"Media">;
 	thumbnailSize?: Prisma.BigIntNullableFilter<"Media"> | bigint | number | null;
@@ -277,6 +285,7 @@ export type MediaOrderByWithRelationInput = {
 	originalId?: Prisma.SortOrder;
 	seekSprites?: Prisma.SortOrderInput | Prisma.SortOrder;
 	shotThumbnails?: Prisma.SortOrderInput | Prisma.SortOrder;
+	shotThumbnailsGeneration?: Prisma.SortOrderInput | Prisma.SortOrder;
 	movieBarcode?: Prisma.SortOrderInput | Prisma.SortOrder;
 	sceneScores?: Prisma.SortOrderInput | Prisma.SortOrder;
 	thumbnailSize?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -300,6 +309,7 @@ export type MediaWhereUniqueInput = Prisma.AtLeast<
 		status?: Prisma.EnumMediaStatusFilter<"Media"> | $Enums.MediaStatus;
 		seekSprites?: Prisma.JsonNullableFilter<"Media">;
 		shotThumbnails?: Prisma.JsonNullableFilter<"Media">;
+		shotThumbnailsGeneration?: Prisma.StringNullableFilter<"Media"> | string | null;
 		movieBarcode?: Prisma.JsonNullableFilter<"Media">;
 		sceneScores?: Prisma.JsonNullableFilter<"Media">;
 		thumbnailSize?: Prisma.BigIntNullableFilter<"Media"> | bigint | number | null;
@@ -324,6 +334,7 @@ export type MediaOrderByWithAggregationInput = {
 	originalId?: Prisma.SortOrder;
 	seekSprites?: Prisma.SortOrderInput | Prisma.SortOrder;
 	shotThumbnails?: Prisma.SortOrderInput | Prisma.SortOrder;
+	shotThumbnailsGeneration?: Prisma.SortOrderInput | Prisma.SortOrder;
 	movieBarcode?: Prisma.SortOrderInput | Prisma.SortOrder;
 	sceneScores?: Prisma.SortOrderInput | Prisma.SortOrder;
 	thumbnailSize?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -347,6 +358,7 @@ export type MediaScalarWhereWithAggregatesInput = {
 	originalId?: Prisma.StringWithAggregatesFilter<"Media"> | string;
 	seekSprites?: Prisma.JsonNullableWithAggregatesFilter<"Media">;
 	shotThumbnails?: Prisma.JsonNullableWithAggregatesFilter<"Media">;
+	shotThumbnailsGeneration?: Prisma.StringNullableWithAggregatesFilter<"Media"> | string | null;
 	movieBarcode?: Prisma.JsonNullableWithAggregatesFilter<"Media">;
 	sceneScores?: Prisma.JsonNullableWithAggregatesFilter<"Media">;
 	thumbnailSize?: Prisma.BigIntNullableWithAggregatesFilter<"Media"> | bigint | number | null;
@@ -361,6 +373,7 @@ export type MediaCreateInput = {
 	status?: $Enums.MediaStatus;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: bigint | number | null;
@@ -380,6 +393,7 @@ export type MediaUncheckedCreateInput = {
 	originalId: string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: bigint | number | null;
@@ -397,6 +411,7 @@ export type MediaUpdateInput = {
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
@@ -416,6 +431,7 @@ export type MediaUncheckedUpdateInput = {
 	originalId?: Prisma.StringFieldUpdateOperationsInput | string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
@@ -434,6 +450,7 @@ export type MediaCreateManyInput = {
 	originalId: string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: bigint | number | null;
@@ -448,6 +465,7 @@ export type MediaUpdateManyMutationInput = {
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
@@ -463,6 +481,7 @@ export type MediaUncheckedUpdateManyInput = {
 	originalId?: Prisma.StringFieldUpdateOperationsInput | string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
@@ -478,6 +497,7 @@ export type MediaCountOrderByAggregateInput = {
 	originalId?: Prisma.SortOrder;
 	seekSprites?: Prisma.SortOrder;
 	shotThumbnails?: Prisma.SortOrder;
+	shotThumbnailsGeneration?: Prisma.SortOrder;
 	movieBarcode?: Prisma.SortOrder;
 	sceneScores?: Prisma.SortOrder;
 	thumbnailSize?: Prisma.SortOrder;
@@ -497,6 +517,7 @@ export type MediaMaxOrderByAggregateInput = {
 	updatedAt?: Prisma.SortOrder;
 	status?: Prisma.SortOrder;
 	originalId?: Prisma.SortOrder;
+	shotThumbnailsGeneration?: Prisma.SortOrder;
 	thumbnailSize?: Prisma.SortOrder;
 	seekSpritesSize?: Prisma.SortOrder;
 	shotThumbnailsSize?: Prisma.SortOrder;
@@ -508,6 +529,7 @@ export type MediaMinOrderByAggregateInput = {
 	updatedAt?: Prisma.SortOrder;
 	status?: Prisma.SortOrder;
 	originalId?: Prisma.SortOrder;
+	shotThumbnailsGeneration?: Prisma.SortOrder;
 	thumbnailSize?: Prisma.SortOrder;
 	seekSpritesSize?: Prisma.SortOrder;
 	shotThumbnailsSize?: Prisma.SortOrder;
@@ -678,6 +700,7 @@ export type MediaCreateWithoutOriginalInput = {
 	status?: $Enums.MediaStatus;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: bigint | number | null;
@@ -695,6 +718,7 @@ export type MediaUncheckedCreateWithoutOriginalInput = {
 	status?: $Enums.MediaStatus;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: bigint | number | null;
@@ -720,6 +744,7 @@ export type MediaCreateWithoutProxiesInput = {
 	status?: $Enums.MediaStatus;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: bigint | number | null;
@@ -738,6 +763,7 @@ export type MediaUncheckedCreateWithoutProxiesInput = {
 	originalId: string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: bigint | number | null;
@@ -782,6 +808,7 @@ export type MediaUpdateWithoutOriginalInput = {
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
@@ -799,6 +826,7 @@ export type MediaUncheckedUpdateWithoutOriginalInput = {
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
@@ -836,6 +864,7 @@ export type MediaUpdateWithoutProxiesInput = {
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
@@ -854,6 +883,7 @@ export type MediaUncheckedUpdateWithoutProxiesInput = {
 	originalId?: Prisma.StringFieldUpdateOperationsInput | string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
@@ -870,6 +900,7 @@ export type MediaCreateWithoutThumbnailInput = {
 	status?: $Enums.MediaStatus;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: bigint | number | null;
@@ -888,6 +919,7 @@ export type MediaUncheckedCreateWithoutThumbnailInput = {
 	originalId: string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: bigint | number | null;
@@ -932,6 +964,7 @@ export type MediaUpdateWithoutThumbnailInput = {
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
@@ -950,6 +983,7 @@ export type MediaUncheckedUpdateWithoutThumbnailInput = {
 	originalId?: Prisma.StringFieldUpdateOperationsInput | string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
@@ -966,6 +1000,7 @@ export type MediaCreateWithoutExportInput = {
 	status?: $Enums.MediaStatus;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: bigint | number | null;
@@ -984,6 +1019,7 @@ export type MediaUncheckedCreateWithoutExportInput = {
 	originalId: string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: bigint | number | null;
@@ -1028,6 +1064,7 @@ export type MediaUpdateWithoutExportInput = {
 	status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
@@ -1046,6 +1083,7 @@ export type MediaUncheckedUpdateWithoutExportInput = {
 	originalId?: Prisma.StringFieldUpdateOperationsInput | string;
 	seekSprites?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	shotThumbnails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	shotThumbnailsGeneration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	movieBarcode?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	sceneScores?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
 	thumbnailSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
@@ -1101,6 +1139,7 @@ export type MediaSelect<
 		originalId?: boolean;
 		seekSprites?: boolean;
 		shotThumbnails?: boolean;
+		shotThumbnailsGeneration?: boolean;
 		movieBarcode?: boolean;
 		sceneScores?: boolean;
 		thumbnailSize?: boolean;
@@ -1126,6 +1165,7 @@ export type MediaSelectCreateManyAndReturn<
 		originalId?: boolean;
 		seekSprites?: boolean;
 		shotThumbnails?: boolean;
+		shotThumbnailsGeneration?: boolean;
 		movieBarcode?: boolean;
 		sceneScores?: boolean;
 		thumbnailSize?: boolean;
@@ -1147,6 +1187,7 @@ export type MediaSelectUpdateManyAndReturn<
 		originalId?: boolean;
 		seekSprites?: boolean;
 		shotThumbnails?: boolean;
+		shotThumbnailsGeneration?: boolean;
 		movieBarcode?: boolean;
 		sceneScores?: boolean;
 		thumbnailSize?: boolean;
@@ -1165,6 +1206,7 @@ export type MediaSelectScalar = {
 	originalId?: boolean;
 	seekSprites?: boolean;
 	shotThumbnails?: boolean;
+	shotThumbnailsGeneration?: boolean;
 	movieBarcode?: boolean;
 	sceneScores?: boolean;
 	thumbnailSize?: boolean;
@@ -1182,6 +1224,7 @@ export type MediaOmit<
 	| "originalId"
 	| "seekSprites"
 	| "shotThumbnails"
+	| "shotThumbnailsGeneration"
 	| "movieBarcode"
 	| "sceneScores"
 	| "thumbnailSize"
@@ -1228,6 +1271,10 @@ export type $MediaPayload<
 			originalId: string;
 			seekSprites: runtime.JsonValue | null;
 			shotThumbnails: runtime.JsonValue | null;
+			/**
+			 * The newest requested render of the shot thumbnails; only its job may publish, see ShotThumbnails
+			 */
+			shotThumbnailsGeneration: string | null;
 			movieBarcode: runtime.JsonValue | null;
 			/**
 			 * Web uploads: picture changes the cut detection found, see SceneScores
@@ -1835,6 +1882,7 @@ export interface MediaFieldRefs {
 	readonly originalId: Prisma.FieldRef<"Media", "String">;
 	readonly seekSprites: Prisma.FieldRef<"Media", "Json">;
 	readonly shotThumbnails: Prisma.FieldRef<"Media", "Json">;
+	readonly shotThumbnailsGeneration: Prisma.FieldRef<"Media", "String">;
 	readonly movieBarcode: Prisma.FieldRef<"Media", "Json">;
 	readonly sceneScores: Prisma.FieldRef<"Media", "Json">;
 	readonly thumbnailSize: Prisma.FieldRef<"Media", "BigInt">;

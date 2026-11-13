@@ -289,7 +289,9 @@
 		});
 	}
 
-	const snapshot = $derived(exportQuery.current?.timelineSnapshot as TimelineSnapshot | undefined);
+	// From the awaited export like `exp`/`media`: `.current` is set outside the navigation's async
+	// batch, so after a quick switch it could still belong to the previous export
+	const snapshot = $derived(exp?.timelineSnapshot as TimelineSnapshot | undefined);
 	// Absolute timeline frame, like marker frames
 	const currentFrame = $derived(snapshot ? frameAtSeconds(videoPosition, snapshot) : 0);
 	const seekToFrame = (frame: number) => {
@@ -484,10 +486,10 @@
 {/snippet}
 
 {#snippet timelineArea()}
-	{#if exportQuery.current?.timelineSnapshot}
+	{#if snapshot}
 		<Timeline
 			bind:this={timeline}
-			snapshot={exportQuery.current!.timelineSnapshot as TimelineSnapshot}
+			snapshot={snapshot!}
 			{markers}
 			{seekThumbnails}
 			mode={timelineMode}

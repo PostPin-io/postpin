@@ -12,6 +12,7 @@ import { prisma } from "#lib/server/database.ts";
 import { s3Client } from "./storage";
 import { JobWeights } from "@postpin-io/shared/queue";
 import type { Prisma } from "@postpin-io/shared/db";
+import { newShotThumbnailsGeneration } from "@postpin-io/shared/types/ShotThumbnails";
 
 const flowProducer = building ? (null as unknown as TypedFlowProducer) : getFlowProducer(env);
 const lightQueue = building ? null : getQueue(Queues.light, env);
@@ -39,13 +40,13 @@ const transcodeJob = (
 
 const lightJob = <N extends "probe" | "sceneDetect" | "shotThumbnails">(
 	name: N,
-	mediaId: string,
+	data: { mediaId: string; generation?: string },
 	children?: TypedFlowChildJob[],
 ) =>
 	({
 		name,
 		queueName: Queues.light,
-		data: { mediaId },
+		data,
 		opts: { failParentOnFailure: true },
 		...(children && { children }),
 	}) as TypedFlowChildJob;
@@ -60,14 +61,21 @@ export async function startMediaProcessing(
 	opts: { webUpload?: boolean; detectCuts?: boolean } = {},
 ) {
 	const [r1080, r720, r480] = PROXY_RESOLUTIONS;
-	const probe = lightJob("probe", mediaId);
+	// stored before the jobs exist, so the shot thumbnails job finds itself current
+	const generation = newShotThumbnailsGeneration();
+	await prisma.media.update({
+		where: { id: mediaId },
+		data: { shotThumbnailsGeneration: generation },
+	});
+	const probe = lightJob("probe", { mediaId });
+	const shotThumbnails = { mediaId, generation };
 	const shots = !opts.webUpload
-		? [probe, lightJob("shotThumbnails", mediaId)]
+		? [probe, lightJob("shotThumbnails", shotThumbnails)]
 		: [
 				lightJob(
 					"shotThumbnails",
-					mediaId,
-					opts.detectCuts ? [lightJob("sceneDetect", mediaId, [probe])] : [probe],
+					shotThumbnails,
+					opts.detectCuts ? [lightJob("sceneDetect", { mediaId }, [probe])] : [probe],
 				),
 			];
 	await flowProducer.add({
@@ -110,11 +118,15 @@ export async function startMediaProcessing(
 	});
 }
 
-/** Renders the shot thumbnails again, after the shots of the snapshot changed */
-export async function renderShotThumbnails(mediaId: string) {
+/**
+ * Renders the shot thumbnails again, after the shots of the snapshot changed. Store `generation`
+ * as the media's shotThumbnailsGeneration together with the new snapshot first: an older render
+ * that is still running then doesn't publish.
+ */
+export async function renderShotThumbnails(mediaId: string, generation: string) {
 	await lightQueue!.add(
 		"shotThumbnails",
-		{ mediaId },
+		{ mediaId, generation },
 		// unique: the processing flow's job may still be kept under the plain id
 		{ jobId: `shotThumbnails-${mediaId}-${Date.now()}`, removeOnComplete: 100, removeOnFail: 100 },
 	);

@@ -8,6 +8,7 @@ import { authorize } from "#lib/server/org-access.ts";
 import { Prisma } from "@postpin-io/shared/db";
 import { applyCuts, cutLevel, isWebUpload } from "@postpin-io/shared/logic/web-upload";
 import { sceneScores } from "@postpin-io/shared/types/SceneScores";
+import { newShotThumbnailsGeneration } from "@postpin-io/shared/types/ShotThumbnails";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 
 /**
@@ -34,15 +35,23 @@ export const setCutSensitivity = command(
 		if (!scores && level !== "none") error(409, "The cuts of this video weren't detected");
 
 		const updated = applyCuts(snapshot, scores, level);
+		// One update for the shots and their generation: a render of older shots that is still
+		// running sees it was overtaken and doesn't publish (see the worker's shotThumbnails)
+		const generation = newShotThumbnailsGeneration();
 		await prisma.export.update({
 			where: { id: exportId },
 			data: {
 				timelineSnapshot: updated as unknown as Prisma.JsonObject,
-				// the old thumbnails belong to the old shots; the job sets this again
-				media: { update: { shotThumbnails: Prisma.DbNull } },
+				media: {
+					update: {
+						// the old thumbnails belong to the old shots; the job sets this again
+						shotThumbnails: Prisma.DbNull,
+						shotThumbnailsGeneration: generation,
+					},
+				},
 			},
 		});
-		await renderShotThumbnails(exp.media.id);
+		await renderShotThumbnails(exp.media.id, generation);
 		return { shotCount: updated.tracks[0]?.clips.length ?? 0 };
 	},
 );

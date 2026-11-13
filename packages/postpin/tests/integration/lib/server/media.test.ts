@@ -83,9 +83,18 @@ describe("startMediaProcessing", () => {
 		]);
 	});
 
-	it("queues the flow before the DB update, so an unknown id throws after queueing", async () => {
+	it("stores the shot thumbnails generation before queueing, so an unknown id queues nothing", async () => {
 		await expect(startMediaProcessing("nope")).rejects.toThrow();
-		expect(fakes.queue).toHaveLength(1);
+		expect(fakes.queue).toHaveLength(0);
+	});
+
+	it("gives the shot thumbnails job the media's current generation", async () => {
+		await startMediaProcessing(mediaId);
+		const flow = fakes.queue[0]!.args[0] as FlowNode;
+		const job = flow.children!.find((c) => c.name === "shotThumbnails")!;
+		const media = await prisma.media.findUniqueOrThrow({ where: { id: mediaId } });
+		expect(media.shotThumbnailsGeneration).toEqual(expect.any(String));
+		expect(job.data).toEqual({ mediaId, generation: media.shotThumbnailsGeneration });
 	});
 });
 

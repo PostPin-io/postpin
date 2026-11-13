@@ -244,6 +244,19 @@ describe("getShotThumbnails", () => {
 			[0, 1, 2].map((i) => `/postpin-test/${mediaId}/shotThumbnails-${i}`),
 		);
 	});
+
+	it("points at the published generation's keys", async () => {
+		await prisma.media.update({
+			where: { id: mediaId },
+			data: { shotThumbnails: { count: 2, width: 320, height: 180, generation: "g7" } },
+		});
+		signIn(w.owner.user, w.org.id);
+
+		const res = await getShotThumbnails({ mediaId });
+		expect(res.urls.map((u) => new URL(u).pathname)).toEqual(
+			[0, 1].map((i) => `/postpin-test/${mediaId}/shotThumbnails-g7-${i}`),
+		);
+	});
 });
 
 describe("getMovieBarcode", () => {

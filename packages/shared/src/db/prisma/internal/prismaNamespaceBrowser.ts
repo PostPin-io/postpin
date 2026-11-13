@@ -217,6 +217,7 @@ export const MediaScalarFieldEnum = {
 	originalId: "originalId",
 	seekSprites: "seekSprites",
 	shotThumbnails: "shotThumbnails",
+	shotThumbnailsGeneration: "shotThumbnailsGeneration",
 	movieBarcode: "movieBarcode",
 	sceneScores: "sceneScores",
 	thumbnailSize: "thumbnailSize",

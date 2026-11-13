@@ -390,9 +390,12 @@
 												/>
 											</a>
 										{:else}
-											<div class="flex size-full items-center justify-center text-base-content/30">
+											<a
+												href={exportHref ?? exportListHref}
+												class="flex size-full items-center justify-center text-base-content/30"
+											>
 												<Apeture />
-											</div>
+											</a>
 										{/if}
 									</div>
 								</td>
@@ -433,9 +436,13 @@
 									/>
 								</a>
 							{:else}
-								<div class="flex size-full items-center justify-center text-base-content/30">
+								<a
+									href={exportHref ?? exportListHref}
+									aria-label={exportHref ? "Open latest export" : "All exports"}
+									class="flex size-full items-center justify-center text-base-content/30"
+								>
 									<Apeture />
-								</div>
+								</a>
 							{/if}
 						</figure>
 

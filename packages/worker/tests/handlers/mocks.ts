@@ -5,7 +5,7 @@ import { vi } from "vitest";
 import { env as testEnv } from "../helpers.ts";
 
 export const prisma = {
-	media: { update: vi.fn() },
+	media: { update: vi.fn(), updateMany: vi.fn() },
 	mediaFile: { findUniqueOrThrow: vi.fn(), upsert: vi.fn(), update: vi.fn() },
 	export: { findUniqueOrThrow: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
 	thumbnail: { upsert: vi.fn() },
@@ -25,8 +25,15 @@ export const sharedStorage = {
 		async (_c: unknown, _e: unknown, o: { mediaId: string; type: string; proxyId?: string }) =>
 			`https://s3/${o.mediaId}/${o.type}${o.proxyId ? `-${o.proxyId}` : ""}`,
 	),
-	getS3ObjectPath: (o: { mediaId: string; type: string; proxyId?: string; index?: number }) =>
-		`${o.mediaId}/${o.type}${o.proxyId ? `-${o.proxyId}` : ""}${o.index !== undefined ? `-${o.index}` : ""}`,
+	getS3ObjectPath: (o: {
+		mediaId: string;
+		type: string;
+		proxyId?: string;
+		index?: number;
+		generation?: string;
+	}) =>
+		`${o.mediaId}/${o.type}${o.proxyId ? `-${o.proxyId}` : ""}${o.generation ? `-${o.generation}` : ""}${o.index !== undefined ? `-${o.index}` : ""}`,
+	deleteShotThumbnails: vi.fn(async () => 0),
 };
 
 export interface UploadParams {
@@ -61,6 +68,7 @@ export function resetMocks() {
 		for (const fn of Object.values(model)) fn.mockReset().mockResolvedValue({});
 	}
 	s3Client.putObject.mockReset().mockResolvedValue({});
+	sharedStorage.deleteShotThumbnails.mockReset().mockResolvedValue(0);
 	ffmpegLib.ffmpeg.mockReset();
 	ffmpegLib.ffprobe.mockReset();
 }

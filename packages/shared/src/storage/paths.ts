@@ -7,10 +7,12 @@ export interface S3Object {
 	type: "thumbnail" | "original" | "proxy" | "sprite" | "shotThumbnails";
 	proxyId?: string;
 	index?: number;
+	/** Shot thumbnails: the render they belong to, see ShotThumbnails */
+	generation?: string;
 }
 
-export function getS3ObjectPath({ mediaId, type, proxyId, index }: S3Object) {
-	return `${mediaId}/${type}${proxyId ? `-${proxyId}` : ""}${index !== undefined ? `-${index}` : ""}`;
+export function getS3ObjectPath({ mediaId, type, proxyId, index, generation }: S3Object) {
+	return `${mediaId}/${type}${proxyId ? `-${proxyId}` : ""}${generation ? `-${generation}` : ""}${index !== undefined ? `-${index}` : ""}`;
 }
 
 export function getPresignedUrl(

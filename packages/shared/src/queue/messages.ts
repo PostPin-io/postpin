@@ -42,6 +42,8 @@ export interface SeekSpritesMessage {
 
 export interface ShotThumbnailsMessage {
 	mediaId: string;
+	/** Only publishes while it is still the media's shotThumbnailsGeneration */
+	generation: string;
 }
 
 export interface MovieBarcodeMessage {

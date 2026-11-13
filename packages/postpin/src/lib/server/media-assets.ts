@@ -34,7 +34,7 @@ export async function shotThumbnailUrls(mediaId: string, lifetime = DEFAULT_LIFE
 		select: { shotThumbnails: true },
 	});
 	if (!media?.shotThumbnails) return null;
-	const { count, width, height } = media.shotThumbnails as ShotThumbnails;
+	const { count, width, height, generation } = media.shotThumbnails as ShotThumbnails;
 	return {
 		count,
 		width,
@@ -44,7 +44,7 @@ export async function shotThumbnailUrls(mediaId: string, lifetime = DEFAULT_LIFE
 				getPresignedUrl(
 					s3PresignClient,
 					env,
-					{ mediaId, type: "shotThumbnails", index },
+					{ mediaId, type: "shotThumbnails", generation, index },
 					"get",
 					lifetime,
 				),
