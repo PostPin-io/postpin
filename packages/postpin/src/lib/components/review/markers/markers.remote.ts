@@ -221,11 +221,11 @@ export const pasteMarkers = command(
 						duration: m.duration,
 						exportId: data.targetExportId,
 						categoryId: categoryOf(m),
-						// cut = verschieben → Autor bleibt (auch ein Gast); copy = neuer Marker → wer einfügt
+						// cut = move → the author stays (a guest too); copy = new marker → whoever pastes
 						authorId: data.mode === "cut" ? m.authorId : user.id,
 						guestId: data.mode === "cut" ? m.guestId : null,
 
-						// nleId bewusst NICHT kopieren: unique pro Export, gehört zum NLE-Original
+						// nleId is deliberately NOT copied: unique per export, it belongs to the NLE original
 						responses: {
 							create: m.responses.map((r) => ({
 								content: r.content,
