@@ -19,6 +19,8 @@ export const prisma = {
 	},
 	export: { findUniqueOrThrow: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
 	thumbnail: { upsert: vi.fn() },
+	category: { upsert: vi.fn() },
+	marker: { createMany: vi.fn() },
 	session: { deleteMany: vi.fn() },
 	deviceCode: { deleteMany: vi.fn() },
 	verification: { deleteMany: vi.fn() },
@@ -49,6 +51,7 @@ export const sharedStorage = {
 		`${o.mediaId}/${o.type}${o.proxyId ? `-${o.proxyId}` : ""}${o.generation ? `-${o.generation}` : ""}${o.index !== undefined ? `-${o.index}` : ""}`,
 	deleteShotThumbnails: vi.fn(async () => 0),
 	deleteObject: vi.fn(async () => {}),
+	getTextObject: vi.fn(async (_c: unknown, _e: unknown, _key: string) => ""),
 };
 
 export interface UploadParams {
@@ -90,6 +93,7 @@ export function resetMocks() {
 	s3Client.putObject.mockReset().mockResolvedValue({});
 	sharedStorage.deleteShotThumbnails.mockReset().mockResolvedValue(0);
 	sharedStorage.deleteObject.mockReset().mockResolvedValue(undefined);
+	sharedStorage.getTextObject.mockReset().mockResolvedValue("");
 	uploadDone.mockReset().mockResolvedValue(undefined);
 	ffmpegLib.ffmpeg.mockReset();
 	ffmpegLib.ffprobe.mockReset();

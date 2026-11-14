@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<!-- The cases of a Resolve export, made up: connected clips over a gap and over a clip, a music
+     file with a cover image, an audio file, a title and a transition -->
+<fcpxml version="1.14">
+    <resources>
+        <format frameDuration="1/25s" height="2160" id="r0" width="3840" name="FFVideoFormat3840x2160p25"/>
+        <format frameDuration="1/25s" height="360" id="r9" width="360" name="FFVideoFormatRateUndefined"/>
+        <effect id="r5" uid=".../Solids.localized/Vivid.motn" name="Vivid"/>
+        <media id="r6" name="Compound Clip 1">
+            <sequence duration="2s" format="r0" tcStart="0s"><spine/></sequence>
+        </media>
+        <asset id="r1" name="A001.mov" start="10s" duration="60s" hasVideo="1" hasAudio="1" format="r0">
+            <media-rep src="file:///media/A001.mov" kind="original-media"/>
+        </asset>
+        <asset id="r2" name="B002.mov" start="20s" duration="60s" hasVideo="1" hasAudio="1" format="r0"/>
+        <asset id="r3" name="Song &amp; Cover.mp4" start="0s" duration="60s" hasVideo="1" hasAudio="1" format="r9"/>
+        <asset id="r4" name="Birds.wav" start="0s" duration="60s" hasAudio="1"/>
+        <asset id="r7" name="Photo.jpg" start="0s" duration="3600s" hasVideo="1" format="r9"/>
+    </resources>
+    <library>
+        <event name="Event">
+            <project name="Trailer">
+                <sequence tcFormat="NDF" duration="12s" format="r0" tcStart="3600s">
+                    <spine>
+                        <gap name="Gap" offset="3600s" start="3600s" duration="2s">
+                            <ref-clip ref="r6" lane="1" offset="3600s" start="0s" duration="2s" name="Compound Clip 1"/>
+                        </gap>
+                        <asset-clip ref="r1" name="A001.mov" offset="3602s" start="10s" duration="4s">
+                            <!-- B-roll over the first second -->
+                            <asset-clip ref="r2" lane="1" name="B002.mov" offset="10s" start="20s" duration="1s"/>
+                            <asset-clip ref="r3" lane="2" name="Song &amp; Cover.mp4" offset="10s" start="0s" duration="10s"/>
+                            <asset-clip ref="r4" lane="-1" name="Birds.wav" offset="10s" start="0s" duration="4s"/>
+                        </asset-clip>
+                        <transition name="Cross Dissolve" offset="88/25s" duration="1s"/>
+                        <asset-clip ref="r2" name="B002.mov" offset="3606s" start="30s" duration="3s" srcEnable="all"/>
+                        <title ref="r5" name="Credits" offset="3609s" start="0s" duration="1s"/>
+                        <gap name="Gap" offset="3610s" start="3600s" duration="2s">
+                            <video ref="r7" lane="1" name="Photo.jpg" offset="3600s" start="0s" duration="1s"/>
+                            <asset-clip ref="r1" lane="1" name="A001.mov" offset="3601s" start="5s" duration="1s" srcEnable="audio"/>
+                        </gap>
+                    </spine>
+                </sequence>
+            </project>
+        </event>
+    </library>
+</fcpxml>

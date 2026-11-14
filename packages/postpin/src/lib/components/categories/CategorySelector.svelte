@@ -17,19 +17,24 @@
 		categories.filter((c) => c.name.toLowerCase().includes(search.trim().toLowerCase())),
 	);
 
+	// A popover lives in the top layer, so the marker card's scroll container can't clip it
+	const uid = $props.id();
+	let popover = $state<HTMLElement>();
+
 	function select(id: string) {
 		onselect?.(id);
 		search = "";
-		(document.activeElement as HTMLElement | null)?.blur();
+		popover?.hidePopover();
 	}
 </script>
 
 {#if !readonly}
-	<div class="dropdown dropdown-center">
-		<div
-			tabindex="0"
-			role="button"
-			class="btn justify-start @max-md:min-w-0 @max-md:px-3 @md:min-w-32"
+	<div class="min-w-0">
+		<button
+			type="button"
+			popovertarget="category-{uid}"
+			style:anchor-name="--category-{uid}"
+			class="btn max-w-full flex-nowrap justify-start @max-md:min-w-0 @max-md:px-3 @md:min-w-32"
 			aria-label={selected ? `Category: ${selected.name}` : undefined}
 		>
 			{#if selected}
@@ -37,8 +42,14 @@
 			{:else}
 				<span class="opacity-60">Select category</span>
 			{/if}
-		</div>
-		<div class="dropdown-content z-10 mt-1 w-64 rounded-box bg-base-100 shadow">
+		</button>
+		<div
+			bind:this={popover}
+			id="category-{uid}"
+			popover="auto"
+			style:position-anchor="--category-{uid}"
+			class="category-popover m-0 w-64 max-w-[calc(100vw-1rem)] rounded-box bg-base-100 p-0 text-base-content shadow"
+		>
 			<div class="flex flex-col gap-2 p-2">
 				<input
 					type="search"
@@ -71,3 +82,15 @@
 		<span class="opacity-60">No category</span>
 	{/if}
 {/if}
+
+<style>
+	/* Below the button, left-aligned to it, kept inside the viewport */
+	.category-popover {
+		position: fixed;
+		inset: auto;
+		top: anchor(bottom);
+		left: anchor(left);
+		margin-top: 0.25rem;
+		position-try-fallbacks: flip-block, flip-inline;
+	}
+</style>

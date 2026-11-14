@@ -64,7 +64,7 @@
 				<div class="divider my-2"></div>
 				<TargetInvite target={shareTarget} />
 			{:else}
-				<ShareLinks exportId={targetQuery.current.id} />
+				<ShareLinks exportId={targetQuery.current.id} onscreening={() => dialog?.close()} />
 			{/if}
 		{:else}
 			<span class="loading mt-2 loading-spinner"></span>

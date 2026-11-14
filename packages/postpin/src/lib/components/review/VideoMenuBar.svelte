@@ -50,6 +50,7 @@
 		onCreateMarker,
 		markerColor,
 		timelineControls = true,
+		timelineHidden = false,
 		status,
 		mobile = false,
 		mobileLandscape = false,
@@ -74,6 +75,7 @@
 		/** Whether the fullscreen button leaves fullscreen; differs from `fullscreen` while the phone is sideways */
 		fullscreenActive?: boolean;
 		onToggleMute?: () => void;
+		/** Shows the fullscreen button */
 		onFullscreen?: () => void;
 		/** Shows the add-marker button */
 		onCreateMarker?: () => void;
@@ -81,6 +83,8 @@
 		markerColor?: string;
 		/** Timeline mode and shot-grid buttons; off when there is no timeline (share links) */
 		timelineControls?: boolean;
+		/** The user hid the timeline; its markers then go on the scrub bar */
+		timelineHidden?: boolean;
 		/** Shown first in the right-hand group, e.g. the processing jobs */
 		status?: Snippet;
 		mobile?: boolean;
@@ -105,8 +109,8 @@
 		Math.min(1, Math.max(0, (f - timing.startFrameIndex + 0.5) / durationFrames));
 	const progress = $derived(barPosition(frame));
 
-	// Without the timeline (phones, share links without it, fullscreen) the markers go on the scrub bar
-	const showMarkers = $derived(!timelineControls || fullscreen);
+	// Without the timeline (phones, share links without it, hidden, fullscreen) the markers go on the scrub bar
+	const showMarkers = $derived(!timelineControls || timelineHidden || fullscreen);
 	// A tap this close to a marker lands on it: a diamond is hard to hit exactly with a finger
 	const SNAP_PX = 8;
 
@@ -279,8 +283,8 @@
 					title={timelineMode === "full"
 						? "Compact Timeline"
 						: timelineMode === "compact"
-							? "Show Only Scrub Area"
-							: "Expand Timeline"}
+							? "Hide Timeline"
+							: "Show Timeline"}
 					onclick={() => (timelineMode = nextTimelineMode(timelineMode))}
 				>
 					{#if timelineMode === "full"}<ChevronsDownUp
@@ -320,13 +324,17 @@
 						{#if muted}<VolumeX size={iconSize} />{:else}<Volume2 size={iconSize} />{/if}
 					</button>
 				{/if}
-				<button
-					class="btn btn-square btn-ghost {btnSize}"
-					title={fullscreenActive ? "Exit Fullscreen (F)" : "Fullscreen (F)"}
-					onclick={() => onFullscreen?.()}
-				>
-					{#if fullscreenActive}<Minimize size={iconSize} />{:else}<Maximize size={iconSize} />{/if}
-				</button>
+				{#if onFullscreen}
+					<button
+						class="btn btn-square btn-ghost {btnSize}"
+						title={fullscreenActive ? "Exit Fullscreen (F)" : "Fullscreen (F)"}
+						onclick={() => onFullscreen()}
+					>
+						{#if fullscreenActive}<Minimize size={iconSize} />{:else}<Maximize
+								size={iconSize}
+							/>{/if}
+					</button>
+				{/if}
 			{/if}
 
 			{#if !fullscreen && timelineControls}

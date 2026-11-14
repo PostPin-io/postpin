@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Role } from "@postpin-io/shared/db/enums";
+import type { CutList } from "@postpin-io/shared/logic/cut-list";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 import {
 	abortWebUpload,
+	attachWebUploadCutList,
 	completeWebUpload,
 	createWebExport,
 	getUploadLimits,
@@ -480,6 +482,206 @@ describe("completeWebUpload checks what S3 really has", () => {
 		const parts = bucket.putFile(fileSize);
 		await abortWebUpload({ exportId: id, uploadId: "upload-1" });
 		await expectStatus(complete(id, parts), 409);
+	});
+});
+
+describe("upload with a cut list", () => {
+	const fileSize = 100 * MiB;
+	const event = {
+		name: "A001.mov",
+		in: "01:00:00:00",
+		out: "01:00:03:05",
+		sourceIn: "00:00:10:00",
+	};
+	const CUT_LIST: CutList = {
+		format: "fcpxml",
+		title: "Trailer",
+		frameRate: FPS_24,
+		tracks: [
+			{ type: "video", name: "Video 1", events: [event] },
+			{ type: "audio", name: "Audio 1", events: [event] },
+		],
+		markers: [],
+	};
+	type FlowNode = { name: string; data: Record<string, unknown>; children?: FlowNode[] };
+	const tree = (n: FlowNode): unknown =>
+		n.children?.length ? { [n.name]: n.children.map(tree) } : n.name;
+	const shotsBranch = () =>
+		(flows()[0] as FlowNode).children!.find((c) => c.name === "shotThumbnails")!;
+	const fieldsOf = async (id: string) =>
+		await prisma.export.findUniqueOrThrow({
+			where: { id },
+			select: { cutListKey: true, cutListError: true, mediaId: true },
+		});
+	const puts = () => fakes.s3.filter((c) => c.command === "PutObjectCommand");
+
+	beforeEach(() => signIn(w.owner.user, w.org.id));
+
+	it("stores it as JSON in the media's folder, and the processing reads it before the shots", async () => {
+		const { id } = await startedUpload(fileSize);
+		await attachWebUploadCutList({ exportId: id, cutList: CUT_LIST });
+
+		const fields = await fieldsOf(id);
+		expect(fields.cutListKey).toBe(`${fields.mediaId}/cutList`);
+		expect(puts()[0]!.input).toMatchObject({
+			Key: `${fields.mediaId}/cutList`,
+			ContentType: "application/json",
+		});
+		expect(JSON.parse(puts()[0]!.input.Body as string)).toEqual(CUT_LIST);
+
+		await completeWebUpload({
+			exportId: id,
+			uploadId: "upload-1",
+			parts: bucket.putFile(fileSize),
+			form: form(),
+		});
+		// probe → sceneDetect → cutList → shotThumbnails: its tracks win over the detected cuts
+		expect(tree(shotsBranch())).toEqual({
+			shotThumbnails: [{ cutList: [{ sceneDetect: ["probe"] }] }],
+		});
+	});
+
+	it("with a cut list and without cut detection: probe → cutList → shotThumbnails", async () => {
+		const { id } = await startedUpload(fileSize);
+		await attachWebUploadCutList({ exportId: id, cutList: CUT_LIST });
+		await completeWebUpload({
+			exportId: id,
+			uploadId: "upload-1",
+			parts: bucket.putFile(fileSize),
+			form: form({ cutLevel: "none" }),
+		});
+		expect(tree(shotsBranch())).toEqual({ shotThumbnails: [{ cutList: ["probe"] }] });
+	});
+
+	it("without a cut list, no cutList job", async () => {
+		const { id } = await startedUpload(fileSize);
+		await completeWebUpload({
+			exportId: id,
+			uploadId: "upload-1",
+			parts: bucket.putFile(fileSize),
+			form: form(),
+		});
+		expect(tree(shotsBranch())).toEqual({ shotThumbnails: [{ sceneDetect: ["probe"] }] });
+		expect((await fieldsOf(id)).cutListKey).toBeNull();
+	});
+
+	it("a list with only markers is taken, and the cuts are still detected", async () => {
+		const { id } = await startedUpload(fileSize);
+		await attachWebUploadCutList({
+			exportId: id,
+			cutList: {
+				...CUT_LIST,
+				tracks: [],
+				markers: [
+					{
+						name: "Fix",
+						note: null,
+						at: "01:00:01:00",
+						duration: 0,
+						host: "Resolve",
+						label: "Blue",
+					},
+				],
+			},
+		});
+		await completeWebUpload({
+			exportId: id,
+			uploadId: "upload-1",
+			parts: bucket.putFile(fileSize),
+			form: form(),
+		});
+		expect(tree(shotsBranch())).toEqual({
+			shotThumbnails: [{ cutList: [{ sceneDetect: ["probe"] }] }],
+		});
+	});
+
+	it("a second one replaces the first, and clears an old error", async () => {
+		const { id } = await startedUpload(fileSize);
+		await prisma.export.update({ where: { id }, data: { cutListError: "old" } });
+		await attachWebUploadCutList({ exportId: id, cutList: CUT_LIST });
+		await attachWebUploadCutList({ exportId: id, cutList: { ...CUT_LIST, title: "v2" } });
+		expect(puts()).toHaveLength(2);
+		expect((await fieldsOf(id)).cutListError).toBeNull();
+	});
+
+	it.each([
+		["without video clips", { ...CUT_LIST, tracks: [CUT_LIST.tracks[1]!] }, /no video clips/],
+		[
+			"with a timecode no rate has",
+			{
+				...CUT_LIST,
+				tracks: [{ ...CUT_LIST.tracks[0]!, events: [{ ...event, out: "01:00:00:61" }] }],
+			},
+			/doesn't fit/,
+		],
+		[
+			"above the size limit",
+			{
+				...CUT_LIST,
+				tracks: [{ ...CUT_LIST.tracks[0]!, events: Array.from({ length: 6000 }, () => event) }],
+			},
+			/too large/,
+		],
+	])("400 for a cut list %s, and nothing is stored", async (_, cutList, message) => {
+		const { id } = await startedUpload(fileSize);
+		const res = await expectStatus(attachWebUploadCutList({ exportId: id, cutList }), 400);
+		expect(res.body.message).toMatch(message);
+		expect(puts()).toEqual([]);
+		expect((await fieldsOf(id)).cutListKey).toBeNull();
+	});
+
+	it("400 for what isn't a cut list at all", async () => {
+		const { id } = await startedUpload(fileSize);
+		await expectStatus(
+			attachWebUploadCutList({ exportId: id, cutList: { format: "aaf" } as never }),
+			400,
+		);
+	});
+
+	it("403 for a reviewer, 404 before the upload started, 409 once it is complete", async () => {
+		const { id } = await startedUpload(fileSize);
+		await signInAs(w.org, REVIEWER, [{ timelineId: w.tl1.id }]);
+		await expectStatus(attachWebUploadCutList({ exportId: id, cutList: CUT_LIST }), 403);
+
+		signIn(w.owner.user, w.org.id);
+		const empty = await createWebExport({
+			projectId: w.projectA.id,
+			timelineId: w.tl1.id,
+			name: "empty",
+		});
+		await expectStatus(attachWebUploadCutList({ exportId: empty.id, cutList: CUT_LIST }), 404);
+
+		await completeWebUpload({
+			exportId: id,
+			uploadId: "upload-1",
+			parts: bucket.putFile(fileSize),
+			form: form(),
+		});
+		await expectStatus(attachWebUploadCutList({ exportId: id, cutList: CUT_LIST }), 409);
+	});
+
+	it("plugins: a cut list never makes their processing wait", async () => {
+		// a cut list stored on an export a plugin completes is ignored: plugins send the real timeline
+		const { id } = await startedUpload(fileSize);
+		await attachWebUploadCutList({ exportId: id, cutList: CUT_LIST });
+		await signInApi(w.owner.user, w.org.id);
+		await new ExportController().completeUpload(w.projectA.id, w.tl1.id, id, {
+			uploadId: "upload-1",
+			parts: bucket.putFile(fileSize),
+			timelineSnapshot: {
+				id,
+				name: "x",
+				frameRate: FPS_24,
+				startFrameIndex: 0,
+				durationFrameCount: 1,
+				tracks: [],
+				mediaItems: [],
+				metadata: {},
+			},
+		});
+		const names = (flows()[0] as FlowNode).children!.map((c) => c.name);
+		expect(names).not.toContain("cutList");
+		expect(names).toContain("shotThumbnails");
 	});
 });
 

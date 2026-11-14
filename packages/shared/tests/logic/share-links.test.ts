@@ -6,12 +6,16 @@ import {
 	NOTE_MAX_LENGTH,
 	expiresAtFor,
 	parseEmailList,
+	screeningCategoryName,
+	screeningDate,
+	screeningExpiresSoon,
 	shareGuestName,
 	shareLinkMailContent,
 	shareLinkNote,
 	shareLinkRecipients,
 	shareLinkStatus,
 	shareUrlLifetime,
+	timeZone,
 } from "../../src/logic/share-links.ts";
 
 const now = new Date("2026-11-09T12:00:00Z");
@@ -133,5 +137,71 @@ describe("shareLinkMailContent", () => {
 			"\n",
 		);
 		expect(lines[2]).toBe("Please check the ending");
+	});
+});
+
+describe("screeningDate", () => {
+	it("is the day where the presenter is, as DD/MM/YYYY", () => {
+		const lateEvening = new Date("2026-11-14T23:30:00Z");
+		expect(screeningDate(lateEvening, "UTC")).toBe("14/11/2026");
+		expect(screeningDate(lateEvening, "Europe/Berlin")).toBe("15/11/2026");
+		expect(screeningDate(lateEvening, "America/Los_Angeles")).toBe("14/11/2026");
+	});
+
+	it("pads day and month", () => {
+		expect(screeningDate(new Date("2027-03-05T12:00:00Z"), "UTC")).toBe("05/03/2027");
+	});
+});
+
+describe("screeningCategoryName", () => {
+	const day = "14/11/2026";
+
+	it("the first screening of a day has no number", () => {
+		expect(screeningCategoryName(day, [])).toBe("Screening (14/11/2026)");
+		expect(screeningCategoryName(day, ["Guest", "Screening (13/11/2026)"])).toBe(
+			"Screening (14/11/2026)",
+		);
+	});
+
+	it("more on the same day are numbered from 2", () => {
+		expect(screeningCategoryName(day, ["Screening (14/11/2026)"])).toBe("Screening 2 (14/11/2026)");
+		expect(screeningCategoryName(day, ["Screening (14/11/2026)", "Screening 2 (14/11/2026)"])).toBe(
+			"Screening 3 (14/11/2026)",
+		);
+	});
+
+	it("counts on from the highest number: a deleted one isn't handed out again", () => {
+		expect(screeningCategoryName(day, ["Screening 4 (14/11/2026)"])).toBe(
+			"Screening 5 (14/11/2026)",
+		);
+	});
+
+	it("ignores other days and names that only look similar", () => {
+		expect(
+			screeningCategoryName(day, [
+				"Screening 7 (13/11/2026)",
+				"Screening notes (14/11/2026)",
+				"Pre-Screening (14/11/2026)",
+				"Screening (14/11/2026) old",
+			]),
+		).toBe("Screening (14/11/2026)");
+	});
+});
+
+describe("timeZone", () => {
+	it.each(["Europe/Berlin", "UTC", "America/New_York"])("accepts %s", (zone) => {
+		expect(v.parse(timeZone, zone)).toBe(zone);
+	});
+
+	it.each(["", "Mars/Olympus", "x".repeat(65)])("rejects %j", (zone) => {
+		expect(() => v.parse(timeZone, zone)).toThrow();
+	});
+});
+
+describe("screeningExpiresSoon", () => {
+	it("from less than an hour before the expiry", () => {
+		expect(screeningExpiresSoon(new Date(now.getTime() + 61 * 60_000), now)).toBe(false);
+		expect(screeningExpiresSoon(new Date(now.getTime() + 59 * 60_000), now)).toBe(true);
+		expect(screeningExpiresSoon(new Date(now.getTime() - 1000), now)).toBe(true);
 	});
 });

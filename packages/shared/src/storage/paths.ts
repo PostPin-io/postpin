@@ -4,7 +4,7 @@ import type { S3Env } from "../env/index.ts";
 
 export interface S3Object {
 	mediaId: string;
-	type: "thumbnail" | "original" | "proxy" | "sprite" | "shotThumbnails";
+	type: "thumbnail" | "original" | "proxy" | "sprite" | "shotThumbnails" | "cutList";
 	proxyId?: string;
 	index?: number;
 	/** Shot thumbnails: the render they belong to, see ShotThumbnails */

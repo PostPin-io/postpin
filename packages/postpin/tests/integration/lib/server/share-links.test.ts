@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
 	GUEST_CATEGORY_NAME,
-	ensureGuestCategory,
+	guestCategoryFor,
 	resolveShareLink,
+	shareLinkCategory,
 } from "#lib/server/share-links.ts";
 import { prisma } from "../../../helpers/db.ts";
 import { expectStatus } from "../../../helpers/expect.ts";
@@ -38,35 +39,63 @@ describe("resolveShareLink", () => {
 	});
 });
 
-describe("ensureGuestCategory", () => {
-	const ensure = () => prisma.$transaction((tx) => ensureGuestCategory(tx, project.id));
+describe("guestCategoryFor", () => {
+	const guestCategory = (creatorId: string | null = null) =>
+		prisma.$transaction((tx) => guestCategoryFor(tx, project.id, creatorId));
 
-	it("creates it once, unowned, and links it to the project", async () => {
-		const id = await ensure();
-		expect(await ensure()).toBe(id);
+	it('creates "Guest" once, owned by the creator', async () => {
+		const user = await f.createUser();
+		const id = await guestCategory(user.id);
+		expect(await guestCategory()).toBe(id);
 
-		const category = await prisma.category.findUniqueOrThrow({ where: { id } });
-		expect(category).toMatchObject({ name: GUEST_CATEGORY_NAME, createdById: null });
-		expect(await prisma.project.findUniqueOrThrow({ where: { id: project.id } })).toMatchObject({
-			guestCategoryId: id,
+		expect(await prisma.category.findUniqueOrThrow({ where: { id } })).toMatchObject({
+			name: GUEST_CATEGORY_NAME,
+			projectId: project.id,
+			createdById: user.id,
 		});
 	});
 
-	it("adds a suffix when the name is taken", async () => {
-		await prisma.category.createMany({
-			data: [
-				{ name: GUEST_CATEGORY_NAME, color: "#000000", projectId: project.id },
-				{ name: `${GUEST_CATEGORY_NAME} (2)`, color: "#000000", projectId: project.id },
-			],
+	it('uses a category the team already called "Guest"', async () => {
+		const existing = await prisma.category.create({
+			data: { name: GUEST_CATEGORY_NAME, color: "#000000", projectId: project.id },
 		});
-		const id = await ensure();
-		expect((await prisma.category.findUniqueOrThrow({ where: { id } })).name).toBe(
-			`${GUEST_CATEGORY_NAME} (3)`,
-		);
+		expect(await guestCategory()).toBe(existing.id);
+	});
+
+	it("creates a new one once the old one is renamed", async () => {
+		const id = await guestCategory();
+		await prisma.category.update({ where: { id }, data: { name: "Client notes" } });
+		expect(await guestCategory()).not.toBe(id);
 	});
 
 	it("creates only one under concurrent calls", async () => {
-		const ids = await Promise.all([ensure(), ensure(), ensure()]);
+		const ids = await Promise.all([guestCategory(), guestCategory(), guestCategory()]);
 		expect(new Set(ids).size).toBe(1);
+	});
+});
+
+describe("shareLinkCategory", () => {
+	const categoryOf = (link: Parameters<typeof shareLinkCategory>[1]) =>
+		prisma.$transaction((tx) => shareLinkCategory(tx, link, project.id));
+
+	it("the link's category", async () => {
+		const category = await f.createCategory(project);
+		const link = await prisma.shareLink.update({
+			where: { id: (await f.createShareLink(exp)).id },
+			data: { categoryId: category.id },
+		});
+		expect(await categoryOf(link)).toBe(category.id);
+		expect(await prisma.category.count()).toBe(1);
+	});
+
+	it('without one: "Guest", which the link keeps', async () => {
+		const link = await f.createShareLink(exp);
+		const id = await categoryOf(link);
+		expect(await prisma.category.findUniqueOrThrow({ where: { id } })).toMatchObject({
+			name: GUEST_CATEGORY_NAME,
+		});
+		expect(await prisma.shareLink.findUniqueOrThrow({ where: { id: link.id } })).toMatchObject({
+			categoryId: id,
+		});
 	});
 });

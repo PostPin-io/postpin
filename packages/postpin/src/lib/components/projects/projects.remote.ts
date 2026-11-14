@@ -5,7 +5,6 @@ import * as v from "valibot";
 import { isOrgWide } from "#lib/roles.ts";
 import { deleteMediaFolders, purgeExports } from "#lib/server/media.ts";
 import { error } from "@sveltejs/kit";
-import { ensureGuestCategory } from "#lib/server/share-links.ts";
 
 export const createProject = command(
 	v.object({
@@ -21,18 +20,15 @@ export const createProject = command(
 			id: session.activeOrganizationId,
 		});
 
-		await prisma.$transaction(async (tx) => {
-			const project = await tx.project.create({
-				data: {
-					name: data.name,
-					creatorId: user.id,
-					organizationId: member.organizationId,
-					...(!isOrgWide(member.role) && {
-						memberGrants: { create: { memberId: member.id, createdById: user.id } },
-					}),
-				},
-			});
-			await ensureGuestCategory(tx, project.id);
+		await prisma.project.create({
+			data: {
+				name: data.name,
+				creatorId: user.id,
+				organizationId: member.organizationId,
+				...(!isOrgWide(member.role) && {
+					memberGrants: { create: { memberId: member.id, createdById: user.id } },
+				}),
+			},
 		});
 	},
 );

@@ -9,9 +9,6 @@ model Project {
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId  String
   categories      Category[]   @relation("ProjectCategories")
-  /// Category for share-link visitor markers, created on first use (ensureGuestCategory)
-  guestCategory   Category?    @relation("ProjectGuestCategory", fields: [guestCategoryId], references: [id], onDelete: SetNull)
-  guestCategoryId String?      @unique
 
   nleProjectId String?
   memberGrants MemberGrant[]
@@ -52,6 +49,12 @@ model Export {
   mediaId              String?     @unique
   timelineSnapshot     Json?
   timelineSnapshotHash String?
+  /// Web uploads: the tracks of the editing software's timeline (from an EDL or FCPXML), uploaded
+  /// with the video into the media's bucket folder; they become the snapshot's tracks once the
+  /// worker knows the frame rate. See cut-list.ts
+  cutListKey           String?
+  /// Why the worker couldn't use the cut list; the cuts are estimated then
+  cutListError         String?
   markers              Marker[]
   shareLinks           ShareLink[]
   uploadedBy           User?       @relation("ExportUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
@@ -79,6 +82,15 @@ model ShareLink {
   markerPanelVisible   Boolean         @default(true)
   /// Plain text, length checked in the app (NOTE_MAX_LENGTH)
   note                 String?
+  /// SCREENING: made for a live screening (guests join by QR code, start muted, low-quality video)
+  kind                 ShareLinkKind   @default(STANDARD)
+  /// How many guests may join; null = only the app-wide limit (MAX_GUESTS_PER_LINK)
+  maxGuests            Int?
+  /// The category the guests' markers get: "Guest" for standard links (shared by the project's
+  /// links), its own for a screening ("Screening (14/11/2026)"). An ordinary category; null once
+  /// it is deleted, the next guest marker then gets "Guest" again (guestCategoryFor).
+  category             Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId           String?
   guests               ShareGuest[]
   mails                ShareLinkMail[]
   /// Visits by guests: a reload within 30 minutes counts as the same visit (recordShareView)
@@ -87,6 +99,11 @@ model ShareLink {
 
   @@index([exportId])
   @@map("share_link")
+}
+
+enum ShareLinkKind {
+  STANDARD
+  SCREENING
 }
 
 /// A visitor who opened a share link and entered a name. One per browser (cookie).

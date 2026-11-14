@@ -11,13 +11,13 @@
 </script>
 
 <span
-	class="badge badge-outline badge-xs {collapsible
+	class="badge max-w-full badge-outline badge-xs {collapsible
 		? '@max-md:size-4 @max-md:rounded-full @max-md:px-0'
 		: ''} {classes}"
 	style:background-color={category.color}
 	style:border-color={category.color}
 	style:color={contrastColor(category.color)}
-	title={collapsible ? category.name : undefined}
+	title={category.name}
 >
-	<span class={collapsible ? "@max-md:hidden" : ""}>{category.name}</span>
+	<span class="min-w-0 truncate {collapsible ? '@max-md:hidden' : ''}">{category.name}</span>
 </span>

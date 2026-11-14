@@ -15,7 +15,6 @@ import type { Request as HapiRequest } from "@hapi/hapi";
 import { apiAuthorize } from "../access.ts";
 import { accessibleProjects, accessibleTimelines } from "#lib/server/org-access.ts";
 import { isOrgWide } from "#lib/roles.ts";
-import { ensureGuestCategory } from "#lib/server/share-links.ts";
 
 interface Project {
 	id: string;
@@ -116,27 +115,23 @@ export class ProjectController extends Controller {
 			id: organizationId,
 		});
 
-		return prisma.$transaction(async (tx) => {
-			const project = await tx.project.create({
-				data: {
-					name,
-					creatorId: user.id,
-					organizationId: member.organizationId,
-					...(!isOrgWide(member.role) && {
-						memberGrants: { create: { memberId: member.id, createdById: user.id } },
-					}),
-				},
-				select: {
-					id: true,
-					name: true,
-					createdAt: true,
-					updatedAt: true,
-					nleProjectId: true,
-					organization: { select: { id: true, name: true } },
-				},
-			});
-			await ensureGuestCategory(tx, project.id);
-			return project;
+		return prisma.project.create({
+			data: {
+				name,
+				creatorId: user.id,
+				organizationId: member.organizationId,
+				...(!isOrgWide(member.role) && {
+					memberGrants: { create: { memberId: member.id, createdById: user.id } },
+				}),
+			},
+			select: {
+				id: true,
+				name: true,
+				createdAt: true,
+				updatedAt: true,
+				nleProjectId: true,
+				organization: { select: { id: true, name: true } },
+			},
 		});
 	}
 }

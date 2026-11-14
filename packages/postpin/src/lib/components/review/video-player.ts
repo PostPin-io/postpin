@@ -5,8 +5,8 @@ export function nextPlaybackRate(current: number) {
 	return PLAYBACK_RATES.find((rate) => rate > current) ?? PLAYBACK_RATES[0]!;
 }
 
-// full: every track, compact: one merged lane per track type, scrub: only the ruler with marker heads
-export const TIMELINE_MODES = ["full", "compact", "scrub"] as const;
+// full: every track, compact: one merged lane per track type, hidden: no timeline, the markers go on the scrub bar
+export const TIMELINE_MODES = ["full", "compact", "hidden"] as const;
 export type TimelineMode = (typeof TIMELINE_MODES)[number];
 
 export function nextTimelineMode(current: TimelineMode): TimelineMode {

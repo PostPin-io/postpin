@@ -2,7 +2,7 @@ import { prisma } from "#lib/server/database.ts";
 import { command, query } from "$app/server";
 import { Prisma } from "@postpin-io/shared/db";
 import { error } from "@sveltejs/kit";
-import { ensureGuestCategory, isGuestCategory } from "#lib/server/share-links.ts";
+import { shareLinkCategory } from "#lib/server/share-links.ts";
 import { readExport, requireMarkers } from "#lib/server/review-access.ts";
 import { markersKey, scopeOf } from "./marker-scope.ts";
 
@@ -29,13 +29,6 @@ async function assertCategoriesInProject(categoryIds: string[], projectId: strin
 	const unique = [...new Set(categoryIds)];
 	const count = await prisma.category.count({ where: { id: { in: unique }, projectId } });
 	if (count !== unique.length) error(404, "Not found");
-}
-
-/** The guest category is always called "Guest" and can't be renamed */
-async function assertNotGuestCategory(categoryId: string) {
-	if (await isGuestCategory(categoryId)) {
-		error(403, "The guest category can't be renamed");
-	}
 }
 
 /**
@@ -268,12 +261,12 @@ export const createMarker = command(
 		frame: v.pipe(v.number(), v.integer(), v.minValue(0)),
 		duration: v.optional(duration, 0),
 		exportId: v.string(),
-		/** Members only; guests always get the project's guest category */
+		/** Members only; guests get the link's category */
 		categoryId: v.optional(v.string()),
 		shareToken,
 	}),
 	async (data) => {
-		// ─── Guest: always the guest category, the guest as author ───
+		// ─── Guest: the link's category, the guest as author ───
 		if (data.shareToken) {
 			const reader = await readExport(data.exportId, data.shareToken);
 			if (reader.kind !== "guest") error(404, "Not found");
@@ -287,7 +280,11 @@ export const createMarker = command(
 						description: data.description,
 						frame: data.frame,
 						exportId: data.exportId,
-						categoryId: await ensureGuestCategory(tx, reader.link.export.timeline.projectId),
+						categoryId: await shareLinkCategory(
+							tx,
+							reader.link,
+							reader.link.export.timeline.projectId,
+						),
 						guestId: reader.guest.id,
 					},
 				}),
@@ -472,9 +469,14 @@ export const moveMarker = command(
 			if ((await prisma.marker.count({ where: { categoryId } })) > 0) continue;
 
 			try {
-				// Only delete if the user created it themselves
+				// Only delete if the user created it themselves. Not the category of a screening
+				// whose link still works: its guests' next markers belong there.
 				const res = await prisma.category.deleteMany({
-					where: { id: categoryId, createdById: user.id },
+					where: {
+						id: categoryId,
+						createdById: user.id,
+						shareLinks: { none: { revokedAt: null, expiresAt: { gt: new Date() } } },
+					},
 				});
 				if (res.count > 0) deletedCategoryIds.push(categoryId);
 			} catch (e) {
@@ -552,23 +554,17 @@ export const createResponse = command(
 export const getCategories = query(v.string(), async (projectId: string) => {
 	const { member } = await authorize("project", "read", { type: "project", id: projectId });
 	const allowed = await accessChecker(member);
-	const [categories, project] = await Promise.all([
-		prisma.category.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
-		prisma.project.findUniqueOrThrow({
-			where: { id: projectId },
-			select: { guestCategoryId: true },
-		}),
-	]);
+	const categories = await prisma.category.findMany({
+		where: { projectId },
+		orderBy: { name: "asc" },
+	});
 
 	return categories.map((c) => {
 		const t = { projectId, ownerId: c.createdById, loose: true };
-		const isGuest = c.id === project.guestCategoryId;
 		return {
 			...c,
-			isGuest,
 			canUpdate: allowed("category", "update", t),
-			canRename: !isGuest && allowed("category", "update", t),
-			canDelete: !isGuest && allowed("category", "delete", t),
+			canDelete: allowed("category", "delete", t),
 		};
 	});
 });
@@ -662,7 +658,6 @@ export const deleteCategory = command(
 			type: "category",
 			id,
 		});
-		if (await isGuestCategory(id)) return { success: false, reason: "GUEST_CATEGORY" } as const;
 
 		if (mergeIntoId === id) error(400, "Same category");
 		if (mergeIntoId) await assertCategoriesInProject([mergeIntoId], target.projectId);
@@ -731,7 +726,6 @@ export const renameCategory = command(
 	}),
 	async (data) => {
 		await authorize("category", "update", { type: "category", id: data.id });
-		await assertNotGuestCategory(data.id);
 		const category = await prisma.category
 			.update({
 				where: { id: data.id },

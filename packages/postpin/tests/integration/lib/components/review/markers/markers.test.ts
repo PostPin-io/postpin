@@ -19,7 +19,7 @@ import {
 	renameCategory,
 	updateMarker,
 } from "#lib/components/review/markers/markers.remote.ts";
-import { ensureGuestCategory } from "#lib/server/share-links.ts";
+import { guestCategoryFor } from "#lib/server/share-links.ts";
 import { contentWorld, signInAs, type ContentWorld } from "../../../../../helpers/content-world.ts";
 import { prisma } from "../../../../../helpers/db.ts";
 import { expectStatus } from "../../../../../helpers/expect.ts";
@@ -419,6 +419,30 @@ describe("moveMarker", () => {
 		const moved = await prisma.marker.findMany({ where: { id: { in: [a.id, b.id] } } });
 		expect(moved.every((m) => m.categoryId === target.id)).toBe(true);
 		expect(await prisma.category.count({ where: { id: w.catA.id } })).toBe(1);
+	});
+
+	it("keeps the emptied category of a screening while its link works", async () => {
+		const screeningCategory = await f.createCategory(w.projectA, { createdBy: w.owner.user });
+		const link = await f.createShareLink(w.exp1, { creator: w.owner.user });
+		await prisma.shareLink.update({
+			where: { id: link.id },
+			data: { kind: "SCREENING", categoryId: screeningCategory.id },
+		});
+		const a = await f.createMarker(w.exp1, screeningCategory);
+		const b = await f.createMarker(w.exp1, screeningCategory);
+		signIn(w.owner.user, w.org.id);
+		const move = (id: string) =>
+			moveMarker({ exportId: w.exp1.id, ids: [id], targetCategoryId: w.catA.id });
+
+		// guests may still add markers: their category must be there
+		await move(a.id);
+		expect((await move(b.id)).deletedCategoryIds).toEqual([]);
+		expect(await prisma.category.count({ where: { id: screeningCategory.id } })).toBe(1);
+
+		// after the link ended it is a category like any other
+		await prisma.shareLink.update({ where: { id: link.id }, data: { revokedAt: new Date() } });
+		const c = await f.createMarker(w.exp1, screeningCategory);
+		expect((await move(c.id)).deletedCategoryIds).toEqual([screeningCategory.id]);
 	});
 
 	it("deletes source categories that end up empty, but only those the user created", async () => {
@@ -981,24 +1005,32 @@ describe("deleteCategory", () => {
 		expect(await prisma.category.count()).toBe(3);
 	});
 });
-describe("guest category", () => {
+describe("guest category: an ordinary category", () => {
 	let guestId: string;
 	beforeEach(async () => {
-		guestId = await prisma.$transaction((tx) => ensureGuestCategory(tx, w.projectA.id));
+		guestId = await prisma.$transaction((tx) => guestCategoryFor(tx, w.projectA.id, null));
 		signIn(w.owner.user, w.org.id);
 	});
 
-	it("can't be deleted", async () => {
-		expect(await deleteCategory({ id: guestId })).toEqual({
-			success: false,
-			reason: "GUEST_CATEGORY",
+	it("can be deleted; its links lose their category", async () => {
+		const link = await prisma.shareLink.update({
+			where: { id: (await f.createShareLink(w.exp1)).id },
+			data: { categoryId: guestId },
+		});
+		expect(await deleteCategory({ id: guestId })).toEqual({ success: true });
+		expect(await prisma.shareLink.findUniqueOrThrow({ where: { id: link.id } })).toMatchObject({
+			categoryId: null,
 		});
 	});
 
-	it("can't be merged into another", async () => {
-		expect(await deleteCategory({ id: guestId, mergeIntoId: w.catA.id })).toMatchObject({
-			reason: "GUEST_CATEGORY",
+	it("can be merged into another", async () => {
+		const m = await f.createMarker(w.exp1, { id: guestId });
+		expect(await deleteCategory({ id: guestId, mergeIntoId: w.catA.id })).toEqual({
+			success: true,
 		});
+		expect((await prisma.marker.findUniqueOrThrow({ where: { id: m.id } })).categoryId).toBe(
+			w.catA.id,
+		);
 	});
 
 	it("markers can be merged into it", async () => {
@@ -1031,21 +1063,17 @@ describe("guest category", () => {
 		expect(updated).toMatchObject({ name: "Renamed", categoryId: guestId });
 	});
 
-	it("is flagged, not deletable and not renamable in getCategories", async () => {
+	it("is deletable and editable in getCategories like any other", async () => {
 		const guest = (await getCategories(w.projectA.id)).find((c) => c.id === guestId)!;
-		expect(guest).toMatchObject({
-			isGuest: true,
-			canDelete: false,
-			canRename: false,
-			canUpdate: true,
-		});
+		expect(guest).toMatchObject({ canDelete: true, canUpdate: true });
+		expect(guest).not.toHaveProperty("isGuest");
 	});
 
-	it("can't be renamed, but its color can be changed", async () => {
-		await expectStatus(renameCategory({ id: guestId, name: "Feedback" }), 403);
+	it("can be renamed and recolored", async () => {
+		await renameCategory({ id: guestId, name: "Feedback" });
 		await changeCategoryColor({ id: guestId, color: "#000000" });
 		expect(await prisma.category.findUniqueOrThrow({ where: { id: guestId } })).toMatchObject({
-			name: "Guest",
+			name: "Feedback",
 			color: "#000000",
 		});
 	});

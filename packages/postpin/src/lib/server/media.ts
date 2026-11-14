@@ -36,7 +36,7 @@ const verifyProxiesJob = (mediaId: string): TypedFlowChildJob => ({
 	opts: { failParentOnFailure: true },
 });
 
-const lightJob = <N extends "probe" | "sceneDetect" | "shotThumbnails">(
+const lightJob = <N extends "probe" | "sceneDetect" | "cutList" | "shotThumbnails">(
 	name: N,
 	data: { mediaId: string; generation?: string },
 	children?: TypedFlowChildJob[],
@@ -51,14 +51,16 @@ const lightJob = <N extends "probe" | "sceneDetect" | "shotThumbnails">(
 
 /**
  * Queues the processing of an uploaded original. Web uploads have an estimated snapshot that probe
- * (and the cut detection) replace, so their shot thumbnails wait for those: probe → sceneDetect →
- * shotThumbnails. Plugin snapshots are final, so everything runs side by side.
+ * (and the cut detection, and the cut list) replace, so their shot thumbnails wait for those:
+ * probe → sceneDetect → cutList → shotThumbnails. The cut list comes last: its tracks win, and
+ * the detected cuts are what is left when it can't be used. Plugin snapshots are final, so
+ * everything runs side by side.
  * `transcode: false` when the plugin uploaded the proxies already: then seekSprites waits for
  * verifyProxies instead of a transcode.
  */
 export async function startMediaProcessing(
 	mediaId: string,
-	opts: { webUpload?: boolean; detectCuts?: boolean; transcode?: boolean } = {},
+	opts: { webUpload?: boolean; detectCuts?: boolean; cutList?: boolean; transcode?: boolean } = {},
 ) {
 	const transcode = opts.transcode ?? true;
 	// stored before the jobs exist, so the shot thumbnails job finds itself current
@@ -69,15 +71,11 @@ export async function startMediaProcessing(
 	});
 	const probe = lightJob("probe", { mediaId });
 	const shotThumbnails = { mediaId, generation };
+	const timing = opts.detectCuts ? lightJob("sceneDetect", { mediaId }, [probe]) : probe;
+	const cuts = opts.cutList ? lightJob("cutList", { mediaId }, [timing]) : timing;
 	const shots = !opts.webUpload
 		? [probe, lightJob("shotThumbnails", shotThumbnails)]
-		: [
-				lightJob(
-					"shotThumbnails",
-					shotThumbnails,
-					opts.detectCuts ? [lightJob("sceneDetect", { mediaId }, [probe])] : [probe],
-				),
-			];
+		: [lightJob("shotThumbnails", shotThumbnails, [cuts])];
 	await flowProducer.add({
 		name: "setMediaProcessingDone",
 		queueName: Queues.light,

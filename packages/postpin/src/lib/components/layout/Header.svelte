@@ -40,9 +40,11 @@
 
 	interface Props {
 		children?: Snippet;
+		/** Buttons next to the account menu (desktop only, like the menu itself) */
+		actions?: Snippet;
 	}
 
-	let { children }: Props = $props();
+	let { children, actions }: Props = $props();
 </script>
 
 {#snippet accountItems(mobile: boolean)}
@@ -109,7 +111,8 @@
 		{#if children}
 			<div class="navbar-center hidden lg:flex">{@render children()}</div>
 		{/if}
-		<div class="navbar-end max-lg:hidden">
+		<div class="navbar-end gap-1 max-lg:hidden">
+			{#if actions}{@render actions()}{/if}
 			<div class="dropdown dropdown-end">
 				<div tabindex="0" role="button" class="btn btn-ghost">
 					{$session.data?.user.name ?? "Account"}

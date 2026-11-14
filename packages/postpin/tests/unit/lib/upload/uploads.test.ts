@@ -8,6 +8,21 @@ import {
 	type PutPart,
 	type StoredUpload,
 } from "#lib/upload/uploads.svelte.ts";
+import type { CutList } from "@postpin-io/shared/logic/cut-list";
+
+const CUT_LIST: CutList = {
+	format: "edl",
+	title: "x",
+	frameRate: null,
+	tracks: [
+		{
+			type: "video",
+			name: "Video 1",
+			events: [{ name: "A", in: "01:00:00:00", out: "01:00:01:00", sourceIn: "00:00:00:00" }],
+		},
+	],
+	markers: [],
+};
 
 const MiB = 1024 * 1024;
 const form = {
@@ -58,6 +73,7 @@ function setup(
 		resumeWebUpload: vi.fn(),
 		completeWebUpload: vi.fn(async (input: { parts: unknown[] }) => void input),
 		abortWebUpload: vi.fn(async () => {}),
+		attachWebUploadCutList: vi.fn(async (_a: { exportId: string; cutList: CutList }) => {}),
 	};
 	const onChange = vi.fn();
 	const manager = new UploadManager(async () => api, put, storage, onChange);
@@ -314,6 +330,58 @@ describe("UploadManager", () => {
 		release();
 		await settled(manager);
 		expect(manager.uploads["e1"]!.loaded).toBe(20);
+	});
+
+	it("sends the cut list after init and before the first part", async () => {
+		const order: string[] = [];
+		const { api, manager } = setup(async () => {
+			order.push("part");
+			return "e";
+		});
+		api.attachWebUploadCutList.mockImplementation(async () => void order.push("cutList"));
+		await manager.start({
+			file: file(25),
+			projectId: "p1",
+			timelineId: "t1",
+			name: "Clip",
+			form,
+			cutList: CUT_LIST,
+		});
+		await settled(manager);
+		expect(api.attachWebUploadCutList).toHaveBeenCalledWith({ exportId: "e1", cutList: CUT_LIST });
+		expect(order[0]).toBe("cutList");
+	});
+
+	it("without a cut list, none is sent", async () => {
+		const { api, manager } = setup(async () => "e");
+		await start(manager);
+		await settled(manager);
+		expect(api.attachWebUploadCutList).not.toHaveBeenCalled();
+	});
+
+	it("a rejected cut list stops the upload before any part, and the upload is aborted", async () => {
+		const put = vi.fn<PutPart>(async () => "e");
+		const { api, manager, onChange, storage } = setup(put);
+		api.attachWebUploadCutList.mockRejectedValue(
+			Object.assign(new Error("x"), {
+				status: 400,
+				body: { message: "The cut list has no video clips" },
+			}),
+		);
+		await expect(
+			manager.start({
+				file: file(25),
+				projectId: "p1",
+				timelineId: "t1",
+				name: "Clip",
+				form,
+				cutList: CUT_LIST,
+			}),
+		).rejects.toMatchObject({ status: 400 });
+		expect(put).not.toHaveBeenCalled();
+		expect(api.abortWebUpload).toHaveBeenCalledWith({ exportId: "e1", uploadId: "u1" });
+		expect(onChange).toHaveBeenCalled();
+		expect(storage.read()).toEqual({});
 	});
 
 	it("a failing init (e.g. file too large) refreshes the list and rethrows", async () => {

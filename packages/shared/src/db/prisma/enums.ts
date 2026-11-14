@@ -25,3 +25,10 @@ export const Role = {
 } as const;
 
 export type Role = (typeof Role)[keyof typeof Role];
+
+export const ShareLinkKind = {
+	STANDARD: "STANDARD",
+	SCREENING: "SCREENING",
+} as const;
+
+export type ShareLinkKind = (typeof ShareLinkKind)[keyof typeof ShareLinkKind];

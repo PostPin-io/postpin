@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
+	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
 	import Info from "@lucide/svelte/icons/info";
 	import Link from "@lucide/svelte/icons/link";
@@ -8,12 +10,19 @@
 	import {
 		createShareLink,
 		getShareLinks,
+		resumeScreeningLink,
 		revokeShareLink,
 		updateShareLink,
 	} from "./share-links.remote";
 	import ShareLinkForm from "./ShareLinkForm.svelte";
 	import ShareLinkQr from "./ShareLinkQr.svelte";
 	import ShareLinkRow from "./ShareLinkRow.svelte";
+	import {
+		openScreeningWindow,
+		requestStopScreening,
+		screening,
+		startScreening,
+	} from "#lib/components/screening/screening.svelte.ts";
 	import {
 		editLinkValues,
 		newLinkValues,
@@ -22,12 +31,15 @@
 		toCreateInput,
 		toUpdateInput,
 		type ShareLinkFormValues,
+		type ShareLinkRow as ShareLinkEntry,
 	} from "./share-links.ts";
 
 	interface Props {
 		exportId: string;
+		/** A screening was started from the list: the export view takes over */
+		onscreening?: () => void;
 	}
-	let { exportId }: Props = $props();
+	let { exportId, onscreening }: Props = $props();
 
 	const activeMember = authClient.useActiveMember();
 	const role = $derived(toRole($activeMember.data?.role));
@@ -82,6 +94,30 @@
 
 	async function save(id: string, values: ShareLinkFormValues) {
 		if (await run(() => updateShareLink(toUpdateInput(id, values)))) editingId = null;
+	}
+
+	/** Runs the screening of an existing screening link again; a second click ends it */
+	async function toggleScreening(link: ShareLinkEntry) {
+		if (screening.session?.link.id === link.id) return requestStopScreening();
+		const ids = { projectId: link.projectId, timelineId: link.timelineId, exportId };
+		// Directly in the click, before anything else: otherwise the browser blocks the pop-up
+		const win = openScreeningWindow(ids);
+		if (!win) {
+			problem = "Your browser blocked the screening window. Allow pop-ups for this site.";
+			return;
+		}
+		// the server's word that the link still works, and that this member may run it
+		if (!(await run(() => resumeScreeningLink({ id: link.id })))) return win.popup?.close();
+		startScreening(win, link, shareLinkUrl(page.url.origin, link.token));
+		onscreening?.();
+		// The export view shows the running screening; from there it is controlled
+		void goto(
+			resolve("/(root)/projects/[project]/timelines/[timeline]/exports/[export]", {
+				project: ids.projectId,
+				timeline: ids.timelineId,
+				export: exportId,
+			}),
+		);
 	}
 </script>
 
@@ -147,6 +183,8 @@
 						onedit={() => startEdit(link.id)}
 						onrevoke={() => run(() => revokeShareLink({ id: link.id }))}
 						onqr={() => (qrUrl = shareLinkUrl(page.url.origin, link.token))}
+						onscreen={() => toggleScreening(link)}
+						screening={screening.session?.link.id === link.id}
 					/>
 				{/if}
 			{/each}

@@ -18,10 +18,10 @@ const TICK_STEPS_SECONDS = [1, 2, 5, 10, 30, 60, 120, 300, 600, 1800, 3600];
 
 /**
  * Lanes to draw. full: every track, video top-down (highest track first), then audio.
- * compact: one merged lane per type. scrub: none.
+ * compact: one merged lane per type. hidden: none.
  */
 export function buildLanes(tracks: Track[], mode: TimelineMode): Lane[] {
-	if (mode === "scrub") return [];
+	if (mode === "hidden") return [];
 	const video = tracks.filter((track) => track.type === "video");
 	const audio = tracks.filter((track) => track.type === "audio");
 	if (mode === "full") return [...[...video].reverse(), ...audio];
@@ -33,7 +33,7 @@ export function buildLanes(tracks: Track[], mode: TimelineMode): Lane[] {
 
 /** Number of lanes in compact mode (one per present track type) */
 export function collapsedLaneCount(tracks: Track[], mode: TimelineMode): number {
-	if (mode === "scrub") return 0;
+	if (mode === "hidden") return 0;
 	return new Set(tracks.map((t) => t.type).filter((t) => t === "video" || t === "audio")).size;
 }
 

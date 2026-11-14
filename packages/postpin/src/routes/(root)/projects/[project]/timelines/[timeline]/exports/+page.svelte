@@ -400,11 +400,7 @@
 								<td class="w-44">
 									<div class="aspect-video w-36 overflow-hidden rounded-md bg-base-300">
 										{#if singleExport.media?.status === "COMPLETED"}
-											<a
-												href={exportHref}
-												class="group relative block size-full"
-												aria-label="Open {singleExport.name}"
-											>
+											<a href={exportHref} class="group relative block size-full">
 												<img
 													src={await getUrl({ mediaId: singleExport.media.id, type: "thumbnail" })}
 													alt="Thumbnail of {singleExport.name}"
@@ -424,7 +420,8 @@
 									</div>
 								</td>
 
-								<td class="font-medium">{singleExport.name}</td>
+								<td class="max-w-xs font-medium break-words">{singleExport.name}</td>
+
 								<td class="whitespace-nowrap text-base-content/70">
 									{new Date(singleExport.createdAt).toLocaleDateString()}
 								</td>

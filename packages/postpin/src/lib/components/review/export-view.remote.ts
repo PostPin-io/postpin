@@ -1,4 +1,5 @@
 import * as env from "$app/env/private";
+import { importedMarkerCounts } from "@postpin-io/shared/db/cut-list-markers";
 import { error } from "@sveltejs/kit";
 import { query } from "$app/server";
 import { s3PresignClient } from "#lib/server/storage.ts";
@@ -63,12 +64,21 @@ export const getExport = query(
 		});
 		const media = exp.media && withoutScores(exp.media);
 		const hideClips = reader.kind === "guest" && !reader.link.timelinePanelVisible;
+		// where the cut list lies is the server's business; whether it worked is the team's
+		const { cutListKey, cutListError, ...fields } = exp;
 		return {
-			...exp,
+			...fields,
 			media,
+			cutList: cutListKey === null || reader.kind === "guest" ? null : { error: cutListError },
+			/** Markers imported from timeline data, by format; the team's business only */
+			importedMarkers:
+				reader.kind === "guest" ? null : await importedMarkerCounts(prisma, exportId),
 			// the reader got here through authorize("export", "read"), so their grant covers the export
 			canChangeCuts:
 				reader.kind === "member" && can(reader.member.role, "export", "upload", { hasGrant: true }),
+			/** May import markers from timeline data, see importCutList */
+			canImportMarkers:
+				reader.kind === "member" && can(reader.member.role, "marker", "create", { hasGrant: true }),
 			timelineSnapshot: (hideClips
 				? timingOnly(exp.timelineSnapshot)
 				: exp.timelineSnapshot) as typeof exp.timelineSnapshot,

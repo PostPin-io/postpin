@@ -22,8 +22,8 @@ describe("nextPlaybackRate", () => {
 });
 
 describe("nextTimelineMode", () => {
-	it("cycles full → compact → scrub → full", () => {
-		expect(TIMELINE_MODES.map(nextTimelineMode)).toEqual(["compact", "scrub", "full"]);
+	it("cycles full → compact → hidden → full", () => {
+		expect(TIMELINE_MODES.map(nextTimelineMode)).toEqual(["compact", "hidden", "full"]);
 	});
 });
 

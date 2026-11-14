@@ -74,6 +74,17 @@ export const variables = defineEnvVars(
 			),
 		}, // empty = disabled
 		TRANSCODE_MODE: { schema: v.optional(v.picklist(["plugin", "server"]), "plugin") },
+		// Most guests one screening link may admit; the presenter picks a number up to this
+		SCREENING_MAX_GUESTS: {
+			schema: v.pipe(
+				v.optional(v.string()),
+				v.transform((value) => value?.trim() || "100"),
+				v.toNumber(),
+				v.integer(),
+				v.minValue(1),
+				v.maxValue(500), // MAX_GUESTS_PER_LINK
+			),
+		},
 		// Legal links in the footer, on sign-up and on share links. Public: rendered in the browser.
 		IMPRINT_URL: { schema: envLinkUrl, public: true },
 		PRIVACY_URL: { schema: envLinkUrl, public: true },

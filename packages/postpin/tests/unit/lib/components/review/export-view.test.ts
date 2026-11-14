@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
 	DEFAULT_LAYOUT,
+	MAX_STORED_PLAYHEADS,
 	normalizeSizes,
 	parsePaneLayout,
+	parsePlayheads,
 	parseQuality,
 	parseTimelineMode,
 	seekThumbnailTiles,
+	withPlayhead,
 } from "#lib/components/review/export-view.ts";
 
 describe("parsePaneLayout", () => {
@@ -72,7 +75,7 @@ describe("parseQuality", () => {
 });
 
 describe("parseTimelineMode", () => {
-	it.each(["full", "compact", "scrub"])("accepts %s", (mode) => {
+	it.each(["full", "compact", "hidden"])("accepts %s", (mode) => {
 		expect(parseTimelineMode(mode)).toBe(mode);
 	});
 
@@ -114,5 +117,37 @@ describe("seekThumbnailTiles", () => {
 
 	it("empty without sheet URLs", () => {
 		expect(seekThumbnailTiles(sprites, [])).toEqual([]);
+	});
+});
+
+describe("parsePlayheads", () => {
+	it("is empty for missing or broken data", () => {
+		expect(parsePlayheads(null)).toEqual({});
+		expect(parsePlayheads("{nope")).toEqual({});
+		expect(parsePlayheads("[1, 2]")).toEqual({});
+	});
+
+	it("keeps only valid positions", () => {
+		expect(parsePlayheads(JSON.stringify({ a: 12.5, b: "3", c: -1, d: 0 }))).toEqual({
+			a: 12.5,
+			d: 0,
+		});
+	});
+});
+
+describe("withPlayhead", () => {
+	it("moves the saved export to the end", () => {
+		expect(Object.keys(withPlayhead({ a: 1, b: 2 }, "a", 5))).toEqual(["b", "a"]);
+		expect(withPlayhead({ a: 1, b: 2 }, "a", 5).a).toBe(5);
+	});
+
+	it("drops the oldest entries beyond the limit", () => {
+		const full = Object.fromEntries(
+			Array.from({ length: MAX_STORED_PLAYHEADS }, (_, i) => [`e${i}`, i]),
+		);
+		const next = withPlayhead(full, "new", 1);
+		expect(Object.keys(next)).toHaveLength(MAX_STORED_PLAYHEADS);
+		expect(next.e0).toBeUndefined();
+		expect(next.new).toBe(1);
 	});
 });

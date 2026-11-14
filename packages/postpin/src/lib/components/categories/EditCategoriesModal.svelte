@@ -10,7 +10,6 @@
 	} from "../review/markers/markers.remote";
 	import { page } from "$app/state";
 	import ColorPicker from "./ColorPicker.svelte";
-	import GuestCategoryInfo from "./GuestCategoryInfo.svelte";
 	import Pencil from "@lucide/svelte/icons/pencil";
 	import Check from "@lucide/svelte/icons/check";
 	import Trash from "@lucide/svelte/icons/trash";
@@ -33,6 +32,8 @@
 	let sourceCategoryId = $state("");
 
 	let isRenaming: string | null = $state(null);
+	// Not bound to the category itself: that would change the name the draft is compared with
+	let renameDraft = $state("");
 
 	/** Error message in the main dialog (e.g., “Category contains foreign markers”) */
 	let deleteError = $state("");
@@ -119,14 +120,15 @@
 		await getCategories(projectId).refresh();
 		newCategoryName = "";
 	}
-	async function renameCategoryHandler(id: string, name: string) {
+	/** Blur and the confirm button both end up here; only the first one renames */
+	async function commitRename(id: string) {
+		if (isRenaming !== id) return;
+		isRenaming = null;
 		const category = categories.find((c) => c.id === id);
-		if (!category?.canRename) return;
-		const trimmedName = name.trim();
-		if (trimmedName === category.name) return;
-		if (trimmedName === "") return;
-		await renameCategory({ id, name: trimmedName });
-		await getCategories(projectId).refresh();
+		const name = renameDraft.trim();
+		if (!category?.canUpdate || name === "" || name === category.name) return;
+		// renameCategory refreshes the categories and this export's markers itself
+		await renameCategory({ id, name, exportId: page.params.export });
 	}
 </script>
 
@@ -157,11 +159,15 @@
 						<input
 							type="text"
 							class="input input-sm"
-							bind:value={category.name}
-							readonly={!category.canRename}
-							onblur={() => {
-								renameCategoryHandler(category.id, category.name);
-								isRenaming = null;
+							bind:value={renameDraft}
+							onblur={() => commitRename(category.id)}
+							onkeydown={(e) => {
+								if (e.key === "Enter") commitRename(category.id);
+								else if (e.key === "Escape") {
+									// not the dialog's "close on Escape"
+									e.preventDefault();
+									isRenaming = null;
+								}
 							}}
 						/>
 
@@ -169,20 +175,13 @@
 							type="button"
 							class="btn btn-square btn-ghost btn-sm"
 							aria-label="Confirm renaming"
-							onclick={() => {
-								renameCategoryHandler(category.id, category.name);
-								getMarkers(page.params.export ?? "").refresh();
-								isRenaming = null;
-							}}
+							onclick={() => commitRename(category.id)}
 						>
 							<Check class="size-[1.1em]" />
 						</button>
 					{/if}
 					{#if isRenaming !== category.id}
 						<span class="truncate">{category.name}</span>
-						{#if category.isGuest}
-							<GuestCategoryInfo id={category.id} />
-						{/if}
 						{#if category.canDelete}
 							<button
 								type="button"
@@ -193,12 +192,13 @@
 								<Trash class="size-[1.1em]" />
 							</button>
 						{/if}
-						{#if category.canRename}
+						{#if category.canUpdate}
 							<button
 								type="button"
 								class="btn btn-square btn-ghost btn-sm"
 								title="rename category"
 								onclick={() => {
+									renameDraft = category.name;
 									isRenaming = category.id;
 								}}
 							>

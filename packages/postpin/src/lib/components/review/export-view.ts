@@ -70,3 +70,37 @@ export function seekThumbnailTiles(sprites: SeekSprites, urls: string[]): Thumbn
 		},
 	}));
 }
+
+/** Last playhead position in seconds per export, most recently saved last */
+export type StoredPlayheads = Record<string, number>;
+
+// Enough for the exports someone switches between; older entries are dropped so the key doesn't grow forever
+export const MAX_STORED_PLAYHEADS = 50;
+
+export function parsePlayheads(raw: string | null): StoredPlayheads {
+	try {
+		const parsed: unknown = JSON.parse(raw ?? "");
+		if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+		return Object.fromEntries(
+			Object.entries(parsed).filter(
+				(entry): entry is [string, number] =>
+					typeof entry[1] === "number" && Number.isFinite(entry[1]) && entry[1] >= 0,
+			),
+		);
+	} catch {
+		return {};
+	}
+}
+
+/** Stores `seconds` for the export as the newest entry, keeping at most `MAX_STORED_PLAYHEADS`. */
+export function withPlayhead(
+	stored: StoredPlayheads,
+	exportId: string,
+	seconds: number,
+): StoredPlayheads {
+	const entries = [
+		...Object.entries(stored).filter(([id]) => id !== exportId),
+		[exportId, seconds] as const,
+	];
+	return Object.fromEntries(entries.slice(-MAX_STORED_PLAYHEADS));
+}

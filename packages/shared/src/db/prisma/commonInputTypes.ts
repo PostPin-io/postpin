@@ -349,6 +349,23 @@ export type EnumRoleWithAggregatesFilter<$PrismaModel = never> = {
 	_max?: Prisma.NestedEnumRoleFilter<$PrismaModel>;
 };
 
+export type EnumShareLinkKindFilter<$PrismaModel = never> = {
+	equals?: $Enums.ShareLinkKind | Prisma.EnumShareLinkKindFieldRefInput<$PrismaModel>;
+	in?: $Enums.ShareLinkKind[] | Prisma.ListEnumShareLinkKindFieldRefInput<$PrismaModel>;
+	notIn?: $Enums.ShareLinkKind[] | Prisma.ListEnumShareLinkKindFieldRefInput<$PrismaModel>;
+	not?: Prisma.NestedEnumShareLinkKindFilter<$PrismaModel> | $Enums.ShareLinkKind;
+};
+
+export type EnumShareLinkKindWithAggregatesFilter<$PrismaModel = never> = {
+	equals?: $Enums.ShareLinkKind | Prisma.EnumShareLinkKindFieldRefInput<$PrismaModel>;
+	in?: $Enums.ShareLinkKind[] | Prisma.ListEnumShareLinkKindFieldRefInput<$PrismaModel>;
+	notIn?: $Enums.ShareLinkKind[] | Prisma.ListEnumShareLinkKindFieldRefInput<$PrismaModel>;
+	not?: Prisma.NestedEnumShareLinkKindWithAggregatesFilter<$PrismaModel> | $Enums.ShareLinkKind;
+	_count?: Prisma.NestedIntFilter<$PrismaModel>;
+	_min?: Prisma.NestedEnumShareLinkKindFilter<$PrismaModel>;
+	_max?: Prisma.NestedEnumShareLinkKindFilter<$PrismaModel>;
+};
+
 export type NestedStringFilter<$PrismaModel = never> = {
 	equals?: string | Prisma.StringFieldRefInput<$PrismaModel>;
 	in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>;
@@ -654,4 +671,21 @@ export type NestedEnumRoleWithAggregatesFilter<$PrismaModel = never> = {
 	_count?: Prisma.NestedIntFilter<$PrismaModel>;
 	_min?: Prisma.NestedEnumRoleFilter<$PrismaModel>;
 	_max?: Prisma.NestedEnumRoleFilter<$PrismaModel>;
+};
+
+export type NestedEnumShareLinkKindFilter<$PrismaModel = never> = {
+	equals?: $Enums.ShareLinkKind | Prisma.EnumShareLinkKindFieldRefInput<$PrismaModel>;
+	in?: $Enums.ShareLinkKind[] | Prisma.ListEnumShareLinkKindFieldRefInput<$PrismaModel>;
+	notIn?: $Enums.ShareLinkKind[] | Prisma.ListEnumShareLinkKindFieldRefInput<$PrismaModel>;
+	not?: Prisma.NestedEnumShareLinkKindFilter<$PrismaModel> | $Enums.ShareLinkKind;
+};
+
+export type NestedEnumShareLinkKindWithAggregatesFilter<$PrismaModel = never> = {
+	equals?: $Enums.ShareLinkKind | Prisma.EnumShareLinkKindFieldRefInput<$PrismaModel>;
+	in?: $Enums.ShareLinkKind[] | Prisma.ListEnumShareLinkKindFieldRefInput<$PrismaModel>;
+	notIn?: $Enums.ShareLinkKind[] | Prisma.ListEnumShareLinkKindFieldRefInput<$PrismaModel>;
+	not?: Prisma.NestedEnumShareLinkKindWithAggregatesFilter<$PrismaModel> | $Enums.ShareLinkKind;
+	_count?: Prisma.NestedIntFilter<$PrismaModel>;
+	_min?: Prisma.NestedEnumShareLinkKindFilter<$PrismaModel>;
+	_max?: Prisma.NestedEnumShareLinkKindFilter<$PrismaModel>;
 };

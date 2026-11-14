@@ -16,6 +16,7 @@ import {
 } from "#lib/server/storage-usage.ts";
 import type { Prisma } from "@postpin-io/shared/db";
 import { formatByteSize } from "@postpin-io/shared/logic/bytes";
+import { checkCutList, CutListError, type CutList } from "@postpin-io/shared/logic/cut-list";
 import {
 	abortMultipartUpload,
 	checkUploadedParts,
@@ -27,6 +28,7 @@ import {
 	listUploadedParts,
 	partLayout,
 	presignPartUrls,
+	putTextObject,
 	type MultipartUpload,
 	type MultipartUploadPartUrl,
 	type UploadedPart,
@@ -354,7 +356,8 @@ export async function completeUpload(a: {
 	proxies?: UploadedProxy[];
 }): Promise<CompleteUploadResponse> {
 	await authorize("export", "upload", { type: "export", id: a.exportId });
-	const media = await getPendingMedia(a.exportId, a.path);
+	const exp = await findExport(a.exportId, a.path);
+	const media = pendingMediaOf(exp);
 	const fileSize = Number(media.original.size ?? 0);
 	// abort-upload sets the reservation to 0: nothing to complete
 	if (fileSize <= 0) error(409, "The upload was cancelled");
@@ -414,7 +417,12 @@ export async function completeUpload(a: {
 		});
 		// a proxy that doesn't check out never fails the upload: the server encodes instead
 		const accepted = await completeProxies(media.id, a.proxies ?? []);
-		await startMediaProcessing(media.id, { ...a.processing, transcode: !accepted });
+		await startMediaProcessing(media.id, {
+			...a.processing,
+			transcode: !accepted,
+			// web uploads only: plugins send the real timeline instead
+			cutList: !!a.processing?.webUpload && exp.cutListKey !== null,
+		});
 		return { transcodedBy: accepted ? "plugin" : "server" };
 	} catch (e) {
 		// nothing was queued: back to an unfinished upload, which can be started again
@@ -423,6 +431,34 @@ export async function completeUpload(a: {
 			.catch(() => {});
 		throw e;
 	}
+}
+
+/**
+ * Web uploads: stores the tracks of the editing software's timeline (read from an EDL or FCPXML
+ * in the browser, see cut-list.ts) while the upload is unfinished. Checked now as far as possible
+ * without the frame rate; the rest once the worker knows it (see the worker's cutList job).
+ * Sending another one replaces it.
+ */
+export async function attachCutList(a: { exportId: string; cutList: CutList }): Promise<void> {
+	await authorize("export", "upload", { type: "export", id: a.exportId });
+	const media = await getPendingMedia(a.exportId);
+	try {
+		checkCutList(a.cutList);
+	} catch (e) {
+		if (e instanceof CutListError) error(400, e.message);
+		throw e;
+	}
+	const key = await putTextObject(
+		s3Client,
+		env,
+		{ mediaId: media.id, type: "cutList" },
+		JSON.stringify(a.cutList),
+		"application/json",
+	);
+	await prisma.export.update({
+		where: { id: a.exportId },
+		data: { cutListKey: key, cutListError: null },
+	});
 }
 
 /** Discards an unfinished multipart upload, so its parts don't linger in storage. */

@@ -36,14 +36,17 @@
 		defaultLayout,
 		normalizeSizes,
 		parsePaneLayout,
+		parsePlayheads,
 		parseQuality,
 		parseTimelineMode,
 		seekThumbnailTiles,
 		type PaneLayout,
+		withPlayhead,
 	} from "#lib/components/review/export-view.ts";
 
 	import ProcessingJobs from "#lib/components/review/ProcessingJobs.svelte";
 	import EstimatedCuts from "#lib/components/review/EstimatedCuts.svelte";
+	import MarkerImport from "#lib/components/review/MarkerImport.svelte";
 	import { isWebUpload } from "@postpin-io/shared/logic/web-upload";
 	import {
 		readyShotThumbnails,
@@ -54,6 +57,16 @@
 	import { isJobRunning } from "#lib/job-status.ts";
 
 	import { setShareContext, type ShareContext } from "./share-context.ts";
+	import ScreeningButton from "#lib/components/screening/ScreeningButton.svelte";
+	import ScreeningRemote from "#lib/components/screening/ScreeningRemote.svelte";
+	import EndScreeningDialog from "#lib/components/screening/EndScreeningDialog.svelte";
+	import {
+		requestStopScreening,
+		restoreScreening,
+		screening,
+		stopScreening,
+	} from "#lib/components/screening/screening.svelte.ts";
+	import { beforeNavigate, goto } from "$app/navigation";
 	import { markersKey } from "./markers/marker-scope.ts";
 
 	interface Props {
@@ -147,10 +160,8 @@
 		isMarkerVisible ? await getMarkers(markersKey(exportId, shareToken)) : [],
 	);
 	let markers = $derived(markerFilter.apply(allMarkers));
-	// Team only: guests have no categories. New markers don't default to the guest category
-	const creatableCategories = $derived(
-		!share && projectId ? (await getCategories(projectId)).filter((c) => !c.isGuest) : [],
-	);
+	// Team only: guests have no categories
+	const creatableCategories = $derived(!share && projectId ? await getCategories(projectId) : []);
 	const newMarkerColor = $derived(
 		(creatableCategories.find((c) => c.id === defaultCategory.id) ?? creatableCategories[0])?.color,
 	);
@@ -310,9 +321,122 @@
 		};
 	});
 
+	// The playhead survives a reload: the player resumes wherever videoPosition is when the video loads
+	const PLAYHEAD_KEY = "postpin:playheads";
+	function loadPlayhead(id: string): number {
+		try {
+			return parsePlayheads(localStorage.getItem(PLAYHEAD_KEY))[id] ?? 0;
+		} catch {
+			return 0;
+		}
+	}
+	function savePlayhead(id: string, seconds: number) {
+		try {
+			const stored = parsePlayheads(localStorage.getItem(PLAYHEAD_KEY));
+			localStorage.setItem(PLAYHEAD_KEY, JSON.stringify(withPlayhead(stored, id, seconds)));
+		} catch (error) {
+			console.error("Failed to save playhead position:", error);
+		}
+	}
+
 	let videoPosition = $state(0);
 	let videoPaused = $state(true);
+	// The page component is reused when navigating between exports, so each one loads its own position
+	let playheadExportId: string | undefined;
+	$effect.pre(() => {
+		const id = exportId;
+		untrack(() => {
+			if (playheadExportId !== undefined) savePlayhead(playheadExportId, videoPosition);
+			playheadExportId = id;
+			videoPaused = true;
+			videoPosition = loadPlayhead(id);
+		});
+	});
+	// Playback updates the position every frame; writing at most once a second is plenty
+	let lastPlayheadSave = 0;
+	$effect(() => {
+		const seconds = videoPosition;
+		const id = untrack(() => playheadExportId);
+		if (!id || Date.now() - lastPlayheadSave < 1000) return;
+		lastPlayheadSave = Date.now();
+		savePlayhead(id, seconds);
+	});
+	// Catch the position since the last throttled write
+	onMount(() => {
+		const flush = () => {
+			if (playheadExportId) savePlayhead(playheadExportId, videoPosition);
+		};
+		window.addEventListener("pagehide", flush);
+		return () => {
+			flush();
+			window.removeEventListener("pagehide", flush);
+		};
+	});
 	let videoPlaybackRate = $state(1);
+
+	// ─── Screening ──────────────────────────────────────────────────────────
+	// While a screening of this export runs, the video plays in the presentation window and
+	// this view is its remote control: the same player state, kept in step over the session.
+	const session = $derived(
+		!share && screening.session?.exportId === exportId ? screening.session : null,
+	);
+	let screeningQr = $state(false);
+	// The screening belongs to this view. A reload keeps it: the window plays on and the view
+	// finds it again. Leaving the view or switching the export ends it, after asking.
+	$effect(() => {
+		const id = exportId;
+		if (!share) untrack(() => restoreScreening(id));
+		return () => {
+			if (screening.session?.exportId === id) stopScreening();
+		};
+	});
+	beforeNavigate((navigation) => {
+		// willUnload: reload, closed tab, another site. Nothing to ask there (see ScreeningSession)
+		if (!session || navigation.willUnload || !navigation.to) return;
+		const to = navigation.to.url;
+		if (to.pathname === navigation.from?.url.pathname) return;
+		navigation.cancel();
+		requestStopScreening(() => void goto(to));
+	});
+	$effect(() => {
+		const s = session;
+		if (!s) return;
+		untrack(() => {
+			// Found again after a reload: the window's first report says where the screening is
+			if (s.restored) return;
+			// A screening starts at the beginning, where the QR code stands in front of the video
+			videoPosition = 0;
+			videoPaused = true;
+			videoPlaybackRate = 1;
+			screeningQr = false;
+		});
+		s.onStatus = (state) => {
+			videoPosition = state.time;
+			videoPaused = state.paused;
+			videoPlaybackRate = state.rate;
+			videoMuted = state.muted;
+			videoQuality = state.quality;
+		};
+		return () => {
+			s.onStatus = undefined;
+			// the local player takes over where the screening stopped, but doesn't start playing
+			videoPaused = true;
+		};
+	});
+	// After the effect above, so the first push already starts at the beginning
+	$effect(() => {
+		session?.push(
+			{
+				time: videoPosition,
+				paused: videoPaused,
+				rate: videoPlaybackRate,
+				muted: videoMuted,
+				quality: videoQuality,
+				qr: screeningQr,
+			},
+			snapshot ? snapshot.frameRate.fpsDenominator / snapshot.frameRate.fpsNumerator : 1 / 25,
+		);
+	});
 
 	let timeline = $state<Timeline>();
 	// Set in the timeline with I and O, used by the marker panel for the next marker
@@ -403,18 +527,23 @@
 			console.error("Failed to save timeline mode:", error);
 		}
 	});
+	const timelinePaneVisible = $derived(isTimelineVisible && timelineMode !== "hidden");
 	let timelineCollapsedHeight = $state(0);
 	let leftPanesHeight = $state(0);
-	// Compact and scrub-only timelines get exactly the space they need, in percent of the pane column
+	// The compact timeline gets exactly the space it needs, in percent of the pane column
 	const collapsedPercent = $derived(
-		timelineMode !== "full" && leftPanesHeight > 0 && timelineCollapsedHeight > 0
+		timelineMode === "compact" && leftPanesHeight > 0 && timelineCollapsedHeight > 0
 			? Math.min((timelineCollapsedHeight / leftPanesHeight) * 100, 85)
 			: undefined,
 	);
 	let player = $state<VideoPlayer>();
 	let videoFullscreen = $state(false);
 	let videoQualities = $state<number[]>([]);
-	let videoMuted = $state(false);
+	// Guests of a screening sit in the room and hear the sound there; they can still unmute
+	let videoMuted = $state(startsMuted());
+	function startsMuted() {
+		return share?.screening ?? false;
+	}
 </script>
 
 <!-- The share page sets its own title -->
@@ -423,6 +552,8 @@
 {/if}
 
 <svelte:window onkeydown={onGlobalKeyDown} />
+
+{#if !share}<EndScreeningDialog />{/if}
 
 <!-- The three areas of the review, rendered by the desktop split panes and the phone layout -->
 {#snippet videoArea(compact = false)}
@@ -442,15 +573,16 @@
 					bind:viewMode
 					bind:timelineMode
 					timelineControls={showTimeline}
+					timelineHidden={timelineMode === "hidden"}
 					mobile={isMobile.current}
 					mobileLandscape={isPhoneLandscape.current}
-					qualities={videoQualities}
+					qualities={session ? session.qualities : videoQualities}
 					muted={videoMuted}
-					playerAvailable={viewMode === "timeline" && !!player}
+					playerAvailable={viewMode === "timeline" && (!!player || !!session)}
 					fullscreen={videoFullscreen || cssFullscreen}
 					fullscreenActive={videoFullscreen}
-					onToggleMute={() => player?.toggleMute()}
-					onFullscreen={toggleFullscreen}
+					onToggleMute={() => (session ? (videoMuted = !videoMuted) : player?.toggleMute())}
+					onFullscreen={session ? undefined : toggleFullscreen}
 					onCreateMarker={isMarkerVisible
 						? () => void markerPanel?.createMarkerAtPlayhead()
 						: undefined}
@@ -468,8 +600,26 @@
 						cutLevel={snapshot.metadata.cutLevel}
 						detected={!!media.hasSceneScores}
 						canChange={!!exp?.canChangeCuts && media.status === "COMPLETED"}
+						cutsFrom={snapshot.metadata.cutsFrom ?? null}
+						trackCount={snapshot.tracks.length}
+						clipCount={snapshot.tracks
+							.filter((t) => t.type === "video")
+							.reduce((n, t) => n + t.clips.length, 0)}
+						cutListError={exp?.cutList?.error ?? null}
+						canImportMarkers={!!exp?.canImportMarkers && media.status === "COMPLETED"}
+						frameRate={snapshot.frameRate}
+						importedMarkers={exp?.importedMarkers ?? null}
 						onchanged={async () => {
 							// brings the new generation; polling runs until it is published
+							await exportQuery.refresh();
+						}}
+					/>
+				{:else if snapshot && !share && exp?.canImportMarkers}
+					<MarkerImport
+						{exportId}
+						frameRate={snapshot.frameRate}
+						importedMarkers={exp?.importedMarkers ?? null}
+						onchanged={async () => {
 							await exportQuery.refresh();
 						}}
 					/>
@@ -485,6 +635,8 @@
 			>
 				{#if viewMode === "shot-grid" && snapshot}
 					<ShotGrid {snapshot} thumbnailUrls={shotUrls} {currentFrame} onSeek={seekToFrame} />
+				{:else if session}
+					<ScreeningRemote {session} bind:qr={screeningQr} />
 				{:else if media.status !== "PENDING" && videoSource && snapshot}
 					<!-- A fresh player when the source switches between the original and HLS -->
 					{#key videoSource.type}
@@ -602,7 +754,16 @@
 		{#if share}
 			{@render shareHeader(share)}
 		{:else}
-			<Header />
+			<Header>
+				{#snippet actions()}
+					{#if projectId && timelineId}
+						<ScreeningButton
+							ids={{ projectId, timelineId, exportId }}
+							ready={hlsReady && !!snapshot}
+						/>
+					{/if}
+				{/snippet}
+			</Header>
 		{/if}
 		{#if isMobile.current}
 			<!-- Phones: the video stays on top, the marker panel below scrolls on its own -->
@@ -636,19 +797,19 @@
 						>
 							<!-- Video and jobs; without the timeline panel the video takes the full height -->
 							<Pane
-								size={!isTimelineVisible
+								size={!timelinePaneVisible
 									? 100
 									: collapsedPercent !== undefined
 										? 100 - collapsedPercent
 										: layout.left[0]}
-								minSize={isTimelineVisible ? 15 : 100}
+								minSize={timelinePaneVisible ? 15 : 100}
 								class="overflow-auto"
 							>
 								{@render videoArea()}
 							</Pane>
 
 							<!-- Timeline panel -->
-							{#if isTimelineVisible}
+							{#if timelinePaneVisible}
 								<Pane
 									size={collapsedPercent ?? layout.left[1]}
 									minSize={collapsedPercent ?? 10}
@@ -659,6 +820,10 @@
 								</Pane>
 							{/if}
 						</Splitpanes>
+						{#if isTimelineVisible && timelineMode === "hidden"}
+							<!-- Not shown, but still mounted: the keyboard shortcuts step through cuts and frames with it -->
+							<div class="hidden">{@render timelineArea()}</div>
+						{/if}
 					</div>
 				</Pane>
 

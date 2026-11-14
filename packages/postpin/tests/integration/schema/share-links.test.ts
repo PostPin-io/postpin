@@ -49,29 +49,15 @@ describe("cascades", () => {
 		});
 	});
 
-	it("deleting the guest category unsets it on the project", async () => {
-		await prisma.project.update({
-			where: { id: w.project.id },
-			data: { guestCategoryId: w.category.id },
+	it("deleting a link's category unsets it on the link", async () => {
+		await prisma.shareLink.update({
+			where: { id: w.link.id },
+			data: { categoryId: w.category.id },
 		});
 		await prisma.category.delete({ where: { id: w.category.id } });
 
-		expect(await prisma.project.findUnique({ where: { id: w.project.id } })).toMatchObject({
-			guestCategoryId: null,
+		expect(await prisma.shareLink.findUnique({ where: { id: w.link.id } })).toMatchObject({
+			categoryId: null,
 		});
-	});
-});
-
-describe("guest category", () => {
-	it("is at most one per project", async () => {
-		const other = await f.createProject(await f.createOrg());
-		await prisma.project.update({
-			where: { id: w.project.id },
-			data: { guestCategoryId: w.category.id },
-		});
-
-		await expect(
-			prisma.project.update({ where: { id: other.id }, data: { guestCategoryId: w.category.id } }),
-		).rejects.toThrow();
 	});
 });

@@ -47,7 +47,16 @@ export function createAuth({ clientId, defaultServerUrl }: AuthOptions) {
 			{ client_id: clientId },
 			{ headers: deviceHeaders() },
 		);
-		if (error) throw error;
+		// a plain object would reach the UI as "[object Object]"
+		if (error) {
+			const { error_description, message, statusText, status } = error as {
+				error_description?: string;
+				message?: string;
+				status: number;
+				statusText: string;
+			};
+			throw new Error(error_description || message || `${status} ${statusText}`);
+		}
 
 		onCode(data.user_code, data.verification_uri); // show code in plugin UI
 		await shell.openExternal(data.verification_uri_complete);

@@ -2384,7 +2384,6 @@ export const ProjectScalarFieldEnum = {
 	updatedAt: "updatedAt",
 	creatorId: "creatorId",
 	organizationId: "organizationId",
-	guestCategoryId: "guestCategoryId",
 	nleProjectId: "nleProjectId",
 } as const;
 
@@ -2412,6 +2411,8 @@ export const ExportScalarFieldEnum = {
 	mediaId: "mediaId",
 	timelineSnapshot: "timelineSnapshot",
 	timelineSnapshotHash: "timelineSnapshotHash",
+	cutListKey: "cutListKey",
+	cutListError: "cutListError",
 	uploadedById: "uploadedById",
 } as const;
 
@@ -2430,6 +2431,9 @@ export const ShareLinkScalarFieldEnum = {
 	timelinePanelVisible: "timelinePanelVisible",
 	markerPanelVisible: "markerPanelVisible",
 	note: "note",
+	kind: "kind",
+	maxGuests: "maxGuests",
+	categoryId: "categoryId",
 	viewCount: "viewCount",
 	lastViewedAt: "lastViewedAt",
 } as const;
@@ -2591,6 +2595,22 @@ export type EnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'Role[]'
  */
 export type ListEnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Role[]">;
+
+/**
+ * Reference to a field of type 'ShareLinkKind'
+ */
+export type EnumShareLinkKindFieldRefInput<$PrismaModel> = FieldRefInputType<
+	$PrismaModel,
+	"ShareLinkKind"
+>;
+
+/**
+ * Reference to a field of type 'ShareLinkKind[]'
+ */
+export type ListEnumShareLinkKindFieldRefInput<$PrismaModel> = FieldRefInputType<
+	$PrismaModel,
+	"ShareLinkKind[]"
+>;
 
 /**
  * Batch Payload for updateMany & deleteMany & createMany

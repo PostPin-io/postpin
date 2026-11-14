@@ -9,6 +9,7 @@ import { shotThumbnails } from "../handlers/shotThumbnails.ts";
 import { movieBarcode } from "../handlers/movieBarcode.ts";
 import { sceneDetect } from "../handlers/sceneDetect.ts";
 import { verifyProxies } from "../handlers/verifyProxies.ts";
+import { cutList } from "../handlers/cutList.ts";
 import { cleanup } from "../handlers/cleanup.ts";
 
 export const heavyHandlers: JobHandlers<typeof Queues.heavy> = {
@@ -24,6 +25,7 @@ export const lightHandlers: JobHandlers<typeof Queues.light> = {
 	movieBarcode,
 	sceneDetect,
 	verifyProxies,
+	cutList,
 };
 
 export const maintenanceHandlers: JobHandlers<typeof Queues.maintenance> = { cleanup };

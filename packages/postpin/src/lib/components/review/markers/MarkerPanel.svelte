@@ -190,8 +190,7 @@
 	let creating = false;
 
 	async function resolveDefaultCategory() {
-		// New team markers don't default to the guest category, but it can be picked afterwards
-		const categories = (await getCategories(projectId)).filter((c) => !c.isGuest);
+		const categories = await getCategories(projectId);
 
 		let categoryId = categories.find((c) => c.id === defaultCategory.id)?.id ?? categories[0]?.id;
 		categoryId ??= (await createCategory({ name: "General", color: "#ffffff", projectId })).id;
