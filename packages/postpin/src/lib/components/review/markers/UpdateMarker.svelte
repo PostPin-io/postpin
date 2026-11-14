@@ -1,5 +1,6 @@
 <script lang="ts">
 	import EditCategoriesModal from "../../categories/EditCategoriesModal.svelte";
+	import CategoryBadge from "../../categories/CategoryBadge.svelte";
 	import CategorySelector from "../../categories/CategorySelector.svelte";
 
 	import { updateMarker, deleteMarker, getCategories, getMarkers } from "./markers.remote";
@@ -218,13 +219,20 @@
 	<div class="card-body h-full min-h-0 w-full gap-3 p-4">
 		<div class="flex items-center justify-between gap-3 {mobile ? 'flex-wrap' : ''}">
 			<div class="flex-screen flex min-w-0 items-center gap-2">
-				<h2 class="card-title text-base whitespace-nowrap">
-					{#if marker.canUpdate}
-						Edit Marker
-					{:else}
-						View Marker
+				{#if mobile}
+					<!-- The card header already says "Edit Marker"; the selector shows the category unless it's a guest -->
+					{#if share && marker.category}
+						<CategoryBadge category={marker.category} class="badge-md" />
 					{/if}
-				</h2>
+				{:else}
+					<h2 class="card-title text-base whitespace-nowrap">
+						{#if marker.canUpdate}
+							Edit Marker
+						{:else}
+							View Marker
+						{/if}
+					</h2>
+				{/if}
 				{#if !share}
 					<CategorySelector
 						value={categoryId}

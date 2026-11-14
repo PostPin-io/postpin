@@ -82,7 +82,7 @@
 		</button>
 	{/if}
 	<h2 class="min-w-0 flex-1 truncate text-center text-lg font-semibold">
-		{marker.name?.trim() || "Marker"}
+		{marker.canUpdate ? "Edit Marker" : "View Marker"}
 	</h2>
 	{#if marker.canDelete}
 		<span class="w-12 shrink-0" aria-hidden="true"></span>
