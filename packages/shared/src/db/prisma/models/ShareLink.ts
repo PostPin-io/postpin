@@ -1868,8 +1868,9 @@ export type $ShareLinkPayload<
 		export: Prisma.$ExportPayload<ExtArgs>;
 		creator: Prisma.$UserPayload<ExtArgs> | null;
 		/**
-		 * Screenings: the category their guests' markers get ("Screening (14/11/2026)").
-		 * Null (also once that category is deleted): the project's guest category.
+		 * The category the guests' markers get: "Guest" for standard links (shared by the project's
+		 * links), its own for a screening ("Screening (14/11/2026)"). An ordinary category; null once
+		 * it is deleted, the next guest marker then gets "Guest" again (guestCategoryFor).
 		 */
 		category: Prisma.$CategoryPayload<ExtArgs> | null;
 		guests: Prisma.$ShareGuestPayload<ExtArgs>[];

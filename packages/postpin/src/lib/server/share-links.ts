@@ -42,37 +42,46 @@ export async function resolveShareLink(token: string) {
 }
 
 /**
- * Id of the project's guest category. It is created with the project, so this only creates
- * one for projects that lack it.
- * createdById stays null: nobody owns it, so moveMarker's cleanup
- * (deletes only the user's own empty categories) never removes it.
+ * Id of the category for the markers of guests of standard links: the project's category named
+ * "Guest", created when there is none. An ordinary category: the team can use, rename and
+ * delete it (a renamed one is no longer found here, so the next link gets a new "Guest").
  */
-export async function ensureGuestCategory(tx: Tx, projectId: string): Promise<string> {
-	// Lock the project row: two links created at once must not create two categories
+export async function guestCategoryFor(
+	tx: Tx,
+	projectId: string,
+	creatorId: string | null,
+): Promise<string> {
+	// Lock the project row: two links created at once must not both create the category
 	await tx.$queryRaw`SELECT 1 FROM "project" WHERE "id" = ${projectId} FOR UPDATE`;
-
-	const project = await tx.project.findUniqueOrThrow({
-		where: { id: projectId },
-		select: { guestCategoryId: true },
-	});
-	if (project.guestCategoryId) return project.guestCategoryId;
-
-	const taken = new Set(
-		(
-			await tx.category.findMany({
-				where: { projectId, name: { startsWith: GUEST_CATEGORY_NAME } },
-				select: { name: true },
-			})
-		).map((c) => c.name),
-	);
-	let name = GUEST_CATEGORY_NAME;
-	for (let i = 2; taken.has(name); i++) name = `${GUEST_CATEGORY_NAME} (${i})`;
-
-	const category = await tx.category.create({
-		data: { name, color: GUEST_CATEGORY_COLOR, projectId, createdById: null },
-	});
-	await tx.project.update({ where: { id: projectId }, data: { guestCategoryId: category.id } });
+	const where = { projectId_name: { projectId, name: GUEST_CATEGORY_NAME } };
+	const category =
+		(await tx.category.findUnique({ where, select: { id: true } })) ??
+		(await tx.category.create({
+			data: {
+				name: GUEST_CATEGORY_NAME,
+				color: GUEST_CATEGORY_COLOR,
+				projectId,
+				createdById: creatorId,
+			},
+			select: { id: true },
+		}));
 	return category.id;
+}
+
+/**
+ * The category a guest's new marker gets: the link's, or "Guest" once that one was deleted
+ * (the link keeps it from then on).
+ */
+export async function shareLinkCategory(
+	tx: Tx,
+	link: { id: string; categoryId: string | null; creatorId: string | null },
+	projectId: string,
+): Promise<string> {
+	if (link.categoryId) return link.categoryId;
+	const categoryId = await guestCategoryFor(tx, projectId, link.creatorId);
+	// updateMany: a link deleted meanwhile is no error here, the marker's own checks decide
+	await tx.shareLink.updateMany({ where: { id: link.id }, data: { categoryId } });
+	return categoryId;
 }
 
 /**
@@ -99,8 +108,4 @@ export async function createScreeningCategory(
 	return tx.category.create({
 		data: { name, color: SCREENING_CATEGORY_COLOR, projectId, createdById: creatorId },
 	});
-}
-
-export async function isGuestCategory(categoryId: string, db: Tx | typeof prisma = prisma) {
-	return (await db.project.count({ where: { guestCategoryId: categoryId } })) > 0;
 }

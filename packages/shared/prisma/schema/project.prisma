@@ -9,9 +9,6 @@ model Project {
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId  String
   categories      Category[]   @relation("ProjectCategories")
-  /// Category for share-link visitor markers, created on first use (ensureGuestCategory)
-  guestCategory   Category?    @relation("ProjectGuestCategory", fields: [guestCategoryId], references: [id], onDelete: SetNull)
-  guestCategoryId String?      @unique
 
   nleProjectId String?
   memberGrants MemberGrant[]
@@ -89,8 +86,9 @@ model ShareLink {
   kind                 ShareLinkKind   @default(STANDARD)
   /// How many guests may join; null = only the app-wide limit (MAX_GUESTS_PER_LINK)
   maxGuests            Int?
-  /// Screenings: the category their guests' markers get ("Screening (14/11/2026)").
-  /// Null (also once that category is deleted): the project's guest category.
+  /// The category the guests' markers get: "Guest" for standard links (shared by the project's
+  /// links), its own for a screening ("Screening (14/11/2026)"). An ordinary category; null once
+  /// it is deleted, the next guest marker then gets "Guest" again (guestCategoryFor).
   category             Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   categoryId           String?
   guests               ShareGuest[]

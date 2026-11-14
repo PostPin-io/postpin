@@ -45,8 +45,15 @@ describe("createShareLink", () => {
 		});
 		expect(link.expiresAt.getTime() - Date.now()).toBeGreaterThan(23 * 60 * 60 * 1000);
 		expect(
-			(await prisma.project.findUniqueOrThrow({ where: { id: w.projectA.id } })).guestCategoryId,
-		).not.toBeNull();
+			await prisma.category.findUniqueOrThrow({ where: { id: link.categoryId! } }),
+		).toMatchObject({ name: "Guest", projectId: w.projectA.id, createdById: w.owner.user.id });
+	});
+
+	it("links of a project share the guest category", async () => {
+		signIn(w.owner.user, w.org.id);
+		const a = await createShareLink({ exportId: w.exp1.id, preset: "24h" });
+		const b = await createShareLink({ exportId: w.exp1.id, preset: "7d" });
+		expect((await linkOf(b.id)).categoryId).toBe((await linkOf(a.id)).categoryId);
 	});
 
 	it("403 for a reviewer with access", async () => {
@@ -176,10 +183,6 @@ describe("createScreeningLink", () => {
 		const hours = (link.expiresAt.getTime() - Date.now()) / 3_600_000;
 		expect(hours).toBeGreaterThan(23.9);
 		expect(hours).toBeLessThanOrEqual(24);
-		// the fallback for when the screening's category is deleted
-		expect(
-			(await prisma.project.findUniqueOrThrow({ where: { id: w.projectA.id } })).guestCategoryId,
-		).not.toBeNull();
 	});
 
 	it("comes with its own category, named after the day and owned by the presenter", async () => {

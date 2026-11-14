@@ -51,13 +51,11 @@ model Category {
 
   project        Project  @relation("ProjectCategories", fields: [projectId], references: [id], onDelete: Cascade)
   projectId      String
-  /// Back side of Project.guestCategory; set iff this is the project's guest category
-  guestOfProject Project? @relation("ProjectGuestCategory")
 
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdById String?
 
-  /// Screening links whose guests' markers land here
+  /// Share links whose guests' markers land here
   shareLinks ShareLink[]
 
   @@unique([projectId, name])

@@ -22,7 +22,7 @@ import { prisma } from "#lib/server/database.ts";
 import { accessChecker, authorize } from "#lib/server/org-access.ts";
 import {
 	createScreeningCategory,
-	ensureGuestCategory,
+	guestCategoryFor,
 	newShareToken,
 } from "#lib/server/share-links.ts";
 
@@ -79,9 +79,10 @@ export const createShareLink = command(
 		});
 
 		const link = await prisma.$transaction(async (tx) => {
-			await ensureGuestCategory(tx, target.projectId!);
+			const categoryId = await guestCategoryFor(tx, target.projectId!, user.id);
 			return tx.shareLink.create({
 				data: {
+					categoryId,
 					exportId: data.exportId,
 					creatorId: user.id,
 					token: newShareToken(),
@@ -159,8 +160,6 @@ export const createScreeningLink = command(
 		assertGuestLimit(maxGuests);
 
 		const link = await prisma.$transaction(async (tx) => {
-			// the fallback once the screening category is deleted
-			await ensureGuestCategory(tx, target.projectId!);
 			const category = await createScreeningCategory(tx, target.projectId!, user.id, timeZone);
 			return tx.shareLink.create({
 				data: {

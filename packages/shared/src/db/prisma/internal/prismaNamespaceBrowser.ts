@@ -341,7 +341,6 @@ export const ProjectScalarFieldEnum = {
 	updatedAt: "updatedAt",
 	creatorId: "creatorId",
 	organizationId: "organizationId",
-	guestCategoryId: "guestCategoryId",
 	nleProjectId: "nleProjectId",
 } as const;
 

@@ -56,17 +56,30 @@ const edit = (id: string) =>
 		frame: 1300,
 		shareToken: w.link.token,
 	});
+/** The link's category: "Guest", created with the first guest marker (the factory link has none) */
 const guestCategoryId = async () =>
-	(await prisma.project.findUniqueOrThrow({ where: { id: w.project.id } })).guestCategoryId;
+	(await prisma.shareLink.findUniqueOrThrow({ where: { id: w.link.id } })).categoryId;
 
 describe("createMarker as guest", () => {
-	it("in the guest category, as the guest, not as a user", async () => {
-		const m = await add();
-		expect(m).toMatchObject({
+	it("in the link's category, as the guest, not as a user", async () => {
+		const category = await f.createCategory(w.project, { createdBy: w.owner.user });
+		await prisma.shareLink.update({ where: { id: w.link.id }, data: { categoryId: category.id } });
+		expect(await add()).toMatchObject({
 			guestId: w.annaGuest.id,
 			authorId: null,
-			categoryId: await guestCategoryId(),
+			categoryId: category.id,
 		});
+	});
+
+	it('a link without a category gets "Guest", owned by the link\'s creator', async () => {
+		const m = await add();
+		expect(m.categoryId).toBe(await guestCategoryId());
+		expect(await prisma.category.findUniqueOrThrow({ where: { id: m.categoryId } })).toMatchObject({
+			name: "Guest",
+			projectId: w.project.id,
+			createdById: w.owner.user.id,
+		});
+		expect((await add(1210)).categoryId).toBe(m.categoryId);
 	});
 
 	it("guests of a screening: in the screening's category", async () => {
@@ -81,7 +94,7 @@ describe("createMarker as guest", () => {
 		});
 	});
 
-	it("once the screening's category is deleted: the guest category again", async () => {
+	it('once the screening\'s category is deleted: "Guest"', async () => {
 		const screeningCategory = await f.createCategory(w.project, { createdBy: w.owner.user });
 		await prisma.shareLink.update({
 			where: { id: w.link.id },
@@ -92,7 +105,11 @@ describe("createMarker as guest", () => {
 		expect(
 			(await prisma.shareLink.findUniqueOrThrow({ where: { id: w.link.id } })).categoryId,
 		).toBeNull();
-		expect((await add()).categoryId).toBe(await guestCategoryId());
+		const m = await add();
+		expect(m.categoryId).toBe(await guestCategoryId());
+		expect(await prisma.category.findUniqueOrThrow({ where: { id: m.categoryId } })).toMatchObject({
+			name: "Guest",
+		});
 	});
 
 	it("400 outside the timeline", async () => {

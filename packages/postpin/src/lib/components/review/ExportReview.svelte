@@ -160,10 +160,8 @@
 		isMarkerVisible ? await getMarkers(markersKey(exportId, shareToken)) : [],
 	);
 	let markers = $derived(markerFilter.apply(allMarkers));
-	// Team only: guests have no categories. New markers don't default to the guest category
-	const creatableCategories = $derived(
-		!share && projectId ? (await getCategories(projectId)).filter((c) => !c.isGuest) : [],
-	);
+	// Team only: guests have no categories
+	const creatableCategories = $derived(!share && projectId ? await getCategories(projectId) : []);
 	const newMarkerColor = $derived(
 		(creatableCategories.find((c) => c.id === defaultCategory.id) ?? creatableCategories[0])?.color,
 	);
