@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { page } from "$app/state";
+	import ChevronDown from "@lucide/svelte/icons/chevron-down";
+	import MonitorUp from "@lucide/svelte/icons/monitor-up";
 	import Projector from "@lucide/svelte/icons/projector";
+	import QrCode from "@lucide/svelte/icons/qr-code";
+	import SlidersHorizontal from "@lucide/svelte/icons/sliders-horizontal";
 	import { authClient } from "#lib/auth-client.ts";
 	import { roleAllows, toRole } from "#lib/roles.ts";
 	import {
@@ -149,21 +153,36 @@
 		<div class="modal-box">
 			<h3 class="flex items-center gap-2 text-lg font-bold"><Projector size={20} /> Screening</h3>
 			<p class="mt-2 text-sm text-base-content/70">Review this export live with an audience.</p>
-			<details class="mt-2 text-sm">
-				<summary class="cursor-pointer text-base-content/70 hover:text-base-content">
+			<!-- A plain <details>: daisyUI's collapse animates the closing, and the text shows through -->
+			<details class="group mt-3 rounded-box border border-base-300 bg-base-200 text-sm">
+				<summary
+					class="flex cursor-pointer list-none items-center justify-between px-4 py-2.5 font-medium [&::-webkit-details-marker]:hidden"
+				>
 					How does a screening work?
+					<ChevronDown size={16} class="transition-transform group-open:rotate-180" />
 				</summary>
-				<ol class="mt-2 list-decimal space-y-1.5 pl-5">
-					<li>
-						The video opens in its own window. Move it to the projector or external screen and go
-						fullscreen.
+				<ul class="grid gap-2.5 px-4 pb-3">
+					<li class="flex gap-3">
+						<MonitorUp size={18} class="mt-0.5 shrink-0" />
+						<span>
+							The video opens in its own window. Move it to the projector or external screen and go
+							fullscreen.
+						</span>
 					</li>
-					<li>
-						A QR code shows before the video starts. Your guests scan it and leave their markers
-						from their phones (muted, with a small video to navigate).
+					<li class="flex gap-3">
+						<QrCode size={18} class="mt-0.5 shrink-0" />
+						<span>
+							A QR code shows before the video starts. Your guests scan it and leave their markers
+							from their phones (muted, with a small video to navigate).
+						</span>
 					</li>
-					<li>You control playback from this page, and end the screening with the same button.</li>
-				</ol>
+					<li class="flex gap-3">
+						<SlidersHorizontal size={18} class="mt-0.5 shrink-0" />
+						<span>
+							You control playback from this page, and end the screening with the same button.
+						</span>
+					</li>
+				</ul>
 			</details>
 
 			{#if setup?.error}
@@ -217,11 +236,6 @@
 							</span>
 						</label>
 					</div>
-				{:else}
-					<p class="mt-4 text-sm text-base-content/70">
-						This creates a share link for the screening: markers only, valid for 24 hours. The
-						guests' markers get their own category, named after today's date.
-					</p>
 				{/if}
 				<label class="mt-3 flex items-center gap-3 text-sm">
 					<span class="flex-1">
@@ -246,7 +260,7 @@
 			<div class="modal-action">
 				<button class="btn" disabled={busy} onclick={() => dialog?.close()}>Cancel</button>
 				<button class="btn btn-primary" disabled={busy || !valid} onclick={start}>
-					{continuing ? "Continue screening" : "Create screening link"}
+					{continuing ? "Continue screening" : "Start"}
 					{#if busy}<span class="loading loading-xs loading-spinner"></span>{/if}
 				</button>
 			</div>

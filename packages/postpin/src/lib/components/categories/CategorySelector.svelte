@@ -25,11 +25,11 @@
 </script>
 
 {#if !readonly}
-	<div class="dropdown dropdown-center">
+	<div class="dropdown dropdown-center min-w-0">
 		<div
 			tabindex="0"
 			role="button"
-			class="btn justify-start @max-md:min-w-0 @max-md:px-3 @md:min-w-32"
+			class="btn max-w-full flex-nowrap justify-start @max-md:min-w-0 @max-md:px-3 @md:min-w-32"
 			aria-label={selected ? `Category: ${selected.name}` : undefined}
 		>
 			{#if selected}

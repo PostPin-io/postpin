@@ -101,9 +101,7 @@
 					Click <strong>Activate Player</strong> in the screening window. Until then the browser doesn't
 					let it play with sound.
 				</span>
-				{#if session.canFocus}
-					<button class="btn btn-sm" onclick={() => session.focusWindow()}>Show window</button>
-				{/if}
+				<button class="btn btn-sm" onclick={() => session.focusWindow()}>Show window</button>
 			</div>
 		{/if}
 		{#if inactive}
@@ -134,11 +132,9 @@
 				<QrCode size={16} />
 				{qr ? "Hide QR code on screen" : "Show QR code on screen"}
 			</button>
-			{#if session.canFocus}
-				<button class="btn btn-sm" onclick={() => session.focusWindow()}>
-					<AppWindow size={16} /> Show window
-				</button>
-			{/if}
+			<button class="btn btn-sm" onclick={() => session.focusWindow()}>
+				<AppWindow size={16} /> Show window
+			</button>
 			<button class="btn btn-sm" onclick={copy}>
 				{#if copied}<Check size={16} /> Copied{:else}<Copy size={16} /> Copy link{/if}
 			</button>

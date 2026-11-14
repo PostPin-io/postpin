@@ -16,6 +16,7 @@ import {
 } from "#lib/server/storage-usage.ts";
 import type { Prisma } from "@postpin-io/shared/db";
 import { formatByteSize } from "@postpin-io/shared/logic/bytes";
+import { checkCutList, CutListError, type CutList } from "@postpin-io/shared/logic/cut-list";
 import {
 	abortMultipartUpload,
 	checkUploadedParts,
@@ -27,6 +28,7 @@ import {
 	listUploadedParts,
 	partLayout,
 	presignPartUrls,
+	putTextObject,
 	type MultipartUpload,
 	type MultipartUploadPartUrl,
 	type UploadedPart,
@@ -56,6 +58,35 @@ export function assertFileSize(fileSize: number) {
 			413,
 			`The file is too large: ${formatByteSize(fileSize)}, at most ${formatByteSize(max)}`,
 		);
+	}
+}
+
+/** As long as the presigned part URLs (presignPartUrls): longer and an abandoned upload blocks space */
+const RESERVATION_MS = 24 * 60 * 60 * 1000;
+const reservationEnd = () => new Date(Date.now() + RESERVATION_MS);
+
+/**
+ * Whether `fileSize` bytes may (still) be uploaded to this export: the size limit, which may have
+ * been lowered meanwhile, and the quotas. The media's own reservation doesn't count against
+ * itself. Whoever started the export pays for it, even if someone else continues the upload.
+ */
+async function assertUploadFits(a: {
+	member: { organizationId: string; userId: string };
+	uploadedById: string | null;
+	fileSize: number;
+	mediaId?: string;
+}) {
+	assertFileSize(a.fileSize);
+	try {
+		await assertQuota({
+			orgId: a.member.organizationId,
+			userId: a.uploadedById ?? a.member.userId,
+			additional: BigInt(a.fileSize),
+			excludeMediaId: a.mediaId,
+		});
+	} catch (e) {
+		if (e instanceof QuotaExceededError) error(413, e.message);
+		throw e;
 	}
 }
 
@@ -153,21 +184,13 @@ export async function initUpload(a: {
 	if (exp.media && exp.media.status !== "PENDING") {
 		error(409, "Export media was already uploaded");
 	}
-	assertFileSize(a.fileSize);
-
-	try {
-		await assertQuota({
-			orgId: member.organizationId,
-			// whoever started the export pays for it, even if someone else retries the upload
-			userId: exp.uploadedById ?? member.userId,
-			additional: BigInt(a.fileSize),
-			// a retry replaces its own reservation
-			excludeMediaId: exp.media?.id,
-		});
-	} catch (e) {
-		if (e instanceof QuotaExceededError) error(413, e.message);
-		throw e;
-	}
+	await assertUploadFits({
+		member,
+		uploadedById: exp.uploadedById,
+		fileSize: a.fileSize,
+		// a retry replaces its own reservation
+		mediaId: exp.media?.id,
+	});
 
 	let mediaId = exp.media?.id;
 	if (!exp.media) {
@@ -177,6 +200,7 @@ export async function initUpload(a: {
 				media: {
 					create: {
 						status: "PENDING",
+						reservedUntil: reservationEnd(),
 						// reserves the space until probe stores the real size
 						original: { create: { size: BigInt(a.fileSize) } },
 					},
@@ -186,10 +210,13 @@ export async function initUpload(a: {
 		});
 		mediaId = media!.id;
 	} else {
-		// retry, possibly with a different file
-		await prisma.mediaFile.update({
-			where: { id: exp.media.originalId },
-			data: { size: BigInt(a.fileSize) },
+		// retry, possibly with a different file: a new reservation from now on
+		await prisma.media.update({
+			where: { id: exp.media.id },
+			data: {
+				reservedUntil: reservationEnd(),
+				original: { update: { size: BigInt(a.fileSize) } },
+			},
 		});
 	}
 
@@ -205,11 +232,14 @@ export async function initUpload(a: {
 }
 
 /** The export's media while its upload is unfinished */
-async function getPendingMedia(exportId: string, path?: ExportPath) {
-	const exp = await findExport(exportId, path);
+function pendingMediaOf(exp: Awaited<ReturnType<typeof findExport>>) {
 	if (!exp.media) error(404, "Export not found");
 	if (exp.media.status !== "PENDING") error(409, "Export media is already processing");
 	return exp.media;
+}
+
+async function getPendingMedia(exportId: string, path?: ExportPath) {
+	return pendingMediaOf(await findExport(exportId, path));
 }
 
 /**
@@ -238,7 +268,8 @@ export async function completeUpload(a: {
 	processing?: { webUpload: boolean; detectCuts: boolean };
 }): Promise<void> {
 	await authorize("export", "upload", { type: "export", id: a.exportId });
-	const media = await getPendingMedia(a.exportId, a.path);
+	const exp = await findExport(a.exportId, a.path);
+	const media = pendingMediaOf(exp);
 	const fileSize = Number(media.original.size ?? 0);
 	// abort-upload sets the reservation to 0: nothing to complete
 	if (fileSize <= 0) error(409, "The upload was cancelled");
@@ -266,25 +297,76 @@ export async function completeUpload(a: {
 	if (!uploaded) error(409, "Export file has not been fully uploaded");
 
 	// Second line of defence: S3 assembled exactly the checked parts, so this only differs if the
-	// parts changed in between. Unknown counts as wrong; the upload is gone either way by now.
-	const storedSize = await getObjectSize(s3Client, env, object).catch(() => null);
-	if (storedSize !== fileSize) {
+	// parts changed in between. When S3 doesn't answer, the checked parts are trusted: deleting a
+	// file that took hours to upload over a failed HEAD would be worse.
+	const storedSize = await getObjectSize(s3Client, env, object).catch((e: unknown) => {
+		console.error(`Measuring the original of ${media.id} failed`, e);
+		return null;
+	});
+	if (storedSize !== null && storedSize !== fileSize) {
 		await deleteObject(s3Client, env, object).catch((e: unknown) =>
 			console.error(`Deleting the mismatched original of ${media.id} failed`, e),
 		);
 		await releaseReservation(media);
-		if (storedSize !== null && storedSize > fileSize) {
+		if (storedSize > fileSize) {
 			error(413, "The uploaded file is larger than announced, start the upload again");
 		}
 		error(409, "The uploaded file couldn't be verified, start the upload again");
 	}
 
+	// Assembling a large file takes a while, so a retry may arrive while the first complete is
+	// still running, and S3 may answer both. Only one of them starts the processing.
+	const claimed = await prisma.media.updateMany({
+		where: { id: media.id, status: "PENDING" },
+		data: { status: "PROCESSING" },
+	});
+	if (claimed.count === 0) error(409, "Export media is already processing");
+
+	try {
+		await prisma.export.update({
+			where: { id: a.exportId },
+			data: { timelineSnapshot: a.timelineSnapshot as unknown as Prisma.JsonObject },
+		});
+		await startMediaProcessing(media.id, {
+			...a.processing,
+			// web uploads only: plugins send the real timeline instead
+			cutList: !!a.processing?.webUpload && exp.cutListKey !== null,
+		});
+	} catch (e) {
+		// nothing was queued: back to an unfinished upload, which can be started again
+		await prisma.media
+			.update({ where: { id: media.id }, data: { status: "PENDING" } })
+			.catch(() => {});
+		throw e;
+	}
+}
+
+/**
+ * Web uploads: stores the tracks of the editing software's timeline (read from an EDL or FCPXML
+ * in the browser, see cut-list.ts) while the upload is unfinished. Checked now as far as possible
+ * without the frame rate; the rest once the worker knows it (see the worker's cutList job).
+ * Sending another one replaces it.
+ */
+export async function attachCutList(a: { exportId: string; cutList: CutList }): Promise<void> {
+	await authorize("export", "upload", { type: "export", id: a.exportId });
+	const media = await getPendingMedia(a.exportId);
+	try {
+		checkCutList(a.cutList);
+	} catch (e) {
+		if (e instanceof CutListError) error(400, e.message);
+		throw e;
+	}
+	const key = await putTextObject(
+		s3Client,
+		env,
+		{ mediaId: media.id, type: "cutList" },
+		JSON.stringify(a.cutList),
+		"application/json",
+	);
 	await prisma.export.update({
 		where: { id: a.exportId },
-		data: { timelineSnapshot: a.timelineSnapshot as unknown as Prisma.JsonObject },
+		data: { cutListKey: key, cutListError: null },
 	});
-
-	await startMediaProcessing(media.id, a.processing);
 }
 
 /** Discards an unfinished multipart upload, so its parts don't linger in storage. */
@@ -295,7 +377,15 @@ export async function abortUpload(a: {
 }): Promise<void> {
 	await authorize("export", "upload", { type: "export", id: a.exportId });
 	const media = await getPendingMedia(a.exportId, a.path);
-	await abortMultipartUpload(s3Client, env, { mediaId: media.id, type: "original" }, a.uploadId);
+	// S3 not knowing the upload any more (aborted before, or by a lifecycle rule) is what we want
+	await abortMultipartUpload(
+		s3Client,
+		env,
+		{ mediaId: media.id, type: "original" },
+		a.uploadId,
+	).catch((e: unknown) => {
+		if ((e as { name?: string })?.name !== "NoSuchUpload") throw e;
+	});
 	// frees the reserved space
 	await releaseReservation(media);
 }
@@ -317,8 +407,9 @@ export async function resumeUpload(a: {
 	path?: ExportPath;
 	uploadId: string;
 }): Promise<ResumeUploadResponse> {
-	await authorize("export", "upload", { type: "export", id: a.exportId });
-	const media = await getPendingMedia(a.exportId, a.path);
+	const { member } = await authorize("export", "upload", { type: "export", id: a.exportId });
+	const exp = await findExport(a.exportId, a.path);
+	const media = pendingMediaOf(exp);
 	const fileSize = Number(media.original.size ?? 0);
 	// abort-upload sets the reservation to 0: nothing to continue
 	if (fileSize <= 0) error(409, "The upload was cancelled");
@@ -326,6 +417,14 @@ export async function resumeUpload(a: {
 	const object = { mediaId: media.id, type: "original" } as const;
 	const listed = await listUploadedParts(s3Client, env, object, a.uploadId).catch(() => null);
 	if (!listed) error(409, "The upload can't be continued any more, start it again");
+
+	// The reservation may have run out while the upload was paused, and the space may be taken
+	// now; the new URLs are valid for another day, so the reservation has to be too
+	await assertUploadFits({ member, uploadedById: exp.uploadedById, fileSize, mediaId: media.id });
+	await prisma.media.update({
+		where: { id: media.id },
+		data: { reservedUntil: reservationEnd() },
+	});
 
 	const { partSize, partCount } = partLayout(fileSize);
 	// a part of the wrong size (another file?) is uploaded again

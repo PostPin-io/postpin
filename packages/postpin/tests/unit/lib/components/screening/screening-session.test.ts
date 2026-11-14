@@ -261,11 +261,37 @@ describe("ScreeningSession after a reload of the view", () => {
 		other.close();
 	});
 
-	it("asks the window to resume and can't bring it to the front", async () => {
+	it("asks the window to resume", async () => {
 		await delivered();
 		expect(other.received).toEqual([{ type: "resume" }]);
 		expect(restored.restored).toBe(true);
-		expect(restored.canFocus).toBe(false);
+	});
+
+	it("finds the window again by its name to bring it to the front", () => {
+		const found = {
+			closed: false,
+			focus: vi.fn(),
+			close: vi.fn(),
+			location: { href: "http://x/screening" },
+		};
+		const open = vi.fn(() => found);
+		vi.stubGlobal("window", { ...window, open });
+		restored.focusWindow();
+		expect(open).toHaveBeenCalledWith("", "postpin-screening-r1");
+		expect(found.focus).toHaveBeenCalled();
+	});
+
+	it("closes what open() made when the window was gone after all", () => {
+		const blank = {
+			closed: false,
+			focus: vi.fn(),
+			close: vi.fn(),
+			location: { href: "about:blank" },
+		};
+		vi.stubGlobal("window", { ...window, open: vi.fn(() => blank) });
+		restored.focusWindow();
+		expect(blank.close).toHaveBeenCalled();
+		expect(blank.focus).not.toHaveBeenCalled();
 	});
 
 	it("takes over the window's state instead of pushing its own: playback goes on", async () => {

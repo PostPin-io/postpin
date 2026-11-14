@@ -22,6 +22,9 @@ export type ScreeningWindow = { popup: Window | null; sessionId: string; ids: Sc
  * Opens the presentation window. Call it directly in the click handler, before anything is
  * awaited: browsers block pop-ups that don't come straight from a click. Null if blocked.
  */
+/** Each screening's window has its own name, so it can be found again by it */
+const windowName = (sessionId: string) => `postpin-screening-${sessionId}`;
+
 export function openScreeningWindow(ids: ScreeningIds): ScreeningWindow | null {
 	const sessionId = crypto.randomUUID();
 	const path = resolve(
@@ -31,7 +34,7 @@ export function openScreeningWindow(ids: ScreeningIds): ScreeningWindow | null {
 	const popup = window.open(
 		`${path}?session=${sessionId}`,
 		// a name of its own: starting anew must not reuse the window the old session is closing
-		`postpin-screening-${sessionId}`,
+		windowName(sessionId),
 		"popup,width=1280,height=720",
 	);
 	return popup && { popup, sessionId, ids };
@@ -47,8 +50,6 @@ export class ScreeningSession {
 	readonly shareUrl: string;
 	/** Picked up again after the view was reloaded: the window's state counts, not the view's */
 	readonly restored: boolean;
-	/** Bringing the window to the front needs its handle, which a reload loses */
-	readonly canFocus: boolean;
 
 	/** The window answered; before that nothing can be controlled */
 	connected = $state(false);
@@ -61,6 +62,7 @@ export class ScreeningSession {
 	onStatus: ((state: ScreeningState) => void) | undefined;
 
 	#popup: Window | null;
+	#sessionId: string;
 	#channel: BroadcastChannel;
 	#rev = 0;
 	/** What the window shows, or was last told to show; null until it said hello */
@@ -84,8 +86,8 @@ export class ScreeningSession {
 		this.link = link;
 		this.shareUrl = shareUrl;
 		this.restored = restored;
-		this.canFocus = win.popup !== null;
 		this.#popup = win.popup;
+		this.#sessionId = win.sessionId;
 		this.#resumingSince = restored ? Date.now() : null;
 		this.#channel = new BroadcastChannel(screeningChannelName(win.sessionId));
 		this.#channel.onmessage = (event: MessageEvent<FromScreeningWindow>) =>
@@ -158,9 +160,20 @@ export class ScreeningSession {
 		this.#post({ type: "command", rev: ++this.#rev, patch });
 	}
 
-	/** Brings the window to the front (see canFocus) */
+	/**
+	 * Brings the window to the front. A reload of the view loses the window's handle; call this
+	 * in a click, then the handle is fetched again by the window's name.
+	 */
 	focusWindow() {
-		this.#popup?.focus();
+		if (!this.#popup || this.#popup.closed) {
+			// Opens nothing new while the window exists: a name that is taken just returns it
+			const found = window.open("", windowName(this.#sessionId));
+			if (!found) return;
+			// It was gone after all: open() made an empty one
+			if (found.location.href === "about:blank") return void found.close();
+			this.#popup = found;
+		}
+		this.#popup.focus();
 	}
 
 	dispose() {
