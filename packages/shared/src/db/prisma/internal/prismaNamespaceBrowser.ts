@@ -389,6 +389,9 @@ export const ShareLinkScalarFieldEnum = {
 	timelinePanelVisible: "timelinePanelVisible",
 	markerPanelVisible: "markerPanelVisible",
 	note: "note",
+	kind: "kind",
+	maxGuests: "maxGuests",
+	categoryId: "categoryId",
 	viewCount: "viewCount",
 	lastViewedAt: "lastViewedAt",
 } as const;

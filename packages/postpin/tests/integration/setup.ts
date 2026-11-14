@@ -28,6 +28,7 @@ vi.mock("$app/env/private", () => ({
 	STORAGE_DEFAULT_USER_QUOTA: undefined,
 	STORAGE_CAPACITY: 1_000_000_000n,
 	STORAGE_DISK_PATH: undefined,
+	SCREENING_MAX_GUESTS: 100,
 	// tests set it with setUploadMaxFileSize()
 	get UPLOAD_MAX_FILE_SIZE() {
 		return uploadLimits.maxFileSize;

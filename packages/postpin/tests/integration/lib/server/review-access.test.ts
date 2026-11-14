@@ -178,6 +178,30 @@ describe("playlists as guest", () => {
 		expect(text).toContain(`\n${fileId}.m3u8?share=${encodeURIComponent(link.token)}\n`);
 	});
 
+	it("screening guests only get the smallest rendition, also when asking by id", async () => {
+		const small = await prisma.mediaFile.create({
+			data: {
+				proxyOfId: mediaId,
+				status: "COMPLETED",
+				width: 640,
+				height: 360,
+				size: BigInt(500_000),
+				duration: 6,
+				codecs: "avc1.64001e,mp4a.40.2",
+				hls: hls as object,
+			},
+		});
+		// other guests choose between both
+		expect(await (await master({ media: mediaId })).text()).toContain(`${fileId}.m3u8`);
+
+		await prisma.shareLink.update({ where: { id: link.id }, data: { kind: "SCREENING" } });
+		const text = await (await master({ media: mediaId })).text();
+		expect(text).toContain(`${small.id}.m3u8`);
+		expect(text).not.toContain(`${fileId}.m3u8`);
+		expect((await rendition({ media: mediaId, file: small.id })).status).toBe(200);
+		await expectStatus(rendition({ media: mediaId, file: fileId }), 404);
+	});
+
 	it("rendition URLs never outlive the link", async () => {
 		const text = await (await rendition({ media: mediaId, file: fileId })).text();
 		expect(expiresIn(text.match(/URI="([^"]+)"/)![1]!)).toBeLessThanOrEqual(2 * 3600);

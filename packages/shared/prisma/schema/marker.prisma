@@ -57,6 +57,9 @@ model Category {
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdById String?
 
+  /// Screening links whose guests' markers land here
+  shareLinks ShareLink[]
+
   @@unique([projectId, name])
   @@map("category")
 }

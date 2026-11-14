@@ -357,7 +357,7 @@
 
 		{#if shownView === "table"}
 			<div class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 shadow">
-				<table class="table w-full table-zebra">
+				<table class="table table-zebra">
 					<thead>
 						<tr>
 							<th class="w-44"><span class="sr-only">Thumbnail</span></th>
@@ -420,7 +420,8 @@
 									</div>
 								</td>
 
-								<td class="font-medium break-words whitespace-normal">{singleExport.name}</td>
+								<td class="max-w-xs font-medium break-words">{singleExport.name}</td>
+
 								<td class="whitespace-nowrap text-base-content/70">
 									{new Date(singleExport.createdAt).toLocaleDateString()}
 								</td>

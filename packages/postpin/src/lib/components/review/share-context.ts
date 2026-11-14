@@ -8,6 +8,8 @@ export type ShareContext = {
 	note: string | null;
 	timelinePanelVisible: boolean;
 	markerPanelVisible: boolean;
+	/** A screening link: the guest sits in the room, so their own player starts muted */
+	screening: boolean;
 };
 
 const KEY = Symbol("share");

@@ -75,6 +75,7 @@
 		/** Whether the fullscreen button leaves fullscreen; differs from `fullscreen` while the phone is sideways */
 		fullscreenActive?: boolean;
 		onToggleMute?: () => void;
+		/** Shows the fullscreen button */
 		onFullscreen?: () => void;
 		/** Shows the add-marker button */
 		onCreateMarker?: () => void;
@@ -323,13 +324,17 @@
 						{#if muted}<VolumeX size={iconSize} />{:else}<Volume2 size={iconSize} />{/if}
 					</button>
 				{/if}
-				<button
-					class="btn btn-square btn-ghost {btnSize}"
-					title={fullscreenActive ? "Exit Fullscreen (F)" : "Fullscreen (F)"}
-					onclick={() => onFullscreen?.()}
-				>
-					{#if fullscreenActive}<Minimize size={iconSize} />{:else}<Maximize size={iconSize} />{/if}
-				</button>
+				{#if onFullscreen}
+					<button
+						class="btn btn-square btn-ghost {btnSize}"
+						title={fullscreenActive ? "Exit Fullscreen (F)" : "Fullscreen (F)"}
+						onclick={() => onFullscreen()}
+					>
+						{#if fullscreenActive}<Minimize size={iconSize} />{:else}<Maximize
+								size={iconSize}
+							/>{/if}
+					</button>
+				{/if}
 			{/if}
 
 			{#if !fullscreen && timelineControls}

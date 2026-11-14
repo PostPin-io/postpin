@@ -85,6 +85,14 @@ model ShareLink {
   markerPanelVisible   Boolean         @default(true)
   /// Plain text, length checked in the app (NOTE_MAX_LENGTH)
   note                 String?
+  /// SCREENING: made for a live screening (guests join by QR code, start muted, low-quality video)
+  kind                 ShareLinkKind   @default(STANDARD)
+  /// How many guests may join; null = only the app-wide limit (MAX_GUESTS_PER_LINK)
+  maxGuests            Int?
+  /// Screenings: the category their guests' markers get ("Screening (14/11/2026)").
+  /// Null (also once that category is deleted): the project's guest category.
+  category             Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId           String?
   guests               ShareGuest[]
   mails                ShareLinkMail[]
   /// Visits by guests: a reload within 30 minutes counts as the same visit (recordShareView)
@@ -93,6 +101,11 @@ model ShareLink {
 
   @@index([exportId])
   @@map("share_link")
+}
+
+enum ShareLinkKind {
+  STANDARD
+  SCREENING
 }
 
 /// A visitor who opened a share link and entered a name. One per browser (cookie).

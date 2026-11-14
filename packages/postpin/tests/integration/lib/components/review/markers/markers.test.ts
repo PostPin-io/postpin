@@ -421,6 +421,30 @@ describe("moveMarker", () => {
 		expect(await prisma.category.count({ where: { id: w.catA.id } })).toBe(1);
 	});
 
+	it("keeps the emptied category of a screening while its link works", async () => {
+		const screeningCategory = await f.createCategory(w.projectA, { createdBy: w.owner.user });
+		const link = await f.createShareLink(w.exp1, { creator: w.owner.user });
+		await prisma.shareLink.update({
+			where: { id: link.id },
+			data: { kind: "SCREENING", categoryId: screeningCategory.id },
+		});
+		const a = await f.createMarker(w.exp1, screeningCategory);
+		const b = await f.createMarker(w.exp1, screeningCategory);
+		signIn(w.owner.user, w.org.id);
+		const move = (id: string) =>
+			moveMarker({ exportId: w.exp1.id, ids: [id], targetCategoryId: w.catA.id });
+
+		// guests may still add markers: their category must be there
+		await move(a.id);
+		expect((await move(b.id)).deletedCategoryIds).toEqual([]);
+		expect(await prisma.category.count({ where: { id: screeningCategory.id } })).toBe(1);
+
+		// after the link ended it is a category like any other
+		await prisma.shareLink.update({ where: { id: link.id }, data: { revokedAt: new Date() } });
+		const c = await f.createMarker(w.exp1, screeningCategory);
+		expect((await move(c.id)).deletedCategoryIds).toEqual([screeningCategory.id]);
+	});
+
 	it("deletes source categories that end up empty, but only those the user created", async () => {
 		const me = await signInAs(w.org, MEMBER, [projectGrant()]);
 		const mineCat = await f.createCategory(w.projectA, { createdBy: me.user });

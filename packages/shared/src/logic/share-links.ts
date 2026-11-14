@@ -60,6 +60,57 @@ export function shareUrlLifetime(expiresAt: Date, now = new Date()) {
 	return Math.max(1, Math.min(MAX_URL_LIFETIME_SECONDS, left));
 }
 
+// ─── Screenings ─────────────────────────────────────────────────────────────
+
+/** A screening link is made for one evening */
+export const SCREENING_PRESET: ShareLinkPreset = "24h";
+/** Preselected guest limit; the server's SCREENING_MAX_GUESTS caps it */
+export const SCREENING_DEFAULT_MAX_GUESTS = 30;
+
+/** An IANA time zone the runtime knows, e.g. "Europe/Berlin" */
+export const timeZone = v.pipe(
+	v.string(),
+	v.maxLength(64),
+	v.check((zone) => {
+		try {
+			new Intl.DateTimeFormat("en", { timeZone: zone });
+			return true;
+		} catch {
+			return false;
+		}
+	}, "Unknown time zone"),
+);
+
+/** The day of a screening as its category shows it: DD/MM/YYYY, where the presenter is */
+export function screeningDate(now: Date, zone: string) {
+	const parts = new Intl.DateTimeFormat("en-GB", {
+		timeZone: zone,
+		day: "2-digit",
+		month: "2-digit",
+		year: "numeric",
+	}).formatToParts(now);
+	const part = (type: string) => parts.find((p) => p.type === type)!.value;
+	return `${part("day")}/${part("month")}/${part("year")}`;
+}
+
+/**
+ * Name of the category for a new screening: "Screening (14/11/2026)", then
+ * "Screening 2 (14/11/2026)" and so on for more screenings on that day. `existing`: the
+ * project's category names. Counts on from the highest number, so a deleted one isn't reused.
+ */
+export function screeningCategoryName(date: string, existing: string[]) {
+	let highest = 0;
+	for (const name of existing) {
+		const match = /^Screening(?: (\d+))? \((.+)\)$/.exec(name);
+		if (match && match[2] === date) highest = Math.max(highest, Number(match[1] ?? 1));
+	}
+	return highest === 0 ? `Screening (${date})` : `Screening ${highest + 1} (${date})`;
+}
+
+/** Less than an hour left: the presenter is warned, guests could be locked out mid-screening */
+export const screeningExpiresSoon = (expiresAt: Date, now = new Date()) =>
+	expiresAt.getTime() - now.getTime() < HOUR;
+
 // ─── Sending by e-mail ──────────────────────────────────────────────────────
 
 export const MAX_RECIPIENTS_PER_SEND = 20;

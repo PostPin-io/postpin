@@ -37,6 +37,10 @@ export async function readMedia(mediaId: string, shareToken?: string): Promise<R
 export const urlLifetime = (reader: Reader) =>
 	reader.kind === "guest" ? shareUrlLifetime(reader.link.expiresAt) : undefined;
 
+/** Joined through a screening link (see ShareLinkKind) */
+export const isScreeningGuest = (reader: Reader) =>
+	reader.kind === "guest" && reader.link.kind === "SCREENING";
+
 /** Clips, shot thumbnails and the barcode belong to the timeline panel */
 export function requireTimeline(reader: Reader) {
 	if (reader.kind === "guest" && !reader.link.timelinePanelVisible) {

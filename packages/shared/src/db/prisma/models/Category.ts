@@ -202,6 +202,7 @@ export type CategoryWhereInput = {
 		Prisma.ProjectWhereInput
 	> | null;
 	createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null;
+	shareLinks?: Prisma.ShareLinkListRelationFilter;
 };
 
 export type CategoryOrderByWithRelationInput = {
@@ -216,6 +217,7 @@ export type CategoryOrderByWithRelationInput = {
 	project?: Prisma.ProjectOrderByWithRelationInput;
 	guestOfProject?: Prisma.ProjectOrderByWithRelationInput;
 	createdBy?: Prisma.UserOrderByWithRelationInput;
+	shareLinks?: Prisma.ShareLinkOrderByRelationAggregateInput;
 };
 
 export type CategoryWhereUniqueInput = Prisma.AtLeast<
@@ -238,6 +240,7 @@ export type CategoryWhereUniqueInput = Prisma.AtLeast<
 			Prisma.ProjectWhereInput
 		> | null;
 		createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null;
+		shareLinks?: Prisma.ShareLinkListRelationFilter;
 	},
 	"id" | "projectId_name"
 >;
@@ -280,6 +283,7 @@ export type CategoryCreateInput = {
 	project: Prisma.ProjectCreateNestedOneWithoutCategoriesInput;
 	guestOfProject?: Prisma.ProjectCreateNestedOneWithoutGuestCategoryInput;
 	createdBy?: Prisma.UserCreateNestedOneWithoutCreatedCategoriesInput;
+	shareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCategoryInput;
 };
 
 export type CategoryUncheckedCreateInput = {
@@ -292,6 +296,7 @@ export type CategoryUncheckedCreateInput = {
 	createdById?: string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutCategoryInput;
 	guestOfProject?: Prisma.ProjectUncheckedCreateNestedOneWithoutGuestCategoryInput;
+	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCategoryInput;
 };
 
 export type CategoryUpdateInput = {
@@ -304,6 +309,7 @@ export type CategoryUpdateInput = {
 	project?: Prisma.ProjectUpdateOneRequiredWithoutCategoriesNestedInput;
 	guestOfProject?: Prisma.ProjectUpdateOneWithoutGuestCategoryNestedInput;
 	createdBy?: Prisma.UserUpdateOneWithoutCreatedCategoriesNestedInput;
+	shareLinks?: Prisma.ShareLinkUpdateManyWithoutCategoryNestedInput;
 };
 
 export type CategoryUncheckedUpdateInput = {
@@ -316,6 +322,7 @@ export type CategoryUncheckedUpdateInput = {
 	createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutCategoryNestedInput;
 	guestOfProject?: Prisma.ProjectUncheckedUpdateOneWithoutGuestCategoryNestedInput;
+	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCategoryNestedInput;
 };
 
 export type CategoryCreateManyInput = {
@@ -627,6 +634,34 @@ export type CategoryUncheckedUpdateManyWithoutProjectNestedInput = {
 	deleteMany?: Prisma.CategoryScalarWhereInput | Prisma.CategoryScalarWhereInput[];
 };
 
+export type CategoryCreateNestedOneWithoutShareLinksInput = {
+	create?: Prisma.XOR<
+		Prisma.CategoryCreateWithoutShareLinksInput,
+		Prisma.CategoryUncheckedCreateWithoutShareLinksInput
+	>;
+	connectOrCreate?: Prisma.CategoryCreateOrConnectWithoutShareLinksInput;
+	connect?: Prisma.CategoryWhereUniqueInput;
+};
+
+export type CategoryUpdateOneWithoutShareLinksNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.CategoryCreateWithoutShareLinksInput,
+		Prisma.CategoryUncheckedCreateWithoutShareLinksInput
+	>;
+	connectOrCreate?: Prisma.CategoryCreateOrConnectWithoutShareLinksInput;
+	upsert?: Prisma.CategoryUpsertWithoutShareLinksInput;
+	disconnect?: Prisma.CategoryWhereInput | boolean;
+	delete?: Prisma.CategoryWhereInput | boolean;
+	connect?: Prisma.CategoryWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.CategoryUpdateToOneWithWhereWithoutShareLinksInput,
+			Prisma.CategoryUpdateWithoutShareLinksInput
+		>,
+		Prisma.CategoryUncheckedUpdateWithoutShareLinksInput
+	>;
+};
+
 export type CategoryCreateWithoutCreatedByInput = {
 	id?: string;
 	name: string;
@@ -636,6 +671,7 @@ export type CategoryCreateWithoutCreatedByInput = {
 	markers?: Prisma.MarkerCreateNestedManyWithoutCategoryInput;
 	project: Prisma.ProjectCreateNestedOneWithoutCategoriesInput;
 	guestOfProject?: Prisma.ProjectCreateNestedOneWithoutGuestCategoryInput;
+	shareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCategoryInput;
 };
 
 export type CategoryUncheckedCreateWithoutCreatedByInput = {
@@ -647,6 +683,7 @@ export type CategoryUncheckedCreateWithoutCreatedByInput = {
 	projectId: string;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutCategoryInput;
 	guestOfProject?: Prisma.ProjectUncheckedCreateNestedOneWithoutGuestCategoryInput;
+	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCategoryInput;
 };
 
 export type CategoryCreateOrConnectWithoutCreatedByInput = {
@@ -712,6 +749,7 @@ export type CategoryCreateWithoutMarkersInput = {
 	project: Prisma.ProjectCreateNestedOneWithoutCategoriesInput;
 	guestOfProject?: Prisma.ProjectCreateNestedOneWithoutGuestCategoryInput;
 	createdBy?: Prisma.UserCreateNestedOneWithoutCreatedCategoriesInput;
+	shareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCategoryInput;
 };
 
 export type CategoryUncheckedCreateWithoutMarkersInput = {
@@ -723,6 +761,7 @@ export type CategoryUncheckedCreateWithoutMarkersInput = {
 	projectId: string;
 	createdById?: string | null;
 	guestOfProject?: Prisma.ProjectUncheckedCreateNestedOneWithoutGuestCategoryInput;
+	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCategoryInput;
 };
 
 export type CategoryCreateOrConnectWithoutMarkersInput = {
@@ -762,6 +801,7 @@ export type CategoryUpdateWithoutMarkersInput = {
 	project?: Prisma.ProjectUpdateOneRequiredWithoutCategoriesNestedInput;
 	guestOfProject?: Prisma.ProjectUpdateOneWithoutGuestCategoryNestedInput;
 	createdBy?: Prisma.UserUpdateOneWithoutCreatedCategoriesNestedInput;
+	shareLinks?: Prisma.ShareLinkUpdateManyWithoutCategoryNestedInput;
 };
 
 export type CategoryUncheckedUpdateWithoutMarkersInput = {
@@ -773,6 +813,7 @@ export type CategoryUncheckedUpdateWithoutMarkersInput = {
 	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	guestOfProject?: Prisma.ProjectUncheckedUpdateOneWithoutGuestCategoryNestedInput;
+	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCategoryNestedInput;
 };
 
 export type CategoryCreateWithoutProjectInput = {
@@ -784,6 +825,7 @@ export type CategoryCreateWithoutProjectInput = {
 	markers?: Prisma.MarkerCreateNestedManyWithoutCategoryInput;
 	guestOfProject?: Prisma.ProjectCreateNestedOneWithoutGuestCategoryInput;
 	createdBy?: Prisma.UserCreateNestedOneWithoutCreatedCategoriesInput;
+	shareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCategoryInput;
 };
 
 export type CategoryUncheckedCreateWithoutProjectInput = {
@@ -795,6 +837,7 @@ export type CategoryUncheckedCreateWithoutProjectInput = {
 	createdById?: string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutCategoryInput;
 	guestOfProject?: Prisma.ProjectUncheckedCreateNestedOneWithoutGuestCategoryInput;
+	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCategoryInput;
 };
 
 export type CategoryCreateOrConnectWithoutProjectInput = {
@@ -819,6 +862,7 @@ export type CategoryCreateWithoutGuestOfProjectInput = {
 	markers?: Prisma.MarkerCreateNestedManyWithoutCategoryInput;
 	project: Prisma.ProjectCreateNestedOneWithoutCategoriesInput;
 	createdBy?: Prisma.UserCreateNestedOneWithoutCreatedCategoriesInput;
+	shareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCategoryInput;
 };
 
 export type CategoryUncheckedCreateWithoutGuestOfProjectInput = {
@@ -830,6 +874,7 @@ export type CategoryUncheckedCreateWithoutGuestOfProjectInput = {
 	projectId: string;
 	createdById?: string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutCategoryInput;
+	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCategoryInput;
 };
 
 export type CategoryCreateOrConnectWithoutGuestOfProjectInput = {
@@ -897,6 +942,7 @@ export type CategoryUpdateWithoutGuestOfProjectInput = {
 	markers?: Prisma.MarkerUpdateManyWithoutCategoryNestedInput;
 	project?: Prisma.ProjectUpdateOneRequiredWithoutCategoriesNestedInput;
 	createdBy?: Prisma.UserUpdateOneWithoutCreatedCategoriesNestedInput;
+	shareLinks?: Prisma.ShareLinkUpdateManyWithoutCategoryNestedInput;
 };
 
 export type CategoryUncheckedUpdateWithoutGuestOfProjectInput = {
@@ -908,6 +954,83 @@ export type CategoryUncheckedUpdateWithoutGuestOfProjectInput = {
 	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
 	createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutCategoryNestedInput;
+	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCategoryNestedInput;
+};
+
+export type CategoryCreateWithoutShareLinksInput = {
+	id?: string;
+	name: string;
+	color: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	markers?: Prisma.MarkerCreateNestedManyWithoutCategoryInput;
+	project: Prisma.ProjectCreateNestedOneWithoutCategoriesInput;
+	guestOfProject?: Prisma.ProjectCreateNestedOneWithoutGuestCategoryInput;
+	createdBy?: Prisma.UserCreateNestedOneWithoutCreatedCategoriesInput;
+};
+
+export type CategoryUncheckedCreateWithoutShareLinksInput = {
+	id?: string;
+	name: string;
+	color: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	projectId: string;
+	createdById?: string | null;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutCategoryInput;
+	guestOfProject?: Prisma.ProjectUncheckedCreateNestedOneWithoutGuestCategoryInput;
+};
+
+export type CategoryCreateOrConnectWithoutShareLinksInput = {
+	where: Prisma.CategoryWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.CategoryCreateWithoutShareLinksInput,
+		Prisma.CategoryUncheckedCreateWithoutShareLinksInput
+	>;
+};
+
+export type CategoryUpsertWithoutShareLinksInput = {
+	update: Prisma.XOR<
+		Prisma.CategoryUpdateWithoutShareLinksInput,
+		Prisma.CategoryUncheckedUpdateWithoutShareLinksInput
+	>;
+	create: Prisma.XOR<
+		Prisma.CategoryCreateWithoutShareLinksInput,
+		Prisma.CategoryUncheckedCreateWithoutShareLinksInput
+	>;
+	where?: Prisma.CategoryWhereInput;
+};
+
+export type CategoryUpdateToOneWithWhereWithoutShareLinksInput = {
+	where?: Prisma.CategoryWhereInput;
+	data: Prisma.XOR<
+		Prisma.CategoryUpdateWithoutShareLinksInput,
+		Prisma.CategoryUncheckedUpdateWithoutShareLinksInput
+	>;
+};
+
+export type CategoryUpdateWithoutShareLinksInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	color?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	markers?: Prisma.MarkerUpdateManyWithoutCategoryNestedInput;
+	project?: Prisma.ProjectUpdateOneRequiredWithoutCategoriesNestedInput;
+	guestOfProject?: Prisma.ProjectUpdateOneWithoutGuestCategoryNestedInput;
+	createdBy?: Prisma.UserUpdateOneWithoutCreatedCategoriesNestedInput;
+};
+
+export type CategoryUncheckedUpdateWithoutShareLinksInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	color?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutCategoryNestedInput;
+	guestOfProject?: Prisma.ProjectUncheckedUpdateOneWithoutGuestCategoryNestedInput;
 };
 
 export type CategoryCreateManyCreatedByInput = {
@@ -928,6 +1051,7 @@ export type CategoryUpdateWithoutCreatedByInput = {
 	markers?: Prisma.MarkerUpdateManyWithoutCategoryNestedInput;
 	project?: Prisma.ProjectUpdateOneRequiredWithoutCategoriesNestedInput;
 	guestOfProject?: Prisma.ProjectUpdateOneWithoutGuestCategoryNestedInput;
+	shareLinks?: Prisma.ShareLinkUpdateManyWithoutCategoryNestedInput;
 };
 
 export type CategoryUncheckedUpdateWithoutCreatedByInput = {
@@ -939,6 +1063,7 @@ export type CategoryUncheckedUpdateWithoutCreatedByInput = {
 	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutCategoryNestedInput;
 	guestOfProject?: Prisma.ProjectUncheckedUpdateOneWithoutGuestCategoryNestedInput;
+	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCategoryNestedInput;
 };
 
 export type CategoryUncheckedUpdateManyWithoutCreatedByInput = {
@@ -968,6 +1093,7 @@ export type CategoryUpdateWithoutProjectInput = {
 	markers?: Prisma.MarkerUpdateManyWithoutCategoryNestedInput;
 	guestOfProject?: Prisma.ProjectUpdateOneWithoutGuestCategoryNestedInput;
 	createdBy?: Prisma.UserUpdateOneWithoutCreatedCategoriesNestedInput;
+	shareLinks?: Prisma.ShareLinkUpdateManyWithoutCategoryNestedInput;
 };
 
 export type CategoryUncheckedUpdateWithoutProjectInput = {
@@ -979,6 +1105,7 @@ export type CategoryUncheckedUpdateWithoutProjectInput = {
 	createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutCategoryNestedInput;
 	guestOfProject?: Prisma.ProjectUncheckedUpdateOneWithoutGuestCategoryNestedInput;
+	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCategoryNestedInput;
 };
 
 export type CategoryUncheckedUpdateManyWithoutProjectInput = {
@@ -996,12 +1123,14 @@ export type CategoryUncheckedUpdateManyWithoutProjectInput = {
 
 export type CategoryCountOutputType = {
 	markers: number;
+	shareLinks: number;
 };
 
 export type CategoryCountOutputTypeSelect<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
 	markers?: boolean | CategoryCountOutputTypeCountMarkersArgs;
+	shareLinks?: boolean | CategoryCountOutputTypeCountShareLinksArgs;
 };
 
 /**
@@ -1025,6 +1154,15 @@ export type CategoryCountOutputTypeCountMarkersArgs<
 	where?: Prisma.MarkerWhereInput;
 };
 
+/**
+ * CategoryCountOutputType without action
+ */
+export type CategoryCountOutputTypeCountShareLinksArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	where?: Prisma.ShareLinkWhereInput;
+};
+
 export type CategorySelect<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = runtime.Types.Extensions.GetSelect<
@@ -1040,6 +1178,7 @@ export type CategorySelect<
 		project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>;
 		guestOfProject?: boolean | Prisma.Category$guestOfProjectArgs<ExtArgs>;
 		createdBy?: boolean | Prisma.Category$createdByArgs<ExtArgs>;
+		shareLinks?: boolean | Prisma.Category$shareLinksArgs<ExtArgs>;
 		_count?: boolean | Prisma.CategoryCountOutputTypeDefaultArgs<ExtArgs>;
 	},
 	ExtArgs["result"]["category"]
@@ -1102,6 +1241,7 @@ export type CategoryInclude<
 	project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>;
 	guestOfProject?: boolean | Prisma.Category$guestOfProjectArgs<ExtArgs>;
 	createdBy?: boolean | Prisma.Category$createdByArgs<ExtArgs>;
+	shareLinks?: boolean | Prisma.Category$shareLinksArgs<ExtArgs>;
 	_count?: boolean | Prisma.CategoryCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type CategoryIncludeCreateManyAndReturn<
@@ -1129,6 +1269,10 @@ export type $CategoryPayload<
 		 */
 		guestOfProject: Prisma.$ProjectPayload<ExtArgs> | null;
 		createdBy: Prisma.$UserPayload<ExtArgs> | null;
+		/**
+		 * Screening links whose guests' markers land here
+		 */
+		shareLinks: Prisma.$ShareLinkPayload<ExtArgs>[];
 	};
 	scalars: runtime.Types.Extensions.GetPayloadResult<
 		{
@@ -1725,6 +1869,17 @@ export interface Prisma__CategoryClient<
 		ExtArgs,
 		GlobalOmitOptions
 	>;
+	shareLinks<T extends Prisma.Category$shareLinksArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.Category$shareLinksArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		| runtime.Types.Result.GetResult<
+				Prisma.$ShareLinkPayload<ExtArgs>,
+				T,
+				"findMany",
+				GlobalOmitOptions
+		  >
+		| Null
+	>;
 	/**
 	 * Attaches callbacks for the resolution and/or rejection of the Promise.
 	 * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2256,6 +2411,32 @@ export type Category$createdByArgs<
 	 */
 	include?: Prisma.UserInclude<ExtArgs> | null;
 	where?: Prisma.UserWhereInput;
+};
+
+/**
+ * Category.shareLinks
+ */
+export type Category$shareLinksArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the ShareLink
+	 */
+	select?: Prisma.ShareLinkSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the ShareLink
+	 */
+	omit?: Prisma.ShareLinkOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.ShareLinkInclude<ExtArgs> | null;
+	where?: Prisma.ShareLinkWhereInput;
+	orderBy?: Prisma.ShareLinkOrderByWithRelationInput | Prisma.ShareLinkOrderByWithRelationInput[];
+	cursor?: Prisma.ShareLinkWhereUniqueInput;
+	take?: number;
+	skip?: number;
+	distinct?: Prisma.ShareLinkScalarFieldEnum | Prisma.ShareLinkScalarFieldEnum[];
 };
 
 /**

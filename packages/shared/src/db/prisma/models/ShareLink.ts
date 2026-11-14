@@ -26,10 +26,12 @@ export type AggregateShareLink = {
 };
 
 export type ShareLinkAvgAggregateOutputType = {
+	maxGuests: number | null;
 	viewCount: number | null;
 };
 
 export type ShareLinkSumAggregateOutputType = {
+	maxGuests: number | null;
 	viewCount: number | null;
 };
 
@@ -45,6 +47,9 @@ export type ShareLinkMinAggregateOutputType = {
 	timelinePanelVisible: boolean | null;
 	markerPanelVisible: boolean | null;
 	note: string | null;
+	kind: $Enums.ShareLinkKind | null;
+	maxGuests: number | null;
+	categoryId: string | null;
 	viewCount: number | null;
 	lastViewedAt: Date | null;
 };
@@ -61,6 +66,9 @@ export type ShareLinkMaxAggregateOutputType = {
 	timelinePanelVisible: boolean | null;
 	markerPanelVisible: boolean | null;
 	note: string | null;
+	kind: $Enums.ShareLinkKind | null;
+	maxGuests: number | null;
+	categoryId: string | null;
 	viewCount: number | null;
 	lastViewedAt: Date | null;
 };
@@ -77,16 +85,21 @@ export type ShareLinkCountAggregateOutputType = {
 	timelinePanelVisible: number;
 	markerPanelVisible: number;
 	note: number;
+	kind: number;
+	maxGuests: number;
+	categoryId: number;
 	viewCount: number;
 	lastViewedAt: number;
 	_all: number;
 };
 
 export type ShareLinkAvgAggregateInputType = {
+	maxGuests?: true;
 	viewCount?: true;
 };
 
 export type ShareLinkSumAggregateInputType = {
+	maxGuests?: true;
 	viewCount?: true;
 };
 
@@ -102,6 +115,9 @@ export type ShareLinkMinAggregateInputType = {
 	timelinePanelVisible?: true;
 	markerPanelVisible?: true;
 	note?: true;
+	kind?: true;
+	maxGuests?: true;
+	categoryId?: true;
 	viewCount?: true;
 	lastViewedAt?: true;
 };
@@ -118,6 +134,9 @@ export type ShareLinkMaxAggregateInputType = {
 	timelinePanelVisible?: true;
 	markerPanelVisible?: true;
 	note?: true;
+	kind?: true;
+	maxGuests?: true;
+	categoryId?: true;
 	viewCount?: true;
 	lastViewedAt?: true;
 };
@@ -134,6 +153,9 @@ export type ShareLinkCountAggregateInputType = {
 	timelinePanelVisible?: true;
 	markerPanelVisible?: true;
 	note?: true;
+	kind?: true;
+	maxGuests?: true;
+	categoryId?: true;
 	viewCount?: true;
 	lastViewedAt?: true;
 	_all?: true;
@@ -239,6 +261,9 @@ export type ShareLinkGroupByOutputType = {
 	timelinePanelVisible: boolean;
 	markerPanelVisible: boolean;
 	note: string | null;
+	kind: $Enums.ShareLinkKind;
+	maxGuests: number | null;
+	categoryId: string | null;
 	viewCount: number;
 	lastViewedAt: Date | null;
 	_count: ShareLinkCountAggregateOutputType | null;
@@ -275,10 +300,17 @@ export type ShareLinkWhereInput = {
 	timelinePanelVisible?: Prisma.BoolFilter<"ShareLink"> | boolean;
 	markerPanelVisible?: Prisma.BoolFilter<"ShareLink"> | boolean;
 	note?: Prisma.StringNullableFilter<"ShareLink"> | string | null;
+	kind?: Prisma.EnumShareLinkKindFilter<"ShareLink"> | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.IntNullableFilter<"ShareLink"> | number | null;
+	categoryId?: Prisma.StringNullableFilter<"ShareLink"> | string | null;
 	viewCount?: Prisma.IntFilter<"ShareLink"> | number;
 	lastViewedAt?: Prisma.DateTimeNullableFilter<"ShareLink"> | Date | string | null;
 	export?: Prisma.XOR<Prisma.ExportScalarRelationFilter, Prisma.ExportWhereInput>;
 	creator?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null;
+	category?: Prisma.XOR<
+		Prisma.CategoryNullableScalarRelationFilter,
+		Prisma.CategoryWhereInput
+	> | null;
 	guests?: Prisma.ShareGuestListRelationFilter;
 	mails?: Prisma.ShareLinkMailListRelationFilter;
 };
@@ -295,10 +327,14 @@ export type ShareLinkOrderByWithRelationInput = {
 	timelinePanelVisible?: Prisma.SortOrder;
 	markerPanelVisible?: Prisma.SortOrder;
 	note?: Prisma.SortOrderInput | Prisma.SortOrder;
+	kind?: Prisma.SortOrder;
+	maxGuests?: Prisma.SortOrderInput | Prisma.SortOrder;
+	categoryId?: Prisma.SortOrderInput | Prisma.SortOrder;
 	viewCount?: Prisma.SortOrder;
 	lastViewedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
 	export?: Prisma.ExportOrderByWithRelationInput;
 	creator?: Prisma.UserOrderByWithRelationInput;
+	category?: Prisma.CategoryOrderByWithRelationInput;
 	guests?: Prisma.ShareGuestOrderByRelationAggregateInput;
 	mails?: Prisma.ShareLinkMailOrderByRelationAggregateInput;
 };
@@ -319,10 +355,17 @@ export type ShareLinkWhereUniqueInput = Prisma.AtLeast<
 		timelinePanelVisible?: Prisma.BoolFilter<"ShareLink"> | boolean;
 		markerPanelVisible?: Prisma.BoolFilter<"ShareLink"> | boolean;
 		note?: Prisma.StringNullableFilter<"ShareLink"> | string | null;
+		kind?: Prisma.EnumShareLinkKindFilter<"ShareLink"> | $Enums.ShareLinkKind;
+		maxGuests?: Prisma.IntNullableFilter<"ShareLink"> | number | null;
+		categoryId?: Prisma.StringNullableFilter<"ShareLink"> | string | null;
 		viewCount?: Prisma.IntFilter<"ShareLink"> | number;
 		lastViewedAt?: Prisma.DateTimeNullableFilter<"ShareLink"> | Date | string | null;
 		export?: Prisma.XOR<Prisma.ExportScalarRelationFilter, Prisma.ExportWhereInput>;
 		creator?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null;
+		category?: Prisma.XOR<
+			Prisma.CategoryNullableScalarRelationFilter,
+			Prisma.CategoryWhereInput
+		> | null;
 		guests?: Prisma.ShareGuestListRelationFilter;
 		mails?: Prisma.ShareLinkMailListRelationFilter;
 	},
@@ -341,6 +384,9 @@ export type ShareLinkOrderByWithAggregationInput = {
 	timelinePanelVisible?: Prisma.SortOrder;
 	markerPanelVisible?: Prisma.SortOrder;
 	note?: Prisma.SortOrderInput | Prisma.SortOrder;
+	kind?: Prisma.SortOrder;
+	maxGuests?: Prisma.SortOrderInput | Prisma.SortOrder;
+	categoryId?: Prisma.SortOrderInput | Prisma.SortOrder;
 	viewCount?: Prisma.SortOrder;
 	lastViewedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
 	_count?: Prisma.ShareLinkCountOrderByAggregateInput;
@@ -369,6 +415,9 @@ export type ShareLinkScalarWhereWithAggregatesInput = {
 	timelinePanelVisible?: Prisma.BoolWithAggregatesFilter<"ShareLink"> | boolean;
 	markerPanelVisible?: Prisma.BoolWithAggregatesFilter<"ShareLink"> | boolean;
 	note?: Prisma.StringNullableWithAggregatesFilter<"ShareLink"> | string | null;
+	kind?: Prisma.EnumShareLinkKindWithAggregatesFilter<"ShareLink"> | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.IntNullableWithAggregatesFilter<"ShareLink"> | number | null;
+	categoryId?: Prisma.StringNullableWithAggregatesFilter<"ShareLink"> | string | null;
 	viewCount?: Prisma.IntWithAggregatesFilter<"ShareLink"> | number;
 	lastViewedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ShareLink"> | Date | string | null;
 };
@@ -383,10 +432,13 @@ export type ShareLinkCreateInput = {
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
 	note?: string | null;
+	kind?: $Enums.ShareLinkKind;
+	maxGuests?: number | null;
 	viewCount?: number;
 	lastViewedAt?: Date | string | null;
 	export: Prisma.ExportCreateNestedOneWithoutShareLinksInput;
 	creator?: Prisma.UserCreateNestedOneWithoutCreatedShareLinksInput;
+	category?: Prisma.CategoryCreateNestedOneWithoutShareLinksInput;
 	guests?: Prisma.ShareGuestCreateNestedManyWithoutShareLinkInput;
 	mails?: Prisma.ShareLinkMailCreateNestedManyWithoutShareLinkInput;
 };
@@ -403,6 +455,9 @@ export type ShareLinkUncheckedCreateInput = {
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
 	note?: string | null;
+	kind?: $Enums.ShareLinkKind;
+	maxGuests?: number | null;
+	categoryId?: string | null;
 	viewCount?: number;
 	lastViewedAt?: Date | string | null;
 	guests?: Prisma.ShareGuestUncheckedCreateNestedManyWithoutShareLinkInput;
@@ -419,10 +474,13 @@ export type ShareLinkUpdateInput = {
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	export?: Prisma.ExportUpdateOneRequiredWithoutShareLinksNestedInput;
 	creator?: Prisma.UserUpdateOneWithoutCreatedShareLinksNestedInput;
+	category?: Prisma.CategoryUpdateOneWithoutShareLinksNestedInput;
 	guests?: Prisma.ShareGuestUpdateManyWithoutShareLinkNestedInput;
 	mails?: Prisma.ShareLinkMailUpdateManyWithoutShareLinkNestedInput;
 };
@@ -439,6 +497,9 @@ export type ShareLinkUncheckedUpdateInput = {
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+	categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	guests?: Prisma.ShareGuestUncheckedUpdateManyWithoutShareLinkNestedInput;
@@ -457,6 +518,9 @@ export type ShareLinkCreateManyInput = {
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
 	note?: string | null;
+	kind?: $Enums.ShareLinkKind;
+	maxGuests?: number | null;
+	categoryId?: string | null;
 	viewCount?: number;
 	lastViewedAt?: Date | string | null;
 };
@@ -471,6 +535,8 @@ export type ShareLinkUpdateManyMutationInput = {
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 };
@@ -487,6 +553,9 @@ export type ShareLinkUncheckedUpdateManyInput = {
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+	categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 };
@@ -513,11 +582,15 @@ export type ShareLinkCountOrderByAggregateInput = {
 	timelinePanelVisible?: Prisma.SortOrder;
 	markerPanelVisible?: Prisma.SortOrder;
 	note?: Prisma.SortOrder;
+	kind?: Prisma.SortOrder;
+	maxGuests?: Prisma.SortOrder;
+	categoryId?: Prisma.SortOrder;
 	viewCount?: Prisma.SortOrder;
 	lastViewedAt?: Prisma.SortOrder;
 };
 
 export type ShareLinkAvgOrderByAggregateInput = {
+	maxGuests?: Prisma.SortOrder;
 	viewCount?: Prisma.SortOrder;
 };
 
@@ -533,6 +606,9 @@ export type ShareLinkMaxOrderByAggregateInput = {
 	timelinePanelVisible?: Prisma.SortOrder;
 	markerPanelVisible?: Prisma.SortOrder;
 	note?: Prisma.SortOrder;
+	kind?: Prisma.SortOrder;
+	maxGuests?: Prisma.SortOrder;
+	categoryId?: Prisma.SortOrder;
 	viewCount?: Prisma.SortOrder;
 	lastViewedAt?: Prisma.SortOrder;
 };
@@ -549,11 +625,15 @@ export type ShareLinkMinOrderByAggregateInput = {
 	timelinePanelVisible?: Prisma.SortOrder;
 	markerPanelVisible?: Prisma.SortOrder;
 	note?: Prisma.SortOrder;
+	kind?: Prisma.SortOrder;
+	maxGuests?: Prisma.SortOrder;
+	categoryId?: Prisma.SortOrder;
 	viewCount?: Prisma.SortOrder;
 	lastViewedAt?: Prisma.SortOrder;
 };
 
 export type ShareLinkSumOrderByAggregateInput = {
+	maxGuests?: Prisma.SortOrder;
 	viewCount?: Prisma.SortOrder;
 };
 
@@ -648,6 +728,92 @@ export type ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput = {
 	deleteMany?: Prisma.ShareLinkScalarWhereInput | Prisma.ShareLinkScalarWhereInput[];
 };
 
+export type ShareLinkCreateNestedManyWithoutCategoryInput = {
+	create?:
+		| Prisma.XOR<
+				Prisma.ShareLinkCreateWithoutCategoryInput,
+				Prisma.ShareLinkUncheckedCreateWithoutCategoryInput
+		  >
+		| Prisma.ShareLinkCreateWithoutCategoryInput[]
+		| Prisma.ShareLinkUncheckedCreateWithoutCategoryInput[];
+	connectOrCreate?:
+		| Prisma.ShareLinkCreateOrConnectWithoutCategoryInput
+		| Prisma.ShareLinkCreateOrConnectWithoutCategoryInput[];
+	createMany?: Prisma.ShareLinkCreateManyCategoryInputEnvelope;
+	connect?: Prisma.ShareLinkWhereUniqueInput | Prisma.ShareLinkWhereUniqueInput[];
+};
+
+export type ShareLinkUncheckedCreateNestedManyWithoutCategoryInput = {
+	create?:
+		| Prisma.XOR<
+				Prisma.ShareLinkCreateWithoutCategoryInput,
+				Prisma.ShareLinkUncheckedCreateWithoutCategoryInput
+		  >
+		| Prisma.ShareLinkCreateWithoutCategoryInput[]
+		| Prisma.ShareLinkUncheckedCreateWithoutCategoryInput[];
+	connectOrCreate?:
+		| Prisma.ShareLinkCreateOrConnectWithoutCategoryInput
+		| Prisma.ShareLinkCreateOrConnectWithoutCategoryInput[];
+	createMany?: Prisma.ShareLinkCreateManyCategoryInputEnvelope;
+	connect?: Prisma.ShareLinkWhereUniqueInput | Prisma.ShareLinkWhereUniqueInput[];
+};
+
+export type ShareLinkUpdateManyWithoutCategoryNestedInput = {
+	create?:
+		| Prisma.XOR<
+				Prisma.ShareLinkCreateWithoutCategoryInput,
+				Prisma.ShareLinkUncheckedCreateWithoutCategoryInput
+		  >
+		| Prisma.ShareLinkCreateWithoutCategoryInput[]
+		| Prisma.ShareLinkUncheckedCreateWithoutCategoryInput[];
+	connectOrCreate?:
+		| Prisma.ShareLinkCreateOrConnectWithoutCategoryInput
+		| Prisma.ShareLinkCreateOrConnectWithoutCategoryInput[];
+	upsert?:
+		| Prisma.ShareLinkUpsertWithWhereUniqueWithoutCategoryInput
+		| Prisma.ShareLinkUpsertWithWhereUniqueWithoutCategoryInput[];
+	createMany?: Prisma.ShareLinkCreateManyCategoryInputEnvelope;
+	set?: Prisma.ShareLinkWhereUniqueInput | Prisma.ShareLinkWhereUniqueInput[];
+	disconnect?: Prisma.ShareLinkWhereUniqueInput | Prisma.ShareLinkWhereUniqueInput[];
+	delete?: Prisma.ShareLinkWhereUniqueInput | Prisma.ShareLinkWhereUniqueInput[];
+	connect?: Prisma.ShareLinkWhereUniqueInput | Prisma.ShareLinkWhereUniqueInput[];
+	update?:
+		| Prisma.ShareLinkUpdateWithWhereUniqueWithoutCategoryInput
+		| Prisma.ShareLinkUpdateWithWhereUniqueWithoutCategoryInput[];
+	updateMany?:
+		| Prisma.ShareLinkUpdateManyWithWhereWithoutCategoryInput
+		| Prisma.ShareLinkUpdateManyWithWhereWithoutCategoryInput[];
+	deleteMany?: Prisma.ShareLinkScalarWhereInput | Prisma.ShareLinkScalarWhereInput[];
+};
+
+export type ShareLinkUncheckedUpdateManyWithoutCategoryNestedInput = {
+	create?:
+		| Prisma.XOR<
+				Prisma.ShareLinkCreateWithoutCategoryInput,
+				Prisma.ShareLinkUncheckedCreateWithoutCategoryInput
+		  >
+		| Prisma.ShareLinkCreateWithoutCategoryInput[]
+		| Prisma.ShareLinkUncheckedCreateWithoutCategoryInput[];
+	connectOrCreate?:
+		| Prisma.ShareLinkCreateOrConnectWithoutCategoryInput
+		| Prisma.ShareLinkCreateOrConnectWithoutCategoryInput[];
+	upsert?:
+		| Prisma.ShareLinkUpsertWithWhereUniqueWithoutCategoryInput
+		| Prisma.ShareLinkUpsertWithWhereUniqueWithoutCategoryInput[];
+	createMany?: Prisma.ShareLinkCreateManyCategoryInputEnvelope;
+	set?: Prisma.ShareLinkWhereUniqueInput | Prisma.ShareLinkWhereUniqueInput[];
+	disconnect?: Prisma.ShareLinkWhereUniqueInput | Prisma.ShareLinkWhereUniqueInput[];
+	delete?: Prisma.ShareLinkWhereUniqueInput | Prisma.ShareLinkWhereUniqueInput[];
+	connect?: Prisma.ShareLinkWhereUniqueInput | Prisma.ShareLinkWhereUniqueInput[];
+	update?:
+		| Prisma.ShareLinkUpdateWithWhereUniqueWithoutCategoryInput
+		| Prisma.ShareLinkUpdateWithWhereUniqueWithoutCategoryInput[];
+	updateMany?:
+		| Prisma.ShareLinkUpdateManyWithWhereWithoutCategoryInput
+		| Prisma.ShareLinkUpdateManyWithWhereWithoutCategoryInput[];
+	deleteMany?: Prisma.ShareLinkScalarWhereInput | Prisma.ShareLinkScalarWhereInput[];
+};
+
 export type ShareLinkCreateNestedManyWithoutExportInput = {
 	create?:
 		| Prisma.XOR<
@@ -734,6 +900,10 @@ export type ShareLinkUncheckedUpdateManyWithoutExportNestedInput = {
 	deleteMany?: Prisma.ShareLinkScalarWhereInput | Prisma.ShareLinkScalarWhereInput[];
 };
 
+export type EnumShareLinkKindFieldUpdateOperationsInput = {
+	set?: $Enums.ShareLinkKind;
+};
+
 export type ShareLinkCreateNestedOneWithoutGuestsInput = {
 	create?: Prisma.XOR<
 		Prisma.ShareLinkCreateWithoutGuestsInput,
@@ -796,9 +966,12 @@ export type ShareLinkCreateWithoutCreatorInput = {
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
 	note?: string | null;
+	kind?: $Enums.ShareLinkKind;
+	maxGuests?: number | null;
 	viewCount?: number;
 	lastViewedAt?: Date | string | null;
 	export: Prisma.ExportCreateNestedOneWithoutShareLinksInput;
+	category?: Prisma.CategoryCreateNestedOneWithoutShareLinksInput;
 	guests?: Prisma.ShareGuestCreateNestedManyWithoutShareLinkInput;
 	mails?: Prisma.ShareLinkMailCreateNestedManyWithoutShareLinkInput;
 };
@@ -814,6 +987,9 @@ export type ShareLinkUncheckedCreateWithoutCreatorInput = {
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
 	note?: string | null;
+	kind?: $Enums.ShareLinkKind;
+	maxGuests?: number | null;
+	categoryId?: string | null;
 	viewCount?: number;
 	lastViewedAt?: Date | string | null;
 	guests?: Prisma.ShareGuestUncheckedCreateNestedManyWithoutShareLinkInput;
@@ -876,8 +1052,92 @@ export type ShareLinkScalarWhereInput = {
 	timelinePanelVisible?: Prisma.BoolFilter<"ShareLink"> | boolean;
 	markerPanelVisible?: Prisma.BoolFilter<"ShareLink"> | boolean;
 	note?: Prisma.StringNullableFilter<"ShareLink"> | string | null;
+	kind?: Prisma.EnumShareLinkKindFilter<"ShareLink"> | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.IntNullableFilter<"ShareLink"> | number | null;
+	categoryId?: Prisma.StringNullableFilter<"ShareLink"> | string | null;
 	viewCount?: Prisma.IntFilter<"ShareLink"> | number;
 	lastViewedAt?: Prisma.DateTimeNullableFilter<"ShareLink"> | Date | string | null;
+};
+
+export type ShareLinkCreateWithoutCategoryInput = {
+	id?: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	token: string;
+	expiresAt: Date | string;
+	revokedAt?: Date | string | null;
+	timelinePanelVisible?: boolean;
+	markerPanelVisible?: boolean;
+	note?: string | null;
+	kind?: $Enums.ShareLinkKind;
+	maxGuests?: number | null;
+	viewCount?: number;
+	lastViewedAt?: Date | string | null;
+	export: Prisma.ExportCreateNestedOneWithoutShareLinksInput;
+	creator?: Prisma.UserCreateNestedOneWithoutCreatedShareLinksInput;
+	guests?: Prisma.ShareGuestCreateNestedManyWithoutShareLinkInput;
+	mails?: Prisma.ShareLinkMailCreateNestedManyWithoutShareLinkInput;
+};
+
+export type ShareLinkUncheckedCreateWithoutCategoryInput = {
+	id?: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	exportId: string;
+	creatorId?: string | null;
+	token: string;
+	expiresAt: Date | string;
+	revokedAt?: Date | string | null;
+	timelinePanelVisible?: boolean;
+	markerPanelVisible?: boolean;
+	note?: string | null;
+	kind?: $Enums.ShareLinkKind;
+	maxGuests?: number | null;
+	viewCount?: number;
+	lastViewedAt?: Date | string | null;
+	guests?: Prisma.ShareGuestUncheckedCreateNestedManyWithoutShareLinkInput;
+	mails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutShareLinkInput;
+};
+
+export type ShareLinkCreateOrConnectWithoutCategoryInput = {
+	where: Prisma.ShareLinkWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.ShareLinkCreateWithoutCategoryInput,
+		Prisma.ShareLinkUncheckedCreateWithoutCategoryInput
+	>;
+};
+
+export type ShareLinkCreateManyCategoryInputEnvelope = {
+	data: Prisma.ShareLinkCreateManyCategoryInput | Prisma.ShareLinkCreateManyCategoryInput[];
+	skipDuplicates?: boolean;
+};
+
+export type ShareLinkUpsertWithWhereUniqueWithoutCategoryInput = {
+	where: Prisma.ShareLinkWhereUniqueInput;
+	update: Prisma.XOR<
+		Prisma.ShareLinkUpdateWithoutCategoryInput,
+		Prisma.ShareLinkUncheckedUpdateWithoutCategoryInput
+	>;
+	create: Prisma.XOR<
+		Prisma.ShareLinkCreateWithoutCategoryInput,
+		Prisma.ShareLinkUncheckedCreateWithoutCategoryInput
+	>;
+};
+
+export type ShareLinkUpdateWithWhereUniqueWithoutCategoryInput = {
+	where: Prisma.ShareLinkWhereUniqueInput;
+	data: Prisma.XOR<
+		Prisma.ShareLinkUpdateWithoutCategoryInput,
+		Prisma.ShareLinkUncheckedUpdateWithoutCategoryInput
+	>;
+};
+
+export type ShareLinkUpdateManyWithWhereWithoutCategoryInput = {
+	where: Prisma.ShareLinkScalarWhereInput;
+	data: Prisma.XOR<
+		Prisma.ShareLinkUpdateManyMutationInput,
+		Prisma.ShareLinkUncheckedUpdateManyWithoutCategoryInput
+	>;
 };
 
 export type ShareLinkCreateWithoutExportInput = {
@@ -890,9 +1150,12 @@ export type ShareLinkCreateWithoutExportInput = {
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
 	note?: string | null;
+	kind?: $Enums.ShareLinkKind;
+	maxGuests?: number | null;
 	viewCount?: number;
 	lastViewedAt?: Date | string | null;
 	creator?: Prisma.UserCreateNestedOneWithoutCreatedShareLinksInput;
+	category?: Prisma.CategoryCreateNestedOneWithoutShareLinksInput;
 	guests?: Prisma.ShareGuestCreateNestedManyWithoutShareLinkInput;
 	mails?: Prisma.ShareLinkMailCreateNestedManyWithoutShareLinkInput;
 };
@@ -908,6 +1171,9 @@ export type ShareLinkUncheckedCreateWithoutExportInput = {
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
 	note?: string | null;
+	kind?: $Enums.ShareLinkKind;
+	maxGuests?: number | null;
+	categoryId?: string | null;
 	viewCount?: number;
 	lastViewedAt?: Date | string | null;
 	guests?: Prisma.ShareGuestUncheckedCreateNestedManyWithoutShareLinkInput;
@@ -965,10 +1231,13 @@ export type ShareLinkCreateWithoutGuestsInput = {
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
 	note?: string | null;
+	kind?: $Enums.ShareLinkKind;
+	maxGuests?: number | null;
 	viewCount?: number;
 	lastViewedAt?: Date | string | null;
 	export: Prisma.ExportCreateNestedOneWithoutShareLinksInput;
 	creator?: Prisma.UserCreateNestedOneWithoutCreatedShareLinksInput;
+	category?: Prisma.CategoryCreateNestedOneWithoutShareLinksInput;
 	mails?: Prisma.ShareLinkMailCreateNestedManyWithoutShareLinkInput;
 };
 
@@ -984,6 +1253,9 @@ export type ShareLinkUncheckedCreateWithoutGuestsInput = {
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
 	note?: string | null;
+	kind?: $Enums.ShareLinkKind;
+	maxGuests?: number | null;
+	categoryId?: string | null;
 	viewCount?: number;
 	lastViewedAt?: Date | string | null;
 	mails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutShareLinkInput;
@@ -1027,10 +1299,13 @@ export type ShareLinkUpdateWithoutGuestsInput = {
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	export?: Prisma.ExportUpdateOneRequiredWithoutShareLinksNestedInput;
 	creator?: Prisma.UserUpdateOneWithoutCreatedShareLinksNestedInput;
+	category?: Prisma.CategoryUpdateOneWithoutShareLinksNestedInput;
 	mails?: Prisma.ShareLinkMailUpdateManyWithoutShareLinkNestedInput;
 };
 
@@ -1046,6 +1321,9 @@ export type ShareLinkUncheckedUpdateWithoutGuestsInput = {
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+	categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	mails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutShareLinkNestedInput;
@@ -1061,10 +1339,13 @@ export type ShareLinkCreateWithoutMailsInput = {
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
 	note?: string | null;
+	kind?: $Enums.ShareLinkKind;
+	maxGuests?: number | null;
 	viewCount?: number;
 	lastViewedAt?: Date | string | null;
 	export: Prisma.ExportCreateNestedOneWithoutShareLinksInput;
 	creator?: Prisma.UserCreateNestedOneWithoutCreatedShareLinksInput;
+	category?: Prisma.CategoryCreateNestedOneWithoutShareLinksInput;
 	guests?: Prisma.ShareGuestCreateNestedManyWithoutShareLinkInput;
 };
 
@@ -1080,6 +1361,9 @@ export type ShareLinkUncheckedCreateWithoutMailsInput = {
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
 	note?: string | null;
+	kind?: $Enums.ShareLinkKind;
+	maxGuests?: number | null;
+	categoryId?: string | null;
 	viewCount?: number;
 	lastViewedAt?: Date | string | null;
 	guests?: Prisma.ShareGuestUncheckedCreateNestedManyWithoutShareLinkInput;
@@ -1123,10 +1407,13 @@ export type ShareLinkUpdateWithoutMailsInput = {
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	export?: Prisma.ExportUpdateOneRequiredWithoutShareLinksNestedInput;
 	creator?: Prisma.UserUpdateOneWithoutCreatedShareLinksNestedInput;
+	category?: Prisma.CategoryUpdateOneWithoutShareLinksNestedInput;
 	guests?: Prisma.ShareGuestUpdateManyWithoutShareLinkNestedInput;
 };
 
@@ -1142,6 +1429,9 @@ export type ShareLinkUncheckedUpdateWithoutMailsInput = {
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+	categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	guests?: Prisma.ShareGuestUncheckedUpdateManyWithoutShareLinkNestedInput;
@@ -1158,6 +1448,9 @@ export type ShareLinkCreateManyCreatorInput = {
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
 	note?: string | null;
+	kind?: $Enums.ShareLinkKind;
+	maxGuests?: number | null;
+	categoryId?: string | null;
 	viewCount?: number;
 	lastViewedAt?: Date | string | null;
 };
@@ -1172,9 +1465,12 @@ export type ShareLinkUpdateWithoutCreatorInput = {
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	export?: Prisma.ExportUpdateOneRequiredWithoutShareLinksNestedInput;
+	category?: Prisma.CategoryUpdateOneWithoutShareLinksNestedInput;
 	guests?: Prisma.ShareGuestUpdateManyWithoutShareLinkNestedInput;
 	mails?: Prisma.ShareLinkMailUpdateManyWithoutShareLinkNestedInput;
 };
@@ -1190,6 +1486,9 @@ export type ShareLinkUncheckedUpdateWithoutCreatorInput = {
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+	categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	guests?: Prisma.ShareGuestUncheckedUpdateManyWithoutShareLinkNestedInput;
@@ -1207,6 +1506,85 @@ export type ShareLinkUncheckedUpdateManyWithoutCreatorInput = {
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+	categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
+	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+};
+
+export type ShareLinkCreateManyCategoryInput = {
+	id?: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	exportId: string;
+	creatorId?: string | null;
+	token: string;
+	expiresAt: Date | string;
+	revokedAt?: Date | string | null;
+	timelinePanelVisible?: boolean;
+	markerPanelVisible?: boolean;
+	note?: string | null;
+	kind?: $Enums.ShareLinkKind;
+	maxGuests?: number | null;
+	viewCount?: number;
+	lastViewedAt?: Date | string | null;
+};
+
+export type ShareLinkUpdateWithoutCategoryInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	token?: Prisma.StringFieldUpdateOperationsInput | string;
+	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
+	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	export?: Prisma.ExportUpdateOneRequiredWithoutShareLinksNestedInput;
+	creator?: Prisma.UserUpdateOneWithoutCreatedShareLinksNestedInput;
+	guests?: Prisma.ShareGuestUpdateManyWithoutShareLinkNestedInput;
+	mails?: Prisma.ShareLinkMailUpdateManyWithoutShareLinkNestedInput;
+};
+
+export type ShareLinkUncheckedUpdateWithoutCategoryInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
+	creatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	token?: Prisma.StringFieldUpdateOperationsInput | string;
+	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
+	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	guests?: Prisma.ShareGuestUncheckedUpdateManyWithoutShareLinkNestedInput;
+	mails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutShareLinkNestedInput;
+};
+
+export type ShareLinkUncheckedUpdateManyWithoutCategoryInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
+	creatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	token?: Prisma.StringFieldUpdateOperationsInput | string;
+	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 };
@@ -1222,6 +1600,9 @@ export type ShareLinkCreateManyExportInput = {
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
 	note?: string | null;
+	kind?: $Enums.ShareLinkKind;
+	maxGuests?: number | null;
+	categoryId?: string | null;
 	viewCount?: number;
 	lastViewedAt?: Date | string | null;
 };
@@ -1236,9 +1617,12 @@ export type ShareLinkUpdateWithoutExportInput = {
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	creator?: Prisma.UserUpdateOneWithoutCreatedShareLinksNestedInput;
+	category?: Prisma.CategoryUpdateOneWithoutShareLinksNestedInput;
 	guests?: Prisma.ShareGuestUpdateManyWithoutShareLinkNestedInput;
 	mails?: Prisma.ShareLinkMailUpdateManyWithoutShareLinkNestedInput;
 };
@@ -1254,6 +1638,9 @@ export type ShareLinkUncheckedUpdateWithoutExportInput = {
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+	categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	guests?: Prisma.ShareGuestUncheckedUpdateManyWithoutShareLinkNestedInput;
@@ -1271,6 +1658,9 @@ export type ShareLinkUncheckedUpdateManyWithoutExportInput = {
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	kind?: Prisma.EnumShareLinkKindFieldUpdateOperationsInput | $Enums.ShareLinkKind;
+	maxGuests?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
+	categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	viewCount?: Prisma.IntFieldUpdateOperationsInput | number;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 };
@@ -1336,10 +1726,14 @@ export type ShareLinkSelect<
 		timelinePanelVisible?: boolean;
 		markerPanelVisible?: boolean;
 		note?: boolean;
+		kind?: boolean;
+		maxGuests?: boolean;
+		categoryId?: boolean;
 		viewCount?: boolean;
 		lastViewedAt?: boolean;
 		export?: boolean | Prisma.ExportDefaultArgs<ExtArgs>;
 		creator?: boolean | Prisma.ShareLink$creatorArgs<ExtArgs>;
+		category?: boolean | Prisma.ShareLink$categoryArgs<ExtArgs>;
 		guests?: boolean | Prisma.ShareLink$guestsArgs<ExtArgs>;
 		mails?: boolean | Prisma.ShareLink$mailsArgs<ExtArgs>;
 		_count?: boolean | Prisma.ShareLinkCountOutputTypeDefaultArgs<ExtArgs>;
@@ -1362,10 +1756,14 @@ export type ShareLinkSelectCreateManyAndReturn<
 		timelinePanelVisible?: boolean;
 		markerPanelVisible?: boolean;
 		note?: boolean;
+		kind?: boolean;
+		maxGuests?: boolean;
+		categoryId?: boolean;
 		viewCount?: boolean;
 		lastViewedAt?: boolean;
 		export?: boolean | Prisma.ExportDefaultArgs<ExtArgs>;
 		creator?: boolean | Prisma.ShareLink$creatorArgs<ExtArgs>;
+		category?: boolean | Prisma.ShareLink$categoryArgs<ExtArgs>;
 	},
 	ExtArgs["result"]["shareLink"]
 >;
@@ -1385,10 +1783,14 @@ export type ShareLinkSelectUpdateManyAndReturn<
 		timelinePanelVisible?: boolean;
 		markerPanelVisible?: boolean;
 		note?: boolean;
+		kind?: boolean;
+		maxGuests?: boolean;
+		categoryId?: boolean;
 		viewCount?: boolean;
 		lastViewedAt?: boolean;
 		export?: boolean | Prisma.ExportDefaultArgs<ExtArgs>;
 		creator?: boolean | Prisma.ShareLink$creatorArgs<ExtArgs>;
+		category?: boolean | Prisma.ShareLink$categoryArgs<ExtArgs>;
 	},
 	ExtArgs["result"]["shareLink"]
 >;
@@ -1405,6 +1807,9 @@ export type ShareLinkSelectScalar = {
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
 	note?: boolean;
+	kind?: boolean;
+	maxGuests?: boolean;
+	categoryId?: boolean;
 	viewCount?: boolean;
 	lastViewedAt?: boolean;
 };
@@ -1423,6 +1828,9 @@ export type ShareLinkOmit<
 	| "timelinePanelVisible"
 	| "markerPanelVisible"
 	| "note"
+	| "kind"
+	| "maxGuests"
+	| "categoryId"
 	| "viewCount"
 	| "lastViewedAt",
 	ExtArgs["result"]["shareLink"]
@@ -1432,6 +1840,7 @@ export type ShareLinkInclude<
 > = {
 	export?: boolean | Prisma.ExportDefaultArgs<ExtArgs>;
 	creator?: boolean | Prisma.ShareLink$creatorArgs<ExtArgs>;
+	category?: boolean | Prisma.ShareLink$categoryArgs<ExtArgs>;
 	guests?: boolean | Prisma.ShareLink$guestsArgs<ExtArgs>;
 	mails?: boolean | Prisma.ShareLink$mailsArgs<ExtArgs>;
 	_count?: boolean | Prisma.ShareLinkCountOutputTypeDefaultArgs<ExtArgs>;
@@ -1441,12 +1850,14 @@ export type ShareLinkIncludeCreateManyAndReturn<
 > = {
 	export?: boolean | Prisma.ExportDefaultArgs<ExtArgs>;
 	creator?: boolean | Prisma.ShareLink$creatorArgs<ExtArgs>;
+	category?: boolean | Prisma.ShareLink$categoryArgs<ExtArgs>;
 };
 export type ShareLinkIncludeUpdateManyAndReturn<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
 	export?: boolean | Prisma.ExportDefaultArgs<ExtArgs>;
 	creator?: boolean | Prisma.ShareLink$creatorArgs<ExtArgs>;
+	category?: boolean | Prisma.ShareLink$categoryArgs<ExtArgs>;
 };
 
 export type $ShareLinkPayload<
@@ -1456,6 +1867,11 @@ export type $ShareLinkPayload<
 	objects: {
 		export: Prisma.$ExportPayload<ExtArgs>;
 		creator: Prisma.$UserPayload<ExtArgs> | null;
+		/**
+		 * Screenings: the category their guests' markers get ("Screening (14/11/2026)").
+		 * Null (also once that category is deleted): the project's guest category.
+		 */
+		category: Prisma.$CategoryPayload<ExtArgs> | null;
 		guests: Prisma.$ShareGuestPayload<ExtArgs>[];
 		mails: Prisma.$ShareLinkMailPayload<ExtArgs>[];
 	};
@@ -1481,6 +1897,15 @@ export type $ShareLinkPayload<
 			 * Plain text, length checked in the app (NOTE_MAX_LENGTH)
 			 */
 			note: string | null;
+			/**
+			 * SCREENING: made for a live screening (guests join by QR code, start muted, low-quality video)
+			 */
+			kind: $Enums.ShareLinkKind;
+			/**
+			 * How many guests may join; null = only the app-wide limit (MAX_GUESTS_PER_LINK)
+			 */
+			maxGuests: number | null;
+			categoryId: string | null;
 			/**
 			 * Visits by guests: a reload within 30 minutes counts as the same visit (recordShareView)
 			 */
@@ -2051,6 +2476,19 @@ export interface Prisma__ShareLinkClient<
 		ExtArgs,
 		GlobalOmitOptions
 	>;
+	category<T extends Prisma.ShareLink$categoryArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.ShareLink$categoryArgs<ExtArgs>>,
+	): Prisma.Prisma__CategoryClient<
+		runtime.Types.Result.GetResult<
+			Prisma.$CategoryPayload<ExtArgs>,
+			T,
+			"findUniqueOrThrow",
+			GlobalOmitOptions
+		> | null,
+		null,
+		ExtArgs,
+		GlobalOmitOptions
+	>;
 	guests<T extends Prisma.ShareLink$guestsArgs<ExtArgs> = {}>(
 		args?: Prisma.Subset<T, Prisma.ShareLink$guestsArgs<ExtArgs>>,
 	): Prisma.PrismaPromise<
@@ -2115,6 +2553,9 @@ export interface ShareLinkFieldRefs {
 	readonly timelinePanelVisible: Prisma.FieldRef<"ShareLink", "Boolean">;
 	readonly markerPanelVisible: Prisma.FieldRef<"ShareLink", "Boolean">;
 	readonly note: Prisma.FieldRef<"ShareLink", "String">;
+	readonly kind: Prisma.FieldRef<"ShareLink", "ShareLinkKind">;
+	readonly maxGuests: Prisma.FieldRef<"ShareLink", "Int">;
+	readonly categoryId: Prisma.FieldRef<"ShareLink", "String">;
 	readonly viewCount: Prisma.FieldRef<"ShareLink", "Int">;
 	readonly lastViewedAt: Prisma.FieldRef<"ShareLink", "DateTime">;
 }
@@ -2569,6 +3010,27 @@ export type ShareLink$creatorArgs<
 	 */
 	include?: Prisma.UserInclude<ExtArgs> | null;
 	where?: Prisma.UserWhereInput;
+};
+
+/**
+ * ShareLink.category
+ */
+export type ShareLink$categoryArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the Category
+	 */
+	select?: Prisma.CategorySelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the Category
+	 */
+	omit?: Prisma.CategoryOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.CategoryInclude<ExtArgs> | null;
+	where?: Prisma.CategoryWhereInput;
 };
 
 /**

@@ -5,6 +5,7 @@
 	import Copy from "@lucide/svelte/icons/copy";
 	import Info from "@lucide/svelte/icons/info";
 	import Mail from "@lucide/svelte/icons/mail";
+	import Projector from "@lucide/svelte/icons/projector";
 	import QrCode from "@lucide/svelte/icons/qr-code";
 	import Settings from "@lucide/svelte/icons/settings";
 	import Trash from "@lucide/svelte/icons/trash-2";
@@ -25,8 +26,12 @@
 		onedit: () => void;
 		onrevoke: () => void;
 		onqr: () => void;
+		/** Starts (or, while it runs, ends) the screening of this screening link */
+		onscreen: () => void;
+		/** Its screening is running in this tab */
+		screening: boolean;
 	}
-	let { link, busy, onedit, onrevoke, onqr }: Props = $props();
+	let { link, busy, onedit, onrevoke, onqr, onscreen, screening }: Props = $props();
 
 	const url = $derived(shareLinkUrl(page.url.origin, link.token));
 	const left = $derived(remainingTime(link.expiresAt));
@@ -79,6 +84,12 @@
 			{:else}
 				<PanelLayout mini timeline={link.timelinePanelVisible} markers={link.markerPanelVisible} />
 			{/if}
+			{#if link.kind === "SCREENING"}
+				<span class="flex items-center gap-1.5 text-sm" title="Screening link">
+					<Projector size={16} aria-label="Screening link" />
+					{#if !label}Screening{/if}
+				</span>
+			{/if}
 			{#if label}
 				<span class="max-w-48 min-w-0 flex-1 truncate text-sm" title={link.note}>{label}</span>
 			{/if}
@@ -93,6 +104,20 @@
 			<Clock size={14} />{left.text}
 		</span>
 		<div class="flex shrink-0 gap-1">
+			{#if link.canScreen}
+				<!-- Desktop only, like the button in the export view: the window goes to a second screen -->
+				<button
+					type="button"
+					class="btn btn-square btn-sm max-lg:hidden {screening ? 'btn-error' : 'btn-ghost'}"
+					title={screening ? "End screening" : "Start screening"}
+					aria-label={screening ? "End screening" : "Start screening"}
+					aria-pressed={screening}
+					disabled={busy}
+					onclick={onscreen}
+				>
+					<Projector size={16} />
+				</button>
+			{/if}
 			{#if link.canUpdate}
 				<button
 					type="button"
@@ -173,6 +198,14 @@
 			<dd>{formatLastViewed(link.lastViewedAt)}</dd>
 			<dt>Expiry</dt>
 			<dd>{formatExpiry(link.expiresAt)} ({link.expiresAt.toLocaleString()})</dd>
+			{#if link.maxGuests}
+				<dt>Guest limit</dt>
+				<dd>{link.maxGuests}</dd>
+			{/if}
+			{#if link.category}
+				<dt>Category</dt>
+				<dd>{link.category.name}</dd>
+			{/if}
 			<dt>Created by</dt>
 			<dd>{link.creator?.name ?? "a former member"}</dd>
 			{#if link.note}

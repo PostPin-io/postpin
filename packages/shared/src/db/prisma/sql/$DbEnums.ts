@@ -5,4 +5,5 @@
 export interface $DbEnums {
 	MediaStatus: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
 	Role: "OWNER" | "ADMIN" | "MEMBER" | "REVIEWER";
+	ShareLinkKind: "STANDARD" | "SCREENING";
 }

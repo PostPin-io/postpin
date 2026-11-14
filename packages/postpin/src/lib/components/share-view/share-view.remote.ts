@@ -2,7 +2,12 @@ import { command, getRequestEvent, query } from "$app/server";
 import * as v from "valibot";
 import { shareGuestName } from "@postpin-io/shared/logic/share-links";
 import { prisma } from "#lib/server/database.ts";
-import { createShareGuest, findShareGuest, requireShareGuest } from "#lib/server/share-guests.ts";
+import {
+	createShareGuest,
+	findShareGuest,
+	isShareLinkFull,
+	requireShareGuest,
+} from "#lib/server/share-guests.ts";
 import { error } from "@sveltejs/kit";
 
 import { resolveShareLink } from "#lib/server/share-links.ts";
@@ -20,6 +25,10 @@ export const getShareInfo = query(v.string(), async (token) => {
 		note: link.note,
 		timelinePanelVisible: link.timelinePanelVisible,
 		markerPanelVisible: link.markerPanelVisible,
+		/** A screening: guests start muted and get the low-quality video */
+		screening: link.kind === "SCREENING",
+		/** No room for a new guest; who joined before still gets in */
+		full: !guest && (await isShareLinkFull(link)),
 		guest: guest && { name: guest.name },
 		// Only someone who can leave markers has to say who they are
 		needsName: link.markerPanelVisible && !guest?.name,

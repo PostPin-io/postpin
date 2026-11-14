@@ -69,6 +69,32 @@ describe("createMarker as guest", () => {
 		});
 	});
 
+	it("guests of a screening: in the screening's category", async () => {
+		const screeningCategory = await f.createCategory(w.project, { createdBy: w.owner.user });
+		await prisma.shareLink.update({
+			where: { id: w.link.id },
+			data: { kind: "SCREENING", categoryId: screeningCategory.id },
+		});
+		expect(await add()).toMatchObject({
+			guestId: w.annaGuest.id,
+			categoryId: screeningCategory.id,
+		});
+	});
+
+	it("once the screening's category is deleted: the guest category again", async () => {
+		const screeningCategory = await f.createCategory(w.project, { createdBy: w.owner.user });
+		await prisma.shareLink.update({
+			where: { id: w.link.id },
+			data: { kind: "SCREENING", categoryId: screeningCategory.id },
+		});
+		await prisma.category.delete({ where: { id: screeningCategory.id } });
+
+		expect(
+			(await prisma.shareLink.findUniqueOrThrow({ where: { id: w.link.id } })).categoryId,
+		).toBeNull();
+		expect((await add()).categoryId).toBe(await guestCategoryId());
+	});
+
 	it("400 outside the timeline", async () => {
 		await expectStatus(add(1500), 400);
 	});

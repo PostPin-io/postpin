@@ -31,9 +31,16 @@ describe("getShareInfo", () => {
 			note: "Check the ending",
 			timelinePanelVisible: false,
 			markerPanelVisible: true,
+			screening: false,
+			full: false,
 			guest: null,
 			needsName: true,
 		});
+	});
+
+	it("a screening link says so", async () => {
+		await prisma.shareLink.update({ where: { id: link.id }, data: { kind: "SCREENING" } });
+		expect((await getShareInfo(link.token)).screening).toBe(true);
 	});
 
 	it("404 for an unknown token", async () => {
@@ -78,6 +85,19 @@ describe("joinShare", () => {
 		await prisma.shareLink.update({ where: { id: link.id }, data: { revokedAt: new Date() } });
 		await expectStatus(joinShare({ token: link.token, name: "Anna" }), 410);
 		expect(await prisma.shareGuest.count()).toBe(0);
+	});
+
+	it("guest limit: full for newcomers (429), whoever joined before stays in", async () => {
+		await prisma.shareLink.update({ where: { id: link.id }, data: { maxGuests: 2 } });
+		await joinShare({ token: link.token, name: "Anna" });
+		await f.createShareGuest(link);
+		expect(await getShareInfo(link.token)).toMatchObject({ full: false, guest: { name: "Anna" } });
+
+		const late = fakeCookies();
+		useCookies(late.cookies);
+		expect(await getShareInfo(link.token)).toMatchObject({ full: true, guest: null });
+		await expectStatus(joinShare({ token: link.token, name: "Carl" }), 429);
+		expect(await prisma.shareGuest.count({ where: { shareLinkId: link.id } })).toBe(2);
 	});
 
 	it("a session of one link is not a guest on another", async () => {

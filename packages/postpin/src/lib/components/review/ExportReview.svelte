@@ -57,6 +57,16 @@
 	import { isJobRunning } from "#lib/job-status.ts";
 
 	import { setShareContext, type ShareContext } from "./share-context.ts";
+	import ScreeningButton from "#lib/components/screening/ScreeningButton.svelte";
+	import ScreeningRemote from "#lib/components/screening/ScreeningRemote.svelte";
+	import EndScreeningDialog from "#lib/components/screening/EndScreeningDialog.svelte";
+	import {
+		requestStopScreening,
+		restoreScreening,
+		screening,
+		stopScreening,
+	} from "#lib/components/screening/screening.svelte.ts";
+	import { beforeNavigate, goto } from "$app/navigation";
 	import { markersKey } from "./markers/marker-scope.ts";
 
 	interface Props {
@@ -366,6 +376,70 @@
 	});
 	let videoPlaybackRate = $state(1);
 
+	// ─── Screening ──────────────────────────────────────────────────────────
+	// While a screening of this export runs, the video plays in the presentation window and
+	// this view is its remote control: the same player state, kept in step over the session.
+	const session = $derived(
+		!share && screening.session?.exportId === exportId ? screening.session : null,
+	);
+	let screeningQr = $state(false);
+	// The screening belongs to this view. A reload keeps it: the window plays on and the view
+	// finds it again. Leaving the view or switching the export ends it, after asking.
+	$effect(() => {
+		const id = exportId;
+		if (!share) untrack(() => restoreScreening(id));
+		return () => {
+			if (screening.session?.exportId === id) stopScreening();
+		};
+	});
+	beforeNavigate((navigation) => {
+		// willUnload: reload, closed tab, another site. Nothing to ask there (see ScreeningSession)
+		if (!session || navigation.willUnload || !navigation.to) return;
+		const to = navigation.to.url;
+		if (to.pathname === navigation.from?.url.pathname) return;
+		navigation.cancel();
+		requestStopScreening(() => void goto(to));
+	});
+	$effect(() => {
+		const s = session;
+		if (!s) return;
+		untrack(() => {
+			// Found again after a reload: the window's first report says where the screening is
+			if (s.restored) return;
+			// A screening starts at the beginning, where the QR code stands in front of the video
+			videoPosition = 0;
+			videoPaused = true;
+			videoPlaybackRate = 1;
+			screeningQr = false;
+		});
+		s.onStatus = (state) => {
+			videoPosition = state.time;
+			videoPaused = state.paused;
+			videoPlaybackRate = state.rate;
+			videoMuted = state.muted;
+			videoQuality = state.quality;
+		};
+		return () => {
+			s.onStatus = undefined;
+			// the local player takes over where the screening stopped, but doesn't start playing
+			videoPaused = true;
+		};
+	});
+	// After the effect above, so the first push already starts at the beginning
+	$effect(() => {
+		session?.push(
+			{
+				time: videoPosition,
+				paused: videoPaused,
+				rate: videoPlaybackRate,
+				muted: videoMuted,
+				quality: videoQuality,
+				qr: screeningQr,
+			},
+			snapshot ? snapshot.frameRate.fpsDenominator / snapshot.frameRate.fpsNumerator : 1 / 25,
+		);
+	});
+
 	let timeline = $state<Timeline>();
 	// Set in the timeline with I and O, used by the marker panel for the next marker
 	let inOut = $state<InOut>({ in: null, out: null });
@@ -467,7 +541,11 @@
 	let player = $state<VideoPlayer>();
 	let videoFullscreen = $state(false);
 	let videoQualities = $state<number[]>([]);
-	let videoMuted = $state(false);
+	// Guests of a screening sit in the room and hear the sound there; they can still unmute
+	let videoMuted = $state(startsMuted());
+	function startsMuted() {
+		return share?.screening ?? false;
+	}
 </script>
 
 <!-- The share page sets its own title -->
@@ -476,6 +554,8 @@
 {/if}
 
 <svelte:window onkeydown={onGlobalKeyDown} />
+
+{#if !share}<EndScreeningDialog />{/if}
 
 <!-- The three areas of the review, rendered by the desktop split panes and the phone layout -->
 {#snippet videoArea(compact = false)}
@@ -498,13 +578,13 @@
 					timelineHidden={timelineMode === "hidden"}
 					mobile={isMobile.current}
 					mobileLandscape={isPhoneLandscape.current}
-					qualities={videoQualities}
+					qualities={session ? session.qualities : videoQualities}
 					muted={videoMuted}
-					playerAvailable={viewMode === "timeline" && !!player}
+					playerAvailable={viewMode === "timeline" && (!!player || !!session)}
 					fullscreen={videoFullscreen || cssFullscreen}
 					fullscreenActive={videoFullscreen}
-					onToggleMute={() => player?.toggleMute()}
-					onFullscreen={toggleFullscreen}
+					onToggleMute={() => (session ? (videoMuted = !videoMuted) : player?.toggleMute())}
+					onFullscreen={session ? undefined : toggleFullscreen}
 					onCreateMarker={isMarkerVisible
 						? () => void markerPanel?.createMarkerAtPlayhead()
 						: undefined}
@@ -557,6 +637,8 @@
 			>
 				{#if viewMode === "shot-grid" && snapshot}
 					<ShotGrid {snapshot} thumbnailUrls={shotUrls} {currentFrame} onSeek={seekToFrame} />
+				{:else if session}
+					<ScreeningRemote {session} bind:qr={screeningQr} />
 				{:else if media.status !== "PENDING" && videoSource && snapshot}
 					<!-- A fresh player when the source switches between the original and HLS -->
 					{#key videoSource.type}
@@ -674,7 +756,16 @@
 		{#if share}
 			{@render shareHeader(share)}
 		{:else}
-			<Header />
+			<Header>
+				{#snippet actions()}
+					{#if projectId && timelineId}
+						<ScreeningButton
+							ids={{ projectId, timelineId, exportId }}
+							ready={hlsReady && !!snapshot}
+						/>
+					{/if}
+				{/snippet}
+			</Header>
 		{/if}
 		{#if isMobile.current}
 			<!-- Phones: the video stays on top, the marker panel below scrolls on its own -->

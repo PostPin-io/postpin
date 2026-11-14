@@ -268,12 +268,12 @@ export const createMarker = command(
 		frame: v.pipe(v.number(), v.integer(), v.minValue(0)),
 		duration: v.optional(duration, 0),
 		exportId: v.string(),
-		/** Members only; guests always get the project's guest category */
+		/** Members only; guests get the link's category (a screening's) or the guest category */
 		categoryId: v.optional(v.string()),
 		shareToken,
 	}),
 	async (data) => {
-		// ─── Guest: always the guest category, the guest as author ───
+		// ─── Guest: the screening's category or the guest category, the guest as author ───
 		if (data.shareToken) {
 			const reader = await readExport(data.exportId, data.shareToken);
 			if (reader.kind !== "guest") error(404, "Not found");
@@ -287,7 +287,9 @@ export const createMarker = command(
 						description: data.description,
 						frame: data.frame,
 						exportId: data.exportId,
-						categoryId: await ensureGuestCategory(tx, reader.link.export.timeline.projectId),
+						categoryId:
+							reader.link.categoryId ??
+							(await ensureGuestCategory(tx, reader.link.export.timeline.projectId)),
 						guestId: reader.guest.id,
 					},
 				}),
@@ -472,9 +474,14 @@ export const moveMarker = command(
 			if ((await prisma.marker.count({ where: { categoryId } })) > 0) continue;
 
 			try {
-				// Only delete if the user created it themselves
+				// Only delete if the user created it themselves. Not the category of a screening
+				// whose link still works: its guests' next markers belong there.
 				const res = await prisma.category.deleteMany({
-					where: { id: categoryId, createdById: user.id },
+					where: {
+						id: categoryId,
+						createdById: user.id,
+						shareLinks: { none: { revokedAt: null, expiresAt: { gt: new Date() } } },
+					},
 				});
 				if (res.count > 0) deletedCategoryIds.push(categoryId);
 			} catch (e) {

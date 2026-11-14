@@ -13,12 +13,17 @@ const headers = {
 	"Cache-Control": "private, no-store",
 };
 
+/** By height; the id breaks ties, so "the lowest rendition" is the same one on every request */
+const largestFirst = (a: { id: string; height: number | null }, b: typeof a) =>
+	b.height! - a.height! || a.id.localeCompare(b.id);
+
 /**
  * Master playlist of all finished renditions, linked relatively (`<id>.m3u8`).
  * `renditionQuery` is appended to each of those URIs, since relative URIs drop the
  * playlist's own query string (guests: `?share=<token>`). Callers check access first.
+ * `lowestOnly`: just the smallest rendition (screening guests, see isLowestRendition).
  */
-export async function masterPlaylist(mediaId: string, renditionQuery = "") {
+export async function masterPlaylist(mediaId: string, renditionQuery = "", lowestOnly = false) {
 	const media = await prisma.media.findUnique({
 		where: { id: mediaId },
 		select: {
@@ -32,7 +37,8 @@ export async function masterPlaylist(mediaId: string, renditionQuery = "") {
 
 	const frameRate = media.original.frameRate;
 	const lines = ["#EXTM3U", "#EXT-X-VERSION:7", "#EXT-X-INDEPENDENT-SEGMENTS"];
-	for (const proxy of renditions.sort((a, b) => b.height! - a.height!)) {
+	renditions.sort(largestFirst);
+	for (const proxy of lowestOnly ? renditions.slice(-1) : renditions) {
 		const hls = v.parse(hlsInfo, proxy.hls);
 		const peakBandwidth = Math.max(...hls.segments.map((s) => (s.length * 8) / s.duration));
 		const averageBandwidth = (Number(proxy.size) * 8) / proxy.duration!;
@@ -44,6 +50,22 @@ export async function masterPlaylist(mediaId: string, renditionQuery = "") {
 		);
 	}
 	return new Response(lines.join("\n") + "\n", { headers });
+}
+
+/**
+ * Screening guests only get the smallest rendition: a room full of phones on one Wi-Fi, and
+ * the video is there to navigate, not to judge the picture. Same choice as masterPlaylist's.
+ */
+export async function isLowestRendition(mediaId: string, fileId: string) {
+	const proxies = await prisma.mediaFile.findMany({
+		where: { proxyOfId: mediaId, status: "COMPLETED" },
+		select: { id: true, height: true, hls: true },
+	});
+	const lowest = proxies
+		.filter((proxy) => proxy.hls !== null)
+		.sort(largestFirst)
+		.at(-1);
+	return lowest?.id === fileId;
 }
 
 /**
