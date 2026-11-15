@@ -78,7 +78,11 @@
 	<li><button onclick={logout}>Logout</button></li>
 {/snippet}
 
-<header class="w-full rounded-md bg-base-200 shadow-sm max-lg:collapse">
+<!--
+	`collapse` isolates the header into its own stacking context, so without a z-index its
+	dropdowns would open behind any positioned page content below it.
+-->
+<header class="w-full rounded-md bg-base-200 shadow-sm max-lg:collapse max-lg:z-50">
 	<input id="navbar-1-toggle" class="peer hidden" type="checkbox" bind:checked={menuOpen} />
 	<label for="navbar-1-toggle" class="fixed inset-0 hidden max-lg:peer-checked:block"></label>
 
