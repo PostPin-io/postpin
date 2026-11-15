@@ -21,8 +21,6 @@
 	type Crumb = Item & {
 		level: Level;
 		href: string;
-		/** The other items on this level, for the dropdown behind the chevron */
-		siblings: Item[] | undefined;
 		siblingHref: (id: string) => string;
 		share?: { label: string; icon: Component; count?: number; open: () => void };
 	};
@@ -67,6 +65,24 @@
 	const exportSiblings = $derived(
 		opened.export && timelineId ? getExportSiblings(timelineId) : undefined,
 	);
+	/** The other items on each level, for the dropdown behind the chevron */
+	const siblingQueries = $derived({
+		project: projectSiblings,
+		timeline: timelineSiblings,
+		export: exportSiblings,
+	});
+
+	// Reload on every open: items created, renamed or deleted elsewhere would otherwise
+	// be missing from the cached list. The stale list stays visible while it reloads.
+	function openMenu(level: Level) {
+		if (opened[level]) refreshSiblings(level);
+		else opened[level] = true;
+	}
+
+	function refreshSiblings(level: Level) {
+		// A failure shows up as the query's `error`
+		siblingQueries[level]?.refresh().catch(() => {});
+	}
 
 	const projectHref = (project: string) => resolve("/(root)/projects/[project]", { project });
 	const timelineHref = (project: string, timeline: string) =>
@@ -88,7 +104,6 @@
 				id: project.id,
 				name: project.name,
 				href: projectHref(project.id),
-				siblings: projectSiblings?.current,
 				siblingHref: projectHref,
 				share: project.canShare
 					? {
@@ -106,7 +121,6 @@
 			id: timeline.id,
 			name: timeline.name,
 			href: timelineHref(project.id, timeline.id),
-			siblings: timelineSiblings?.current,
 			siblingHref: (id) => timelineHref(project.id, id),
 			share: timeline.canShare
 				? {
@@ -123,7 +137,6 @@
 			id: exp.id,
 			name: exp.name,
 			href: exportHref(project.id, timeline.id, exp.id),
-			siblings: exportSiblings?.current,
 			siblingHref: (id) => exportHref(project.id, timeline.id, id),
 			share: exp.canShare
 				? {
@@ -144,6 +157,7 @@
 </script>
 
 {#snippet siblingMenu(crumb: Crumb)}
+	{@const siblings = siblingQueries[crumb.level]}
 	<div class="group dropdown">
 		<div
 			tabindex="0"
@@ -151,7 +165,7 @@
 			class="btn btn-square btn-ghost text-base-content/50 btn-xs"
 			title="Switch {crumb.level}"
 			aria-label="Switch {crumb.level}"
-			onfocus={() => (opened[crumb.level] = true)}
+			onfocus={() => openMenu(crumb.level)}
 		>
 			<ChevronRight class="size-3.5 transition-transform group-focus-within:rotate-90" />
 		</div>
@@ -159,10 +173,8 @@
 			tabindex="-1"
 			class="menu dropdown-content z-20 mt-1 max-h-80 w-64 flex-nowrap overflow-y-auto rounded-box bg-base-100 p-2 shadow"
 		>
-			{#if !crumb.siblings}
-				<li class="disabled"><span class="loading loading-xs loading-spinner"></span></li>
-			{:else}
-				{#each crumb.siblings as item (item.id)}
+			{#if siblings?.current}
+				{#each siblings.current as item (item.id)}
 					<li>
 						<a
 							href={crumb.siblingHref(item.id)}
@@ -173,6 +185,11 @@
 						</a>
 					</li>
 				{/each}
+			{:else if siblings?.error}
+				<li class="menu-title text-error">Could not load {crumb.level}s</li>
+				<li><button type="button" onclick={() => refreshSiblings(crumb.level)}>Retry</button></li>
+			{:else}
+				<li class="menu-disabled"><span class="loading loading-xs loading-spinner"></span></li>
 			{/if}
 		</ul>
 	</div>
