@@ -85,6 +85,8 @@
 	// Shared with the search, so a date typed as shown here is found
 	const dateTimeFormat = markerDateTimeFormat;
 	const dateFormat = markerDateFormat;
+	// Narrow cards: just the year, the full date stays in the tooltip
+	const yearFormat = new Intl.DateTimeFormat(undefined, { year: "numeric" });
 
 	// Phones: the author as initials ("Laurenz Jänsch" → "LJ", "Laurenz" → "LA"), full name as tooltip
 	const authorName = $derived(marker.guest?.name ?? marker.author?.name ?? "Deleted User");
@@ -200,10 +202,12 @@
 		onmousedown={handleMousedown}
 		onkeydown={handleKeydown}
 	>
-		<div class="flex items-center gap-1 py-1.5 pr-1.5 pl-3 font-semibold">
-			<div class="min-w-0 flex-1">
+		<!-- items-start: with a title over several lines the buttons stay at the top -->
+		<div class="flex items-start gap-1 py-1.5 pr-1.5 pl-3 font-semibold">
+			<div class="flex min-h-8 min-w-0 flex-1 items-center">
 				{#if marker.name?.trim()}
-					<div class="text-xs {expanded ? 'break-words' : 'max-w-xs truncate'}">
+					<!-- anywhere: a long word without spaces wraps too, instead of pushing the buttons out -->
+					<div class="text-xs {expanded ? '[overflow-wrap:anywhere]' : 'max-w-xs truncate'}">
 						{marker.name}
 					</div>
 				{:else}
@@ -213,8 +217,7 @@
 			<button
 				type="button"
 				class="btn btn-square btn-ghost btn-sm"
-				title="Jump to marker"
-				aria-label="Jump to marker"
+				title="Press alt + click to jump to marker"
 				onclick={(e) => {
 					e.stopPropagation();
 					onselect?.(marker.frame);
@@ -306,20 +309,25 @@
 					</div>
 				{/if}
 				<div
-					class="flex items-center justify-between gap-3 border-t border-base-300 pt-2 text-xs text-base-content/60"
+					class="@container flex items-center justify-between gap-3 border-t border-base-300 pt-2 text-xs text-base-content/60"
 				>
+					<!-- Getting narrower: the author becomes initials first, then the date just the year -->
 					<div class="flex min-w-0 items-center gap-3">
 						{#if marker.name?.trim()}
-							{@render categoryBadge("badge-sm p-0 px-2")}
+							<span class="flex max-w-28 min-w-0 shrink">
+								{@render categoryBadge("badge-sm p-0 px-2")}
+							</span>
 						{/if}
 
-						<span class="truncate">By {authorName}</span>
+						<span class="truncate @max-md:hidden">By {authorName}</span>
+						<span class="shrink-0 @md:hidden" title={authorName}>{authorInitials}</span>
 
 						<span
-							class="font-normal text-base-content/60 tabular-nums"
+							class="shrink-0 font-normal text-base-content/60 tabular-nums"
 							title={dateTimeFormat.format(marker.createdAt)}
 						>
-							{dateFormat.format(marker.createdAt)}
+							<span class="@max-xs:hidden">{dateFormat.format(marker.createdAt)}</span>
+							<span class="@xs:hidden">{yearFormat.format(marker.createdAt)}</span>
 						</span>
 					</div>
 
