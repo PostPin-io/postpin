@@ -475,7 +475,7 @@ export const moveMarker = command(
 					where: {
 						id: categoryId,
 						createdById: user.id,
-						shareLinks: { none: { revokedAt: null, expiresAt: { gt: new Date() } } },
+						shareLinks: { none: activeShareLink() },
 					},
 				});
 				if (res.count > 0) deletedCategoryIds.push(categoryId);
@@ -557,17 +557,58 @@ export const getCategories = query(v.string(), async (projectId: string) => {
 	const categories = await prisma.category.findMany({
 		where: { projectId },
 		orderBy: { name: "asc" },
+		include: {
+			_count: { select: { markers: true, shareLinks: { where: activeShareLink() } } },
+		},
 	});
 
-	return categories.map((c) => {
+	return categories.map(({ _count, ...c }) => {
 		const t = { projectId, ownerId: c.createdById, loose: true };
 		return {
 			...c,
 			canUpdate: allowed("category", "update", t),
 			canDelete: allowed("category", "delete", t),
+			/** No markers in the whole project, and no working share link puts its guests' markers here */
+			unused: _count.markers === 0 && _count.shareLinks === 0,
 		};
 	});
 });
+
+/** Share links that still work: their guests' next markers go to the link's category */
+const activeShareLink = () => ({ revokedAt: null, expiresAt: { gt: new Date() } });
+
+/** Deletes every category of the project without markers that the user may delete. */
+export const deleteUnusedCategories = command(
+	v.object({ projectId: v.string() }),
+	async ({ projectId }) => {
+		const { user, member } = await authorize("project", "read", { type: "project", id: projectId });
+		const allowed = await accessChecker(member);
+		const t = { projectId, loose: true };
+		const mayDeleteForeign = allowed("category", "delete", t);
+		if (!mayDeleteForeign && !allowed("category", "delete", { ...t, ownerId: user.id })) {
+			error(403, "Not allowed to delete categories");
+		}
+
+		try {
+			const { count } = await prisma.category.deleteMany({
+				where: {
+					projectId,
+					markers: { none: {} },
+					shareLinks: { none: activeShareLink() },
+					...(!mayDeleteForeign && { createdById: user.id }),
+				},
+			});
+			await getCategories(projectId).refresh();
+			return { count };
+		} catch (e) {
+			// A marker was added to one of them meanwhile
+			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
+				error(409, "Categories changed in the meantime. Please try again.");
+			}
+			throw e;
+		}
+	},
+);
 
 export const createCategory = command(
 	v.object({

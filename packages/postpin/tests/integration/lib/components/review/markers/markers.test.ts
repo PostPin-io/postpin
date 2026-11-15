@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { Role } from "@postpin-io/shared/db/enums";
+import { categoryPreset } from "@postpin-io/shared/logic/category-presets";
 import {
 	changeCategoryColor,
 	changeDescription,
 	createCategory,
+	deleteUnusedCategories,
 	createMarker,
 	createResponse,
 	deleteCategory,
@@ -19,6 +21,12 @@ import {
 	renameCategory,
 	updateMarker,
 } from "#lib/components/review/markers/markers.remote.ts";
+import {
+	applyCategoryPreset,
+	deleteCategoryPreset,
+	getCategoryPresets,
+	saveCategoryPreset,
+} from "#lib/components/categories/category-presets.remote.ts";
 import { guestCategoryFor } from "#lib/server/share-links.ts";
 import { contentWorld, signInAs, type ContentWorld } from "../../../../../helpers/content-world.ts";
 import { prisma } from "../../../../../helpers/db.ts";
@@ -812,6 +820,181 @@ describe("getCategories", () => {
 		await signInAs(w.org, MEMBER, [tl1Grant()]);
 		const res = await getCategories(w.projectA.id);
 		expect(res.map((c) => [c.canUpdate, c.canDelete])).toEqual([[true, true]]);
+	});
+});
+
+describe("applyCategoryPreset", () => {
+	it("adds the preset's categories as creator and keeps one that exists already", async () => {
+		const me = await signInAs(w.org, REVIEWER, [tl1Grant()]);
+		const existing = await prisma.category.create({
+			data: { name: "Resolve Red", color: "#123456", projectId: w.projectA.id },
+		});
+		const { categories } = categoryPreset("resolve");
+
+		const res = await applyCategoryPreset({ projectId: w.projectA.id, preset: "resolve" });
+		expect(res).toEqual({ created: categories.length - 1, skipped: 1 });
+
+		const blue = await prisma.category.findUniqueOrThrow({
+			where: { projectId_name: { projectId: w.projectA.id, name: "Resolve Blue" } },
+		});
+		expect(blue).toMatchObject({ color: "#008feb", createdById: me.user.id });
+		expect(await prisma.category.findUniqueOrThrow({ where: { id: existing.id } })).toMatchObject({
+			color: "#123456",
+			createdById: null,
+		});
+
+		// a second time adds nothing
+		expect(await applyCategoryPreset({ projectId: w.projectA.id, preset: "resolve" })).toEqual({
+			created: 0,
+			skipped: categories.length,
+		});
+	});
+
+	it("404 without a grant in the project, 400 for an unknown preset", async () => {
+		await signInAs(w.org, REVIEWER, [{ projectId: w.projectB.id }]);
+		await expectStatus(applyCategoryPreset({ projectId: w.projectA.id, preset: "postpin" }), 404);
+		await expectStatus(applyCategoryPreset({ projectId: w.projectB.id, preset: "nope" }), 404);
+		expect(await prisma.category.count({ where: { projectId: w.projectA.id } })).toBe(1);
+	});
+});
+
+describe("organization presets", () => {
+	const custom = async () =>
+		(await getCategoryPresets(w.projectA.id)).presets.filter((p) => !p.builtIn);
+
+	it("a member saves categories as a preset that outlives the project and fills another one", async () => {
+		const extra = await f.createCategory(w.projectA);
+		const me = await signInAs(w.org, MEMBER, [projectGrant(), { projectId: w.projectB.id }]);
+		const { id } = await saveCategoryPreset({
+			projectId: w.projectA.id,
+			name: " Feature film ",
+			categoryIds: [w.catA.id, extra.id],
+		});
+		expect(await prisma.categoryPreset.findUniqueOrThrow({ where: { id } })).toMatchObject({
+			name: "Feature film",
+			organizationId: w.org.id,
+			createdById: me.user.id,
+		});
+
+		await prisma.category.deleteMany({ where: { projectId: w.projectA.id } });
+		await prisma.project.delete({ where: { id: w.projectA.id } });
+
+		const [preset] = (await getCategoryPresets(w.projectB.id)).presets.filter((p) => !p.builtIn);
+		expect(preset).toMatchObject({ id, name: "Feature film", canDelete: true });
+		expect(preset!.categories.map((c) => c.name).sort()).toEqual([w.catA.name, extra.name].sort());
+
+		expect(await applyCategoryPreset({ projectId: w.projectB.id, preset: id })).toMatchObject({
+			created: expect.any(Number),
+		});
+		expect(
+			await prisma.category.count({ where: { projectId: w.projectB.id, name: extra.name } }),
+		).toBe(1);
+	});
+
+	it("lists the built-in presets first, none of them deletable", async () => {
+		signIn(w.owner.user, w.org.id);
+		const { presets, canCreate } = await getCategoryPresets(w.projectA.id);
+		expect(canCreate).toBe(true);
+		expect(presets.map((p) => p.id)).toEqual([
+			"postpin",
+			"resolve",
+			"premiere",
+			"avid",
+			"final-cut",
+		]);
+		expect(presets.every((p) => p.builtIn && !p.canDelete)).toBe(true);
+		await expectStatus(deleteCategoryPreset({ projectId: w.projectA.id, id: "postpin" }), 404);
+	});
+
+	it("409 for a name that is taken, also by a built-in preset; 400 for a foreign category", async () => {
+		signIn(w.owner.user, w.org.id);
+		const save = (name: string, categoryIds = [w.catA.id]) =>
+			saveCategoryPreset({ projectId: w.projectA.id, name, categoryIds });
+		await save("Mine");
+		await expectStatus(save("Mine"), 409);
+		await expectStatus(save("postpin"), 409);
+		await expectStatus(save("Other", [w.catB.id]), 400);
+		expect(await custom()).toHaveLength(1);
+	});
+
+	it("a reviewer may use presets but not save or delete them", async () => {
+		signIn(w.owner.user, w.org.id);
+		const { id } = await saveCategoryPreset({
+			projectId: w.projectA.id,
+			name: "Team",
+			categoryIds: [w.catA.id],
+		});
+		await signInAs(w.org, REVIEWER, [tl1Grant()]);
+		const res = await getCategoryPresets(w.projectA.id);
+		expect(res.canCreate).toBe(false);
+		expect(res.presets.find((p) => p.id === id)).toMatchObject({ canDelete: false });
+		await expectStatus(
+			saveCategoryPreset({ projectId: w.projectA.id, name: "x", categoryIds: [w.catA.id] }),
+			403,
+		);
+		await expectStatus(deleteCategoryPreset({ projectId: w.projectA.id, id }), 403);
+	});
+
+	it("a member deletes only own presets, an admin any", async () => {
+		signIn(w.owner.user, w.org.id);
+		const input = { projectId: w.projectA.id, categoryIds: [w.catA.id] };
+		const foreign = await saveCategoryPreset({ ...input, name: "Owner's" });
+		await signInAs(w.org, MEMBER, [projectGrant()]);
+		const mine = await saveCategoryPreset({ ...input, name: "Mine" });
+		await expectStatus(deleteCategoryPreset({ projectId: w.projectA.id, id: foreign.id }), 403);
+		await deleteCategoryPreset({ projectId: w.projectA.id, id: mine.id });
+
+		await signInAs(w.org, ADMIN);
+		await deleteCategoryPreset({ projectId: w.projectA.id, id: foreign.id });
+		expect(await prisma.categoryPreset.count()).toBe(0);
+	});
+
+	it("presets of another organization are neither listed nor usable", async () => {
+		const other = await prisma.categoryPreset.create({
+			data: {
+				name: "Theirs",
+				categories: [{ name: "Secret", color: "#000000" }],
+				organizationId: w.otherProject.organizationId,
+			},
+		});
+		signIn(w.owner.user, w.org.id);
+		expect(await custom()).toEqual([]);
+		await expectStatus(applyCategoryPreset({ projectId: w.projectA.id, preset: other.id }), 404);
+		await expectStatus(deleteCategoryPreset({ projectId: w.projectA.id, id: other.id }), 404);
+		await expectStatus(getCategoryPresets(w.otherProject.id), 404);
+	});
+});
+
+describe("deleteUnusedCategories", () => {
+	it("deletes the categories without markers, not those in use or of a working share link", async () => {
+		const used = await f.createCategory(w.projectA);
+		await f.createMarker(w.exp1, used);
+		const screening = await f.createCategory(w.projectA);
+		const link = await f.createShareLink(w.exp1, { creator: w.owner.user });
+		await prisma.shareLink.update({ where: { id: link.id }, data: { categoryId: screening.id } });
+		signIn(w.owner.user, w.org.id);
+
+		expect((await getCategories(w.projectA.id)).filter((c) => c.unused).map((c) => c.id)).toEqual([
+			w.catA.id,
+		]);
+		expect(await deleteUnusedCategories({ projectId: w.projectA.id })).toEqual({ count: 1 });
+		const left = await prisma.category.findMany({ where: { projectId: w.projectA.id } });
+		expect(left.map((c) => c.id).sort()).toEqual([used.id, screening.id].sort());
+		// other projects are untouched
+		expect(await prisma.category.count({ where: { id: w.catB.id } })).toBe(1);
+	});
+
+	it("a reviewer only deletes own unused categories", async () => {
+		const me = await signInAs(w.org, REVIEWER, [tl1Grant()]);
+		await f.createCategory(w.projectA, { createdBy: me.user });
+		expect(await deleteUnusedCategories({ projectId: w.projectA.id })).toEqual({ count: 1 });
+		expect(await prisma.category.count({ where: { id: w.catA.id } })).toBe(1);
+	});
+
+	it("404 without a grant in the project", async () => {
+		await signInAs(w.org, MEMBER, [{ projectId: w.projectB.id }]);
+		await expectStatus(deleteUnusedCategories({ projectId: w.projectA.id }), 404);
+		expect(await prisma.category.count({ where: { id: w.catA.id } })).toBe(1);
 	});
 });
 
