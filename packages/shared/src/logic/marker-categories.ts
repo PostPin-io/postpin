@@ -22,8 +22,23 @@ export const RESOLVE_MARKER_COLORS = {
 	Cream: "#f9ede4",
 } as const;
 
+/**
+ * Premiere's eight marker colors in the order of their color index, as the Premiere plugin shows
+ * them. The hex values are approximations.
+ */
+export const PREMIERE_MARKER_COLORS = [
+	{ name: "Green", hex: "#4caf50" },
+	{ name: "Red", hex: "#e0474c" },
+	{ name: "Purple", hex: "#c44fd1" },
+	{ name: "Orange", hex: "#f0882b" },
+	{ name: "Yellow", hex: "#e8d33a" },
+	{ name: "White", hex: "#e6e6e6" },
+	{ name: "Blue", hex: "#3d7ef2" },
+	{ name: "Cyan", hex: "#31c4d4" },
+] as const;
+
 /** The locator colors of Avid's EDLs (`* LOC:` lines) */
-const AVID_COLORS: Record<string, string> = {
+export const AVID_COLORS: Record<string, string> = {
 	Red: "#ff0000",
 	Green: "#00c000",
 	Blue: "#0060ff",
@@ -35,7 +50,7 @@ const AVID_COLORS: Record<string, string> = {
 };
 
 /** Final Cut has no marker colors, only types, which it colors itself */
-const FINAL_CUT_TYPES: Record<string, string> = {
+export const FINAL_CUT_TYPES: Record<string, string> = {
 	Marker: "#3b82f6",
 	"To-do": "#ef4444",
 	Done: "#22c55e",
