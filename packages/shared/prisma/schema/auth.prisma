@@ -23,6 +23,7 @@ model User {
   createdShareLinks        ShareLink[]
   sentShareLinkMails       ShareLinkMail[]
   createdCategories        Category[]
+  createdCategoryPresets   CategoryPreset[]
   inviteLinks              InviteLink[]
 
   @@unique([email])

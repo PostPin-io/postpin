@@ -397,6 +397,7 @@ export const ModelName = {
 	DeviceCode: "DeviceCode",
 	Marker: "Marker",
 	Category: "Category",
+	CategoryPreset: "CategoryPreset",
 	Response: "Response",
 	Media: "Media",
 	MediaFile: "MediaFile",
@@ -439,6 +440,7 @@ export type TypeMap<
 			| "deviceCode"
 			| "marker"
 			| "category"
+			| "categoryPreset"
 			| "response"
 			| "media"
 			| "mediaFile"
@@ -973,6 +975,81 @@ export type TypeMap<
 				count: {
 					args: Prisma.CategoryCountArgs<ExtArgs>;
 					result: runtime.Types.Utils.Optional<Prisma.CategoryCountAggregateOutputType> | number;
+				};
+			};
+		};
+		CategoryPreset: {
+			payload: Prisma.$CategoryPresetPayload<ExtArgs>;
+			fields: Prisma.CategoryPresetFieldRefs;
+			operations: {
+				findUnique: {
+					args: Prisma.CategoryPresetFindUniqueArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPresetPayload> | null;
+				};
+				findUniqueOrThrow: {
+					args: Prisma.CategoryPresetFindUniqueOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPresetPayload>;
+				};
+				findFirst: {
+					args: Prisma.CategoryPresetFindFirstArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPresetPayload> | null;
+				};
+				findFirstOrThrow: {
+					args: Prisma.CategoryPresetFindFirstOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPresetPayload>;
+				};
+				findMany: {
+					args: Prisma.CategoryPresetFindManyArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPresetPayload>[];
+				};
+				create: {
+					args: Prisma.CategoryPresetCreateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPresetPayload>;
+				};
+				createMany: {
+					args: Prisma.CategoryPresetCreateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				createManyAndReturn: {
+					args: Prisma.CategoryPresetCreateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPresetPayload>[];
+				};
+				delete: {
+					args: Prisma.CategoryPresetDeleteArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPresetPayload>;
+				};
+				update: {
+					args: Prisma.CategoryPresetUpdateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPresetPayload>;
+				};
+				deleteMany: {
+					args: Prisma.CategoryPresetDeleteManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateMany: {
+					args: Prisma.CategoryPresetUpdateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateManyAndReturn: {
+					args: Prisma.CategoryPresetUpdateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPresetPayload>[];
+				};
+				upsert: {
+					args: Prisma.CategoryPresetUpsertArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPresetPayload>;
+				};
+				aggregate: {
+					args: Prisma.CategoryPresetAggregateArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.AggregateCategoryPreset>;
+				};
+				groupBy: {
+					args: Prisma.CategoryPresetGroupByArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.CategoryPresetGroupByOutputType>[];
+				};
+				count: {
+					args: Prisma.CategoryPresetCountArgs<ExtArgs>;
+					result:
+						runtime.Types.Utils.Optional<Prisma.CategoryPresetCountAggregateOutputType> | number;
 				};
 			};
 		};
@@ -2241,6 +2318,18 @@ export const CategoryScalarFieldEnum = {
 export type CategoryScalarFieldEnum =
 	(typeof CategoryScalarFieldEnum)[keyof typeof CategoryScalarFieldEnum];
 
+export const CategoryPresetScalarFieldEnum = {
+	id: "id",
+	name: "name",
+	categories: "categories",
+	createdAt: "createdAt",
+	organizationId: "organizationId",
+	createdById: "createdById",
+} as const;
+
+export type CategoryPresetScalarFieldEnum =
+	(typeof CategoryPresetScalarFieldEnum)[keyof typeof CategoryPresetScalarFieldEnum];
+
 export const ResponseScalarFieldEnum = {
 	markerId: "markerId",
 	id: "id",
@@ -2471,6 +2560,12 @@ export const SortOrder = {
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder];
 
+export const JsonNullValueInput = {
+	JsonNull: JsonNull,
+} as const;
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
+
 export const NullableJsonNullValueInput = {
 	DbNull: DbNull,
 	JsonNull: JsonNull,
@@ -2551,6 +2646,16 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "In
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Int[]">;
 
 /**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Json">;
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "QueryMode">;
+
+/**
  * Reference to a field of type 'MediaStatus'
  */
 export type EnumMediaStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
@@ -2565,16 +2670,6 @@ export type ListEnumMediaStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
 	$PrismaModel,
 	"MediaStatus[]"
 >;
-
-/**
- * Reference to a field of type 'Json'
- */
-export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Json">;
-
-/**
- * Reference to a field of type 'QueryMode'
- */
-export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "QueryMode">;
 
 /**
  * Reference to a field of type 'Float'
@@ -2776,6 +2871,7 @@ export type GlobalOmitConfig = {
 	deviceCode?: Prisma.DeviceCodeOmit;
 	marker?: Prisma.MarkerOmit;
 	category?: Prisma.CategoryOmit;
+	categoryPreset?: Prisma.CategoryPresetOmit;
 	response?: Prisma.ResponseOmit;
 	media?: Prisma.MediaOmit;
 	mediaFile?: Prisma.MediaFileOmit;

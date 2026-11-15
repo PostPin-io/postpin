@@ -80,6 +80,12 @@ export type Marker = Prisma.MarkerModel;
  */
 export type Category = Prisma.CategoryModel;
 /**
+ * Model CategoryPreset
+ * A reusable set of categories of an organization, saved from a project's categories. Outlives
+ * the project. The built-in presets live in code (shared/src/logic/category-presets.ts).
+ */
+export type CategoryPreset = Prisma.CategoryPresetModel;
+/**
  * Model Response
  *
  */

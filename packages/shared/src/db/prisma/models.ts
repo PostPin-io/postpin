@@ -14,6 +14,7 @@ export type * from "./models/Verification.ts";
 export type * from "./models/DeviceCode.ts";
 export type * from "./models/Marker.ts";
 export type * from "./models/Category.ts";
+export type * from "./models/CategoryPreset.ts";
 export type * from "./models/Response.ts";
 export type * from "./models/Media.ts";
 export type * from "./models/MediaFile.ts";

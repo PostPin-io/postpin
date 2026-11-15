@@ -117,6 +117,22 @@ async function resolveTarget({ type, id }: Target): Promise<ResolvedTarget | nul
 				}
 			);
 		}
+		// Belongs to the org, not to a project: only org-wide roles pass a grant check on it.
+		// The preset commands ask through the project they are used in instead.
+		case "categoryPreset": {
+			const p = await prisma.categoryPreset.findUnique({
+				where: { id },
+				select: { organizationId: true, createdById: true },
+			});
+			return (
+				p && {
+					organizationId: p.organizationId,
+					projectId: null,
+					timelineId: null,
+					ownerId: p.createdById,
+				}
+			);
+		}
 		case "invitation": {
 			const i = await prisma.invitation.findUnique({
 				where: { id },

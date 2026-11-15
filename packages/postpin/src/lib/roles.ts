@@ -9,6 +9,8 @@ export const ACTIONS = {
 	export: ["read", "upload", "rename", "delete"],
 	marker: ["read", "create", "update", "delete", "respond"],
 	category: ["read", "create", "update", "delete"],
+	/** The organization's own category presets; the built-in ones are code and can't be changed */
+	categoryPreset: ["read", "create", "delete"],
 	/** E-mail invitation to the org, a project or a timeline */
 	invitation: ["read", "create", "update", "delete"],
 	/** Shareable invite link to the org, a project or a timeline */
@@ -46,6 +48,7 @@ const reviewer = {
 	export: { read: all },
 	marker: { read: all, create: all, respond: all, update: own, delete: own },
 	category: { read: all, create: all, update: own, delete: own },
+	categoryPreset: { read: all },
 	member: { read: all },
 } satisfies Permissions;
 
@@ -55,6 +58,7 @@ const member = extend(reviewer, {
 	export: { upload: all, rename: all, delete: all },
 	marker: { update: all, delete: all },
 	category: { update: all, delete: all },
+	categoryPreset: { create: all, delete: own },
 	invitation: { read: all, create: all, delete: own, update: own },
 	inviteLink: { read: all, create: all, delete: own },
 	shareLink: { read: all, create: all, update: own, delete: own },
@@ -62,6 +66,7 @@ const member = extend(reviewer, {
 });
 
 const admin = extend(member, {
+	categoryPreset: { delete: all },
 	invitation: { delete: all, update: all },
 	inviteLink: { delete: all },
 	shareLink: { update: all, delete: all },

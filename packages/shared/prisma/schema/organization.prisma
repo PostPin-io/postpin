@@ -11,6 +11,7 @@ model Organization {
   inviteLinks  InviteLink[]
   sessions     Session[]
   projects     Project[]
+  categoryPresets CategoryPreset[]
 
   lastActiveUsers User[] @relation("LastActiveOrganization")
 
