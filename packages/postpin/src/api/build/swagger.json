@@ -833,6 +833,9 @@
 	"info": {
 		"title": "@postpin-io/postpin",
 		"version": "0.0.1",
+		"license": {
+			"name": "MIT"
+		},
 		"contact": {}
 	},
 	"paths": {
