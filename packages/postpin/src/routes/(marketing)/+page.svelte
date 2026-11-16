@@ -1,6 +1,6 @@
 <script lang="ts">
 	import PageMeta from "#lib/components/layout/PageMeta.svelte";
-	import LandingSlides from "#lib/components/landing/LandingSlides.svelte";
+	import LandingFlow from "#lib/components/landing/LandingFlow.svelte";
 </script>
 
 <PageMeta
@@ -10,4 +10,4 @@
 	<meta property="og:image" content="/landing/review-dark.webp" />
 </svelte:head>
 
-<LandingSlides />
+<LandingFlow />

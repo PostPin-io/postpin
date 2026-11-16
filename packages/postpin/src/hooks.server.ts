@@ -35,10 +35,10 @@ const sessionHandler: Handle = async ({ event, resolve }) => {
 	// /_app/remote/: share-link visitors call remote functions too. Every remote function checks
 	// access itself (authorize / readExport / requireShareGuest / …); a new one MUST do so as well.
 	// /media/: HLS playlists, for guests too (`?share=<token>`); each route checks via readMedia.
-	// /landing/1-3: versions of the landing page side by side, to compare them
+	// /landing/1-4: versions of the landing page side by side, to compare them
 	const publicPaths = [
 		"/",
-		/^\/landing\/[123]$/,
+		/^\/landing\/[1234]$/,
 		/^\/auth\//,
 		/^\/api\//,
 		/^\/s\//,

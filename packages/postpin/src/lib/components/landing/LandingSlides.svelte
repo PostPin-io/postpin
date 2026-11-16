@@ -8,8 +8,8 @@
 
 	interface Props {
 		/**
-		 * The first slide. "lottie": headline over the workflow animation with its steps (/, and
-		 * /landing/3). "timeline": the earlier one with the big logo over the icon timeline
+		 * The first slide. "lottie": headline over the workflow animation with its steps
+		 * (/landing/3). "timeline": the earlier one with the big logo over the icon timeline
 		 * (/landing/2). The slides after it are the same.
 		 */
 		hero?: "lottie" | "timeline";

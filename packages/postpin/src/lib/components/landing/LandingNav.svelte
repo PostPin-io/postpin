@@ -13,8 +13,15 @@
 		 * and the name big itself. Brand, links and background fade in once it is left.
 		 */
 		minimal?: boolean;
+		/**
+		 * A bar over the full width with a line under it, instead of the rounded bar inset from the
+		 * edges (/landing/4). Its content still lines up with the page.
+		 */
+		wide?: boolean;
+		/** Only the brand is out of sight: the page shows the logo big itself, as long as it is in view */
+		brandHidden?: boolean;
 	}
-	let { floating = false, minimal = false }: Props = $props();
+	let { floating = false, minimal = false, wide = false, brandHidden = false }: Props = $props();
 
 	const sections = [
 		{ href: "#how-it-works", label: "How it works" },
@@ -26,6 +33,21 @@
 
 	// Faded out, and out of the tab order and away from clicks while it is
 	const hidden = $derived(minimal ? "pointer-events-none opacity-0" : "opacity-100");
+	const brandOff = $derived(minimal || brandHidden);
+	const brandClass = $derived(brandOff ? "pointer-events-none opacity-0" : "opacity-100");
+	const headerClass = $derived(
+		wide
+			? // solid: a blur over the full width is repainted on every scrolled frame, which stutters in Safari
+				"border-b border-base-300 bg-base-200 px-4"
+			: `px-2 py-2 ${minimal ? "bg-transparent" : "bg-base-100/90 backdrop-blur-md"}`,
+	);
+	const navClass = $derived(
+		wide
+			? "px-0"
+			: `rounded-md transition-[background-color,box-shadow] duration-300 ${
+					minimal ? "bg-transparent shadow-none" : "bg-base-200/90 shadow-sm"
+				}`,
+	);
 </script>
 
 <!--
@@ -35,15 +57,9 @@
 <header
 	class="{floating
 		? 'fixed inset-x-0'
-		: 'sticky'} top-0 z-50 px-2 py-2 transition-[background-color,backdrop-filter] duration-300 {minimal
-		? 'bg-transparent'
-		: 'bg-base-100/90 backdrop-blur-md'}"
+		: 'sticky'} top-0 z-50 transition-[background-color,backdrop-filter] duration-300 {headerClass}"
 >
-	<nav
-		class="navbar mx-auto max-w-6xl rounded-md transition-[background-color,box-shadow] duration-300 {minimal
-			? 'bg-transparent shadow-none'
-			: 'bg-base-200/90 shadow-sm'}"
-	>
+	<nav class="navbar mx-auto max-w-6xl {navClass}">
 		<div class="navbar-start">
 			<div class="dropdown md:hidden {hidden} transition-opacity duration-300">
 				<div
@@ -65,9 +81,9 @@
 			</div>
 			<a
 				href="/"
-				class="btn btn-ghost text-xl transition-opacity duration-300 {hidden}"
-				tabindex={minimal ? -1 : undefined}
-				aria-hidden={minimal}
+				class="btn btn-ghost text-xl transition-opacity duration-300 {brandClass}"
+				tabindex={brandOff ? -1 : undefined}
+				aria-hidden={brandOff}
 			>
 				<Logo class="h-6 w-auto" />
 				PostPin

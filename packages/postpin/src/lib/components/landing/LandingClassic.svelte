@@ -1,8 +1,10 @@
 <!--
 	The landing page as it was before the slides: one long scroll page (/landing/1). Only kept to
-	compare the versions.
+	compare the versions. /landing/4 swaps in its own first screen through the hero snippet and
+	keeps everything below it.
 -->
 <script lang="ts">
+	import type { Snippet } from "svelte";
 	import Logo from "#lib/components/layout/Logo.svelte";
 	import LegalLinks from "#lib/components/layout/LegalLinks.svelte";
 	import LandingNav from "#lib/components/landing/LandingNav.svelte";
@@ -10,10 +12,9 @@
 
 	import Projector from "@lucide/svelte/icons/projector";
 	import LayoutGrid from "@lucide/svelte/icons/layout-grid";
-	import ChartGantt from "@lucide/svelte/icons/chart-gantt";
 	import Tags from "@lucide/svelte/icons/tags";
+	import Scissors from "@lucide/svelte/icons/scissors";
 	import Layers from "@lucide/svelte/icons/layers";
-	import Users from "@lucide/svelte/icons/users";
 	import Smartphone from "@lucide/svelte/icons/smartphone";
 	import Upload from "@lucide/svelte/icons/upload";
 	import Check from "@lucide/svelte/icons/check";
@@ -80,9 +81,9 @@
 			text: "See every shot of the cut as a thumbnail and jump to one with a click.",
 		},
 		{
-			icon: ChartGantt,
-			title: "Your timeline in the browser",
-			text: "The tracks and clips from your editor appear under the player, in their colors. Click a clip to jump to it.",
+			icon: Scissors,
+			title: "Cut detection",
+			text: "Upload any video and PostPin finds the cuts for you. They become the shot grid and the timeline under the player. Too many or too few? Change the sensitivity afterwards, or take the cuts from an EDL or FCPXML.",
 		},
 		{
 			icon: Tags,
@@ -95,19 +96,9 @@
 			text: "Every upload is a new version with its own notes. Copy the open ones over to the next version.",
 		},
 		{
-			icon: Users,
-			title: "Roles and access",
-			text: "Reviewers add notes, members upload, admins manage the team. Share a single project or timeline instead of everything.",
-		},
-		{
 			icon: Smartphone,
 			title: "Phone and tablet",
 			text: "Review on the go. The video plays in up to 4K and switches to a lower quality on a slow connection.",
-		},
-		{
-			icon: Upload,
-			title: "Any video file",
-			text: "Upload a video in the browser and PostPin finds the cuts, or takes them from an EDL or FCPXML.",
 		},
 	];
 
@@ -116,6 +107,16 @@
 		{ name: "Adobe Premiere Pro", icon: "premiere-pro", docs: "/plugins/premiere" },
 		{ name: "Avid Pro Tools", icon: "pro-tools", docs: "/plugins/desktop" },
 	];
+
+	// hero replaces the default first screen below. rail is a narrow column left of the steps of "How
+	// it works", as tall as they are; it also pulls that section up so the first step is
+	// in the first screen.
+	let {
+		hero,
+		rail,
+		wideNav = false,
+		brandHidden = false,
+	}: { hero?: Snippet; rail?: Snippet; wideNav?: boolean; brandHidden?: boolean } = $props();
 </script>
 
 {#snippet bullets(points: string[])}
@@ -129,46 +130,68 @@
 	</ul>
 {/snippet}
 
-<LandingNav />
+<LandingNav wide={wideNav} {brandHidden} />
 
 <main>
-	<!-- Hero -->
-	<section class="px-4 pt-16 pb-12 sm:pt-24">
-		<div class="mx-auto max-w-3xl text-center">
-			<span class="badge badge-soft badge-primary">Free while in early access</span>
-			<h1 class="mt-6 text-4xl font-bold tracking-tight text-balance sm:text-6xl">
-				From your timeline to your client and back
-			</h1>
-			<p class="mx-auto mt-6 max-w-2xl text-lg text-pretty text-base-content/70">
-				Upload a cut straight from your favorite editing software. Your team and your clients leave
-				notes in the browser, and the notes come back to your timeline as markers.
-			</p>
-			<div class="mt-8 flex flex-wrap justify-center gap-2">
-				<a href="/auth/signup" class="btn btn-lg btn-primary">Create an account</a>
-				<a href="#how-it-works" class="btn btn-lg">How it works</a>
+	{#if hero}
+		{@render hero()}
+	{:else}
+		<!-- Hero -->
+		<section class="px-4 pt-16 pb-12 sm:pt-24">
+			<div class="mx-auto max-w-3xl text-center">
+				<span class="badge badge-soft badge-primary">Free while in early access</span>
+				<h1 class="mt-6 text-4xl font-bold tracking-tight text-balance sm:text-6xl">
+					From your timeline to your client and back
+				</h1>
+				<p class="mx-auto mt-6 max-w-2xl text-lg text-pretty text-base-content/70">
+					Upload a cut straight from your favorite editing software. Your team and your clients
+					leave notes in the browser, and the notes come back to your timeline as markers.
+				</p>
+				<div class="mt-8 flex flex-wrap justify-center gap-2">
+					<a href="/auth/signup" class="btn btn-lg btn-primary">Create an account</a>
+					<a href="#how-it-works" class="btn btn-lg">How it works</a>
+				</div>
+				<p class="mt-4 text-sm text-base-content/60">
+					<a class="link" href="#editors">Supported editors</a> · Cloud or self-hosted · Open source
+				</p>
 			</div>
-			<p class="mt-4 text-sm text-base-content/60">
-				<a class="link" href="#editors">Supported editors</a> · Cloud or self-hosted · Open source
-			</p>
-		</div>
-		<div class="mx-auto mt-12 max-w-6xl">
-			<Shot
-				name="review"
-				alt="The PostPin review page with the player, the timeline from the editor and the notes"
-				width={2000}
-				height={1250}
-				themed
-				eager
-				fullWidth
-			/>
-		</div>
-	</section>
+			<div class="mx-auto mt-12 max-w-6xl">
+				<Shot
+					name="review"
+					alt="The PostPin review page with the player, the timeline from the editor and the notes"
+					width={2000}
+					height={1250}
+					themed
+					eager
+					fullWidth
+				/>
+			</div>
+		</section>
+	{/if}
 
 	<!-- How it works -->
-	<section id="how-it-works" class="scroll-mt-20 bg-base-200 px-4 py-16 sm:py-24">
-		<div class="mx-auto max-w-6xl">
-			<h2 class="text-3xl font-bold tracking-tight sm:text-4xl">How it works</h2>
-			<ol class="mt-12 space-y-16">
+	<section
+		id="how-it-works"
+		class="scroll-mt-20 bg-base-200 px-4 {rail ? 'pt-8 pb-16 sm:pt-10 sm:pb-24' : 'py-16 sm:py-24'}"
+	>
+		<!--
+			With a rail, the heading and the steps share a grid with a narrow column on the left: the
+			rail sits in the row of the steps, as tall as they are, and lines its stations up with them
+		-->
+		<div
+			class="mx-auto max-w-6xl {rail
+				? 'grid grid-cols-[2.75rem_1fr] [grid-template-rows:auto_1fr] gap-x-3 sm:grid-cols-[3.5rem_1fr] sm:gap-x-4 lg:grid-cols-[4rem_1fr] lg:gap-x-6'
+				: ''}"
+		>
+			<h2 class="text-3xl font-bold tracking-tight sm:text-4xl {rail ? 'col-start-2' : ''}">
+				How it works
+			</h2>
+			{#if rail}
+				<div class="relative col-start-1 row-start-2">
+					{@render rail()}
+				</div>
+			{/if}
+			<ol class="{rail ? 'col-start-2 row-start-2 mt-8' : 'mt-12'} space-y-16">
 				{#each steps as step, i (step.title)}
 					<li class="grid items-center gap-8 md:grid-cols-5">
 						<div class="md:col-span-2 {i % 2 ? 'md:order-2' : ''}">
@@ -190,7 +213,7 @@
 	<section id="features" class="scroll-mt-20 px-4 py-16 sm:py-24">
 		<div class="mx-auto max-w-6xl">
 			<h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Features</h2>
-			<div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			<div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 				{#each features as feature (feature.title)}
 					<article class="card border border-base-300 bg-base-100">
 						<div class="card-body">
