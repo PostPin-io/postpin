@@ -63,6 +63,9 @@ export const variables = defineEnvVars(
 				),
 			),
 		},
+		// Shows the landing page on / to visitors who aren't signed in. Off by default, so
+		// self-hosted instances go straight to the login.
+		LANDING_PAGE: { schema: envBoolean },
 		STORAGE_DEFAULT_ORG_QUOTA: { schema: envByteSize }, // empty = unlimited
 		STORAGE_DEFAULT_USER_QUOTA: { schema: envByteSize }, // empty = unlimited
 		STORAGE_CAPACITY: { schema: envByteSize }, // empty = unlimited
