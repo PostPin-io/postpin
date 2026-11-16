@@ -15,6 +15,9 @@
 		updateShareLink,
 	} from "./share-links.remote";
 	import ShareLinkForm from "./ShareLinkForm.svelte";
+	import Check from "@lucide/svelte/icons/check";
+	import { reviewTour } from "#lib/components/tutorial/review-tour.svelte.ts";
+	import TutorialHint from "#lib/components/tutorial/TutorialHint.svelte";
 	import ShareLinkQr from "./ShareLinkQr.svelte";
 	import ShareLinkRow from "./ShareLinkRow.svelte";
 	import {
@@ -143,6 +146,17 @@
 			<Plus size={16} />
 		</button>
 	</div>
+
+	{#if reviewTour.hint === "share-link"}
+		<TutorialHint>
+			{#if ordered.length === 0}
+				Choose how long the link should work, then confirm with
+				<Check class="inline size-4 align-text-bottom" />.
+			{:else}
+				Copy the link and send it to your reviewer.
+			{/if}
+		</TutorialHint>
+	{/if}
 
 	{#if problem}<p class="mt-2 text-sm text-error">{problem}</p>{/if}
 

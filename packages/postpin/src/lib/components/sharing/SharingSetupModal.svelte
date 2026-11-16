@@ -4,6 +4,7 @@
 	import TargetInvite from "./TargetInvite.svelte";
 	import ShareLinks from "./share-links/ShareLinks.svelte";
 	import X from "@lucide/svelte/icons/x";
+	import { reviewTour } from "#lib/components/tutorial/review-tour.svelte.ts";
 
 	type Target = { projectId: string; timelineId?: string; exportId?: string };
 
@@ -24,7 +25,11 @@
 <dialog
 	class="modal modal-bottom sm:modal-middle"
 	bind:this={dialog}
-	onclose={() => (isOpen = false)}
+	onclose={() => {
+		isOpen = false;
+		// the tutorial's hints are for the dialog it opened, not for the next one
+		reviewTour.hint = null;
+	}}
 >
 	<div
 		class="modal-box max-h-[90dvh] pt-0 sm:min-h-[32rem] {targetQuery?.current?.type === 'export'
