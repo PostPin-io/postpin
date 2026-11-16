@@ -1,7 +1,8 @@
 <script lang="ts">
 	import PageMeta from "#lib/components/layout/PageMeta.svelte";
 	import { untrack } from "svelte";
-	import { refreshAll } from "$app/navigation";
+	import { goto, refreshAll } from "$app/navigation";
+	import { getTutorialState, restartTutorial } from "#lib/components/tutorial/tutorial.remote.ts";
 	import { authClient } from "#lib/auth-client.ts";
 	import {
 		getDeletionBlockers,
@@ -23,6 +24,13 @@
 	const memberships = $derived(await getMemberships());
 	const sessions = $derived(await getSessions());
 	const storage = $derived(await getMyStorage());
+	const tutorial = $derived(await getTutorialState());
+
+	async function restart() {
+		await restartTutorial();
+		// the dashboard knows where the tutorial goes on
+		await goto("/dashboard");
+	}
 
 	let name = $state(untrack(() => profile.name));
 	let savingName = $state(false);
@@ -438,6 +446,19 @@
 			</table>
 		{/if}
 	</fieldset>
+
+	{#if tutorial.eligible}
+		<fieldset class="fieldset rounded-box border border-base-300 bg-base-100 p-4">
+			<legend class="fieldset-legend">Tutorial</legend>
+			<p class="text-sm text-base-content/70">
+				Shows the explanations of markers and sharing again. Organizations, projects and exports you
+				created stay as they are.
+			</p>
+			<div>
+				<button type="button" class="btn btn-sm" onclick={restart}> Show tutorial again </button>
+			</div>
+		</fieldset>
+	{/if}
 
 	<fieldset class="fieldset rounded-box border border-error/40 bg-base-100 p-4">
 		<legend class="fieldset-legend text-error">Delete account</legend>

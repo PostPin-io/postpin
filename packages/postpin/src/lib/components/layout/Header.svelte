@@ -4,7 +4,9 @@
 	import { authClient } from "#lib/auth-client.ts";
 	import { afterNavigate, goto, refreshAll } from "$app/navigation";
 
+	import GraduationCap from "@lucide/svelte/icons/graduation-cap";
 	import Menu from "@lucide/svelte/icons/menu";
+	import { reviewTour } from "#lib/components/tutorial/review-tour.svelte.ts";
 
 	import type { Snippet } from "svelte";
 	import Logo from "#lib/components/layout/Logo.svelte";
@@ -106,6 +108,18 @@
 				</span>
 			</a>
 			<Breadcrumbs />
+			{#if reviewTour.shareOffered}
+				<!-- Tutorial only: next to the breadcrumbs, whose buttons it explains. Not called
+				     "Share", which would look like the way to share. -->
+				<button
+					type="button"
+					class="btn ml-1 shrink-0 btn-primary btn-sm"
+					onclick={() => (reviewTour.shareOpen = true)}
+				>
+					<GraduationCap class="size-4" />
+					Share Guide
+				</button>
+			{/if}
 			{#if page.data.isSystemAdmin}
 				<ul class="menu menu-horizontal px-1 max-lg:hidden">
 					<li><a href={resolve("/(root)/admin")}>System</a></li>

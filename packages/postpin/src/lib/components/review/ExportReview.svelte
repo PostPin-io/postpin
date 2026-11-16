@@ -58,6 +58,8 @@
 
 	import { setShareContext, type ShareContext } from "./share-context.ts";
 	import ScreeningButton from "#lib/components/screening/ScreeningButton.svelte";
+	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
+	import ReviewTutorial from "#lib/components/tutorial/ReviewTutorial.svelte";
 	import ScreeningRemote from "#lib/components/screening/ScreeningRemote.svelte";
 	import EndScreeningDialog from "#lib/components/screening/EndScreeningDialog.svelte";
 	import {
@@ -166,6 +168,7 @@
 		(creatableCategories.find((c) => c.id === defaultCategory.id) ?? creatableCategories[0])?.color,
 	);
 	let markerPanel = $state<MarkerPanel>();
+	let sharingDialog = $state<SharingSetupModal>();
 	let originalUrl = $state<string | undefined>(undefined);
 	let thumbnailUrl = $state<string | undefined>(undefined);
 
@@ -554,6 +557,24 @@
 <svelte:window onkeydown={onGlobalKeyDown} />
 
 {#if !share}<EndScreeningDialog />{/if}
+{#if !share}
+	<SharingSetupModal bind:this={sharingDialog} />
+	{#if projectId && timelineId && exp?.canShare}
+		<!-- on its own boundary: the tutorial must never hold up or break the review -->
+		<svelte:boundary>
+			<ReviewTutorial
+				{projectId}
+				{timelineId}
+				{exportId}
+				exportName={exp.name}
+				ready={hlsReady && !!snapshot}
+				onshare={(target) => sharingDialog?.open(target)}
+			/>
+			{#snippet pending()}{/snippet}
+			{#snippet failed()}{/snippet}
+		</svelte:boundary>
+	{/if}
+{/if}
 
 <!-- The three areas of the review, rendered by the desktop split panes and the phone layout -->
 {#snippet videoArea(compact = false)}

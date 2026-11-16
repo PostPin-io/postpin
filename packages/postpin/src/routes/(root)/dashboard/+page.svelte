@@ -10,6 +10,7 @@
 	import DeleteProjectModal from "#lib/components/projects/DeleteProjectModal.svelte";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
 	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
+	import ContinueTutorialCard from "#lib/components/tutorial/ContinueTutorialCard.svelte";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
@@ -210,6 +211,7 @@
 			</div>
 		</div>
 	{:else}
+		<ContinueTutorialCard />
 		<header
 			class="flex flex-col gap-3 border-b border-base-300 pb-4 md:flex-row md:items-center md:justify-between"
 		>

@@ -42,6 +42,7 @@ export type UserMinAggregateOutputType = {
 	emailVerified: boolean | null;
 	image: string | null;
 	storageQuota: bigint | null;
+	tutorialCompletedAt: Date | null;
 	lastActiveOrganizationId: string | null;
 };
 
@@ -54,6 +55,7 @@ export type UserMaxAggregateOutputType = {
 	emailVerified: boolean | null;
 	image: string | null;
 	storageQuota: bigint | null;
+	tutorialCompletedAt: Date | null;
 	lastActiveOrganizationId: string | null;
 };
 
@@ -66,6 +68,8 @@ export type UserCountAggregateOutputType = {
 	emailVerified: number;
 	image: number;
 	storageQuota: number;
+	tutorialCompletedAt: number;
+	tutorialSeenSteps: number;
 	lastActiveOrganizationId: number;
 	_all: number;
 };
@@ -87,6 +91,7 @@ export type UserMinAggregateInputType = {
 	emailVerified?: true;
 	image?: true;
 	storageQuota?: true;
+	tutorialCompletedAt?: true;
 	lastActiveOrganizationId?: true;
 };
 
@@ -99,6 +104,7 @@ export type UserMaxAggregateInputType = {
 	emailVerified?: true;
 	image?: true;
 	storageQuota?: true;
+	tutorialCompletedAt?: true;
 	lastActiveOrganizationId?: true;
 };
 
@@ -111,6 +117,8 @@ export type UserCountAggregateInputType = {
 	emailVerified?: true;
 	image?: true;
 	storageQuota?: true;
+	tutorialCompletedAt?: true;
+	tutorialSeenSteps?: true;
 	lastActiveOrganizationId?: true;
 	_all?: true;
 };
@@ -211,6 +219,8 @@ export type UserGroupByOutputType = {
 	emailVerified: boolean;
 	image: string | null;
 	storageQuota: bigint | null;
+	tutorialCompletedAt: Date | null;
+	tutorialSeenSteps: string[];
 	lastActiveOrganizationId: string | null;
 	_count: UserCountAggregateOutputType | null;
 	_avg: UserAvgAggregateOutputType | null;
@@ -243,6 +253,8 @@ export type UserWhereInput = {
 	emailVerified?: Prisma.BoolFilter<"User"> | boolean;
 	image?: Prisma.StringNullableFilter<"User"> | string | null;
 	storageQuota?: Prisma.BigIntNullableFilter<"User"> | bigint | number | null;
+	tutorialCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null;
+	tutorialSeenSteps?: Prisma.StringNullableListFilter<"User">;
 	lastActiveOrganizationId?: Prisma.StringNullableFilter<"User"> | string | null;
 	uploadedExports?: Prisma.ExportListRelationFilter;
 	sessions?: Prisma.SessionListRelationFilter;
@@ -273,6 +285,8 @@ export type UserOrderByWithRelationInput = {
 	emailVerified?: Prisma.SortOrder;
 	image?: Prisma.SortOrderInput | Prisma.SortOrder;
 	storageQuota?: Prisma.SortOrderInput | Prisma.SortOrder;
+	tutorialCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
+	tutorialSeenSteps?: Prisma.SortOrder;
 	lastActiveOrganizationId?: Prisma.SortOrderInput | Prisma.SortOrder;
 	uploadedExports?: Prisma.ExportOrderByRelationAggregateInput;
 	sessions?: Prisma.SessionOrderByRelationAggregateInput;
@@ -304,6 +318,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
 		emailVerified?: Prisma.BoolFilter<"User"> | boolean;
 		image?: Prisma.StringNullableFilter<"User"> | string | null;
 		storageQuota?: Prisma.BigIntNullableFilter<"User"> | bigint | number | null;
+		tutorialCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null;
+		tutorialSeenSteps?: Prisma.StringNullableListFilter<"User">;
 		lastActiveOrganizationId?: Prisma.StringNullableFilter<"User"> | string | null;
 		uploadedExports?: Prisma.ExportListRelationFilter;
 		sessions?: Prisma.SessionListRelationFilter;
@@ -336,6 +352,8 @@ export type UserOrderByWithAggregationInput = {
 	emailVerified?: Prisma.SortOrder;
 	image?: Prisma.SortOrderInput | Prisma.SortOrder;
 	storageQuota?: Prisma.SortOrderInput | Prisma.SortOrder;
+	tutorialCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
+	tutorialSeenSteps?: Prisma.SortOrder;
 	lastActiveOrganizationId?: Prisma.SortOrderInput | Prisma.SortOrder;
 	_count?: Prisma.UserCountOrderByAggregateInput;
 	_avg?: Prisma.UserAvgOrderByAggregateInput;
@@ -356,6 +374,8 @@ export type UserScalarWhereWithAggregatesInput = {
 	emailVerified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean;
 	image?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null;
 	storageQuota?: Prisma.BigIntNullableWithAggregatesFilter<"User"> | bigint | number | null;
+	tutorialCompletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null;
+	tutorialSeenSteps?: Prisma.StringNullableListFilter<"User">;
 	lastActiveOrganizationId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null;
 };
 
@@ -368,6 +388,8 @@ export type UserCreateInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
@@ -394,6 +416,8 @@ export type UserUncheckedCreateInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
@@ -420,6 +444,8 @@ export type UserUpdateInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
@@ -446,6 +472,8 @@ export type UserUncheckedUpdateInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
@@ -472,6 +500,8 @@ export type UserCreateManyInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: string | null;
 };
 
@@ -484,6 +514,8 @@ export type UserUpdateManyMutationInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 };
 
 export type UserUncheckedUpdateManyInput = {
@@ -495,7 +527,17 @@ export type UserUncheckedUpdateManyInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+};
+
+export type StringNullableListFilter<$PrismaModel = never> = {
+	equals?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null;
+	has?: string | Prisma.StringFieldRefInput<$PrismaModel> | null;
+	hasEvery?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>;
+	hasSome?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>;
+	isEmpty?: boolean;
 };
 
 export type UserCountOrderByAggregateInput = {
@@ -507,6 +549,8 @@ export type UserCountOrderByAggregateInput = {
 	emailVerified?: Prisma.SortOrder;
 	image?: Prisma.SortOrder;
 	storageQuota?: Prisma.SortOrder;
+	tutorialCompletedAt?: Prisma.SortOrder;
+	tutorialSeenSteps?: Prisma.SortOrder;
 	lastActiveOrganizationId?: Prisma.SortOrder;
 };
 
@@ -523,6 +567,7 @@ export type UserMaxOrderByAggregateInput = {
 	emailVerified?: Prisma.SortOrder;
 	image?: Prisma.SortOrder;
 	storageQuota?: Prisma.SortOrder;
+	tutorialCompletedAt?: Prisma.SortOrder;
 	lastActiveOrganizationId?: Prisma.SortOrder;
 };
 
@@ -535,6 +580,7 @@ export type UserMinOrderByAggregateInput = {
 	emailVerified?: Prisma.SortOrder;
 	image?: Prisma.SortOrder;
 	storageQuota?: Prisma.SortOrder;
+	tutorialCompletedAt?: Prisma.SortOrder;
 	lastActiveOrganizationId?: Prisma.SortOrder;
 };
 
@@ -562,6 +608,10 @@ export type UserOrderByRelationAggregateInput = {
 	_count?: Prisma.SortOrder;
 };
 
+export type UserCreatetutorialSeenStepsInput = {
+	set: string[];
+};
+
 export type StringFieldUpdateOperationsInput = {
 	set?: string;
 };
@@ -584,6 +634,15 @@ export type NullableBigIntFieldUpdateOperationsInput = {
 	decrement?: bigint | number;
 	multiply?: bigint | number;
 	divide?: bigint | number;
+};
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+	set?: Date | string | null;
+};
+
+export type UserUpdatetutorialSeenStepsInput = {
+	set?: string[];
+	push?: string | string[];
 };
 
 export type UserCreateNestedOneWithoutSessionsInput = {
@@ -1067,6 +1126,8 @@ export type UserCreateWithoutSessionsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
 	createdProjects?: Prisma.ProjectCreateNestedManyWithoutCreatorInput;
@@ -1092,6 +1153,8 @@ export type UserUncheckedCreateWithoutSessionsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
 	accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput;
@@ -1145,6 +1208,8 @@ export type UserUpdateWithoutSessionsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
 	createdProjects?: Prisma.ProjectUpdateManyWithoutCreatorNestedInput;
@@ -1170,6 +1235,8 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
 	accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput;
@@ -1195,6 +1262,8 @@ export type UserCreateWithoutAccountsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
 	createdProjects?: Prisma.ProjectCreateNestedManyWithoutCreatorInput;
@@ -1220,6 +1289,8 @@ export type UserUncheckedCreateWithoutAccountsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
@@ -1273,6 +1344,8 @@ export type UserUpdateWithoutAccountsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
 	createdProjects?: Prisma.ProjectUpdateManyWithoutCreatorNestedInput;
@@ -1298,6 +1371,8 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
@@ -1323,6 +1398,8 @@ export type UserCreateWithoutMarkersInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
@@ -1348,6 +1425,8 @@ export type UserUncheckedCreateWithoutMarkersInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
@@ -1401,6 +1480,8 @@ export type UserUpdateWithoutMarkersInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
@@ -1426,6 +1507,8 @@ export type UserUncheckedUpdateWithoutMarkersInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
@@ -1451,6 +1534,8 @@ export type UserCreateWithoutCreatedCategoriesInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
@@ -1476,6 +1561,8 @@ export type UserUncheckedCreateWithoutCreatedCategoriesInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
@@ -1529,6 +1616,8 @@ export type UserUpdateWithoutCreatedCategoriesInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
@@ -1554,6 +1643,8 @@ export type UserUncheckedUpdateWithoutCreatedCategoriesInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
@@ -1579,6 +1670,8 @@ export type UserCreateWithoutCreatedCategoryPresetsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
@@ -1604,6 +1697,8 @@ export type UserUncheckedCreateWithoutCreatedCategoryPresetsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
@@ -1657,6 +1752,8 @@ export type UserUpdateWithoutCreatedCategoryPresetsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
@@ -1682,6 +1779,8 @@ export type UserUncheckedUpdateWithoutCreatedCategoryPresetsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
@@ -1707,6 +1806,8 @@ export type UserCreateWithoutResponsesInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
@@ -1732,6 +1833,8 @@ export type UserUncheckedCreateWithoutResponsesInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
@@ -1785,6 +1888,8 @@ export type UserUpdateWithoutResponsesInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
@@ -1810,6 +1915,8 @@ export type UserUncheckedUpdateWithoutResponsesInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
@@ -1835,6 +1942,8 @@ export type UserCreateWithoutLastActiveOrganizationInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
@@ -1860,6 +1969,8 @@ export type UserUncheckedCreateWithoutLastActiveOrganizationInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput;
@@ -1931,6 +2042,8 @@ export type UserScalarWhereInput = {
 	emailVerified?: Prisma.BoolFilter<"User"> | boolean;
 	image?: Prisma.StringNullableFilter<"User"> | string | null;
 	storageQuota?: Prisma.BigIntNullableFilter<"User"> | bigint | number | null;
+	tutorialCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null;
+	tutorialSeenSteps?: Prisma.StringNullableListFilter<"User">;
 	lastActiveOrganizationId?: Prisma.StringNullableFilter<"User"> | string | null;
 };
 
@@ -1943,6 +2056,8 @@ export type UserCreateWithoutMembershipsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
@@ -1968,6 +2083,8 @@ export type UserUncheckedCreateWithoutMembershipsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
@@ -2021,6 +2138,8 @@ export type UserUpdateWithoutMembershipsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
@@ -2046,6 +2165,8 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
@@ -2071,6 +2192,8 @@ export type UserCreateWithoutInvitationsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
@@ -2096,6 +2219,8 @@ export type UserUncheckedCreateWithoutInvitationsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
@@ -2149,6 +2274,8 @@ export type UserUpdateWithoutInvitationsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
@@ -2174,6 +2301,8 @@ export type UserUncheckedUpdateWithoutInvitationsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
@@ -2199,6 +2328,8 @@ export type UserCreateWithoutInviteLinksInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
@@ -2224,6 +2355,8 @@ export type UserUncheckedCreateWithoutInviteLinksInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
@@ -2277,6 +2410,8 @@ export type UserUpdateWithoutInviteLinksInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
@@ -2302,6 +2437,8 @@ export type UserUncheckedUpdateWithoutInviteLinksInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
@@ -2327,6 +2464,8 @@ export type UserCreateWithoutCreatedGrantsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
@@ -2352,6 +2491,8 @@ export type UserUncheckedCreateWithoutCreatedGrantsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
@@ -2405,6 +2546,8 @@ export type UserUpdateWithoutCreatedGrantsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
@@ -2430,6 +2573,8 @@ export type UserUncheckedUpdateWithoutCreatedGrantsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
@@ -2455,6 +2600,8 @@ export type UserCreateWithoutCreatedProjectsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
@@ -2480,6 +2627,8 @@ export type UserUncheckedCreateWithoutCreatedProjectsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
@@ -2533,6 +2682,8 @@ export type UserUpdateWithoutCreatedProjectsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
@@ -2558,6 +2709,8 @@ export type UserUncheckedUpdateWithoutCreatedProjectsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
@@ -2583,6 +2736,8 @@ export type UserCreateWithoutUploadedExportsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
 	createdProjects?: Prisma.ProjectCreateNestedManyWithoutCreatorInput;
@@ -2608,6 +2763,8 @@ export type UserUncheckedCreateWithoutUploadedExportsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: string | null;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput;
@@ -2661,6 +2818,8 @@ export type UserUpdateWithoutUploadedExportsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
 	createdProjects?: Prisma.ProjectUpdateManyWithoutCreatorNestedInput;
@@ -2686,6 +2845,8 @@ export type UserUncheckedUpdateWithoutUploadedExportsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput;
@@ -2711,6 +2872,8 @@ export type UserCreateWithoutCreatedShareLinksInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
@@ -2736,6 +2899,8 @@ export type UserUncheckedCreateWithoutCreatedShareLinksInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
@@ -2789,6 +2954,8 @@ export type UserUpdateWithoutCreatedShareLinksInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
@@ -2814,6 +2981,8 @@ export type UserUncheckedUpdateWithoutCreatedShareLinksInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
@@ -2839,6 +3008,8 @@ export type UserCreateWithoutSentShareLinkMailsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
@@ -2864,6 +3035,8 @@ export type UserUncheckedCreateWithoutSentShareLinkMailsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
@@ -2917,6 +3090,8 @@ export type UserUpdateWithoutSentShareLinkMailsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
@@ -2942,6 +3117,8 @@ export type UserUncheckedUpdateWithoutSentShareLinkMailsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
@@ -2967,6 +3144,8 @@ export type UserCreateManyLastActiveOrganizationInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
+	tutorialCompletedAt?: Date | string | null;
+	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
 };
 
 export type UserUpdateWithoutLastActiveOrganizationInput = {
@@ -2978,6 +3157,8 @@ export type UserUpdateWithoutLastActiveOrganizationInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
@@ -3003,6 +3184,8 @@ export type UserUncheckedUpdateWithoutLastActiveOrganizationInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput;
@@ -3028,6 +3211,8 @@ export type UserUncheckedUpdateManyWithoutLastActiveOrganizationInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
 };
 
 /**
@@ -3220,6 +3405,8 @@ export type UserSelect<
 		emailVerified?: boolean;
 		image?: boolean;
 		storageQuota?: boolean;
+		tutorialCompletedAt?: boolean;
+		tutorialSeenSteps?: boolean;
 		lastActiveOrganizationId?: boolean;
 		uploadedExports?: boolean | Prisma.User$uploadedExportsArgs<ExtArgs>;
 		sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>;
@@ -3253,6 +3440,8 @@ export type UserSelectCreateManyAndReturn<
 		emailVerified?: boolean;
 		image?: boolean;
 		storageQuota?: boolean;
+		tutorialCompletedAt?: boolean;
+		tutorialSeenSteps?: boolean;
 		lastActiveOrganizationId?: boolean;
 		lastActiveOrganization?: boolean | Prisma.User$lastActiveOrganizationArgs<ExtArgs>;
 	},
@@ -3271,6 +3460,8 @@ export type UserSelectUpdateManyAndReturn<
 		emailVerified?: boolean;
 		image?: boolean;
 		storageQuota?: boolean;
+		tutorialCompletedAt?: boolean;
+		tutorialSeenSteps?: boolean;
 		lastActiveOrganizationId?: boolean;
 		lastActiveOrganization?: boolean | Prisma.User$lastActiveOrganizationArgs<ExtArgs>;
 	},
@@ -3286,6 +3477,8 @@ export type UserSelectScalar = {
 	emailVerified?: boolean;
 	image?: boolean;
 	storageQuota?: boolean;
+	tutorialCompletedAt?: boolean;
+	tutorialSeenSteps?: boolean;
 	lastActiveOrganizationId?: boolean;
 };
 
@@ -3300,6 +3493,8 @@ export type UserOmit<
 	| "emailVerified"
 	| "image"
 	| "storageQuota"
+	| "tutorialCompletedAt"
+	| "tutorialSeenSteps"
 	| "lastActiveOrganizationId",
 	ExtArgs["result"]["user"]
 >;
@@ -3365,6 +3560,14 @@ export type $UserPayload<
 			emailVerified: boolean;
 			image: string | null;
 			storageQuota: bigint | null;
+			/**
+			 * Onboarding tutorial: set when it was finished or skipped; null = still running
+			 */
+			tutorialCompletedAt: Date | null;
+			/**
+			 * Tutorial steps that can't be derived from the data (explanations seen), see TUTORIAL_SEEN_STEPS
+			 */
+			tutorialSeenSteps: string[];
 			lastActiveOrganizationId: string | null;
 		},
 		ExtArgs["result"]["user"]
@@ -4082,6 +4285,8 @@ export interface UserFieldRefs {
 	readonly emailVerified: Prisma.FieldRef<"User", "Boolean">;
 	readonly image: Prisma.FieldRef<"User", "String">;
 	readonly storageQuota: Prisma.FieldRef<"User", "BigInt">;
+	readonly tutorialCompletedAt: Prisma.FieldRef<"User", "DateTime">;
+	readonly tutorialSeenSteps: Prisma.FieldRef<"User", "String[]">;
 	readonly lastActiveOrganizationId: Prisma.FieldRef<"User", "String">;
 }
 
