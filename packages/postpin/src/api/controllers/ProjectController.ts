@@ -1,4 +1,5 @@
 import { prisma } from "#lib/server/database.ts";
+import { DEFAULT_CATEGORIES } from "@postpin-io/shared/logic/category-presets";
 import {
 	Body,
 	Controller,
@@ -123,6 +124,9 @@ export class ProjectController extends Controller {
 				...(!isOrgWide(member.role) && {
 					memberGrants: { create: { memberId: member.id, createdById: user.id } },
 				}),
+				categories: {
+					create: DEFAULT_CATEGORIES.map((c) => ({ ...c, createdById: user.id })),
+				},
 			},
 			select: {
 				id: true,

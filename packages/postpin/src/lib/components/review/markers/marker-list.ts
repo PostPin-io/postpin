@@ -6,7 +6,11 @@ type SortableMarker = {
 	createdAt: Date | string;
 	frame: number;
 	author?: { name: string } | null;
+	/** Share-link guests have no account: their name stands in for the author's */
+	guest?: { name: string | null } | null;
 };
+
+const userName = (m: SortableMarker) => m.guest?.name ?? m.author?.name ?? "";
 
 /** Sorted copy of `list`; the input stays untouched. */
 export function sortMarkers<T extends SortableMarker>(
@@ -22,7 +26,7 @@ export function sortMarkers<T extends SortableMarker>(
 			case "createdAt":
 				return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
 			case "user":
-				return (a.author?.name ?? "").localeCompare(b.author?.name ?? "");
+				return userName(a).localeCompare(userName(b));
 			case "timecode":
 				return a.frame - b.frame;
 		}
@@ -30,19 +34,39 @@ export function sortMarkers<T extends SortableMarker>(
 	return [...list].sort((a, b) => dir * compare(a, b));
 }
 
+/** How the marker list shows dates: short on the card, with the time in its tooltip */
+export const markerDateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "short" });
+export const markerDateTimeFormat = new Intl.DateTimeFormat(undefined, {
+	dateStyle: "medium",
+	timeStyle: "short",
+});
+
 type SearchableMarker = {
 	name: string;
 	description?: string | null;
 	responses: { content: string }[];
+	author?: { name: string } | null;
+	guest?: { name: string | null } | null;
+	createdAt?: Date | string;
 };
 
-/** Case-insensitive search in name, description and responses. */
+/** Everything a search can hit; dates as the list shows them, so a typed date is found */
+function searchableTexts(m: SearchableMarker): string[] {
+	const texts = [m.name, m.description ?? "", ...m.responses.map((r) => r.content)];
+	if (m.author?.name) texts.push(m.author.name);
+	if (m.guest?.name) texts.push(m.guest.name);
+	if (m.createdAt) {
+		const created = new Date(m.createdAt);
+		texts.push(markerDateFormat.format(created), markerDateTimeFormat.format(created));
+	}
+	return texts;
+}
+
+/** Case-insensitive search in name, description, responses, author and creation date. */
 export function searchMarkers<T extends SearchableMarker>(markers: T[], search: string): T[] {
 	const query = search.trim().toLowerCase();
 	return markers.filter((m) =>
-		[m.name, m.description ?? "", ...m.responses.map((r) => r.content)].some((text) =>
-			text.toLowerCase().includes(query),
-		),
+		searchableTexts(m).some((text) => text.toLowerCase().includes(query)),
 	);
 }
 /**

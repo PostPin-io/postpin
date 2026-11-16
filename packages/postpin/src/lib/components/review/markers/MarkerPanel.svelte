@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { page } from "$app/state";
 	import { tick } from "svelte";
+	import { SvelteSet } from "svelte/reactivity";
+	import RouteOff from "@lucide/svelte/icons/route-off";
 	import { isTypingTarget } from "#lib/keyboard.ts";
 	import Marker from "./Marker.svelte";
 	import UpdateMarker from "./UpdateMarker.svelte";
@@ -85,17 +87,18 @@
 	let existingAtNext = $derived(
 		markers.find((m) => m.frame === nextRange.frame && m.duration === nextRange.duration),
 	);
-	// Ranges the playhead is in, highlighted in the list
+	// Markers under the playhead (ranges it is in, points it sits on), highlighted in the list
 	let playingIds = $derived(
 		new Set(
 			markers
-				.filter((m) => m.duration > 0 && m.frame <= currentFrame && currentFrame <= lastFrameOf(m))
+				.filter((m) => m.frame <= currentFrame && currentFrame <= lastFrameOf(m))
 				.map((m) => m.id),
 		),
 	);
 	const timeline = $derived({ startFrameIndex: startFrame, durationFrameCount: frameCount });
 
-	let markersComponents: Marker[] = $state([]);
+	// Kept here, not in each card: "expand all" needs it and it survives sorting and filtering
+	const expandedIds = new SvelteSet<string>();
 
 	let categories = $derived(share ? [] : await getCategories(projectId));
 	let categorySearch = $state("");
@@ -175,14 +178,26 @@
 		setTimeout(() => responseMarkerComponent?.focusInput(), 50);
 	}
 
+	let anyVisibleExpanded = $derived(visibleMarkers.some((marker) => expandedIds.has(marker.id)));
+
 	function toggleCollapseAllMarkers() {
-		const anyMarkerOpen = markersComponents.some((marker) => marker?.isExpanded());
-		if (anyMarkerOpen) {
-			markersComponents.forEach((marker) => marker?.collapse());
-		} else {
-			markersComponents.forEach((marker) => marker?.open());
-		}
+		if (anyVisibleExpanded) expandedIds.clear();
+		else visibleMarkers.forEach((marker) => expandedIds.add(marker.id));
 	}
+
+	// Bring the selected marker into view, e.g. a new one added with M further down the list
+	let listElement: HTMLElement | null = $state(null);
+	$effect(() => {
+		const id = selectedMarkerId;
+		if (!id || !listElement) return;
+		// After the editor pane opened and the list got its new height
+		const handle = requestAnimationFrame(() => {
+			listElement
+				?.querySelector(`[data-marker-id="${CSS.escape(id)}"]`)
+				?.scrollIntoView({ block: "nearest" });
+		});
+		return () => cancelAnimationFrame(handle);
+	});
 
 	$effect(() => {
 		localStorage.setItem("UpdateMarkerFocused", isUpdateMarkerFocused ? "true" : "false");
@@ -256,8 +271,13 @@
 	}
 
 	function escapeKeypress(event: KeyboardEvent) {
-		if (event.key !== "Escape" || selectedMarkerIds.length === 0) return;
-		if (isTypingTarget(event)) return;
+		if (event.key !== "Escape" || isTypingTarget(event)) return;
+		// Cancels a pending cut first, the markers stay where they are
+		if (cutIds.size > 0) {
+			clearMarkerClipboard();
+			reloadClipboard();
+			return;
+		}
 		selectedMarkerIds = [];
 	}
 
@@ -283,24 +303,43 @@
 			markerIds: selected.map((m) => m.id),
 			mode: key === "x" ? "cut" : "copy",
 		});
+		reloadClipboard();
+	}
+
+	// Markers cut with ⌘X on this export, shown faded until pasted
+	let clipboard = $state(readMarkerClipboard());
+	let cutIds = $derived(
+		new Set(
+			clipboard?.mode === "cut" && clipboard.sourceExportId === currentExportId
+				? clipboard.markerIds
+				: [],
+		),
+	);
+
+	// Also when another tab cuts or pastes
+	function reloadClipboard() {
+		clipboard = readMarkerClipboard();
 	}
 
 	let pasting = false;
 
 	async function pasteMarkers() {
-		const clipboard = readMarkerClipboard();
-		if (!clipboard || pasting) return;
+		const pasted = readMarkerClipboard();
+		if (!pasted || pasting) return;
 		pasting = true;
 		try {
 			const { categoryId: fallbackCategoryId } = await resolveDefaultCategory();
 			const { skipped } = await pasteMarkersRemote({
-				...clipboard,
+				...pasted,
 				targetExportId: currentExportId,
 				anchorFrame: Math.max(0, currentFrame),
 				fallbackCategoryId,
 			});
 
-			if (clipboard.mode === "cut") clearMarkerClipboard();
+			if (pasted.mode === "cut") {
+				clearMarkerClipboard();
+				reloadClipboard();
+			}
 			if (skipped > 0) alert(`${skipped} marker(s) no longer exist and were skipped.`);
 		} catch (e) {
 			alert(`Could not paste markers: ${(e as Error).message}`);
@@ -401,27 +440,41 @@
 
 <div class="flex h-full min-h-0 flex-1 flex-col">
 	<div class="mb-4 flex max-w-full shrink-0 items-center justify-between px-2">
-		<div class="flex-screen flex gap-2">
-			<h1 class="  text-lg font-bold">Marker</h1>
+		<div class="flex min-w-0 flex-1 items-center gap-2">
+			<h2 class="text-lg font-bold">Markers</h2>
 			<input
 				type="search"
-				class="input w-1/2 self-end input-xs"
-				placeholder="Search "
+				class="input min-w-0 flex-1 input-xs"
+				placeholder="Search"
+				aria-label="Search markers"
 				bind:value={search}
 			/>
 			<button
 				type="button"
+				class="btn btn-square btn-ghost btn-sm"
+				title={sortDirection == "asc" ? "Sorted ascending" : "Sorted descending"}
 				aria-label="Toggle sort direction"
 				onclick={() => {
 					sortDirection = sortDirection == "asc" ? "desc" : "asc";
 				}}
 			>
 				{#if sortDirection == "asc"}
-					<ChevronUp />
+					<ChevronUp size={18} />
 				{:else}
-					<ChevronDown />
+					<ChevronDown size={18} />
 				{/if}
 			</button>
+			{#if hasActiveFilters}
+				<button
+					type="button"
+					class="btn btn-square btn-ghost btn-sm"
+					title="Clear all filters"
+					aria-label="Clear all filters"
+					onclick={clearAllFilters}
+				>
+					<RouteOff size={18} />
+				</button>
+			{/if}
 		</div>
 		<div
 			class="dropdown dropdown-left"
@@ -490,9 +543,9 @@
 						</ul>
 					</details>
 				</li>
-				{#if markersComponents.length > 0 && !mobile}
+				{#if visibleMarkers.length > 0 && !mobile}
 					<li onclick={() => toggleCollapseAllMarkers()}>
-						{#if markersComponents.some((marker) => marker?.isExpanded())}
+						{#if anyVisibleExpanded}
 							<a>Collapse All</a>
 						{:else}
 							<a>Expand All</a>
@@ -505,13 +558,22 @@
 
 	<Splitpanes theme="daisy-theme" horizontal class="min-h-0 flex-1">
 		<Pane class="overflow-auto">
-			<div class="flex h-full min-h-0 flex-1 flex-col gap-4 overflow-y-auto *:shrink-0">
-				{#each visibleMarkers as marker, index (marker.id)}
+			<!-- py-1: room for the selection ring of the first and last card -->
+			<div
+				bind:this={listElement}
+				class="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-y-auto py-1 *:shrink-0"
+			>
+				{#each visibleMarkers as marker (marker.id)}
 					<Marker
 						{marker}
 						active={selectedMarkerIds.includes(marker.id)}
+						cut={cutIds.has(marker.id)}
 						playing={playingIds.has(marker.id)}
-						bind:this={markersComponents[index]}
+						expanded={expandedIds.has(marker.id)}
+						onexpand={(expanded) => {
+							if (expanded) expandedIds.add(marker.id);
+							else expandedIds.delete(marker.id);
+						}}
 						onchoose={() => {
 							selectedMarkerIds = [marker.id];
 							anchorMarkerId = marker.id;
@@ -594,6 +656,7 @@
 {/if}
 
 <svelte:window
+	on:storage={reloadClipboard}
 	on:keydown={mKeypress}
 	on:keydown={deleteKeypress}
 	on:keydown={escapeKeypress}

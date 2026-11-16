@@ -236,6 +236,7 @@ export type OrganizationWhereInput = {
 	inviteLinks?: Prisma.InviteLinkListRelationFilter;
 	sessions?: Prisma.SessionListRelationFilter;
 	projects?: Prisma.ProjectListRelationFilter;
+	categoryPresets?: Prisma.CategoryPresetListRelationFilter;
 	lastActiveUsers?: Prisma.UserListRelationFilter;
 };
 
@@ -252,6 +253,7 @@ export type OrganizationOrderByWithRelationInput = {
 	inviteLinks?: Prisma.InviteLinkOrderByRelationAggregateInput;
 	sessions?: Prisma.SessionOrderByRelationAggregateInput;
 	projects?: Prisma.ProjectOrderByRelationAggregateInput;
+	categoryPresets?: Prisma.CategoryPresetOrderByRelationAggregateInput;
 	lastActiveUsers?: Prisma.UserOrderByRelationAggregateInput;
 };
 
@@ -272,6 +274,7 @@ export type OrganizationWhereUniqueInput = Prisma.AtLeast<
 		inviteLinks?: Prisma.InviteLinkListRelationFilter;
 		sessions?: Prisma.SessionListRelationFilter;
 		projects?: Prisma.ProjectListRelationFilter;
+		categoryPresets?: Prisma.CategoryPresetListRelationFilter;
 		lastActiveUsers?: Prisma.UserListRelationFilter;
 	},
 	"id" | "slug"
@@ -322,6 +325,7 @@ export type OrganizationCreateInput = {
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutOrganizationInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutActiveOrganizationInput;
 	projects?: Prisma.ProjectCreateNestedManyWithoutOrganizationInput;
+	categoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutOrganizationInput;
 	lastActiveUsers?: Prisma.UserCreateNestedManyWithoutLastActiveOrganizationInput;
 };
 
@@ -338,6 +342,7 @@ export type OrganizationUncheckedCreateInput = {
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutOrganizationInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutActiveOrganizationInput;
 	projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOrganizationInput;
+	categoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutOrganizationInput;
 	lastActiveUsers?: Prisma.UserUncheckedCreateNestedManyWithoutLastActiveOrganizationInput;
 };
 
@@ -354,6 +359,7 @@ export type OrganizationUpdateInput = {
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutOrganizationNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutActiveOrganizationNestedInput;
 	projects?: Prisma.ProjectUpdateManyWithoutOrganizationNestedInput;
+	categoryPresets?: Prisma.CategoryPresetUpdateManyWithoutOrganizationNestedInput;
 	lastActiveUsers?: Prisma.UserUpdateManyWithoutLastActiveOrganizationNestedInput;
 };
 
@@ -370,6 +376,7 @@ export type OrganizationUncheckedUpdateInput = {
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutOrganizationNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutActiveOrganizationNestedInput;
 	projects?: Prisma.ProjectUncheckedUpdateManyWithoutOrganizationNestedInput;
+	categoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutOrganizationNestedInput;
 	lastActiveUsers?: Prisma.UserUncheckedUpdateManyWithoutLastActiveOrganizationNestedInput;
 };
 
@@ -408,6 +415,11 @@ export type OrganizationNullableScalarRelationFilter = {
 	isNot?: Prisma.OrganizationWhereInput | null;
 };
 
+export type OrganizationScalarRelationFilter = {
+	is?: Prisma.OrganizationWhereInput;
+	isNot?: Prisma.OrganizationWhereInput;
+};
+
 export type OrganizationCountOrderByAggregateInput = {
 	id?: Prisma.SortOrder;
 	name?: Prisma.SortOrder;
@@ -444,11 +456,6 @@ export type OrganizationMinOrderByAggregateInput = {
 
 export type OrganizationSumOrderByAggregateInput = {
 	storageQuota?: Prisma.SortOrder;
-};
-
-export type OrganizationScalarRelationFilter = {
-	is?: Prisma.OrganizationWhereInput;
-	isNot?: Prisma.OrganizationWhereInput;
 };
 
 export type OrganizationCreateNestedOneWithoutLastActiveUsersInput = {
@@ -504,6 +511,32 @@ export type OrganizationUpdateOneWithoutSessionsNestedInput = {
 			Prisma.OrganizationUpdateWithoutSessionsInput
 		>,
 		Prisma.OrganizationUncheckedUpdateWithoutSessionsInput
+	>;
+};
+
+export type OrganizationCreateNestedOneWithoutCategoryPresetsInput = {
+	create?: Prisma.XOR<
+		Prisma.OrganizationCreateWithoutCategoryPresetsInput,
+		Prisma.OrganizationUncheckedCreateWithoutCategoryPresetsInput
+	>;
+	connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutCategoryPresetsInput;
+	connect?: Prisma.OrganizationWhereUniqueInput;
+};
+
+export type OrganizationUpdateOneRequiredWithoutCategoryPresetsNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.OrganizationCreateWithoutCategoryPresetsInput,
+		Prisma.OrganizationUncheckedCreateWithoutCategoryPresetsInput
+	>;
+	connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutCategoryPresetsInput;
+	upsert?: Prisma.OrganizationUpsertWithoutCategoryPresetsInput;
+	connect?: Prisma.OrganizationWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.OrganizationUpdateToOneWithWhereWithoutCategoryPresetsInput,
+			Prisma.OrganizationUpdateWithoutCategoryPresetsInput
+		>,
+		Prisma.OrganizationUncheckedUpdateWithoutCategoryPresetsInput
 	>;
 };
 
@@ -624,6 +657,7 @@ export type OrganizationCreateWithoutLastActiveUsersInput = {
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutOrganizationInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutActiveOrganizationInput;
 	projects?: Prisma.ProjectCreateNestedManyWithoutOrganizationInput;
+	categoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutOrganizationInput;
 };
 
 export type OrganizationUncheckedCreateWithoutLastActiveUsersInput = {
@@ -639,6 +673,7 @@ export type OrganizationUncheckedCreateWithoutLastActiveUsersInput = {
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutOrganizationInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutActiveOrganizationInput;
 	projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOrganizationInput;
+	categoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutOrganizationInput;
 };
 
 export type OrganizationCreateOrConnectWithoutLastActiveUsersInput = {
@@ -682,6 +717,7 @@ export type OrganizationUpdateWithoutLastActiveUsersInput = {
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutOrganizationNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutActiveOrganizationNestedInput;
 	projects?: Prisma.ProjectUpdateManyWithoutOrganizationNestedInput;
+	categoryPresets?: Prisma.CategoryPresetUpdateManyWithoutOrganizationNestedInput;
 };
 
 export type OrganizationUncheckedUpdateWithoutLastActiveUsersInput = {
@@ -697,6 +733,7 @@ export type OrganizationUncheckedUpdateWithoutLastActiveUsersInput = {
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutOrganizationNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutActiveOrganizationNestedInput;
 	projects?: Prisma.ProjectUncheckedUpdateManyWithoutOrganizationNestedInput;
+	categoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutOrganizationNestedInput;
 };
 
 export type OrganizationCreateWithoutSessionsInput = {
@@ -711,6 +748,7 @@ export type OrganizationCreateWithoutSessionsInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutOrganizationInput;
 	projects?: Prisma.ProjectCreateNestedManyWithoutOrganizationInput;
+	categoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutOrganizationInput;
 	lastActiveUsers?: Prisma.UserCreateNestedManyWithoutLastActiveOrganizationInput;
 };
 
@@ -726,6 +764,7 @@ export type OrganizationUncheckedCreateWithoutSessionsInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutOrganizationInput;
 	projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOrganizationInput;
+	categoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutOrganizationInput;
 	lastActiveUsers?: Prisma.UserUncheckedCreateNestedManyWithoutLastActiveOrganizationInput;
 };
 
@@ -769,6 +808,7 @@ export type OrganizationUpdateWithoutSessionsInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutOrganizationNestedInput;
 	projects?: Prisma.ProjectUpdateManyWithoutOrganizationNestedInput;
+	categoryPresets?: Prisma.CategoryPresetUpdateManyWithoutOrganizationNestedInput;
 	lastActiveUsers?: Prisma.UserUpdateManyWithoutLastActiveOrganizationNestedInput;
 };
 
@@ -783,6 +823,99 @@ export type OrganizationUncheckedUpdateWithoutSessionsInput = {
 	members?: Prisma.MemberUncheckedUpdateManyWithoutOrganizationNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutOrganizationNestedInput;
+	projects?: Prisma.ProjectUncheckedUpdateManyWithoutOrganizationNestedInput;
+	categoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutOrganizationNestedInput;
+	lastActiveUsers?: Prisma.UserUncheckedUpdateManyWithoutLastActiveOrganizationNestedInput;
+};
+
+export type OrganizationCreateWithoutCategoryPresetsInput = {
+	id: string;
+	name: string;
+	slug: string;
+	logo?: string | null;
+	createdAt: Date | string;
+	metadata?: string | null;
+	storageQuota?: bigint | number | null;
+	members?: Prisma.MemberCreateNestedManyWithoutOrganizationInput;
+	invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput;
+	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutOrganizationInput;
+	sessions?: Prisma.SessionCreateNestedManyWithoutActiveOrganizationInput;
+	projects?: Prisma.ProjectCreateNestedManyWithoutOrganizationInput;
+	lastActiveUsers?: Prisma.UserCreateNestedManyWithoutLastActiveOrganizationInput;
+};
+
+export type OrganizationUncheckedCreateWithoutCategoryPresetsInput = {
+	id: string;
+	name: string;
+	slug: string;
+	logo?: string | null;
+	createdAt: Date | string;
+	metadata?: string | null;
+	storageQuota?: bigint | number | null;
+	members?: Prisma.MemberUncheckedCreateNestedManyWithoutOrganizationInput;
+	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput;
+	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutOrganizationInput;
+	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutActiveOrganizationInput;
+	projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOrganizationInput;
+	lastActiveUsers?: Prisma.UserUncheckedCreateNestedManyWithoutLastActiveOrganizationInput;
+};
+
+export type OrganizationCreateOrConnectWithoutCategoryPresetsInput = {
+	where: Prisma.OrganizationWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.OrganizationCreateWithoutCategoryPresetsInput,
+		Prisma.OrganizationUncheckedCreateWithoutCategoryPresetsInput
+	>;
+};
+
+export type OrganizationUpsertWithoutCategoryPresetsInput = {
+	update: Prisma.XOR<
+		Prisma.OrganizationUpdateWithoutCategoryPresetsInput,
+		Prisma.OrganizationUncheckedUpdateWithoutCategoryPresetsInput
+	>;
+	create: Prisma.XOR<
+		Prisma.OrganizationCreateWithoutCategoryPresetsInput,
+		Prisma.OrganizationUncheckedCreateWithoutCategoryPresetsInput
+	>;
+	where?: Prisma.OrganizationWhereInput;
+};
+
+export type OrganizationUpdateToOneWithWhereWithoutCategoryPresetsInput = {
+	where?: Prisma.OrganizationWhereInput;
+	data: Prisma.XOR<
+		Prisma.OrganizationUpdateWithoutCategoryPresetsInput,
+		Prisma.OrganizationUncheckedUpdateWithoutCategoryPresetsInput
+	>;
+};
+
+export type OrganizationUpdateWithoutCategoryPresetsInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	slug?: Prisma.StringFieldUpdateOperationsInput | string;
+	logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	members?: Prisma.MemberUpdateManyWithoutOrganizationNestedInput;
+	invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput;
+	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutOrganizationNestedInput;
+	sessions?: Prisma.SessionUpdateManyWithoutActiveOrganizationNestedInput;
+	projects?: Prisma.ProjectUpdateManyWithoutOrganizationNestedInput;
+	lastActiveUsers?: Prisma.UserUpdateManyWithoutLastActiveOrganizationNestedInput;
+};
+
+export type OrganizationUncheckedUpdateWithoutCategoryPresetsInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	slug?: Prisma.StringFieldUpdateOperationsInput | string;
+	logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	members?: Prisma.MemberUncheckedUpdateManyWithoutOrganizationNestedInput;
+	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput;
+	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutOrganizationNestedInput;
+	sessions?: Prisma.SessionUncheckedUpdateManyWithoutActiveOrganizationNestedInput;
 	projects?: Prisma.ProjectUncheckedUpdateManyWithoutOrganizationNestedInput;
 	lastActiveUsers?: Prisma.UserUncheckedUpdateManyWithoutLastActiveOrganizationNestedInput;
 };
@@ -799,6 +932,7 @@ export type OrganizationCreateWithoutMembersInput = {
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutOrganizationInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutActiveOrganizationInput;
 	projects?: Prisma.ProjectCreateNestedManyWithoutOrganizationInput;
+	categoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutOrganizationInput;
 	lastActiveUsers?: Prisma.UserCreateNestedManyWithoutLastActiveOrganizationInput;
 };
 
@@ -814,6 +948,7 @@ export type OrganizationUncheckedCreateWithoutMembersInput = {
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutOrganizationInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutActiveOrganizationInput;
 	projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOrganizationInput;
+	categoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutOrganizationInput;
 	lastActiveUsers?: Prisma.UserUncheckedCreateNestedManyWithoutLastActiveOrganizationInput;
 };
 
@@ -857,6 +992,7 @@ export type OrganizationUpdateWithoutMembersInput = {
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutOrganizationNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutActiveOrganizationNestedInput;
 	projects?: Prisma.ProjectUpdateManyWithoutOrganizationNestedInput;
+	categoryPresets?: Prisma.CategoryPresetUpdateManyWithoutOrganizationNestedInput;
 	lastActiveUsers?: Prisma.UserUpdateManyWithoutLastActiveOrganizationNestedInput;
 };
 
@@ -872,6 +1008,7 @@ export type OrganizationUncheckedUpdateWithoutMembersInput = {
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutOrganizationNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutActiveOrganizationNestedInput;
 	projects?: Prisma.ProjectUncheckedUpdateManyWithoutOrganizationNestedInput;
+	categoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutOrganizationNestedInput;
 	lastActiveUsers?: Prisma.UserUncheckedUpdateManyWithoutLastActiveOrganizationNestedInput;
 };
 
@@ -887,6 +1024,7 @@ export type OrganizationCreateWithoutInvitationsInput = {
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutOrganizationInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutActiveOrganizationInput;
 	projects?: Prisma.ProjectCreateNestedManyWithoutOrganizationInput;
+	categoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutOrganizationInput;
 	lastActiveUsers?: Prisma.UserCreateNestedManyWithoutLastActiveOrganizationInput;
 };
 
@@ -902,6 +1040,7 @@ export type OrganizationUncheckedCreateWithoutInvitationsInput = {
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutOrganizationInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutActiveOrganizationInput;
 	projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOrganizationInput;
+	categoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutOrganizationInput;
 	lastActiveUsers?: Prisma.UserUncheckedCreateNestedManyWithoutLastActiveOrganizationInput;
 };
 
@@ -945,6 +1084,7 @@ export type OrganizationUpdateWithoutInvitationsInput = {
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutOrganizationNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutActiveOrganizationNestedInput;
 	projects?: Prisma.ProjectUpdateManyWithoutOrganizationNestedInput;
+	categoryPresets?: Prisma.CategoryPresetUpdateManyWithoutOrganizationNestedInput;
 	lastActiveUsers?: Prisma.UserUpdateManyWithoutLastActiveOrganizationNestedInput;
 };
 
@@ -960,6 +1100,7 @@ export type OrganizationUncheckedUpdateWithoutInvitationsInput = {
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutOrganizationNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutActiveOrganizationNestedInput;
 	projects?: Prisma.ProjectUncheckedUpdateManyWithoutOrganizationNestedInput;
+	categoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutOrganizationNestedInput;
 	lastActiveUsers?: Prisma.UserUncheckedUpdateManyWithoutLastActiveOrganizationNestedInput;
 };
 
@@ -975,6 +1116,7 @@ export type OrganizationCreateWithoutInviteLinksInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutActiveOrganizationInput;
 	projects?: Prisma.ProjectCreateNestedManyWithoutOrganizationInput;
+	categoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutOrganizationInput;
 	lastActiveUsers?: Prisma.UserCreateNestedManyWithoutLastActiveOrganizationInput;
 };
 
@@ -990,6 +1132,7 @@ export type OrganizationUncheckedCreateWithoutInviteLinksInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutActiveOrganizationInput;
 	projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOrganizationInput;
+	categoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutOrganizationInput;
 	lastActiveUsers?: Prisma.UserUncheckedCreateNestedManyWithoutLastActiveOrganizationInput;
 };
 
@@ -1033,6 +1176,7 @@ export type OrganizationUpdateWithoutInviteLinksInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutActiveOrganizationNestedInput;
 	projects?: Prisma.ProjectUpdateManyWithoutOrganizationNestedInput;
+	categoryPresets?: Prisma.CategoryPresetUpdateManyWithoutOrganizationNestedInput;
 	lastActiveUsers?: Prisma.UserUpdateManyWithoutLastActiveOrganizationNestedInput;
 };
 
@@ -1048,6 +1192,7 @@ export type OrganizationUncheckedUpdateWithoutInviteLinksInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutActiveOrganizationNestedInput;
 	projects?: Prisma.ProjectUncheckedUpdateManyWithoutOrganizationNestedInput;
+	categoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutOrganizationNestedInput;
 	lastActiveUsers?: Prisma.UserUncheckedUpdateManyWithoutLastActiveOrganizationNestedInput;
 };
 
@@ -1063,6 +1208,7 @@ export type OrganizationCreateWithoutProjectsInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutOrganizationInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutActiveOrganizationInput;
+	categoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutOrganizationInput;
 	lastActiveUsers?: Prisma.UserCreateNestedManyWithoutLastActiveOrganizationInput;
 };
 
@@ -1078,6 +1224,7 @@ export type OrganizationUncheckedCreateWithoutProjectsInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutOrganizationInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutActiveOrganizationInput;
+	categoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutOrganizationInput;
 	lastActiveUsers?: Prisma.UserUncheckedCreateNestedManyWithoutLastActiveOrganizationInput;
 };
 
@@ -1121,6 +1268,7 @@ export type OrganizationUpdateWithoutProjectsInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutOrganizationNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutActiveOrganizationNestedInput;
+	categoryPresets?: Prisma.CategoryPresetUpdateManyWithoutOrganizationNestedInput;
 	lastActiveUsers?: Prisma.UserUpdateManyWithoutLastActiveOrganizationNestedInput;
 };
 
@@ -1136,6 +1284,7 @@ export type OrganizationUncheckedUpdateWithoutProjectsInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutOrganizationNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutActiveOrganizationNestedInput;
+	categoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutOrganizationNestedInput;
 	lastActiveUsers?: Prisma.UserUncheckedUpdateManyWithoutLastActiveOrganizationNestedInput;
 };
 
@@ -1149,6 +1298,7 @@ export type OrganizationCountOutputType = {
 	inviteLinks: number;
 	sessions: number;
 	projects: number;
+	categoryPresets: number;
 	lastActiveUsers: number;
 };
 
@@ -1160,6 +1310,7 @@ export type OrganizationCountOutputTypeSelect<
 	inviteLinks?: boolean | OrganizationCountOutputTypeCountInviteLinksArgs;
 	sessions?: boolean | OrganizationCountOutputTypeCountSessionsArgs;
 	projects?: boolean | OrganizationCountOutputTypeCountProjectsArgs;
+	categoryPresets?: boolean | OrganizationCountOutputTypeCountCategoryPresetsArgs;
 	lastActiveUsers?: boolean | OrganizationCountOutputTypeCountLastActiveUsersArgs;
 };
 
@@ -1223,6 +1374,15 @@ export type OrganizationCountOutputTypeCountProjectsArgs<
 /**
  * OrganizationCountOutputType without action
  */
+export type OrganizationCountOutputTypeCountCategoryPresetsArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	where?: Prisma.CategoryPresetWhereInput;
+};
+
+/**
+ * OrganizationCountOutputType without action
+ */
 export type OrganizationCountOutputTypeCountLastActiveUsersArgs<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
@@ -1245,6 +1405,7 @@ export type OrganizationSelect<
 		inviteLinks?: boolean | Prisma.Organization$inviteLinksArgs<ExtArgs>;
 		sessions?: boolean | Prisma.Organization$sessionsArgs<ExtArgs>;
 		projects?: boolean | Prisma.Organization$projectsArgs<ExtArgs>;
+		categoryPresets?: boolean | Prisma.Organization$categoryPresetsArgs<ExtArgs>;
 		lastActiveUsers?: boolean | Prisma.Organization$lastActiveUsersArgs<ExtArgs>;
 		_count?: boolean | Prisma.OrganizationCountOutputTypeDefaultArgs<ExtArgs>;
 	},
@@ -1305,6 +1466,7 @@ export type OrganizationInclude<
 	inviteLinks?: boolean | Prisma.Organization$inviteLinksArgs<ExtArgs>;
 	sessions?: boolean | Prisma.Organization$sessionsArgs<ExtArgs>;
 	projects?: boolean | Prisma.Organization$projectsArgs<ExtArgs>;
+	categoryPresets?: boolean | Prisma.Organization$categoryPresetsArgs<ExtArgs>;
 	lastActiveUsers?: boolean | Prisma.Organization$lastActiveUsersArgs<ExtArgs>;
 	_count?: boolean | Prisma.OrganizationCountOutputTypeDefaultArgs<ExtArgs>;
 };
@@ -1325,6 +1487,7 @@ export type $OrganizationPayload<
 		inviteLinks: Prisma.$InviteLinkPayload<ExtArgs>[];
 		sessions: Prisma.$SessionPayload<ExtArgs>[];
 		projects: Prisma.$ProjectPayload<ExtArgs>[];
+		categoryPresets: Prisma.$CategoryPresetPayload<ExtArgs>[];
 		lastActiveUsers: Prisma.$UserPayload<ExtArgs>[];
 	};
 	scalars: runtime.Types.Extensions.GetPayloadResult<
@@ -1923,6 +2086,17 @@ export interface Prisma__OrganizationClient<
 	): Prisma.PrismaPromise<
 		| runtime.Types.Result.GetResult<
 				Prisma.$ProjectPayload<ExtArgs>,
+				T,
+				"findMany",
+				GlobalOmitOptions
+		  >
+		| Null
+	>;
+	categoryPresets<T extends Prisma.Organization$categoryPresetsArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.Organization$categoryPresetsArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		| runtime.Types.Result.GetResult<
+				Prisma.$CategoryPresetPayload<ExtArgs>,
 				T,
 				"findMany",
 				GlobalOmitOptions
@@ -2529,6 +2703,33 @@ export type Organization$projectsArgs<
 	take?: number;
 	skip?: number;
 	distinct?: Prisma.ProjectScalarFieldEnum | Prisma.ProjectScalarFieldEnum[];
+};
+
+/**
+ * Organization.categoryPresets
+ */
+export type Organization$categoryPresetsArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the CategoryPreset
+	 */
+	select?: Prisma.CategoryPresetSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the CategoryPreset
+	 */
+	omit?: Prisma.CategoryPresetOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.CategoryPresetInclude<ExtArgs> | null;
+	where?: Prisma.CategoryPresetWhereInput;
+	orderBy?:
+		Prisma.CategoryPresetOrderByWithRelationInput | Prisma.CategoryPresetOrderByWithRelationInput[];
+	cursor?: Prisma.CategoryPresetWhereUniqueInput;
+	take?: number;
+	skip?: number;
+	distinct?: Prisma.CategoryPresetScalarFieldEnum | Prisma.CategoryPresetScalarFieldEnum[];
 };
 
 /**

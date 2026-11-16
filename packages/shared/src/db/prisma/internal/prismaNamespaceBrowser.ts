@@ -55,6 +55,7 @@ export const ModelName = {
 	DeviceCode: "DeviceCode",
 	Marker: "Marker",
 	Category: "Category",
+	CategoryPreset: "CategoryPreset",
 	Response: "Response",
 	Media: "Media",
 	MediaFile: "MediaFile",
@@ -197,6 +198,18 @@ export const CategoryScalarFieldEnum = {
 
 export type CategoryScalarFieldEnum =
 	(typeof CategoryScalarFieldEnum)[keyof typeof CategoryScalarFieldEnum];
+
+export const CategoryPresetScalarFieldEnum = {
+	id: "id",
+	name: "name",
+	categories: "categories",
+	createdAt: "createdAt",
+	organizationId: "organizationId",
+	createdById: "createdById",
+} as const;
+
+export type CategoryPresetScalarFieldEnum =
+	(typeof CategoryPresetScalarFieldEnum)[keyof typeof CategoryPresetScalarFieldEnum];
 
 export const ResponseScalarFieldEnum = {
 	markerId: "markerId",
@@ -427,6 +440,12 @@ export const SortOrder = {
 } as const;
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder];
+
+export const JsonNullValueInput = {
+	JsonNull: JsonNull,
+} as const;
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
 
 export const NullableJsonNullValueInput = {
 	DbNull: DbNull,

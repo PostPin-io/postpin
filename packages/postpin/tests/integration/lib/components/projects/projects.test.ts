@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { isHttpError } from "@sveltejs/kit";
 import { Role } from "@postpin-io/shared/db/enums";
+import { DEFAULT_CATEGORIES } from "@postpin-io/shared/logic/category-presets";
 import {
 	createProject,
 	deleteProject,
@@ -37,11 +38,16 @@ describe("createProject", () => {
 		},
 	);
 
-	it("creates no categories with the project", async () => {
-		await signInAs(w.org, OWNER);
-		await createProject({ name: "Empty" });
-		const p = await prisma.project.findFirstOrThrow({ where: { name: "Empty" } });
-		expect(await prisma.category.count({ where: { projectId: p.id } })).toBe(0);
+	it("starts the project with the PostPin preset, created by the user", async () => {
+		const me = await signInAs(w.org, OWNER);
+		await createProject({ name: "Preset" });
+		const p = await prisma.project.findFirstOrThrow({ where: { name: "Preset" } });
+		const categories = await prisma.category.findMany({ where: { projectId: p.id } });
+		expect(categories.map((c) => ({ name: c.name, color: c.color }))).toEqual(
+			expect.arrayContaining([...DEFAULT_CATEGORIES]),
+		);
+		expect(categories).toHaveLength(DEFAULT_CATEGORIES.length);
+		expect(categories.every((c) => c.createdById === me.user.id)).toBe(true);
 	});
 
 	it("a member without any grant creates a project and gets a project grant on it", async () => {

@@ -62,6 +62,27 @@ model Category {
   @@map("category")
 }
 
+/// A reusable set of categories of an organization, saved from a project's categories. Outlives
+/// the project. The built-in presets live in code (shared/src/logic/category-presets.ts).
+model CategoryPreset {
+  id String @id @default(cuid())
+
+  name String
+  /// [{ name, color }], a copy: later changes to the project's categories don't reach the preset
+  categories Json
+
+  createdAt DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById String?
+
+  @@unique([organizationId, name])
+  @@map("category_preset")
+}
+
 model Response {
   marker   Marker @relation(fields: [markerId], references: [id], onDelete: Cascade)
   markerId String

@@ -3,6 +3,7 @@
 	import { clampToTimeline, frameFromInput } from "./timecode-input.ts";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 	import Clock from "@lucide/svelte/icons/clock";
+	import { timecodeFormat } from "./timecode-format.svelte.ts";
 
 	interface Props {
 		/** Absolute timeline frame */
@@ -12,6 +13,7 @@
 		startFrame: number;
 		/** Timeline length in frames; typed values are capped to the timeline */
 		frameCount: number;
+		/** Click to type a new value; otherwise the value is only shown */
 		editable?: boolean;
 		mobile?: boolean;
 		mobileLandscape?: boolean;
@@ -22,8 +24,7 @@
 		frameRate,
 		startFrame,
 		frameCount,
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		editable,
+		editable = false,
 		mobile = false,
 		mobileLandscape = false,
 	}: Props = $props();
@@ -42,7 +43,8 @@
 	let mobileDialog: HTMLDialogElement | null = $state(null);
 	let mobileInput = $state("");
 	let mobileError = $state(false);
-	let isTC = $state(true);
+	// Shared, so every timecode in the app switches together
+	const isTC = $derived(timecodeFormat.mode === "tc");
 
 	function openMobileInput() {
 		mobileInput = String(frame - startFrame);
@@ -81,9 +83,7 @@
 	function setTimecodeValue(input: string) {
 		try {
 			const parsed = parseTimecode(input, frameRate);
-			if (parsed != null) frame = clampToTimeline(parsed, startFrame, frameCount);
-			editingField = null;
-			inputField_TC?.blur();
+			commit(parsed);
 		} catch {
 			error = true;
 			inputField_TC?.focus();
@@ -93,14 +93,54 @@
 
 	function setFrameValue(input: string) {
 		try {
-			frame = clampToTimeline(frameFromInput(input, startFrame), startFrame, frameCount);
-			frameDraft = null;
-			editingField = null;
-			inputField_Frame?.blur();
+			commit(frameFromInput(input, startFrame));
 		} catch {
 			error = true;
 			inputField_Frame?.focus();
 			inputField_Frame?.select();
+		}
+	}
+
+	function commit(target: number | null) {
+		const next = target == null ? frame : clampToTimeline(target, startFrame, frameCount);
+		if (next !== frame) frame = next;
+		// Unchanged or clamped back: the field still holds what was typed
+		stopEditing();
+	}
+
+	/** Leaves the field and shows the real value again */
+	function stopEditing() {
+		const field = inputField_TC ?? inputField_Frame;
+		editingField = null;
+		frameDraft = null;
+		error = false;
+		if (inputField_TC) inputField_TC.value = formatTimecode(frame, frameRate);
+		if (inputField_Frame) inputField_Frame.value = String(frame - startFrame);
+		field?.blur();
+	}
+
+	// Leaving the field saves a valid value and drops an invalid one, so focus is never trapped
+	function commitOnBlur(field: "editing_TC" | "editingFrame", input: string) {
+		if (editingField !== field) return;
+		try {
+			commit(
+				field === "editing_TC"
+					? parseTimecode(input, frameRate)
+					: frameFromInput(input, startFrame),
+			);
+		} catch {
+			stopEditing();
+		}
+	}
+
+	function handleKey(e: KeyboardEvent, set: (input: string) => void) {
+		error = false;
+		if (e.key === "Enter") {
+			set((e.currentTarget as HTMLInputElement).value);
+		} else if (e.key === "Escape") {
+			// Don't let Escape also clear the marker selection
+			e.stopPropagation();
+			stopEditing();
 		}
 	}
 
@@ -131,8 +171,11 @@
 		</button>
 	{:else if isTC}
 		<span>
-			<button title="click to switch to Frame" class="cursor-pointer" onclick={() => (isTC = false)}
-				>TC</button
+			<button
+				type="button"
+				title="Click to switch to frames"
+				class="cursor-pointer"
+				onclick={() => timecodeFormat.toggle()}>TC</button
 			></span
 		>
 		<input
@@ -143,23 +186,23 @@
 			class="box-content w-[11ch] border-0 bg-transparent px-1 py-0 outline-none [font:inherit]
                        {editingField == 'editing_TC' || error
 				? 'rounded-sm ring-1'
-				: 'cursor-pointer'} {error ? 'ring-red-500' : 'ring-primary'}"
+				: editable
+					? 'cursor-pointer'
+					: 'cursor-default'} {error ? 'ring-red-500' : 'ring-primary'}"
+			tabindex={editable ? 0 : -1}
 			onclick={() => {
-				editingField = "editing_TC";
+				if (editable) editingField = "editing_TC";
 			}}
-			onblur={() => {
-				setTimecodeValue(inputField_TC?.value ?? "");
-			}}
-			onkeydown={(e) => {
-				error = false;
-				if (e.key === "Enter" || e.key === "Escape") {
-					setTimecodeValue(inputField_TC?.value ?? "");
-				}
-			}}
+			onblur={(e) => commitOnBlur("editing_TC", e.currentTarget.value)}
+			onkeydown={(e) => handleKey(e, setTimecodeValue)}
 		/>
 	{:else}
 		<span>
-			<button title="click to switch to TC" class="cursor-pointer" onclick={() => (isTC = true)}
+			<button
+				type="button"
+				title="Click to switch to timecode"
+				class="cursor-pointer"
+				onclick={() => timecodeFormat.toggle()}
 				>F
 			</button></span
 		>
@@ -176,19 +219,15 @@
 			class="box-content border-0 bg-transparent px-1 py-0 outline-none [font:inherit]
                        {editingField == 'editingFrame' || error
 				? 'rounded-sm ring-1'
-				: 'cursor-pointer'} {error ? 'ring-red-500' : 'ring-primary'}"
+				: editable
+					? 'cursor-pointer'
+					: 'cursor-default'} {error ? 'ring-red-500' : 'ring-primary'}"
+			tabindex={editable ? 0 : -1}
 			onclick={() => {
-				editingField = "editingFrame";
+				if (editable) editingField = "editingFrame";
 			}}
-			onblur={() => {
-				setFrameValue(inputField_Frame?.value ?? "");
-			}}
-			onkeydown={(e) => {
-				error = false;
-				if (e.key === "Enter" || e.key === "Escape") {
-					setFrameValue(inputField_Frame?.value ?? "");
-				}
-			}}
+			onblur={(e) => commitOnBlur("editingFrame", e.currentTarget.value)}
+			onkeydown={(e) => handleKey(e, setFrameValue)}
 		/>
 	{/if}
 </div>

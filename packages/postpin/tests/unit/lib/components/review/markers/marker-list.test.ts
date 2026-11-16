@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	filterMarkers,
+	markerDateFormat,
 	searchMarkers,
 	selectRange,
 	sortMarkers,
@@ -51,6 +52,15 @@ describe("sortMarkers", () => {
 		expect(ids(sortMarkers(list, field, dir))).toEqual(expected);
 	});
 
+	it("sorts guest markers by the guest's name", () => {
+		const mixed = [
+			{ ...m("member", { author: { name: "Mia" } }), guest: null },
+			{ ...m("guest"), guest: { name: "Fritz" } },
+			{ ...m("other", { author: { name: "Zoe" } }), guest: null },
+		];
+		expect(ids(sortMarkers(mixed, "user", "asc"))).toEqual(["guest", "member", "other"]);
+	});
+
 	it("accepts Date objects as well as strings", () => {
 		const dated = [m("x", { frame: 0 }), { ...m("y"), updatedAt: new Date("2027-01-01") }];
 		expect(ids(sortMarkers(dated as never[], "updatedAt", "desc"))).toEqual(["y", "x"]);
@@ -75,6 +85,19 @@ describe("searchMarkers", () => {
 		expect(ids("warm")).toEqual(["1"]);
 		expect(ids("  intro ")).toEqual(["2"]);
 		expect(ids("V2")).toEqual(["3"]);
+	});
+
+	it("finds the author, a guest's name and the creation date as the list shows it", () => {
+		const created = new Date("2026-11-14T10:00:00Z");
+		const people = [
+			{ id: "m", name: "", responses: [], author: { name: "Mia Muster" }, guest: null },
+			{ id: "g", name: "", responses: [], author: null, guest: { name: "Fritz" } },
+			{ id: "d", name: "", responses: [], createdAt: created },
+		];
+		const found = (q: string) => searchMarkers(people, q).map((x) => x.id);
+		expect(found("muster")).toEqual(["m"]);
+		expect(found("fritz")).toEqual(["g"]);
+		expect(found(markerDateFormat.format(created))).toEqual(["d"]);
 	});
 
 	it("an empty query matches everything", () => {

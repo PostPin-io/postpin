@@ -14,7 +14,7 @@
 	import CircleArrowLeft from "@lucide/svelte/icons/circle-arrow-left";
 	import type { ReviewMarker } from "./types";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
-	import { formatTimecode } from "@postpin-io/shared/logic/timecode";
+	import { timecodeFormat } from "../timecode-format.svelte.ts";
 	import { lastFrameOf } from "@postpin-io/shared/logic/ranges";
 	import MoveHorizontal from "@lucide/svelte/icons/move-horizontal";
 	import Diamond from "@lucide/svelte/icons/diamond";
@@ -303,8 +303,12 @@
 		card-body p grow -->
 		{#if marker.duration > 0}
 			<div class="-mt-1 font-mono text-xs text-base-content/60" title="In – Out (duration)">
-				{formatTimecode(marker.frame, frameRate)} – {formatTimecode(lastFrameOf(marker), frameRate)}
-				({formatTimecode(marker.duration, frameRate)})
+				{timecodeFormat.position(marker.frame, frameRate, startFrame)} – {timecodeFormat.position(
+					lastFrameOf(marker),
+					frameRate,
+					startFrame,
+				)}
+				({timecodeFormat.length(marker.duration, frameRate)})
 			</div>
 		{/if}
 		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->

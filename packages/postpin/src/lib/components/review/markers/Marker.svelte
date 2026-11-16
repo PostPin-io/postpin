@@ -3,6 +3,11 @@
 	import MessageSquareReply from "@lucide/svelte/icons/message-square-reply";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
 	import ChevronRight from "@lucide/svelte/icons/chevron-right";
+	import ChevronUp from "@lucide/svelte/icons/chevron-up";
+	import Locate from "@lucide/svelte/icons/locate";
+	import UserRound from "@lucide/svelte/icons/user-round";
+	import RangeEdgeIcon from "../RangeEdgeIcon.svelte";
+	import { markerDateFormat, markerDateTimeFormat } from "./marker-list.ts";
 	import { getResponses } from "./markers.remote";
 	import Timecode from "../Timecode.svelte";
 	import CategoryBadge from "../../categories/CategoryBadge.svelte";
@@ -13,6 +18,11 @@
 
 	interface Props {
 		active?: boolean;
+		/** Cut with ⌘X, waiting to be pasted elsewhere */
+		cut?: boolean;
+		/** Description, responses and details are shown */
+		expanded?: boolean;
+		onexpand?: (expanded: boolean) => void;
 		/** The playhead is inside this range */
 		playing?: boolean;
 		onselect?: (frame: number) => void;
@@ -38,6 +48,9 @@
 	let {
 		marker,
 		active = false,
+		cut = false,
+		expanded = false,
+		onexpand,
 		playing = false,
 		onselect,
 		frameRate,
@@ -57,18 +70,23 @@
 	const getShare = useShare();
 	const share = $derived(getShare());
 
-	let isOpen = $state(false);
 	let responsesCollapsed = $state(false);
 
-	// Responses are only fetched while the marker is expanded
-	// Responses are only fetched while the marker is expanded, and never for guests
-	let responses = $derived(isOpen && !share ? await getResponses(marker.id) : []);
+	// Only fetched while expanded and when there are any; never for guests.
+	// Not awaited: expanding a marker must not suspend the whole list
+	const responsesQuery = $derived(
+		expanded && !share && marker.responses.length > 0 ? getResponses(marker.id) : null,
+	);
+	const responses = $derived(responsesQuery?.current ?? []);
 
-	const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
-		dateStyle: "medium",
-		timeStyle: "short",
-	});
-	const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "short" });
+	// A range shows one end at a time; the icon in front switches between in and out
+	let showOut = $state(false);
+
+	// Shared with the search, so a date typed as shown here is found
+	const dateTimeFormat = markerDateTimeFormat;
+	const dateFormat = markerDateFormat;
+	// Narrow cards: just the year, the full date stays in the tooltip
+	const yearFormat = new Intl.DateTimeFormat(undefined, { year: "numeric" });
 
 	// Phones: the author as initials ("Laurenz Jänsch" → "LJ", "Laurenz" → "LA"), full name as tooltip
 	const authorName = $derived(marker.guest?.name ?? marker.author?.name ?? "Deleted User");
@@ -77,22 +95,6 @@
 		const letters = parts.length > 1 ? parts[0][0] + parts[1][0] : parts[0].slice(0, 2);
 		return letters.toUpperCase();
 	});
-
-	export function toggleCollapse() {
-		isOpen = !isOpen;
-	}
-
-	export function open() {
-		isOpen = true;
-	}
-
-	export function collapse() {
-		isOpen = false;
-	}
-
-	export function isExpanded() {
-		return isOpen;
-	}
 
 	function handleClick(e: MouseEvent) {
 		if (e.shiftKey) {
@@ -111,15 +113,22 @@
 		}
 	}
 
-	// Shift/cmd-clicks select markers, not text
+	// Shift/cmd-clicks select markers and double clicks expand them, neither selects text
 	function handleMousedown(e: MouseEvent) {
-		if (e.shiftKey || e.metaKey) e.preventDefault();
+		if (e.shiftKey || e.metaKey || e.detail > 1) e.preventDefault();
+	}
+
+	// The first click already selected it; a double click opens or closes it
+	function handleDblclick(e: MouseEvent) {
+		if (e.shiftKey || e.metaKey || e.altKey) return;
+		onexpand?.(!expanded);
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
+		// Space stays with the player (play/pause), so one can keep watching while picking markers
 		if (e.target === e.currentTarget && e.key === "Enter") {
 			e.preventDefault();
-			onselect?.(marker.frame);
+			onexpand?.(!expanded);
 		}
 	}
 </script>
@@ -128,21 +137,6 @@
 	<CategoryBadge category={marker.category} class={classes} />
 {/snippet}
 
-{#snippet checkIcon()}
-	<svg
-		xmlns="http://www.w3.org/2000/svg"
-		viewBox="0 0 20 20"
-		fill="currentColor"
-		class="h-5 w-5"
-		aria-hidden="true"
-	>
-		<path
-			fill-rule="evenodd"
-			d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-			clip-rule="evenodd"
-		/>
-	</svg>
-{/snippet}
 {#if mobile}
 	<!-- Tap the row to jump there, the pencil to edit and respond -->
 	<article
@@ -187,150 +181,204 @@
 		</button>
 	</article>
 {:else}
+	<!-- A click selects the marker; the chevron (or Enter) expands it -->
 	<!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
 	<article
-		class="card mx-1 max-w-full cursor-pointer overflow-hidden border bg-base-100 shadow-sm transition-colors hover:border-primary/60 {active
+		class="mx-1 max-w-full cursor-pointer overflow-hidden rounded-box border border-l-4 bg-base-100 shadow-sm transition-[color,border-color,opacity] hover:border-primary/60 {cut
+			? 'opacity-50'
+			: ''} {active
 			? 'border-primary ring-1 ring-primary'
 			: playing
 				? 'border-base-content/40'
 				: 'border-base-300'}"
+		style:border-left-color={marker.category.color}
+		data-marker-id={marker.id}
 		role="button"
 		tabindex="0"
 		aria-pressed={active}
+		title={cut ? "Cut – paste with ⌘V, Esc to cancel" : undefined}
 		onclick={handleClick}
+		ondblclick={handleDblclick}
 		onmousedown={handleMousedown}
 		onkeydown={handleKeydown}
 	>
-		<details
-			class="group collapse-arrow collapse border border-l-4 border-base-300 bg-base-100"
-			style:border-left-color={marker.category.color}
-			bind:open={isOpen}
-		>
-			<summary class="collapse-title flex items-center gap-2 px-3 py-3 font-semibold">
+		<!-- items-start: with a title over several lines the buttons stay at the top -->
+		<div class="flex items-start gap-1 py-1.5 pr-1.5 pl-3 font-semibold">
+			<div class="flex min-h-8 min-w-0 flex-1 items-center">
 				{#if marker.name?.trim()}
-					<div class="max-w-xs truncate text-xs group-open:max-w-none group-open:whitespace-normal">
+					<!-- anywhere: a long word without spaces wraps too, instead of pushing the buttons out -->
+					<div class="text-xs {expanded ? '[overflow-wrap:anywhere]' : 'max-w-xs truncate'}">
 						{marker.name}
 					</div>
 				{:else}
 					{@render categoryBadge("badge-md px-3 font-semibold")}
 				{/if}
-			</summary>
+			</div>
+			<button
+				type="button"
+				class="btn btn-square btn-ghost btn-sm"
+				title="Press alt + click to jump to marker"
+				onclick={(e) => {
+					e.stopPropagation();
+					onselect?.(marker.frame);
+				}}
+			>
+				<Locate size={16} />
+			</button>
+			<button
+				type="button"
+				class="btn btn-square btn-ghost btn-sm"
+				title={expanded ? "Collapse" : "Expand"}
+				aria-label={expanded ? "Collapse marker" : "Expand marker"}
+				aria-expanded={expanded}
+				onclick={(e) => {
+					e.stopPropagation();
+					onexpand?.(!expanded);
+				}}
+			>
+				{#if expanded}<ChevronUp size={16} />{:else}<ChevronDown size={16} />{/if}
+			</button>
+		</div>
 
-			<div class="collapse-content text-sm">
-				<div class="card-body gap-3 p-3">
-					{#if marker.description}
-						<p class="text-xs leading-snug whitespace-pre-wrap text-base-content/75">
-							{marker.description}
-						</p>
-					{/if}
+		{#if expanded}
+			<div class="flex flex-col gap-3 px-3 pb-3 text-sm">
+				{#if marker.description}
+					<p class="text-xs leading-snug whitespace-pre-wrap text-base-content/75">
+						{marker.description}
+					</p>
+				{/if}
 
-					{#if responses.length > 0}
+				{#if responses.length > 0}
+					<button
+						type="button"
+						class="flex items-center gap-1 self-start text-xs font-semibold text-base-content/70 hover:text-base-content"
+						aria-expanded={!responsesCollapsed}
+						onclick={(e) => {
+							e.stopPropagation();
+							responsesCollapsed = !responsesCollapsed;
+						}}
+					>
+						{#if responsesCollapsed}<ChevronRight size={14} />{:else}<ChevronDown size={14} />{/if}
+						Responses ({responses.length})
+					</button>
+				{/if}
+				{#if responses.length > 0 && !responsesCollapsed}
+					<ol class="w-full" aria-label="Responses">
+						{#each responses as response, index (response.id)}
+							{@const isLast = index === responses.length - 1}
+							<li class="relative flex w-full gap-3 {isLast ? '' : 'pb-3'}">
+								<!-- Connector line to the next response -->
+								{#if !isLast}
+									<span
+										class="absolute top-7 -bottom-2 left-2.5 w-px -translate-x-1/2 bg-base-300"
+										aria-hidden="true"
+									></span>
+								{/if}
+
+								<span class="relative z-10 mt-2 shrink-0 bg-base-100 text-base-content/60">
+									<UserRound size={20} aria-hidden="true" />
+								</span>
+
+								<div
+									class="min-w-0 flex-1 rounded-box border border-base-300 bg-base-200/40 px-3 py-2"
+								>
+									<p class="text-xs break-words whitespace-pre-wrap">{response.content}</p>
+									<div class="mt-1 text-[11px] text-base-content/60">
+										{response.author?.name ?? "Deleted User"} · {dateTimeFormat.format(
+											response.createdAt,
+										)}
+									</div>
+								</div>
+							</li>
+						{/each}
+					</ol>
+				{/if}
+				{#if !share}
+					<div class="flex justify-end">
 						<button
 							type="button"
-							class="flex items-center gap-1 self-start text-xs font-semibold text-base-content/70 hover:text-base-content"
-							aria-expanded={!responsesCollapsed}
+							class="btn btn-ghost btn-xs"
 							onclick={(e) => {
 								e.stopPropagation();
-								responsesCollapsed = !responsesCollapsed;
+								onrespond?.();
 							}}
 						>
-							{#if responsesCollapsed}<ChevronRight size={14} />{:else}<ChevronDown
-									size={14}
-								/>{/if}
-							Responses ({responses.length})
+							<MessageSquareReply size={14} />
+							Respond
 						</button>
-					{/if}
-					{#if responses.length > 0 && !responsesCollapsed}
-						<ol class="w-full" aria-label="Responses">
-							{#each responses as response, index (response.id)}
-								{@const isLast = index === responses.length - 1}
-								<li class="relative flex w-full gap-3 {isLast ? '' : 'pb-3'}">
-									<!-- Connector line to the next response -->
-									{#if !isLast}
-										<span
-											class="absolute top-7 -bottom-2 left-2.5 w-px -translate-x-1/2 bg-base-300"
-											aria-hidden="true"
-										></span>
-									{/if}
+					</div>
+				{/if}
+				<div
+					class="@container flex items-center justify-between gap-3 border-t border-base-300 pt-2 text-xs text-base-content/60"
+				>
+					<!-- Getting narrower: the author becomes initials first, then the date just the year -->
+					<div class="flex min-w-0 items-center gap-3">
+						{#if marker.name?.trim()}
+							<span class="flex max-w-28 min-w-0 shrink">
+								{@render categoryBadge("badge-sm p-0 px-2")}
+							</span>
+						{/if}
 
-									<span class="relative z-10 mt-2 shrink-0 bg-base-100 text-primary">
-										{@render checkIcon()}
-									</span>
+						<span class="truncate @max-md:hidden">By {authorName}</span>
+						<span class="shrink-0 @md:hidden" title={authorName}>{authorInitials}</span>
 
-									<div
-										class="min-w-0 flex-1 rounded-box border border-base-300 bg-base-200/40 px-3 py-2"
-									>
-										<p class="text-xs break-words whitespace-pre-wrap">{response.content}</p>
-										<div class="mt-1 text-[11px] text-base-content/60">
-											{response.author?.name ?? "Deleted User"} · {dateTimeFormat.format(
-												response.createdAt,
-											)}
-										</div>
-									</div>
-								</li>
-							{/each}
-						</ol>
-					{/if}
-					{#if !share}
-						<div class="flex justify-end">
+						<span
+							class="shrink-0 font-normal text-base-content/60 tabular-nums"
+							title={dateTimeFormat.format(marker.createdAt)}
+						>
+							<span class="@max-xs:hidden">{dateFormat.format(marker.createdAt)}</span>
+							<span class="@xs:hidden">{yearFormat.format(marker.createdAt)}</span>
+						</span>
+					</div>
+
+					<!-- Editing the timecode must not select the marker -->
+					<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+					<div
+						class="flex shrink-0 items-center gap-1 font-mono text-[11px]"
+						onclick={(e) => e.stopPropagation()}
+					>
+						{#if marker.duration > 0}
 							<button
 								type="button"
-								class="btn btn-outline btn-xs"
-								onclick={(e) => {
-									e.stopPropagation();
-									onrespond?.();
-								}}
+								class="cursor-pointer opacity-80 hover:opacity-100"
+								title={showOut
+									? "Range end – click to show the start"
+									: "Range start – click to show the end"}
+								aria-label={showOut ? "Show range start" : "Show range end"}
+								onclick={() => (showOut = !showOut)}
 							>
-								<MessageSquareReply size={14} />
-								Respond
+								<!-- The same half diamonds as on the timeline -->
+								<RangeEdgeIcon
+									edge={showOut ? "end" : "start"}
+									size={12}
+									fill={marker.category.color}
+									strokeWidth={0}
+								/>
 							</button>
-						</div>
-					{/if}
-					<div
-						class="flex items-center justify-between gap-3 border-t border-base-300 pt-2 text-xs text-base-content/60"
-					>
-						<div class="flex min-w-0 items-center gap-3">
-							{#if marker.name?.trim()}
-								{@render categoryBadge("badge-sm p-0 px-2")}
-							{/if}
-
-							{#if marker.guest}
-								<span class="truncate">By {marker.guest.name}</span>
-								<span class="badge badge-ghost badge-xs">Guest</span>
-							{:else}
-								<span class="truncate">By {marker.author?.name ?? "Deleted User"}</span>
-							{/if}
-
-							<span class="font-normal text-base-content/60 tabular-nums">
-								{dateFormat.format(marker.createdAt)}
-							</span>
-						</div>
-
-						<span class="shrink-0 truncate font-mono text-[11px]" title={marker.frame.toString()}>
+						{/if}
+						{#if showOut && marker.duration > 0}
+							<Timecode
+								bind:frame={
+									() => lastFrameOf(marker),
+									(end) => onresize?.(Math.max(end - marker.frame + 1, 1))
+								}
+								{frameRate}
+								{startFrame}
+								{frameCount}
+								editable={marker.canUpdate}
+							/>
+						{:else}
 							<Timecode
 								bind:frame={() => marker.frame, (f) => onreposition?.(f)}
 								{frameRate}
 								{startFrame}
 								{frameCount}
-								editable={true}
+								editable={marker.canUpdate}
 							/>
-							{#if marker.duration > 0}
-								–
-								<Timecode
-									bind:frame={
-										() => lastFrameOf(marker),
-										(end) => onresize?.(Math.max(end - marker.frame + 1, 1))
-									}
-									{frameRate}
-									{startFrame}
-									{frameCount}
-									editable={true}
-								/>
-							{/if}
-						</span>
+						{/if}
 					</div>
 				</div>
 			</div>
-		</details>
+		{/if}
 	</article>
 {/if}

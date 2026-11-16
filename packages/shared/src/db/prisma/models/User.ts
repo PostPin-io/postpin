@@ -260,6 +260,7 @@ export type UserWhereInput = {
 	createdShareLinks?: Prisma.ShareLinkListRelationFilter;
 	sentShareLinkMails?: Prisma.ShareLinkMailListRelationFilter;
 	createdCategories?: Prisma.CategoryListRelationFilter;
+	createdCategoryPresets?: Prisma.CategoryPresetListRelationFilter;
 	inviteLinks?: Prisma.InviteLinkListRelationFilter;
 };
 
@@ -286,6 +287,7 @@ export type UserOrderByWithRelationInput = {
 	createdShareLinks?: Prisma.ShareLinkOrderByRelationAggregateInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailOrderByRelationAggregateInput;
 	createdCategories?: Prisma.CategoryOrderByRelationAggregateInput;
+	createdCategoryPresets?: Prisma.CategoryPresetOrderByRelationAggregateInput;
 	inviteLinks?: Prisma.InviteLinkOrderByRelationAggregateInput;
 };
 
@@ -319,6 +321,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
 		createdShareLinks?: Prisma.ShareLinkListRelationFilter;
 		sentShareLinkMails?: Prisma.ShareLinkMailListRelationFilter;
 		createdCategories?: Prisma.CategoryListRelationFilter;
+		createdCategoryPresets?: Prisma.CategoryPresetListRelationFilter;
 		inviteLinks?: Prisma.InviteLinkListRelationFilter;
 	},
 	"id" | "email"
@@ -378,6 +381,7 @@ export type UserCreateInput = {
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -403,6 +407,7 @@ export type UserUncheckedCreateInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -428,6 +433,7 @@ export type UserUpdateInput = {
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -453,6 +459,7 @@ export type UserUncheckedUpdateInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -684,6 +691,34 @@ export type UserUpdateOneWithoutCreatedCategoriesNestedInput = {
 			Prisma.UserUpdateWithoutCreatedCategoriesInput
 		>,
 		Prisma.UserUncheckedUpdateWithoutCreatedCategoriesInput
+	>;
+};
+
+export type UserCreateNestedOneWithoutCreatedCategoryPresetsInput = {
+	create?: Prisma.XOR<
+		Prisma.UserCreateWithoutCreatedCategoryPresetsInput,
+		Prisma.UserUncheckedCreateWithoutCreatedCategoryPresetsInput
+	>;
+	connectOrCreate?: Prisma.UserCreateOrConnectWithoutCreatedCategoryPresetsInput;
+	connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneWithoutCreatedCategoryPresetsNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.UserCreateWithoutCreatedCategoryPresetsInput,
+		Prisma.UserUncheckedCreateWithoutCreatedCategoryPresetsInput
+	>;
+	connectOrCreate?: Prisma.UserCreateOrConnectWithoutCreatedCategoryPresetsInput;
+	upsert?: Prisma.UserUpsertWithoutCreatedCategoryPresetsInput;
+	disconnect?: Prisma.UserWhereInput | boolean;
+	delete?: Prisma.UserWhereInput | boolean;
+	connect?: Prisma.UserWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.UserUpdateToOneWithWhereWithoutCreatedCategoryPresetsInput,
+			Prisma.UserUpdateWithoutCreatedCategoryPresetsInput
+		>,
+		Prisma.UserUncheckedUpdateWithoutCreatedCategoryPresetsInput
 	>;
 };
 
@@ -1044,6 +1079,7 @@ export type UserCreateWithoutSessionsInput = {
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1068,6 +1104,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1120,6 +1157,7 @@ export type UserUpdateWithoutSessionsInput = {
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1144,6 +1182,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1168,6 +1207,7 @@ export type UserCreateWithoutAccountsInput = {
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1192,6 +1232,7 @@ export type UserUncheckedCreateWithoutAccountsInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1244,6 +1285,7 @@ export type UserUpdateWithoutAccountsInput = {
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1268,6 +1310,7 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1292,6 +1335,7 @@ export type UserCreateWithoutMarkersInput = {
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1316,6 +1360,7 @@ export type UserUncheckedCreateWithoutMarkersInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1368,6 +1413,7 @@ export type UserUpdateWithoutMarkersInput = {
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1392,6 +1438,7 @@ export type UserUncheckedUpdateWithoutMarkersInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1416,6 +1463,7 @@ export type UserCreateWithoutCreatedCategoriesInput = {
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1440,6 +1488,7 @@ export type UserUncheckedCreateWithoutCreatedCategoriesInput = {
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1492,6 +1541,7 @@ export type UserUpdateWithoutCreatedCategoriesInput = {
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1516,6 +1566,135 @@ export type UserUncheckedUpdateWithoutCreatedCategoriesInput = {
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+};
+
+export type UserCreateWithoutCreatedCategoryPresetsInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	email: string;
+	emailVerified?: boolean;
+	image?: string | null;
+	storageQuota?: bigint | number | null;
+	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
+	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
+	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
+	createdProjects?: Prisma.ProjectCreateNestedManyWithoutCreatorInput;
+	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
+	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
+	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
+	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
+	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
+	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+};
+
+export type UserUncheckedCreateWithoutCreatedCategoryPresetsInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	email: string;
+	emailVerified?: boolean;
+	image?: string | null;
+	storageQuota?: bigint | number | null;
+	lastActiveOrganizationId?: string | null;
+	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
+	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
+	accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput;
+	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
+	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
+	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
+	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
+	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+};
+
+export type UserCreateOrConnectWithoutCreatedCategoryPresetsInput = {
+	where: Prisma.UserWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.UserCreateWithoutCreatedCategoryPresetsInput,
+		Prisma.UserUncheckedCreateWithoutCreatedCategoryPresetsInput
+	>;
+};
+
+export type UserUpsertWithoutCreatedCategoryPresetsInput = {
+	update: Prisma.XOR<
+		Prisma.UserUpdateWithoutCreatedCategoryPresetsInput,
+		Prisma.UserUncheckedUpdateWithoutCreatedCategoryPresetsInput
+	>;
+	create: Prisma.XOR<
+		Prisma.UserCreateWithoutCreatedCategoryPresetsInput,
+		Prisma.UserUncheckedCreateWithoutCreatedCategoryPresetsInput
+	>;
+	where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutCreatedCategoryPresetsInput = {
+	where?: Prisma.UserWhereInput;
+	data: Prisma.XOR<
+		Prisma.UserUpdateWithoutCreatedCategoryPresetsInput,
+		Prisma.UserUncheckedUpdateWithoutCreatedCategoryPresetsInput
+	>;
+};
+
+export type UserUpdateWithoutCreatedCategoryPresetsInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	email?: Prisma.StringFieldUpdateOperationsInput | string;
+	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
+	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
+	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
+	createdProjects?: Prisma.ProjectUpdateManyWithoutCreatorNestedInput;
+	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
+	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
+	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
+	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
+	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
+	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutCreatedCategoryPresetsInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	email?: Prisma.StringFieldUpdateOperationsInput | string;
+	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
+	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
+	accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput;
+	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
+	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
+	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
+	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
+	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1540,6 +1719,7 @@ export type UserCreateWithoutResponsesInput = {
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1564,6 +1744,7 @@ export type UserUncheckedCreateWithoutResponsesInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1616,6 +1797,7 @@ export type UserUpdateWithoutResponsesInput = {
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1640,6 +1822,7 @@ export type UserUncheckedUpdateWithoutResponsesInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1664,6 +1847,7 @@ export type UserCreateWithoutLastActiveOrganizationInput = {
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1688,6 +1872,7 @@ export type UserUncheckedCreateWithoutLastActiveOrganizationInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1770,6 +1955,7 @@ export type UserCreateWithoutMembershipsInput = {
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1794,6 +1980,7 @@ export type UserUncheckedCreateWithoutMembershipsInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1846,6 +2033,7 @@ export type UserUpdateWithoutMembershipsInput = {
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1870,6 +2058,7 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1894,6 +2083,7 @@ export type UserCreateWithoutInvitationsInput = {
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1918,6 +2108,7 @@ export type UserUncheckedCreateWithoutInvitationsInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -1970,6 +2161,7 @@ export type UserUpdateWithoutInvitationsInput = {
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -1994,6 +2186,7 @@ export type UserUncheckedUpdateWithoutInvitationsInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -2019,6 +2212,7 @@ export type UserCreateWithoutInviteLinksInput = {
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 };
 
 export type UserUncheckedCreateWithoutInviteLinksInput = {
@@ -2043,6 +2237,7 @@ export type UserUncheckedCreateWithoutInviteLinksInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
 export type UserCreateOrConnectWithoutInviteLinksInput = {
@@ -2095,6 +2290,7 @@ export type UserUpdateWithoutInviteLinksInput = {
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutInviteLinksInput = {
@@ -2119,6 +2315,7 @@ export type UserUncheckedUpdateWithoutInviteLinksInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
 export type UserCreateWithoutCreatedGrantsInput = {
@@ -2142,6 +2339,7 @@ export type UserCreateWithoutCreatedGrantsInput = {
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -2166,6 +2364,7 @@ export type UserUncheckedCreateWithoutCreatedGrantsInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -2218,6 +2417,7 @@ export type UserUpdateWithoutCreatedGrantsInput = {
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -2242,6 +2442,7 @@ export type UserUncheckedUpdateWithoutCreatedGrantsInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -2266,6 +2467,7 @@ export type UserCreateWithoutCreatedProjectsInput = {
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -2290,6 +2492,7 @@ export type UserUncheckedCreateWithoutCreatedProjectsInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -2342,6 +2545,7 @@ export type UserUpdateWithoutCreatedProjectsInput = {
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -2366,6 +2570,7 @@ export type UserUncheckedUpdateWithoutCreatedProjectsInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -2390,6 +2595,7 @@ export type UserCreateWithoutUploadedExportsInput = {
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -2414,6 +2620,7 @@ export type UserUncheckedCreateWithoutUploadedExportsInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -2466,6 +2673,7 @@ export type UserUpdateWithoutUploadedExportsInput = {
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -2490,6 +2698,7 @@ export type UserUncheckedUpdateWithoutUploadedExportsInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -2514,6 +2723,7 @@ export type UserCreateWithoutCreatedShareLinksInput = {
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -2538,6 +2748,7 @@ export type UserUncheckedCreateWithoutCreatedShareLinksInput = {
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -2590,6 +2801,7 @@ export type UserUpdateWithoutCreatedShareLinksInput = {
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -2614,6 +2826,7 @@ export type UserUncheckedUpdateWithoutCreatedShareLinksInput = {
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -2638,6 +2851,7 @@ export type UserCreateWithoutSentShareLinkMailsInput = {
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -2662,6 +2876,7 @@ export type UserUncheckedCreateWithoutSentShareLinkMailsInput = {
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
 };
 
@@ -2714,6 +2929,7 @@ export type UserUpdateWithoutSentShareLinkMailsInput = {
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -2738,6 +2954,7 @@ export type UserUncheckedUpdateWithoutSentShareLinkMailsInput = {
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -2773,6 +2990,7 @@ export type UserUpdateWithoutLastActiveOrganizationInput = {
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -2797,6 +3015,7 @@ export type UserUncheckedUpdateWithoutLastActiveOrganizationInput = {
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
@@ -2828,6 +3047,7 @@ export type UserCountOutputType = {
 	createdShareLinks: number;
 	sentShareLinkMails: number;
 	createdCategories: number;
+	createdCategoryPresets: number;
 	inviteLinks: number;
 };
 
@@ -2846,6 +3066,7 @@ export type UserCountOutputTypeSelect<
 	createdShareLinks?: boolean | UserCountOutputTypeCountCreatedShareLinksArgs;
 	sentShareLinkMails?: boolean | UserCountOutputTypeCountSentShareLinkMailsArgs;
 	createdCategories?: boolean | UserCountOutputTypeCountCreatedCategoriesArgs;
+	createdCategoryPresets?: boolean | UserCountOutputTypeCountCreatedCategoryPresetsArgs;
 	inviteLinks?: boolean | UserCountOutputTypeCountInviteLinksArgs;
 };
 
@@ -2972,6 +3193,15 @@ export type UserCountOutputTypeCountCreatedCategoriesArgs<
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountCreatedCategoryPresetsArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	where?: Prisma.CategoryPresetWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountInviteLinksArgs<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
@@ -3004,6 +3234,7 @@ export type UserSelect<
 		createdShareLinks?: boolean | Prisma.User$createdShareLinksArgs<ExtArgs>;
 		sentShareLinkMails?: boolean | Prisma.User$sentShareLinkMailsArgs<ExtArgs>;
 		createdCategories?: boolean | Prisma.User$createdCategoriesArgs<ExtArgs>;
+		createdCategoryPresets?: boolean | Prisma.User$createdCategoryPresetsArgs<ExtArgs>;
 		inviteLinks?: boolean | Prisma.User$inviteLinksArgs<ExtArgs>;
 		_count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
 	},
@@ -3088,6 +3319,7 @@ export type UserInclude<
 	createdShareLinks?: boolean | Prisma.User$createdShareLinksArgs<ExtArgs>;
 	sentShareLinkMails?: boolean | Prisma.User$sentShareLinkMailsArgs<ExtArgs>;
 	createdCategories?: boolean | Prisma.User$createdCategoriesArgs<ExtArgs>;
+	createdCategoryPresets?: boolean | Prisma.User$createdCategoryPresetsArgs<ExtArgs>;
 	inviteLinks?: boolean | Prisma.User$inviteLinksArgs<ExtArgs>;
 	_count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
 };
@@ -3120,6 +3352,7 @@ export type $UserPayload<
 		createdShareLinks: Prisma.$ShareLinkPayload<ExtArgs>[];
 		sentShareLinkMails: Prisma.$ShareLinkMailPayload<ExtArgs>[];
 		createdCategories: Prisma.$CategoryPayload<ExtArgs>[];
+		createdCategoryPresets: Prisma.$CategoryPresetPayload<ExtArgs>[];
 		inviteLinks: Prisma.$InviteLinkPayload<ExtArgs>[];
 	};
 	scalars: runtime.Types.Extensions.GetPayloadResult<
@@ -3782,6 +4015,17 @@ export interface Prisma__UserClient<
 	): Prisma.PrismaPromise<
 		| runtime.Types.Result.GetResult<
 				Prisma.$CategoryPayload<ExtArgs>,
+				T,
+				"findMany",
+				GlobalOmitOptions
+		  >
+		| Null
+	>;
+	createdCategoryPresets<T extends Prisma.User$createdCategoryPresetsArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.User$createdCategoryPresetsArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		| runtime.Types.Result.GetResult<
+				Prisma.$CategoryPresetPayload<ExtArgs>,
 				T,
 				"findMany",
 				GlobalOmitOptions
@@ -4599,6 +4843,33 @@ export type User$createdCategoriesArgs<
 	take?: number;
 	skip?: number;
 	distinct?: Prisma.CategoryScalarFieldEnum | Prisma.CategoryScalarFieldEnum[];
+};
+
+/**
+ * User.createdCategoryPresets
+ */
+export type User$createdCategoryPresetsArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the CategoryPreset
+	 */
+	select?: Prisma.CategoryPresetSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the CategoryPreset
+	 */
+	omit?: Prisma.CategoryPresetOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.CategoryPresetInclude<ExtArgs> | null;
+	where?: Prisma.CategoryPresetWhereInput;
+	orderBy?:
+		Prisma.CategoryPresetOrderByWithRelationInput | Prisma.CategoryPresetOrderByWithRelationInput[];
+	cursor?: Prisma.CategoryPresetWhereUniqueInput;
+	take?: number;
+	skip?: number;
+	distinct?: Prisma.CategoryPresetScalarFieldEnum | Prisma.CategoryPresetScalarFieldEnum[];
 };
 
 /**
