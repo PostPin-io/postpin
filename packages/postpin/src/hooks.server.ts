@@ -61,7 +61,8 @@ const sessionHandler: Handle = async ({ event, resolve }) => {
 		});
 	}
 
-	const NO_ORG_PATHS = ["/dashboard", "/profile", "/admin"];
+	// /welcome: the tutorial, where a new account creates its first organization
+	const NO_ORG_PATHS = ["/dashboard", "/welcome", "/profile", "/admin"];
 	const allowedWithoutOrg =
 		isPublicPath ||
 		event.url.pathname.startsWith("/_app/") ||

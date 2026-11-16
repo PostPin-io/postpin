@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { commandKeyLabel, hasCommandKey } from "#lib/keyboard.ts";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 	import MessageSquareReply from "@lucide/svelte/icons/message-square-reply";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
@@ -100,7 +101,7 @@
 		if (e.shiftKey) {
 			e.preventDefault();
 			onrange?.();
-		} else if (e.metaKey) {
+		} else if (hasCommandKey(e)) {
 			// Multi-select instead of expanding the marker
 			e.preventDefault();
 			ontoggle?.();
@@ -115,12 +116,12 @@
 
 	// Shift/cmd-clicks select markers and double clicks expand them, neither selects text
 	function handleMousedown(e: MouseEvent) {
-		if (e.shiftKey || e.metaKey || e.detail > 1) e.preventDefault();
+		if (e.shiftKey || hasCommandKey(e) || e.detail > 1) e.preventDefault();
 	}
 
 	// The first click already selected it; a double click opens or closes it
 	function handleDblclick(e: MouseEvent) {
-		if (e.shiftKey || e.metaKey || e.altKey) return;
+		if (e.shiftKey || hasCommandKey(e) || e.altKey) return;
 		onexpand?.(!expanded);
 	}
 
@@ -196,7 +197,7 @@
 		role="button"
 		tabindex="0"
 		aria-pressed={active}
-		title={cut ? "Cut – paste with ⌘V, Esc to cancel" : undefined}
+		title={cut ? `Cut – paste with ${commandKeyLabel()}V, Esc to cancel` : undefined}
 		onclick={handleClick}
 		ondblclick={handleDblclick}
 		onmousedown={handleMousedown}

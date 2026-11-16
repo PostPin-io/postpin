@@ -1,5 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { isInsideOverlay, isPlainKey, isTypingTarget } from "#lib/keyboard.ts";
+import {
+	commandKeyLabel,
+	hasCommandKey,
+	isApplePlatform,
+	isInsideOverlay,
+	isPlainKey,
+	isTypingTarget,
+} from "#lib/keyboard.ts";
 
 /** Minimal Element stand-in: `closest` matches against a list of selectors this node or a parent matches */
 class FakeElement {
@@ -61,5 +68,29 @@ describe("isPlainKey", () => {
 	it("meta is allowed with allowMeta, ctrl/alt still are not", () => {
 		expect(isPlainKey(event(null, { metaKey: true }), { allowMeta: true })).toBe(true);
 		expect(isPlainKey(event(null, { ctrlKey: true }), { allowMeta: true })).toBe(false);
+	});
+});
+
+describe("command key", () => {
+	it.each(["MacIntel", "iPhone", "iPad"])("is ⌘ on %s", (platform) => {
+		expect(isApplePlatform(platform)).toBe(true);
+	});
+
+	it.each(["Win32", "Linux x86_64", ""])("is Ctrl on %s", (platform) => {
+		expect(isApplePlatform(platform)).toBe(false);
+	});
+
+	it("reads ⌘ on Apple keyboards and Ctrl elsewhere", () => {
+		const meta = { metaKey: true, ctrlKey: false };
+		const ctrl = { metaKey: false, ctrlKey: true };
+		expect(hasCommandKey(meta, true)).toBe(true);
+		expect(hasCommandKey(ctrl, true)).toBe(false); // Ctrl-click opens the context menu on a Mac
+		expect(hasCommandKey(ctrl, false)).toBe(true);
+		expect(hasCommandKey(meta, false)).toBe(false); // the Windows key
+	});
+
+	it("labels the key for the keyboard", () => {
+		expect(commandKeyLabel(true)).toBe("⌘");
+		expect(commandKeyLabel(false)).toBe("Ctrl+");
 	});
 });

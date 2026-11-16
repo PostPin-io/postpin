@@ -3,7 +3,7 @@
 	import { tick } from "svelte";
 	import { SvelteSet } from "svelte/reactivity";
 	import RouteOff from "@lucide/svelte/icons/route-off";
-	import { isTypingTarget } from "#lib/keyboard.ts";
+	import { hasCommandKey, isTypingTarget } from "#lib/keyboard.ts";
 	import Marker from "./Marker.svelte";
 	import UpdateMarker from "./UpdateMarker.svelte";
 	import ResponseMarker from "./ResponseMarker.svelte";
@@ -239,7 +239,7 @@
 	}
 
 	function deleteKeypress(event: KeyboardEvent) {
-		if (!event.metaKey || (event.key !== "Backspace" && event.key !== "Delete")) return;
+		if (!hasCommandKey(event) || (event.key !== "Backspace" && event.key !== "Delete")) return;
 		if (isTypingTarget(event)) return;
 
 		if (selectedMarkerIds.length > 1) {
@@ -262,7 +262,7 @@
 	}
 
 	function selectAllKeypress(event: KeyboardEvent) {
-		if (!event.metaKey || event.altKey || event.shiftKey) return;
+		if (!hasCommandKey(event) || event.altKey || event.shiftKey) return;
 		if (event.key !== "a" && event.key !== "A") return;
 		if (isTypingTarget(event) || visibleMarkers.length === 0) return;
 
@@ -285,7 +285,7 @@
 		// Copy and paste work across exports: team only
 		if (share) return;
 
-		if (!event.metaKey || event.altKey || event.shiftKey) return;
+		if (!hasCommandKey(event) || event.altKey || event.shiftKey) return;
 		const key = event.key.toLowerCase();
 		if (key !== "c" && key !== "x") return;
 		if (selectedMarkerIds.length === 0 || isTypingTarget(event)) return;
@@ -352,7 +352,7 @@
 		// Copy and paste work across exports: team only
 		if (share) return;
 
-		if (!event.metaKey || event.altKey || event.shiftKey) return;
+		if (!hasCommandKey(event) || event.altKey || event.shiftKey) return;
 		if (event.key !== "v" && event.key !== "V") return;
 		if (isTypingTarget(event)) return;
 		if (!readMarkerClipboard()) return;

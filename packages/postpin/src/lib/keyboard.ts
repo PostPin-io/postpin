@@ -17,3 +17,21 @@ export function isInsideOverlay(event: KeyboardEvent): boolean {
 export function isPlainKey(event: KeyboardEvent, { allowMeta = false } = {}): boolean {
 	return !event.ctrlKey && !event.altKey && (allowMeta || !event.metaKey);
 }
+
+/** Apple keyboards have ⌘ where others use Ctrl for shortcuts like copy and paste */
+export function isApplePlatform(
+	platform = typeof navigator === "undefined" ? "" : navigator.platform,
+) {
+	return /^(Mac|iPhone|iPad|iPod)/.test(platform);
+}
+
+/** ⌘ on Apple keyboards, Ctrl elsewhere: the modifier of copy, paste and the like */
+export function hasCommandKey(
+	event: Pick<KeyboardEvent | MouseEvent, "metaKey" | "ctrlKey">,
+	apple = isApplePlatform(),
+) {
+	return apple ? event.metaKey : event.ctrlKey;
+}
+
+/** How the command key is labelled on this keyboard */
+export const commandKeyLabel = (apple = isApplePlatform()) => (apple ? "⌘" : "Ctrl+");
