@@ -426,5 +426,5 @@ jobs:
           echo "{\"apiVersion\": $api_version}" > "$RUNNER_TEMP/api-version.json"
           prerelease=()
           if [[ "$TAG" == *-* ]]; then prerelease=(--prerelease); fi
-          gh release create "$TAG" deploy/compose.yml "$RUNNER_TEMP/env.example" "$RUNNER_TEMP/api-version.json" "$RUNNER_TEMP"/desktop/* \
+          gh release create "$TAG" deploy/compose.yml deploy/install.sh "$RUNNER_TEMP/env.example" "$RUNNER_TEMP/api-version.json" "$RUNNER_TEMP"/desktop/* \
             --title "$TAG" --generate-notes --verify-tag "${prerelease[@]}"
