@@ -295,6 +295,8 @@
 				</p>
 				<!-- the workflow at a glance, right under the slogan, wider than the text -->
 				<PipelineTimeline class="mt-10 hidden w-full max-w-5xl shrink-0 sm:block" />
+				<!-- on phones a closer view that follows the dot from station to station -->
+				<PipelineTimeline follow class="mt-8 w-full max-w-md shrink-0 sm:hidden" />
 				<p class="mt-8 text-sm text-base-content/60">
 					Free while in early access · Cloud or self-hosted · Open source
 				</p>
