@@ -47,6 +47,9 @@
 
 	let { header, titleBarInset = true, fetch }: Props = $props();
 
+	// The traffic lights sit left on macOS; Windows and Linux put their buttons right, see the header
+	const isMac = navigator.userAgent.includes("Macintosh");
+
 	const { nle, host } = getBridges();
 
 	type TimelineExport = GetExportsResponse["exports"][number];
@@ -426,16 +429,19 @@
 {:else}
 	<!-- Fills the window: the header stays put, only the content below it scrolls -->
 	<main class="@container flex h-screen flex-col">
+		<!-- h-12 matches the window buttons' overlay on Windows (TITLE_BAR_HEIGHT in plugin-electron),
+		     the end padding keeps our buttons out from under it (the env() falls back to 0 on macOS) -->
 		<header
 			class={[
-				"flex shrink-0 items-center border-t border-base-content/20 px-4 py-2 text-sm select-none [app-region:drag]",
-				titleBarInset && "ms-16",
+				"flex h-12 shrink-0 items-center border-t border-base-content/20 px-4 py-2 text-sm select-none [-webkit-app-region:drag] [app-region:drag]",
+				titleBarInset && isMac && "ms-16",
 			]}
+			style="padding-inline-end: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw) + 1rem)"
 		>
 			<button
 				type="button"
 				class="cursor-pointer
-			 items-center flex [app-region:no-drag] text-white"
+			 items-center flex [-webkit-app-region:no-drag] [app-region:no-drag] text-white"
 				onclick={() => host.openInBrowser("/")}
 			>
 				<PostPinLogo class="h-5 w-auto me-3" />
@@ -448,7 +454,7 @@
 				<!-- installs on quit anyway; restarting now would cut off a running render or upload -->
 				<button
 					type="button"
-					class="btn btn-ghost btn-sm text-primary [app-region:no-drag]"
+					class="btn btn-ghost btn-sm text-primary [-webkit-app-region:no-drag] [app-region:no-drag]"
 					title="Restart PostPin to install the update"
 					disabled={!!isBusy}
 					onclick={() => host.updater?.install()}
@@ -458,14 +464,14 @@
 			{/if}
 			<button
 				type="button"
-				class="btn btn-link btn-sm [app-region:no-drag]"
+				class="btn btn-link btn-sm [-webkit-app-region:no-drag] [app-region:no-drag]"
 				onclick={() => host.openInBrowser("/")}
 			>
 				<Globe size={14} />
 			</button>
 			<button
 				type="button"
-				class="btn btn-link btn-sm [app-region:no-drag]"
+				class="btn btn-link btn-sm [-webkit-app-region:no-drag] [app-region:no-drag]"
 				onclick={() => host.logout()}
 			>
 				<LogOut size={14} />
