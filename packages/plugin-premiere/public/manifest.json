@@ -8,6 +8,24 @@
 		"app": "premierepro",
 		"minVersion": "26.2.0"
 	},
+	"icons": [
+		{
+			"width": 24,
+			"height": 24,
+			"path": "icons/plugin-dark.png",
+			"scale": [1, 2],
+			"theme": ["darkest", "dark", "medium"],
+			"species": ["pluginList"]
+		},
+		{
+			"width": 24,
+			"height": 24,
+			"path": "icons/plugin-light.png",
+			"scale": [1, 2],
+			"theme": ["lightest", "light"],
+			"species": ["pluginList"]
+		}
+	],
 	"entrypoints": [
 		{
 			"type": "panel",
@@ -22,7 +40,25 @@
 			"preferredDockedSize": {
 				"width": 360,
 				"height": 600
-			}
+			},
+			"icon": [
+				{
+					"width": 23,
+					"height": 23,
+					"path": "icons/panel-dark.png",
+					"scale": [1, 2],
+					"theme": ["darkest", "dark", "medium"],
+					"species": ["toolbar"]
+				},
+				{
+					"width": 23,
+					"height": 23,
+					"path": "icons/panel-light.png",
+					"scale": [1, 2],
+					"theme": ["lightest", "light"],
+					"species": ["toolbar"]
+				}
+			]
 		}
 	],
 	"requiredPermissions": {
