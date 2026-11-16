@@ -34,15 +34,16 @@
 </script>
 
 {#if loading}
-	<main class="w-screen h-screen flex items-center justify-center">
+	<main class="w-screen h-screen flex items-center justify-center select-none">
 		{#if loginCode}
 			<div class="w-96 bg-base-100 text-center flex flex-col gap-4 p-8 rounded-lg shadow-lg">
 				<h2 class="font-bold">Continue in your browser</h2>
 				<p class="text-sm text-base-content/70">
 					Approve the sign-in in the browser window that just opened. If it didn't open, go to
-					<span class="font-semibold break-all">{loginCode.verificationUri}</span> and enter this code:
+					<span class="font-semibold break-all select-text">{loginCode.verificationUri}</span> and enter
+					this code:
 				</p>
-				<div class="rounded-box bg-base-200 py-4 font-mono text-2xl tracking-widest">
+				<div class="rounded-box bg-base-200 py-4 font-mono text-2xl tracking-widest select-all">
 					{formatLoginCode(loginCode.userCode)}
 				</div>
 				<span class="loading loading-md loading-spinner mx-auto"></span>
@@ -52,7 +53,7 @@
 		{/if}
 	</main>
 {:else}
-	<main class="w-screen h-screen flex items-center justify-center">
+	<main class="w-screen h-screen flex items-center justify-center select-none">
 		<div class="w-96 bg-base-100 text-center flex flex-col gap-4 p-8 rounded-lg shadow-lg">
 			<h2 class="font-bold">Login to PostPin</h2>
 			<p class="text-sm text-base-content/70 mb-2">Welcome to PostPin!</p>
@@ -75,7 +76,7 @@
 			{/if}
 
 			{#if errorMessage}
-				<div class="alert alert-error text-sm" role="alert">{errorMessage}</div>
+				<div class="alert alert-error text-sm select-text" role="alert">{errorMessage}</div>
 			{/if}
 
 			<button class="btn btn-block btn-primary" onclick={login}>Login</button>
