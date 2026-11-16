@@ -134,15 +134,15 @@ describe("importedMarkersText", () => {
 	it.each([
 		[
 			{ edl: 3, fcpxml: 0 },
-			{ title: "Markers from the EDL", count: "3 markers" },
+			{ title: "Marker Import", count: "3 markers" },
 		],
 		[
 			{ edl: 0, fcpxml: 1 },
-			{ title: "Markers from the FCPXML", count: "1 marker" },
+			{ title: "Marker Import", count: "1 marker" },
 		],
 		[
 			{ edl: 2, fcpxml: 2 },
-			{ title: "Markers from EDL and FCPXML", count: "4 markers" },
+			{ title: "Marker Import", count: "4 markers" },
 		],
 		[{ edl: 0, fcpxml: 0 }, null],
 		[null, null],

@@ -1,5 +1,6 @@
 {
 	"name": "@postpin-io/api-client-ts",
+	"license": "MIT",
 	"exports": {
 		".": {
 			"import": "./src/index.ts"
