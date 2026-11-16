@@ -601,6 +601,7 @@ function openWindow() {
 		preloadPath: path.join(__dirname, "preload.js"),
 		devServerUrl: DEV_SERVER_URL,
 		url: path.join(__dirname, "ui/index.html"),
+		theme: "dark",
 	});
 
 	exposeHostBridge(win, {

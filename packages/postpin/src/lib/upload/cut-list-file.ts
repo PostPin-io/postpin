@@ -108,19 +108,12 @@ export const cutListSummaryText = (s: ReturnType<typeof cutListSummary>) =>
 		.filter(Boolean)
 		.join(", ") || "Nothing";
 
-/**
- * Where an export's imported markers came from, for the review: "Markers from the EDL" and
- * "3 markers"; null without any
- */
+/** An export's imported markers, for the review: "Marker Import" and "3 markers"; null without any */
 export function importedMarkersText(counts: Record<keyof typeof CUT_LIST_FORMATS, number> | null) {
 	if (!counts) return null;
 	const total = counts.edl + counts.fcpxml;
 	if (total === 0) return null;
-	const from =
-		counts.edl > 0 && counts.fcpxml > 0
-			? "EDL and FCPXML"
-			: `the ${CUT_LIST_FORMATS[counts.edl > 0 ? "edl" : "fcpxml"]}`;
-	return { title: `Marker Import`, count: plural(total, "marker") };
+	return { title: "Marker Import", count: plural(total, "marker") };
 }
 
 /**

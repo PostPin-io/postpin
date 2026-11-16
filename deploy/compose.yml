@@ -1,6 +1,7 @@
 # PostPin for self-hosting. See docs/self-hosting.md.
 #
-#   cp env.example .env     # release asset; in the repository it's deploy/.env.example
+#   bash install.sh         # asks for hostnames, admin email and SMTP, writes .env
+#   or by hand: cp env.example .env (in the repository it's deploy/.env.example)
 #   docker compose up -d    # after filling in every change-me in .env
 #
 # App (port 3000) and S3 storage (port 9000) only listen on localhost; put your reverse proxy in

@@ -103,7 +103,8 @@ describe("ScreeningSession", () => {
 		session.push(state({ time: 0, quality: 720 }), FRAME);
 		expect(session.connected).toBe(false);
 		win.send({ type: "hello" });
-		await delivered();
+		// the first message over a fresh channel can take longer than delivered() on a busy CI runner
+		await vi.waitFor(() => expect(win.received).not.toHaveLength(0));
 
 		expect(win.received).toEqual([
 			{

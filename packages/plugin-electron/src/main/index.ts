@@ -2,7 +2,7 @@
 // Runs inside Resolve's Electron 36 as well, so don't use APIs newer than that.
 
 import type { NleBridge } from "@postpin-io/plugin-core/bridge";
-import { BrowserWindow, dialog, shell } from "electron";
+import { BrowserWindow, dialog, nativeTheme, shell } from "electron";
 import { stat } from "node:fs/promises";
 import { CommonAPI, NleAPI } from "../ipc/browser/PostPin";
 import { fromWireMarker, toWireCapabilities, toWireMarker } from "../wire";
@@ -25,10 +25,27 @@ export interface WindowOptions {
 	iconPath?: string;
 	width?: number;
 	height?: number;
+	// the page's daisyUI theme, so the window buttons on Windows and Linux match it:
+	// "system" for prefers-color-scheme, or the theme a page pins with data-theme (Resolve: "dark")
+	theme?: "system" | "light" | "dark";
 }
 
 export interface HostBridgeOptions extends AuthOptions {
 	ffmpegDir?: string;
+}
+
+// Height of the window buttons on Windows and Linux. Matches the plugin-core header (h-12) and
+// the drag strip, which pads its end by env(titlebar-area-*) so nothing slides under the buttons.
+const TITLE_BAR_HEIGHT = 48;
+
+// The overlay doesn't follow the page: without colors it's a system-colored (mostly white) box.
+// These are daisyUI's base-100 and base-content of the light and dark themes. "system" follows
+// prefers-color-scheme just like nativeTheme does.
+function titleBarOverlay(theme: WindowOptions["theme"]): Electron.TitleBarOverlay {
+	const dark = theme === "system" ? nativeTheme.shouldUseDarkColors : theme === "dark";
+	return dark
+		? { color: "#1d232a", symbolColor: "#ecf9ff", height: TITLE_BAR_HEIGHT }
+		: { color: "#ffffff", symbolColor: "#18181b", height: TITLE_BAR_HEIGHT };
 }
 
 export function createWindow({
@@ -39,6 +56,7 @@ export function createWindow({
 	iconPath,
 	width = 900,
 	height = 825,
+	theme = "system",
 }: WindowOptions) {
 	const win = new BrowserWindow({
 		title,
@@ -51,8 +69,14 @@ export function createWindow({
 		minHeight: 400,
 		titleBarStyle: "hidden",
 		trafficLightPosition: { x: 10, y: 18 },
-		...(process.platform !== "darwin" ? { titleBarOverlay: true } : {}),
+		...(process.platform !== "darwin" ? { titleBarOverlay: titleBarOverlay(theme) } : {}),
 	});
+
+	if (process.platform !== "darwin" && theme === "system") {
+		const updateOverlay = () => win.setTitleBarOverlay(titleBarOverlay(theme));
+		nativeTheme.on("updated", updateOverlay);
+		win.on("closed", () => nativeTheme.off("updated", updateOverlay));
+	}
 
 	// Keep our title instead of the page's <title>
 	win.on("page-title-updated", (event) => event.preventDefault());
