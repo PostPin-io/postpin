@@ -14,9 +14,18 @@ env:
   IMAGE_PREFIX: ghcr.io/postpin-io
 
 jobs:
+  # Nothing gets built or published unless CI passes on the tagged commit. Runs CI a second time
+  # next to the run from the push to main, which is simpler than waiting for that one.
+  ci:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+    secrets: inherit
+
   # Each image is built natively per architecture (QEMU emulation would take very long for the
   # worker) and pushed by digest only; the merge job tags them as one multi-arch image.
   build:
+    needs: ci
     name: build (${{ matrix.image.name }}, ${{ matrix.platform.arch }})
     runs-on: ${{ matrix.platform.runner }}
     permissions:
@@ -146,6 +155,7 @@ jobs:
 
   # macOS: signed + notarized. Only this job gets the signing secrets (environment release, tags v*).
   desktop-mac:
+    needs: ci
     runs-on: macos-latest
     environment: release
     permissions:
@@ -189,6 +199,7 @@ jobs:
 
   # Windows: unsigned NSIS installer for now (SmartScreen warning on first start)
   desktop-win:
+    needs: ci
     runs-on: windows-latest
     permissions:
       contents: read
@@ -221,6 +232,7 @@ jobs:
 
   # Resolve plugin: signed + notarized .pkg
   resolve-mac:
+    needs: ci
     runs-on: macos-latest
     environment: release
     permissions:
@@ -274,6 +286,7 @@ jobs:
 
   # Resolve plugin for Windows: unsigned NSIS installer for now
   resolve-win:
+    needs: ci
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -299,6 +312,7 @@ jobs:
   # Premiere's native addon (packages/plugin-premiere/native, Rust) for both Mac architectures,
   # signed + notarized. Artifact names must not start with "premiere-": the release uploads those.
   addon-premiere-mac:
+    needs: ci
     runs-on: macos-latest
     environment: release
     permissions:
@@ -332,6 +346,7 @@ jobs:
 
   # The addon for Windows: unsigned for now, like the other Windows builds
   addon-premiere-win:
+    needs: ci
     runs-on: windows-latest
     permissions:
       contents: read
