@@ -1,36 +1,29 @@
 <script lang="ts">
-	import { authClient } from "#lib/auth-client.ts";
-	import { slugify } from "#lib/slug.ts";
-	import { refreshAll } from "$app/navigation";
+	import { createOrganization } from "./create-org.ts";
 
 	let dialog: HTMLDialogElement | null = null;
 
 	export function open() {
+		problem = null;
 		dialog?.showModal();
 	}
 
 	let creatingOrg = $state(false);
+	let problem = $state<string | null>(null);
 
 	let orgName = $state("");
 
 	async function createOrg() {
 		creatingOrg = true;
+		problem = null;
 
-		const { data, error } = await authClient.organization.create({
-			name: orgName,
-			slug: slugify(orgName),
-			keepCurrentActiveOrganization: false,
-		});
-
-		console.log("createOrg", { data, error });
-
-		if (error) {
-			alert(`Error creating organization: ${error.message}`);
+		try {
+			await createOrganization(orgName);
+		} catch (err) {
+			problem = err instanceof Error ? err.message : "Could not create the organization.";
 			creatingOrg = false;
 			return;
 		}
-
-		await refreshAll();
 
 		dialog?.close();
 		setTimeout(() => {
@@ -62,6 +55,10 @@
 					}}
 				/>
 			</div>
+
+			{#if problem}
+				<div class="alert w-full text-sm alert-error" role="alert">{problem}</div>
+			{/if}
 
 			<div class="modal-action">
 				<button class="btn" onclick={() => dialog?.close()} disabled={creatingOrg}> Cancel </button>
