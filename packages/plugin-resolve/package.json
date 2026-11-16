@@ -3,6 +3,7 @@
 	"version": "1.0.0",
 	"description": "PostPin workflow integration plugin for DaVinci Resolve",
 	"main": "main.js",
+	"license": "MIT",
 	"scripts": {
 		"setup:mac": "P=\"/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/io.postpin.plugin.resolve\" && sudo rm -rf \"$P\" && sudo mkdir -p \"$P\" && sudo chown \"$USER\" \"$P\"",
 		"build": "node build.mjs && vite build",
