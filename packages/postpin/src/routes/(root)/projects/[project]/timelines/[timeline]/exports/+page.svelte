@@ -10,6 +10,7 @@
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
 	import UploadHintModal from "#lib/components/exports/UploadHintModal.svelte";
 	import UploadModal from "#lib/components/exports/UploadModal.svelte";
+	import UploadDropOverlay from "#lib/components/exports/UploadDropOverlay.svelte";
 	import ExportUploadStatus from "#lib/components/exports/ExportUploadStatus.svelte";
 	import { uploads } from "#lib/upload/uploads.svelte.ts";
 	import { formatByteSize } from "@postpin-io/shared/logic/bytes";
@@ -252,7 +253,7 @@
 					<button
 						class="btn rounded-full btn-sm"
 						aria-label="Upload a video"
-						title="Upload a video"
+						title="Upload a video, or drop one anywhere on this page"
 						onclick={() => uploadHintDialog?.open()}
 					>
 						<Upload size={16} />
@@ -513,4 +514,6 @@
 		projectId={page.params.project!}
 		timelineId={page.params.timeline!}
 	/>
+	<!-- A dropped video is a clear choice for the web upload: no plugin hint first -->
+	<UploadDropOverlay {timelineName} ondropped={(file) => uploadDialog?.open(file)} />
 {/if}

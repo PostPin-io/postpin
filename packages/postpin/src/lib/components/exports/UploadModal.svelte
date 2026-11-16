@@ -140,12 +140,14 @@
 			!starting,
 	);
 
-	export function open() {
+	/** `initial`: a video that was already chosen, e.g. dropped on the page */
+	export function open(initial?: File) {
 		reset();
 		isOpen = true;
 		dialog?.showModal();
 		// start loading the file reader while the user picks a file
 		void import("mediabunny");
+		if (initial) void choose(initial);
 	}
 
 	function reset() {
