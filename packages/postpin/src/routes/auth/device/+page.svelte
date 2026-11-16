@@ -5,6 +5,8 @@
 	import { goto } from "$app/navigation";
 	import { onMount } from "svelte";
 	import { DEVICE_CLIENTS } from "#lib/device-clients.ts";
+	import { getTutorialState } from "#lib/components/tutorial/tutorial.remote.ts";
+	import { isWelcomeStep } from "#lib/tutorial.ts";
 
 	let { data } = $props();
 
@@ -106,6 +108,14 @@
 		<div class="alert alert-success" role="alert">
 			You can close this tab and return to the app.
 		</div>
+		<!-- on its own boundary: the sign-in is done either way -->
+		<svelte:boundary>
+			{#if isWelcomeStep((await getTutorialState()).step)}
+				<a class="btn w-full btn-primary" href="/welcome?show=export">Back to the tutorial</a>
+			{/if}
+			{#snippet pending()}{/snippet}
+			{#snippet failed()}{/snippet}
+		</svelte:boundary>
 	{:else if success === "denied"}
 		<div class="alert alert-warning" role="alert">
 			The app was not given access. You can close this tab.
