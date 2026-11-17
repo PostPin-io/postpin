@@ -4,20 +4,20 @@
 	interface Props {
 		category: { name: string; color: string };
 		class?: string;
-		/** Show only a colored circle while the nearest `@container` is narrower than `@md`. */
-		collapsible?: boolean;
+		/** Only a colored circle; the name stays in the tooltip */
+		collapsed?: boolean;
 	}
-	let { category, class: classes = "", collapsible = false }: Props = $props();
+	let { category, class: classes = "", collapsed = false }: Props = $props();
 </script>
 
 <span
-	class="badge max-w-full badge-outline badge-xs {collapsible
-		? '@max-md:size-4 @max-md:rounded-full @max-md:px-0'
+	class="badge max-w-full badge-outline badge-xs {collapsed
+		? 'size-4 rounded-full px-0'
 		: ''} {classes}"
 	style:background-color={category.color}
 	style:border-color={category.color}
 	style:color={contrastColor(category.color)}
 	title={category.name}
 >
-	<span class="min-w-0 truncate {collapsible ? '@max-md:hidden' : ''}">{category.name}</span>
+	{#if !collapsed}<span class="min-w-0 truncate">{category.name}</span>{/if}
 </span>

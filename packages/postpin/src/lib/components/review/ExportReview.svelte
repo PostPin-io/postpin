@@ -735,6 +735,7 @@
 			mode={timelineMode}
 			bind:inOut
 			onCollapsedHeight={(height) => (timelineCollapsedHeight = height)}
+			onmarkerclick={(id) => markerPanel?.setSelectedMarkerId(id)}
 			bind:videoPositionSeconds={videoPosition}
 			bind:paused={videoPaused}
 			bind:playbackRate={videoPlaybackRate}

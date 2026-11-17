@@ -221,6 +221,8 @@
 				title="Press alt + click to jump to marker"
 				onclick={(e) => {
 					e.stopPropagation();
+					// Jumping to a marker selects it too, like alt + click on the card
+					onchoose?.();
 					onselect?.(marker.frame);
 				}}
 			>

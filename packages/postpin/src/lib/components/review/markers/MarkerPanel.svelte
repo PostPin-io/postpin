@@ -392,6 +392,8 @@
 	}
 	export function setSelectedMarkerId(id: string | null) {
 		selectedMarkerIds = id ? [id] : [];
+		// Like a click on the card: a shift-click next selects the range from here
+		anchorMarkerId = id;
 	}
 
 	let anchorMarkerId: string | null = null;
