@@ -26,8 +26,9 @@ describe("expiresAtFor", () => {
 		["7d", "2026-11-16T12:00:00.000Z"],
 		["30d", "2026-12-09T12:00:00.000Z"],
 	] as const)("%s", (preset, expected) => {
-		expect(expiresAtFor(preset, now).toISOString()).toBe(expected);
+		expect(expiresAtFor(preset, now)!.toISOString()).toBe(expected);
 	});
+	it("never → null", () => expect(expiresAtFor("never", now)).toBeNull());
 });
 
 describe("shareLinkStatus", () => {
@@ -40,6 +41,8 @@ describe("shareLinkStatus", () => {
 		expect(shareLinkStatus({ expiresAt: now, revokedAt: null }, now)).toBe("expired");
 		expect(shareLinkStatus({ expiresAt: earlier, revokedAt: null }, now)).toBe("expired");
 	});
+	it("active forever without expiry", () =>
+		expect(shareLinkStatus({ expiresAt: null, revokedAt: null }, now)).toBe("active"));
 	it("revoked wins over expiry", () =>
 		expect(shareLinkStatus({ expiresAt: later, revokedAt: earlier }, now)).toBe("revoked"));
 });
@@ -67,6 +70,7 @@ describe("shareUrlLifetime", () => {
 	])("%s", (_, secondsLeft, expected) =>
 		expect(shareUrlLifetime(new Date(now.getTime() + secondsLeft * 1000), now)).toBe(expected),
 	);
+	it("no expiry → 12 h", () => expect(shareUrlLifetime(null, now)).toBe(12 * 3600));
 });
 
 describe("parseEmailList", () => {

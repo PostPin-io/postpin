@@ -43,10 +43,18 @@ describe("createShareLink", () => {
 			note: "Hi",
 			revokedAt: null,
 		});
-		expect(link.expiresAt.getTime() - Date.now()).toBeGreaterThan(23 * 60 * 60 * 1000);
+		expect(link.expiresAt!.getTime() - Date.now()).toBeGreaterThan(23 * 60 * 60 * 1000);
 		expect(
 			await prisma.category.findUniqueOrThrow({ where: { id: link.categoryId! } }),
 		).toMatchObject({ name: "Guest", projectId: w.projectA.id, createdById: w.owner.user.id });
+	});
+
+	it('"never" creates a link without expiry', async () => {
+		signIn(w.owner.user, w.org.id);
+		const { id } = await createShareLink({ exportId: w.exp1.id, preset: "never" });
+		expect((await linkOf(id)).expiresAt).toBeNull();
+		const [row] = await getShareLinks(w.exp1.id);
+		expect(row!.status).toBe("active");
 	});
 
 	it("links of a project share the guest category", async () => {
@@ -67,7 +75,7 @@ describe("createShareLink", () => {
 	});
 
 	it.each([
-		["unknown preset", { preset: "never" }],
+		["unknown preset", { preset: "1y" }],
 		["note too long", { preset: "7d", note: "x".repeat(2001) }],
 	])("400 for %s", async (_, data) => {
 		signIn(w.owner.user, w.org.id);
@@ -114,7 +122,16 @@ describe("updateShareLink / revokeShareLink", () => {
 		signIn(w.owner.user, w.org.id);
 		const link = await f.createShareLink(w.exp1, { expiresAt: new Date(Date.now() - 1000) });
 		await updateShareLink({ id: link.id, preset: "7d" });
-		expect((await linkOf(link.id)).expiresAt.getTime()).toBeGreaterThan(Date.now());
+		expect((await linkOf(link.id)).expiresAt!.getTime()).toBeGreaterThan(Date.now());
+	});
+
+	it('"never" removes the expiry, a preset sets one again', async () => {
+		signIn(w.owner.user, w.org.id);
+		const link = await f.createShareLink(w.exp1, { expiresAt: new Date(Date.now() - 1000) });
+		await updateShareLink({ id: link.id, preset: "never" });
+		expect((await linkOf(link.id)).expiresAt).toBeNull();
+		await updateShareLink({ id: link.id, preset: "24h" });
+		expect((await linkOf(link.id)).expiresAt).not.toBeNull();
 	});
 });
 
@@ -180,7 +197,7 @@ describe("createScreeningLink", () => {
 			note: null,
 			maxGuests: 40,
 		});
-		const hours = (link.expiresAt.getTime() - Date.now()) / 3_600_000;
+		const hours = (link.expiresAt!.getTime() - Date.now()) / 3_600_000;
 		expect(hours).toBeGreaterThan(23.9);
 		expect(hours).toBeLessThanOrEqual(24);
 	});

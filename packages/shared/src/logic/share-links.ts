@@ -2,11 +2,12 @@ import * as v from "valibot";
 
 const HOUR = 60 * 60 * 1000;
 
-/** How long a new link stays active. No "never": every link expires. */
+/** How long a new link stays active; "never" (null) lasts until it is revoked */
 export const SHARE_LINK_PRESETS = {
 	"24h": 24 * HOUR,
 	"7d": 7 * 24 * HOUR,
 	"30d": 30 * 24 * HOUR,
+	never: null,
 } as const;
 
 export type ShareLinkPreset = keyof typeof SHARE_LINK_PRESETS;
@@ -15,18 +16,20 @@ export const DEFAULT_SHARE_LINK_PRESET: ShareLinkPreset = "7d";
 
 export const NOTE_MAX_LENGTH = 2000;
 
-export function expiresAtFor(preset: ShareLinkPreset, now = new Date()): Date {
-	return new Date(now.getTime() + SHARE_LINK_PRESETS[preset]);
+/** null for "never" */
+export function expiresAtFor(preset: ShareLinkPreset, now = new Date()): Date | null {
+	const ms = SHARE_LINK_PRESETS[preset];
+	return ms === null ? null : new Date(now.getTime() + ms);
 }
 
 export type ShareLinkStatus = "active" | "expired" | "revoked";
 
 export function shareLinkStatus(
-	link: { expiresAt: Date; revokedAt: Date | null },
+	link: { expiresAt: Date | null; revokedAt: Date | null },
 	now = new Date(),
 ): ShareLinkStatus {
 	if (link.revokedAt) return "revoked";
-	return link.expiresAt <= now ? "expired" : "active";
+	return link.expiresAt && link.expiresAt <= now ? "expired" : "active";
 }
 
 /** Path of the public share view; the UI puts the origin in front */
@@ -54,8 +57,9 @@ export const shareGuestName = v.pipe(
 /** Lifetime of presigned URLs everywhere: team and guests */
 export const MAX_URL_LIFETIME_SECONDS = 12 * 60 * 60;
 
-/** Guests: never past the link's expiry. At least 1 s (S3 rejects 0). */
-export function shareUrlLifetime(expiresAt: Date, now = new Date()) {
+/** Guests: never past the link's expiry (if it has one). At least 1 s (S3 rejects 0). */
+export function shareUrlLifetime(expiresAt: Date | null, now = new Date()) {
+	if (!expiresAt) return MAX_URL_LIFETIME_SECONDS;
 	const left = Math.floor((expiresAt.getTime() - now.getTime()) / 1000);
 	return Math.max(1, Math.min(MAX_URL_LIFETIME_SECONDS, left));
 }
@@ -63,7 +67,7 @@ export function shareUrlLifetime(expiresAt: Date, now = new Date()) {
 // ─── Screenings ─────────────────────────────────────────────────────────────
 
 /** A screening link is made for one evening */
-export const SCREENING_PRESET: ShareLinkPreset = "24h";
+export const SCREENING_PRESET = "24h" satisfies ShareLinkPreset;
 /** Preselected guest limit; the server's SCREENING_MAX_GUESTS caps it */
 export const SCREENING_DEFAULT_MAX_GUESTS = 30;
 
@@ -108,8 +112,8 @@ export function screeningCategoryName(date: string, existing: string[]) {
 }
 
 /** Less than an hour left: the presenter is warned, guests could be locked out mid-screening */
-export const screeningExpiresSoon = (expiresAt: Date, now = new Date()) =>
-	expiresAt.getTime() - now.getTime() < HOUR;
+export const screeningExpiresSoon = (expiresAt: Date | null, now = new Date()) =>
+	!!expiresAt && expiresAt.getTime() - now.getTime() < HOUR;
 
 // ─── Sending by e-mail ──────────────────────────────────────────────────────
 
@@ -155,14 +159,14 @@ export function shareLinkMailContent(mail: {
 	exportName: string;
 	url: string;
 	note: string | null;
-	expiresAt: Date;
+	expiresAt: Date | null;
 }) {
 	const lines = [
 		`${mail.senderName} shared the video "${mail.exportName}" with you on PostPin.`,
 		...(mail.note ? ["", mail.note] : []),
 		"",
 		`Watch it and leave your markers: ${mail.url}`,
-		`The link works until ${mailDate.format(mail.expiresAt)}.`,
+		...(mail.expiresAt ? [`The link works until ${mailDate.format(mail.expiresAt)}.`] : []),
 	];
 	return {
 		subject: `${mail.senderName} shared "${mail.exportName}" with you`,

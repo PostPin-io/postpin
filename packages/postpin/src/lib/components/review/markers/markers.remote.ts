@@ -575,7 +575,10 @@ export const getCategories = query(v.string(), async (projectId: string) => {
 });
 
 /** Share links that still work: their guests' next markers go to the link's category */
-const activeShareLink = () => ({ revokedAt: null, expiresAt: { gt: new Date() } });
+const activeShareLink = () => ({
+	revokedAt: null,
+	OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+});
 
 /** Deletes every category of the project without markers that the user may delete. */
 export const deleteUnusedCategories = command(

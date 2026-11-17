@@ -14,8 +14,8 @@
 		initial: ShareLinkFormValues;
 		/** Offers "keep" for the expiry */
 		editing?: boolean;
-		/** Editing: the link's current expiry, shown on the "keep" option */
-		currentExpiresAt?: Date;
+		/** Editing: the link's current expiry (null = never), shown on the "keep" option */
+		currentExpiresAt?: Date | null;
 		submitLabel: string;
 		busy?: boolean;
 		onsubmit: (values: ShareLinkFormValues) => void;
@@ -42,16 +42,25 @@
 		"24h": "24 hours from now",
 		"7d": "7 days from now",
 		"30d": "30 days from now",
+		never: "Works until it is deleted",
 	};
-	const current = $derived(currentExpiresAt ? remainingTime(currentExpiresAt) : null);
+	const current = $derived(currentExpiresAt !== undefined ? remainingTime(currentExpiresAt) : null);
 	// "keep" leaves the expiry as it is; the other options count from now
 	const keepLabel = $derived(
-		current ? (current.text === "expired" ? "expired" : `${current.text} left`) : "keep",
+		currentExpiresAt === null
+			? "keep infinitely"
+			: current
+				? current.text === "expired"
+					? "expired"
+					: `${current.text} left`
+				: "keep",
 	);
 	const keepTitle = $derived(
-		currentExpiresAt
-			? `Keep the current expiry (${currentExpiresAt.toLocaleString()}). The other options count from now.`
-			: "Keep the current expiry",
+		currentExpiresAt === null
+			? "Keep it without expiry. The other options count from now."
+			: currentExpiresAt
+				? `Keep the current expiry (${currentExpiresAt.toLocaleString()}). The other options count from now.`
+				: "Keep the current expiry",
 	);
 
 	function toggle(part: "timeline" | "markers") {
@@ -100,7 +109,7 @@
 						disabled={busy}
 						onclick={() => (values.preset = preset)}
 					>
-						{preset ?? keepLabel}
+						{preset === "never" ? "infinitely" : (preset ?? keepLabel)}
 					</button>
 				{/each}
 			</div>

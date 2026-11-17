@@ -256,7 +256,7 @@ export type ShareLinkGroupByOutputType = {
 	exportId: string;
 	creatorId: string | null;
 	token: string;
-	expiresAt: Date;
+	expiresAt: Date | null;
 	revokedAt: Date | null;
 	timelinePanelVisible: boolean;
 	markerPanelVisible: boolean;
@@ -295,7 +295,7 @@ export type ShareLinkWhereInput = {
 	exportId?: Prisma.StringFilter<"ShareLink"> | string;
 	creatorId?: Prisma.StringNullableFilter<"ShareLink"> | string | null;
 	token?: Prisma.StringFilter<"ShareLink"> | string;
-	expiresAt?: Prisma.DateTimeFilter<"ShareLink"> | Date | string;
+	expiresAt?: Prisma.DateTimeNullableFilter<"ShareLink"> | Date | string | null;
 	revokedAt?: Prisma.DateTimeNullableFilter<"ShareLink"> | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFilter<"ShareLink"> | boolean;
 	markerPanelVisible?: Prisma.BoolFilter<"ShareLink"> | boolean;
@@ -322,7 +322,7 @@ export type ShareLinkOrderByWithRelationInput = {
 	exportId?: Prisma.SortOrder;
 	creatorId?: Prisma.SortOrderInput | Prisma.SortOrder;
 	token?: Prisma.SortOrder;
-	expiresAt?: Prisma.SortOrder;
+	expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder;
 	revokedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
 	timelinePanelVisible?: Prisma.SortOrder;
 	markerPanelVisible?: Prisma.SortOrder;
@@ -350,7 +350,7 @@ export type ShareLinkWhereUniqueInput = Prisma.AtLeast<
 		updatedAt?: Prisma.DateTimeFilter<"ShareLink"> | Date | string;
 		exportId?: Prisma.StringFilter<"ShareLink"> | string;
 		creatorId?: Prisma.StringNullableFilter<"ShareLink"> | string | null;
-		expiresAt?: Prisma.DateTimeFilter<"ShareLink"> | Date | string;
+		expiresAt?: Prisma.DateTimeNullableFilter<"ShareLink"> | Date | string | null;
 		revokedAt?: Prisma.DateTimeNullableFilter<"ShareLink"> | Date | string | null;
 		timelinePanelVisible?: Prisma.BoolFilter<"ShareLink"> | boolean;
 		markerPanelVisible?: Prisma.BoolFilter<"ShareLink"> | boolean;
@@ -379,7 +379,7 @@ export type ShareLinkOrderByWithAggregationInput = {
 	exportId?: Prisma.SortOrder;
 	creatorId?: Prisma.SortOrderInput | Prisma.SortOrder;
 	token?: Prisma.SortOrder;
-	expiresAt?: Prisma.SortOrder;
+	expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder;
 	revokedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
 	timelinePanelVisible?: Prisma.SortOrder;
 	markerPanelVisible?: Prisma.SortOrder;
@@ -410,7 +410,7 @@ export type ShareLinkScalarWhereWithAggregatesInput = {
 	exportId?: Prisma.StringWithAggregatesFilter<"ShareLink"> | string;
 	creatorId?: Prisma.StringNullableWithAggregatesFilter<"ShareLink"> | string | null;
 	token?: Prisma.StringWithAggregatesFilter<"ShareLink"> | string;
-	expiresAt?: Prisma.DateTimeWithAggregatesFilter<"ShareLink"> | Date | string;
+	expiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ShareLink"> | Date | string | null;
 	revokedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ShareLink"> | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolWithAggregatesFilter<"ShareLink"> | boolean;
 	markerPanelVisible?: Prisma.BoolWithAggregatesFilter<"ShareLink"> | boolean;
@@ -427,7 +427,7 @@ export type ShareLinkCreateInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	token: string;
-	expiresAt: Date | string;
+	expiresAt?: Date | string | null;
 	revokedAt?: Date | string | null;
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
@@ -450,7 +450,7 @@ export type ShareLinkUncheckedCreateInput = {
 	exportId: string;
 	creatorId?: string | null;
 	token: string;
-	expiresAt: Date | string;
+	expiresAt?: Date | string | null;
 	revokedAt?: Date | string | null;
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
@@ -469,7 +469,7 @@ export type ShareLinkUpdateInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -492,7 +492,7 @@ export type ShareLinkUncheckedUpdateInput = {
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
 	creatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -513,7 +513,7 @@ export type ShareLinkCreateManyInput = {
 	exportId: string;
 	creatorId?: string | null;
 	token: string;
-	expiresAt: Date | string;
+	expiresAt?: Date | string | null;
 	revokedAt?: Date | string | null;
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
@@ -530,7 +530,7 @@ export type ShareLinkUpdateManyMutationInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -548,7 +548,7 @@ export type ShareLinkUncheckedUpdateManyInput = {
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
 	creatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -961,7 +961,7 @@ export type ShareLinkCreateWithoutCreatorInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	token: string;
-	expiresAt: Date | string;
+	expiresAt?: Date | string | null;
 	revokedAt?: Date | string | null;
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
@@ -982,7 +982,7 @@ export type ShareLinkUncheckedCreateWithoutCreatorInput = {
 	updatedAt?: Date | string;
 	exportId: string;
 	token: string;
-	expiresAt: Date | string;
+	expiresAt?: Date | string | null;
 	revokedAt?: Date | string | null;
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
@@ -1047,7 +1047,7 @@ export type ShareLinkScalarWhereInput = {
 	exportId?: Prisma.StringFilter<"ShareLink"> | string;
 	creatorId?: Prisma.StringNullableFilter<"ShareLink"> | string | null;
 	token?: Prisma.StringFilter<"ShareLink"> | string;
-	expiresAt?: Prisma.DateTimeFilter<"ShareLink"> | Date | string;
+	expiresAt?: Prisma.DateTimeNullableFilter<"ShareLink"> | Date | string | null;
 	revokedAt?: Prisma.DateTimeNullableFilter<"ShareLink"> | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFilter<"ShareLink"> | boolean;
 	markerPanelVisible?: Prisma.BoolFilter<"ShareLink"> | boolean;
@@ -1064,7 +1064,7 @@ export type ShareLinkCreateWithoutCategoryInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	token: string;
-	expiresAt: Date | string;
+	expiresAt?: Date | string | null;
 	revokedAt?: Date | string | null;
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
@@ -1086,7 +1086,7 @@ export type ShareLinkUncheckedCreateWithoutCategoryInput = {
 	exportId: string;
 	creatorId?: string | null;
 	token: string;
-	expiresAt: Date | string;
+	expiresAt?: Date | string | null;
 	revokedAt?: Date | string | null;
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
@@ -1145,7 +1145,7 @@ export type ShareLinkCreateWithoutExportInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	token: string;
-	expiresAt: Date | string;
+	expiresAt?: Date | string | null;
 	revokedAt?: Date | string | null;
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
@@ -1166,7 +1166,7 @@ export type ShareLinkUncheckedCreateWithoutExportInput = {
 	updatedAt?: Date | string;
 	creatorId?: string | null;
 	token: string;
-	expiresAt: Date | string;
+	expiresAt?: Date | string | null;
 	revokedAt?: Date | string | null;
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
@@ -1226,7 +1226,7 @@ export type ShareLinkCreateWithoutGuestsInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	token: string;
-	expiresAt: Date | string;
+	expiresAt?: Date | string | null;
 	revokedAt?: Date | string | null;
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
@@ -1248,7 +1248,7 @@ export type ShareLinkUncheckedCreateWithoutGuestsInput = {
 	exportId: string;
 	creatorId?: string | null;
 	token: string;
-	expiresAt: Date | string;
+	expiresAt?: Date | string | null;
 	revokedAt?: Date | string | null;
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
@@ -1294,7 +1294,7 @@ export type ShareLinkUpdateWithoutGuestsInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -1316,7 +1316,7 @@ export type ShareLinkUncheckedUpdateWithoutGuestsInput = {
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
 	creatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -1334,7 +1334,7 @@ export type ShareLinkCreateWithoutMailsInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	token: string;
-	expiresAt: Date | string;
+	expiresAt?: Date | string | null;
 	revokedAt?: Date | string | null;
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
@@ -1356,7 +1356,7 @@ export type ShareLinkUncheckedCreateWithoutMailsInput = {
 	exportId: string;
 	creatorId?: string | null;
 	token: string;
-	expiresAt: Date | string;
+	expiresAt?: Date | string | null;
 	revokedAt?: Date | string | null;
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
@@ -1402,7 +1402,7 @@ export type ShareLinkUpdateWithoutMailsInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -1424,7 +1424,7 @@ export type ShareLinkUncheckedUpdateWithoutMailsInput = {
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
 	creatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -1443,7 +1443,7 @@ export type ShareLinkCreateManyCreatorInput = {
 	updatedAt?: Date | string;
 	exportId: string;
 	token: string;
-	expiresAt: Date | string;
+	expiresAt?: Date | string | null;
 	revokedAt?: Date | string | null;
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
@@ -1460,7 +1460,7 @@ export type ShareLinkUpdateWithoutCreatorInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -1481,7 +1481,7 @@ export type ShareLinkUncheckedUpdateWithoutCreatorInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -1501,7 +1501,7 @@ export type ShareLinkUncheckedUpdateManyWithoutCreatorInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -1520,7 +1520,7 @@ export type ShareLinkCreateManyCategoryInput = {
 	exportId: string;
 	creatorId?: string | null;
 	token: string;
-	expiresAt: Date | string;
+	expiresAt?: Date | string | null;
 	revokedAt?: Date | string | null;
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
@@ -1536,7 +1536,7 @@ export type ShareLinkUpdateWithoutCategoryInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -1558,7 +1558,7 @@ export type ShareLinkUncheckedUpdateWithoutCategoryInput = {
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
 	creatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -1578,7 +1578,7 @@ export type ShareLinkUncheckedUpdateManyWithoutCategoryInput = {
 	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
 	creatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -1595,7 +1595,7 @@ export type ShareLinkCreateManyExportInput = {
 	updatedAt?: Date | string;
 	creatorId?: string | null;
 	token: string;
-	expiresAt: Date | string;
+	expiresAt?: Date | string | null;
 	revokedAt?: Date | string | null;
 	timelinePanelVisible?: boolean;
 	markerPanelVisible?: boolean;
@@ -1612,7 +1612,7 @@ export type ShareLinkUpdateWithoutExportInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -1633,7 +1633,7 @@ export type ShareLinkUncheckedUpdateWithoutExportInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	creatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -1653,7 +1653,7 @@ export type ShareLinkUncheckedUpdateManyWithoutExportInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	creatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	token?: Prisma.StringFieldUpdateOperationsInput | string;
-	expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	timelinePanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	markerPanelVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean;
@@ -1887,7 +1887,10 @@ export type $ShareLinkPayload<
 			 * Random, URL-safe. Not the id: cuids are guessable-ish and can't be rotated.
 			 */
 			token: string;
-			expiresAt: Date;
+			/**
+			 * null = never expires (only revoking ends it)
+			 */
+			expiresAt: Date | null;
 			/**
 			 * Set instead of deleting, so the list stays traceable
 			 */

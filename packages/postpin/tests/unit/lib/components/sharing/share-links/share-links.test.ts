@@ -32,6 +32,7 @@ describe("formatExpiry", () => {
 		[24 * HOUR, "Expires in 24 hours"],
 		[7 * 24 * HOUR, "Expires in 7 days"],
 	])("%i ms → %s", (ms, text) => expect(formatExpiry(at(ms), now)).toBe(text));
+	it("never", () => expect(formatExpiry(null, now)).toBe("Never expires"));
 });
 
 describe("form values", () => {
@@ -102,6 +103,7 @@ describe("remainingTime", () => {
 		[24 * HOUR, "1d", false],
 		[6 * 24 * HOUR + 5 * HOUR, "6d", false],
 	])("%i ms → %s", (ms, text, warn) => expect(remainingTime(at(ms), now)).toEqual({ text, warn }));
+	it("never", () => expect(remainingTime(null, now)).toEqual({ text: "∞", warn: false }));
 });
 
 describe("shortUrl", () => {

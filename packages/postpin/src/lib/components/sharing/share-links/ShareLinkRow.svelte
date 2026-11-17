@@ -99,7 +99,11 @@
 			class="flex items-center gap-1 text-sm whitespace-nowrap {left.warn
 				? 'text-error'
 				: 'text-base-content/60'}"
-			title={active ? `Expires ${link.expiresAt.toLocaleString()}` : "Expired, edit to renew"}
+			title={active
+				? link.expiresAt
+					? `Expires ${link.expiresAt.toLocaleString()}`
+					: "Never expires"
+				: "Expired, edit to renew"}
 		>
 			<Clock size={14} />{left.text}
 		</span>
@@ -197,7 +201,10 @@
 			<dt>Last opened</dt>
 			<dd>{formatLastViewed(link.lastViewedAt)}</dd>
 			<dt>Expiry</dt>
-			<dd>{formatExpiry(link.expiresAt)} ({link.expiresAt.toLocaleString()})</dd>
+			<dd>
+				{formatExpiry(link.expiresAt)}{#if link.expiresAt}
+					({link.expiresAt.toLocaleString()}){/if}
+			</dd>
 			{#if link.maxGuests}
 				<dt>Guest limit</dt>
 				<dd>{link.maxGuests}</dd>

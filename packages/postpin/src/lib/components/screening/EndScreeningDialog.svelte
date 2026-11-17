@@ -69,10 +69,14 @@
 			{#if active && !deleteLink}
 				<li class="flex items-center gap-3">
 					<Link size={18} class="shrink-0 text-base-content/60" />
-					Guests can add markers until {link!.expiresAt.toLocaleString(undefined, {
-						dateStyle: "medium",
-						timeStyle: "short",
-					})}.
+					{#if link!.expiresAt}
+						Guests can add markers until {link!.expiresAt.toLocaleString(undefined, {
+							dateStyle: "medium",
+							timeStyle: "short",
+						})}.
+					{:else}
+						Guests can keep adding markers until the link is deleted.
+					{/if}
 				</li>
 			{/if}
 		</ul>

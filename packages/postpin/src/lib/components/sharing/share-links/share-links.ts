@@ -13,6 +13,7 @@ export const PRESET_LABELS: Record<ShareLinkPreset, string> = {
 	"24h": "24 hours",
 	"7d": "7 days",
 	"30d": "30 days",
+	never: "infinitely",
 };
 
 export const STATUS_LABELS: Record<ShareLinkStatus, string> = {
@@ -27,7 +28,8 @@ export const shortUrl = (url: string) => url.replace(/^https?:\/\//, "");
 
 const relative = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
-export function formatExpiry(expiresAt: Date, now = new Date()) {
+export function formatExpiry(expiresAt: Date | null, now = new Date()) {
+	if (!expiresAt) return "Never expires";
 	const ms = expiresAt.getTime() - now.getTime();
 	if (ms <= 0) return "Expired";
 	const minutes = Math.round(ms / 60_000);
@@ -64,8 +66,9 @@ export function orderedLinks<T extends { status: ShareLinkStatus }>(links: T[]) 
 
 const HOUR_MS = 60 * 60 * 1000;
 
-/** The expiry chip: hours below a day (and then a warning), days above, "expired" after */
-export function remainingTime(expiresAt: Date, now = new Date()) {
+/** The expiry chip: hours below a day (and then a warning), days above, "expired" after, ∞ for never */
+export function remainingTime(expiresAt: Date | null, now = new Date()) {
+	if (!expiresAt) return { text: "∞", warn: false };
 	const ms = expiresAt.getTime() - now.getTime();
 	if (ms <= 0) return { text: "expired", warn: true };
 	const hours = ms / HOUR_MS;

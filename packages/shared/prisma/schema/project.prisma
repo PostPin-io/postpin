@@ -75,7 +75,8 @@ model ShareLink {
   creatorId            String?
   /// Random, URL-safe. Not the id: cuids are guessable-ish and can't be rotated.
   token                String          @unique
-  expiresAt            DateTime
+  /// null = never expires (only revoking ends it)
+  expiresAt            DateTime?
   /// Set instead of deleting, so the list stays traceable
   revokedAt            DateTime?
   timelinePanelVisible Boolean         @default(false)
