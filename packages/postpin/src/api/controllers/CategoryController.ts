@@ -3,6 +3,7 @@ import { Body, Controller, Get, Path, Put, Response, Route, Security } from "@ts
 import { HttpError } from "../HttpError.ts";
 import { Prisma, type Category } from "@postpin-io/shared/db";
 import { apiAuthorize } from "../access.ts";
+import { notifyCategories } from "#lib/server/live.ts";
 
 @Security("session")
 @Route("v1/projects/{projectId}/categories")
@@ -33,7 +34,7 @@ export class CategoryController extends Controller {
 		}
 
 		try {
-			return await prisma.category.create({
+			const category = await prisma.category.create({
 				data: {
 					projectId,
 					name: body.name,
@@ -41,6 +42,8 @@ export class CategoryController extends Controller {
 					createdById: user.id,
 				},
 			});
+			void notifyCategories(projectId);
+			return category;
 		} catch (err) {
 			if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
 				throw new HttpError(409, `Category "${body.name}" already exists`);

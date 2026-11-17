@@ -9,6 +9,11 @@ vi.mock("../../src/lib/database.ts", async () => (await import("./mocks.ts")).da
 vi.mock("../../src/lib/storage.ts", async () => (await import("./mocks.ts")).storage);
 vi.mock("../../src/lib/env.ts", async () => (await import("./mocks.ts")).env);
 vi.mock("@postpin-io/shared/storage", async () => (await import("./mocks.ts")).sharedStorage);
+const { publishLive } = vi.hoisted(() => ({ publishLive: vi.fn(async () => {}) }));
+vi.mock("@postpin-io/shared/live", async (original) => ({
+	...(await original<typeof import("@postpin-io/shared/live")>()),
+	livePublisher: () => publishLive,
+}));
 
 import { cutList } from "../../src/handlers/cutList.ts";
 
@@ -63,6 +68,7 @@ const stores = (list: unknown) =>
 
 beforeEach(() => {
 	resetMocks();
+	publishLive.mockClear();
 	vi.spyOn(console, "log").mockImplementation(() => {});
 	prisma.export.findUniqueOrThrow.mockResolvedValue({
 		id: "e1",
@@ -199,6 +205,15 @@ describe("cutList", () => {
 			expect.objectContaining({ frame: 90050, categoryId: "cat-Resolve Red" }),
 			expect.objectContaining({ frame: 90075, categoryId: "cat-Resolve Blue" }),
 		]);
+		// open review pages reload their markers and the new color categories
+		expect(publishLive).toHaveBeenCalledWith(["live:export:e1"], {
+			type: "markers",
+			exportId: "e1",
+		});
+		expect(publishLive).toHaveBeenCalledWith(["live:project:p1"], {
+			type: "categories",
+			projectId: "p1",
+		});
 	});
 
 	it("a list with only markers keeps the snapshot's tracks", async () => {

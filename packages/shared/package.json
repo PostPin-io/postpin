@@ -16,7 +16,8 @@
 		"./db/sql": "./src/db/prisma/sql.ts",
 		"./db/cut-list-markers": "./src/db/cut-list-markers.ts",
 		"./types/*": "./src/types/*.ts",
-		"./logic/*": "./src/logic/*.ts"
+		"./logic/*": "./src/logic/*.ts",
+		"./live": "./src/live/index.ts"
 	},
 	"scripts": {
 		"db:generate": "prisma generate --config prisma7.config.ts --sql && prettier --write src/db/prisma",
