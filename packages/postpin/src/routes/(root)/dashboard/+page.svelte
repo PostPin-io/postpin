@@ -11,6 +11,8 @@
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
 	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
 	import ContinueTutorialCard from "#lib/components/tutorial/ContinueTutorialCard.svelte";
+	import UploadDropOverlay from "#lib/components/exports/UploadDropOverlay.svelte";
+	import { heldUpload } from "#lib/upload/held-upload.svelte.ts";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
@@ -47,6 +49,20 @@
 	let shareProjectDialog: SharingSetupModal | null = null;
 
 	let data = $derived(await getProjects());
+
+	// A video dropped here waits for its project: those it may go to stand out, the others fade
+	const canDropHere = $derived(data.projects.some((p) => p.canUpload));
+	// The hovered target turns green: there the video goes
+	const targetClass = (canUpload: boolean, row = false) =>
+		!heldUpload.file
+			? row
+				? "hover:bg-base-200/60"
+				: ""
+			: !canUpload
+				? "opacity-40"
+				: row
+					? "bg-warning/15 hover:bg-success/20"
+					: "ring-2 ring-warning ring-offset-2 ring-offset-base-100 hover:ring-success";
 
 	function sortBy(field: typeof sortField) {
 		if (sortField == field) {
@@ -364,7 +380,7 @@
 							{@const latest = project.timelines[0]?.exports[0]}
 							{@const projectHref = `/projects/${project.id}`}
 
-							<tr class="hover:bg-base-200/60 [&>td]:align-middle">
+							<tr class="[&>td]:align-middle {targetClass(project.canUpload, true)}">
 								<td class="w-44">
 									<div class="aspect-video w-36 overflow-hidden rounded-md bg-base-300">
 										{#if latest?.media}
@@ -416,7 +432,9 @@
 					{@const latest = project.timelines[0]?.exports[0]}
 					{@const projectHref = `/projects/${project.id}`}
 
-					<article class="card h-full bg-base-100 shadow-xl">
+					<article
+						class="card h-full bg-base-100 shadow-xl transition {targetClass(project.canUpload)}"
+					>
 						<figure class="group relative aspect-video overflow-hidden bg-base-300">
 							{#if latest?.media}
 								<a href={projectHref} class="block size-full" aria-label="Open {project.name}">
@@ -471,3 +489,8 @@
 <RenameProjectModal bind:this={renameProjectDialog} />
 <DeleteProjectModal bind:this={delProjectDialog} />
 <SharingSetupModal bind:this={shareProjectDialog} />
+{#if canDropHere}
+	<UploadDropOverlay ondropped={(file) => heldUpload.hold(file)}>
+		Then choose the project and the timeline it goes to.
+	</UploadDropOverlay>
+{/if}

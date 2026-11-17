@@ -40,6 +40,8 @@ export const getProjects = query(async () => {
 			canRename: allowed("project", "rename", { projectId: p.id }),
 			canDelete: allowed("project", "delete", { projectId: p.id }),
 			canShare: allowed("grant", "create", { projectId: p.id }),
+			// in any of its timelines: where a dropped video may go
+			canUpload: allowed("export", "upload", { projectId: p.id, loose: true }),
 		})),
 	};
 });

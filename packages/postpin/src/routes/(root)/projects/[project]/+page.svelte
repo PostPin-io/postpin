@@ -9,6 +9,9 @@
 	import RenameTimelineModal from "#lib/components/timelines/RenameTimelineModal.svelte";
 	import DeleteTimelineModal from "#lib/components/timelines/DeleteTimelineModal.svelte";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
+	import UploadDropOverlay from "#lib/components/exports/UploadDropOverlay.svelte";
+	import { heldUpload } from "#lib/upload/held-upload.svelte.ts";
+	import Upload from "@lucide/svelte/icons/upload";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
@@ -52,13 +55,30 @@
 		}
 	}
 
+	// A video dropped here waits for its timeline: those it may go to stand out, the others fade
+	const canDropHere = $derived(data.timelines.some((t) => t.canUpload));
+	// The hovered target turns green: there the video goes
+	const targetClass = (canUpload: boolean, row = false) =>
+		!heldUpload.file
+			? row
+				? "hover:bg-base-200/60"
+				: ""
+			: !canUpload
+				? "opacity-40"
+				: row
+					? "bg-warning/15 hover:bg-success/20"
+					: "ring-2 ring-warning ring-offset-2 ring-offset-base-100 hover:ring-success";
+
 	function exportLinks(timeline: (typeof data.timelines)[number]) {
 		const latest = timeline.exports[0];
 		const base = `/projects/${page.params.project}/timelines/${timeline.id}/exports`;
+		// with a held video the timeline is its target: the export list takes the video
+		const uploadHere = !!heldUpload.file && timeline.canUpload;
 		return {
 			latest,
-			exportHref: latest ? `${base}/${latest.id}` : null,
+			exportHref: latest && !uploadHere ? `${base}/${latest.id}` : null,
 			exportListHref: base,
+			uploadHere,
 		};
 	}
 
@@ -372,15 +392,15 @@
 
 					<tbody>
 						{#each sortedTimelines as timeline (timeline.id)}
-							{@const { latest, exportHref, exportListHref } = exportLinks(timeline)}
-							<tr class="hover:bg-base-200/60 [&>td]:align-middle">
+							{@const { latest, exportHref, exportListHref, uploadHere } = exportLinks(timeline)}
+							<tr class="group/target [&>td]:align-middle {targetClass(timeline.canUpload, true)}">
 								<td class="w-44">
 									<div class="aspect-video w-36 overflow-hidden rounded-md bg-base-300">
 										{#if latest?.media}
 											<a
-												href={exportHref}
+												href={exportHref ?? exportListHref}
 												class="group relative block size-full"
-												aria-label="Open latest export"
+												aria-label={uploadHere ? "Upload here" : "Open latest export"}
 											>
 												<img
 													src={await getUrl({ mediaId: latest.media.id, type: "thumbnail" })}
@@ -409,7 +429,17 @@
 								</td>
 
 								<td class="text-right whitespace-nowrap">
-									{@render actionsMenu(timeline, exportHref, exportListHref)}
+									<div class="flex items-center justify-end gap-2">
+										{#if uploadHere}
+											<a
+												href={exportListHref}
+												class="btn btn-sm btn-warning group-hover/target:btn-success"
+											>
+												<Upload size={16} /> Upload here
+											</a>
+										{/if}
+										{@render actionsMenu(timeline, exportHref, exportListHref)}
+									</div>
 								</td>
 							</tr>
 						{:else}
@@ -423,11 +453,19 @@
 		{:else}
 			<div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
 				{#each sortedTimelines as timeline (timeline.id)}
-					{@const { latest, exportHref, exportListHref } = exportLinks(timeline)}
-					<article class="card h-full bg-base-100 shadow-xl">
+					{@const { latest, exportHref, exportListHref, uploadHere } = exportLinks(timeline)}
+					<article
+						class="group/target card h-full bg-base-100 shadow-xl transition {targetClass(
+							timeline.canUpload,
+						)}"
+					>
 						<figure class="group relative aspect-video overflow-hidden bg-base-300">
 							{#if latest?.media}
-								<a href={exportHref} class="block size-full" aria-label="Open latest export">
+								<a
+									href={exportHref ?? exportListHref}
+									class="block size-full"
+									aria-label={uploadHere ? "Upload here" : "Open latest export"}
+								>
 									<img
 										src={await getUrl({ mediaId: latest.media.id, type: "thumbnail" })}
 										alt="Thumbnail of {timeline.name}"
@@ -438,7 +476,11 @@
 							{:else}
 								<a
 									href={exportHref ?? exportListHref}
-									aria-label={exportHref ? "Open latest export" : "All exports"}
+									aria-label={uploadHere
+										? "Upload here"
+										: exportHref
+											? "Open latest export"
+											: "All exports"}
 									class="flex size-full items-center justify-center text-base-content/30"
 								>
 									<Apeture />
@@ -466,7 +508,14 @@
 							</dl>
 
 							<div class="mt-4 card-actions justify-end">
-								{#if exportHref}
+								{#if uploadHere}
+									<a
+										href={exportListHref}
+										class="btn btn-sm btn-warning group-hover/target:btn-success"
+									>
+										<Upload size={16} /> Upload here
+									</a>
+								{:else if exportHref}
 									<a href={exportHref} class="btn btn-primary btn-sm">Open latest</a>
 								{:else}
 									<span class="text-sm text-base-content/70">No exports yet</span>
@@ -486,3 +535,8 @@
 <RenameTimelineModal bind:this={renameTimelineDialog} projectId={page.params.project!} />
 <DeleteTimelineModal bind:this={delTimelineDialog} />
 <SharingSetupModal bind:this={sharingDialog} />
+{#if canDropHere}
+	<UploadDropOverlay ondropped={(file) => heldUpload.hold(file)}>
+		Then choose the timeline it goes to.
+	</UploadDropOverlay>
+{/if}
