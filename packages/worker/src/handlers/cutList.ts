@@ -5,11 +5,15 @@ import { CutListError, cutListSchema } from "@postpin-io/shared/logic/cut-list";
 import { applyCutList, isWebUpload } from "@postpin-io/shared/logic/web-upload";
 import { getTextObject } from "@postpin-io/shared/storage";
 import { saveCutListMarkers } from "@postpin-io/shared/db/cut-list-markers";
+import { liveChannel, livePublisher } from "@postpin-io/shared/live";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 import type { TypedJob } from "../lib/worker.ts";
 import { prisma } from "../lib/database.ts";
 import { env } from "../lib/env.ts";
 import { s3Client } from "../lib/storage.ts";
+
+/** Open review pages show the imported markers without a reload */
+const publishLive = livePublisher(env);
 
 /**
  * Web uploads with a cut list (the editing software's tracks and markers, from an EDL or FCPXML):
@@ -65,6 +69,12 @@ export async function cutList(job: TypedJob<typeof Queues.light, "cutList">) {
 		where: { id: exp.id },
 		data: { timelineSnapshot: updated as unknown as Prisma.JsonObject, cutListError: null },
 	});
+	if (count > 0) {
+		const projectId = exp.timeline.projectId;
+		// not awaited: a live event must never hold up the job
+		void publishLive([liveChannel.export(exp.id)], { type: "markers", exportId: exp.id });
+		void publishLive([liveChannel.project(projectId)], { type: "categories", projectId });
+	}
 	console.log(
 		`${updated.tracks.length} tracks and ${count} markers of ${mediaId} from its ${list.format} ✅`,
 	);

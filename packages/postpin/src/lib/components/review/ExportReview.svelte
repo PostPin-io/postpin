@@ -70,6 +70,7 @@
 	} from "#lib/components/screening/screening.svelte.ts";
 	import { beforeNavigate, goto } from "$app/navigation";
 	import { markersKey } from "./markers/marker-scope.ts";
+	import { liveMarkers } from "./markers/live-markers.svelte.ts";
 
 	interface Props {
 		exportId: string;
@@ -162,6 +163,14 @@
 		isMarkerVisible ? await getMarkers(markersKey(exportId, shareToken)) : [],
 	);
 	let markers = $derived(markerFilter.apply(allMarkers));
+	// Other tabs and reviewers: their marker changes show up without a reload. Same condition as
+	// loading the markers; guests also need a name, the stream answers 401 without one.
+	liveMarkers(() => ({
+		exportId,
+		shareToken,
+		projectId,
+		enabled: isMarkerVisible && (!share || !!share.guestName),
+	}));
 	// Team only: guests have no categories
 	const creatableCategories = $derived(!share && projectId ? await getCategories(projectId) : []);
 	const newMarkerColor = $derived(

@@ -19,6 +19,7 @@ import {
 } from "@postpin-io/shared/logic/cut-list";
 import { putTextObject } from "@postpin-io/shared/storage";
 import { authorize } from "#lib/server/org-access.ts";
+import { notifyCategories, notifyMarkers } from "#lib/server/live.ts";
 import { Prisma } from "@postpin-io/shared/db";
 import {
 	applyCutList,
@@ -165,6 +166,9 @@ export const importCutList = command(
 			await renderShotThumbnails(exp.media.id, generation);
 		}
 		if (added > 0) {
+			// the import may add categories ("Resolve Blue") as well
+			void notifyMarkers(exportId);
+			void notifyCategories(exp.timeline.projectId);
 			await Promise.all([
 				getMarkers(markersKey(exportId)).refresh(),
 				getCategories(exp.timeline.projectId).refresh(),

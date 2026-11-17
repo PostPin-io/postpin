@@ -1,5 +1,6 @@
 import { prisma } from "#lib/server/database.ts";
 import { authorize } from "#lib/server/org-access.ts";
+import { notifyCategories } from "#lib/server/live.ts";
 import { can } from "#lib/roles.ts";
 import { command, query } from "$app/server";
 import { Prisma } from "@postpin-io/shared/db";
@@ -93,6 +94,7 @@ export const applyCategoryPreset = command(
 			})),
 			skipDuplicates: true,
 		});
+		if (count > 0) void notifyCategories(data.projectId);
 		await getCategories(data.projectId).refresh();
 		return { created: count, skipped: categories.length - count };
 	},

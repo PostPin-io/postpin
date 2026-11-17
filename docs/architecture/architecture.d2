@@ -51,10 +51,10 @@ vm: PostPin Server VM {
     icon: ../../node_modules/simple-icons/icons/docker.svg
     database: PostgreSQL {class: svc; icon: ../../node_modules/devicon/icons/postgresql/postgresql-original.svg}
   }
-  redis: Redis Queue {
+  redis: Redis {
     class: container
     icon: ../../node_modules/simple-icons/icons/docker.svg
-    redis: Queue (redis) {class: svc; icon: ../../node_modules/devicon/icons/redis/redis-original.svg}
+    redis: "Queue + live events\n(redis pub/sub)" {class: svc; icon: ../../node_modules/devicon/icons/redis/redis-original.svg}
   }
 
   app: PostPin App {
@@ -82,6 +82,7 @@ external: External Services {
 }
 
 user.browser <-> vm.app.svelte
+user.browser <- vm.app.svelte: live markers (SSE)
 user.resolve <-> vm.app.api
 user.premiere <-> vm.app.api
 user -> vm.s3
