@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
+  changeset:
     runs-on: ubuntu-latest
     steps:
       # changeset status compares against the base branch, so it needs the history
