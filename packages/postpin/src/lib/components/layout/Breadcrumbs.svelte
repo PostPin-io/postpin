@@ -34,24 +34,31 @@
 	const namesQuery = $derived(
 		projectId ? getBreadcrumbNames({ projectId, timelineId, exportId }) : undefined,
 	);
-	const names = $derived(namesQuery?.current);
 
-	// A failed query leaves `.current` empty and stays cached for these params,
-	// so the breadcrumbs would silently stay hidden. Log it and retry on the next navigation.
-	$effect(() => {
-		if (namesQuery?.error) console.error("Could not load breadcrumbs", namesQuery.error);
-	});
-	afterNavigate(() => {
-		if (namesQuery?.error) void namesQuery.refresh();
-	});
+	// Awaited instead of read through `.current`: the pages await their own queries, which keeps
+	// the navigation pending. A `.current` value arriving in the meantime is a separate update that
+	// Svelte fails to combine with the pending one, leaving the breadcrumbs on the previous page
+	// until a reload. Awaiting makes them part of the navigation, so both change together.
+	const names = $derived(await namesQuery?.catch(loadFailed));
 
-	// Number of active share links next to the export's share button
-	const shareLinksQuery = $derived(
-		names?.export?.canShare ? getShareLinks(names.export.id) : undefined,
+	const shareLinks = $derived(
+		names?.export?.canShare ? await getShareLinks(names.export.id).catch(loadFailed) : undefined,
 	);
+	/** Number of active share links next to the export's share button */
 	const shareLinkCount = $derived(
-		shareLinksQuery?.current?.filter((link) => link.status === "active").length ?? 0,
+		shareLinks?.filter((link) => link.status === "active").length ?? 0,
 	);
+
+	// A failed query must not take the page down with it: the breadcrumbs just stay hidden
+	function loadFailed(error: unknown) {
+		console.error("Could not load breadcrumbs", error);
+		return undefined;
+	}
+
+	// The failure stays cached for these params, so try again on the next navigation
+	afterNavigate(() => {
+		if (namesQuery?.error) void namesQuery.refresh().catch(() => {});
+	});
 
 	// Sibling lists load only once their dropdown has been opened
 	let opened = $state<Record<Level, boolean>>({ project: false, timeline: false, export: false });
@@ -95,6 +102,8 @@
 		});
 
 	const crumbs = $derived.by((): Crumb[] => {
+		// Read on every page, not just on exports: Svelte reports an awaited value nobody reads
+		const linkCount = shareLinkCount;
 		if (!names) return [];
 		const { project, timeline, export: exp } = names;
 
@@ -142,7 +151,7 @@
 				? {
 						label: "Share links",
 						icon: Link,
-						count: shareLinkCount,
+						count: linkCount,
 						open: () =>
 							sharingModal?.open({
 								projectId: project.id,
