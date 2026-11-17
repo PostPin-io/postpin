@@ -170,7 +170,12 @@ Whatever proxy you use, it must
 
 - forward the original `Host` header to rustfs, because presigned URLs are signed for that host,
 - not limit the request body size, because uploads are sent in parts of 32 MiB or more,
-- not buffer uploads for a long time, so slow connections don't run into timeouts.
+- not buffer uploads for a long time, so slow connections don't run into timeouts,
+- not buffer `/live/`, the event stream that shows other reviewers' markers live, and keep it open
+  for longer than a minute (the app sends a heartbeat every 25 seconds).
+
+Serve the app over HTTP/2 if your proxy can: over HTTP/1.1 a browser keeps at most 6 connections
+per hostname, and every open review tab holds one for its live markers.
 
 If your proxy runs in a container itself, `localhost` is the proxy container: add it to the
 `postpin_default` network and use `app:3000` and `rustfs:9000` instead.
@@ -178,7 +183,7 @@ If your proxy runs in a container itself, `localhost` is the proxy container: ad
 ### Caddy
 
 [Caddy](https://caddyserver.com) gets and renews certificates automatically and meets all of the
-above by default. `/etc/caddy/Caddyfile`:
+above by default, live markers included. `/etc/caddy/Caddyfile`:
 
 ```caddyfile
 postpin.example.com {
@@ -205,6 +210,18 @@ server {
 		proxy_set_header Host $host;
 		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 		proxy_set_header X-Forwarded-Proto $scheme;
+	}
+
+	# live markers: an event stream, passed through as it comes
+	location /live/ {
+		proxy_pass http://127.0.0.1:3000;
+		proxy_set_header Host $host;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+		proxy_http_version 1.1;
+		proxy_set_header Connection "";
+		proxy_buffering off;
+		proxy_read_timeout 1h;
 	}
 }
 
