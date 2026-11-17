@@ -37,6 +37,7 @@ export const getTimelines = query(valibot.string(), async (projectId) => {
 			canDelete: allowed("timeline", "delete", { projectId, timelineId: t.id }),
 			canShare: allowed("grant", "create", { projectId, timelineId: t.id }),
 			canShareLink: allowed("shareLink", "create", { projectId, timelineId: t.id }),
+			canUpload: allowed("export", "upload", { projectId, timelineId: t.id }),
 		})),
 	};
 });

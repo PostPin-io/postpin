@@ -230,7 +230,7 @@
 	bind:this={dialog}
 	onclose={() => (isOpen = false)}
 >
-	<div class="modal-box max-h-[90dvh] pt-0">
+	<div class="modal-box max-h-[95dvh] pt-0">
 		<div class="sticky top-0 z-10 -mx-6 flex items-start gap-2 bg-base-100 px-6 pt-6 pb-2">
 			<h3 class="flex-1 text-lg font-bold">Upload a video</h3>
 			<button

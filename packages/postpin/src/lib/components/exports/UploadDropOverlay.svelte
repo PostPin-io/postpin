@@ -1,16 +1,17 @@
 <script lang="ts">
 	// Dropping a video anywhere on the page starts the web upload: while a file is dragged over the
 	// window this covers the page as the drop target, and hands the dropped video to `ondropped`.
+	import type { Snippet } from "svelte";
 	import CloudUpload from "@lucide/svelte/icons/cloud-upload";
 	import { fade } from "svelte/transition";
 	import { UPLOAD_EXTENSIONS, UPLOAD_FORMATS_TEXT } from "#lib/upload/inspect-file.ts";
 
 	interface Props {
-		/** Where the video goes, named in the overlay */
-		timelineName: string;
+		/** What happens with the video, under the heading */
+		children: Snippet;
 		ondropped: (file: File) => void;
 	}
-	let { timelineName, ondropped }: Props = $props();
+	let { children, ondropped }: Props = $props();
 
 	let dragging = $state(false);
 	let fileCount = $state(1);
@@ -66,10 +67,7 @@
 		>
 			<CloudUpload size={56} class="animate-bounce text-primary motion-reduce:animate-none" />
 			<p class="text-2xl font-bold">Drop your video to upload</p>
-			<p class="max-w-md text-base-content/70">
-				It becomes a new export of <span class="font-medium text-base-content">{timelineName}</span
-				>.
-			</p>
+			<p class="max-w-md text-base-content/70">{@render children()}</p>
 			<p class="max-w-md text-sm text-base-content/60">
 				{UPLOAD_FORMATS_TEXT}.
 				{#if fileCount > 1}One video at a time: the first one is used.{/if}

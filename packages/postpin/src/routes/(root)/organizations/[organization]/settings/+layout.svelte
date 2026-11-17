@@ -3,18 +3,15 @@
 	import { resolve } from "$app/paths";
 	import type { LayoutProps } from "./$types";
 
-	let { data, children }: LayoutProps = $props();
+	let { children }: LayoutProps = $props();
 
 	const organization = $derived(page.params.organization!);
 	const tabs = $derived([
-		...(data.canEditSettings
-			? [
-					{
-						label: "General",
-						href: resolve("/(root)/organizations/[organization]/settings", { organization }),
-					},
-				]
-			: []),
+		// for every role: the About section is on it; the settings themselves only for admins
+		{
+			label: "General",
+			href: resolve("/(root)/organizations/[organization]/settings", { organization }),
+		},
 		{
 			label: "Members",
 			href: resolve("/(root)/organizations/[organization]/settings/members", { organization }),

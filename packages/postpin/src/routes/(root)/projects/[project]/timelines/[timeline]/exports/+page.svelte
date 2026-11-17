@@ -13,6 +13,7 @@
 	import UploadDropOverlay from "#lib/components/exports/UploadDropOverlay.svelte";
 	import ExportUploadStatus from "#lib/components/exports/ExportUploadStatus.svelte";
 	import { uploads } from "#lib/upload/uploads.svelte.ts";
+	import { heldUpload } from "#lib/upload/held-upload.svelte.ts";
 	import { formatByteSize } from "@postpin-io/shared/logic/bytes";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
@@ -62,6 +63,14 @@
 		return () => clearInterval(interval);
 	});
 	let timelineName = $derived(await getTimelineName(page.params.timeline || ""));
+
+	// A video dropped on the projects or timelines, and this timeline was chosen for it. The dialog
+	// only exists when the user may upload here, otherwise the video stays held.
+	$effect(() => {
+		if (!uploadDialog || !heldUpload.file) return;
+		const file = heldUpload.take();
+		if (file) uploadDialog.open(file);
+	});
 
 	function sortBy(field: typeof sortField) {
 		if (sortField == field) {
@@ -515,5 +524,7 @@
 		timelineId={page.params.timeline!}
 	/>
 	<!-- A dropped video is a clear choice for the web upload: no plugin hint first -->
-	<UploadDropOverlay {timelineName} ondropped={(file) => uploadDialog?.open(file)} />
+	<UploadDropOverlay ondropped={(file) => uploadDialog?.open(file)}>
+		It becomes a new export of <span class="font-medium text-base-content">{timelineName}</span>.
+	</UploadDropOverlay>
 {/if}
