@@ -87,7 +87,7 @@ jobs:
 
   merge:
     name: publish (${{ matrix.image.name }})
-    needs: [build, desktop-mac, desktop-win, resolve-mac, resolve-win, premiere]
+    needs: [build, desktop-mac, desktop-win, resolve-mac, resolve-win, premiere, notes]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -406,8 +406,32 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  # Release notes from the changelogs, before any image is tagged: a stable tag whose version has
+  # no notes (pnpm changeset version not run) stops the release here.
+  notes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - name: Release notes from the changelogs
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/notes"
+          if ! node scripts/release-notes.mjs "$TAG" > "$RUNNER_TEMP/notes/release-notes.md"; then
+            # pre-releases may go out with GitHub's generated notes only
+            if [[ "$TAG" != *-* ]]; then exit 1; fi
+            : > "$RUNNER_TEMP/notes/release-notes.md"
+          fi
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-notes
+          path: ${{ runner.temp }}/notes/release-notes.md
+          retention-days: 1
+
   release:
-    needs: [merge, desktop-mac, desktop-win, resolve-mac, resolve-win, premiere]
+    needs: [merge, desktop-mac, desktop-win, resolve-mac, resolve-win, premiere, notes]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -428,6 +452,10 @@ jobs:
           path: ${{ runner.temp }}/desktop
           pattern: premiere-*
           merge-multiple: true
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-notes
+          path: ${{ runner.temp }}/notes
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -441,5 +469,8 @@ jobs:
           echo "{\"apiVersion\": $api_version}" > "$RUNNER_TEMP/api-version.json"
           prerelease=()
           if [[ "$TAG" == *-* ]]; then prerelease=(--prerelease); fi
+          # the notes job's notes from the changelogs; GitHub's generated notes (PRs, full changelog
+          # link) follow below them
+          notes="$RUNNER_TEMP/notes/release-notes.md"
           gh release create "$TAG" deploy/compose.yml deploy/install.sh "$RUNNER_TEMP/env.example" "$RUNNER_TEMP/api-version.json" "$RUNNER_TEMP"/desktop/* \
-            --title "$TAG" --generate-notes --verify-tag "${prerelease[@]}"
+            --title "$TAG" --notes-file "$notes" --generate-notes --verify-tag "${prerelease[@]}"
