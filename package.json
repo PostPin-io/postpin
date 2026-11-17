@@ -20,6 +20,7 @@
 		"test:coverage": "pnpm -r --if-present run test:coverage"
 	},
 	"devDependencies": {
+		"@changesets/cli": "^3.0.3",
 		"@mdi/svg": "^7.4.47",
 		"devicon": "^2.18.0",
 		"husky": "^9.1.7",
