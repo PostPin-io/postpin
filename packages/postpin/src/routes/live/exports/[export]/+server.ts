@@ -9,7 +9,8 @@ const MAX_LIFETIME_MS = 30 * 60_000;
 
 /**
  * Public path (see hooks.server.ts): access is checked here, the same way as getMarkers.
- * `?share=<token>` = as guest, who only hears about their own markers (multi-tab).
+ * `?share=<token>` = as guest, who only hears about their own markers (multi-tab) and the
+ * project's categories, which their markers show.
  */
 export const GET: RequestHandler = async ({ params, url, request }) => {
 	const exportId = params.export;
@@ -20,7 +21,11 @@ export const GET: RequestHandler = async ({ params, url, request }) => {
 	let channels: string[];
 	let lifetime = MAX_LIFETIME_MS;
 	if (reader.kind === "guest") {
-		channels = [liveChannel.guest(reader.guest.id)];
+		// The project channel carries no data, only "reload": guests then reload their own markers
+		channels = [
+			liveChannel.guest(reader.guest.id),
+			liveChannel.project(reader.link.export.timeline.projectId),
+		];
 		const expiresAt = reader.link.expiresAt; // null = never expires
 		if (expiresAt) lifetime = Math.min(lifetime, Math.max(0, expiresAt.getTime() - Date.now()));
 	} else {
