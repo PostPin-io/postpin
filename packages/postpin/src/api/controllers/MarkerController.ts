@@ -4,6 +4,7 @@ import { HttpError } from "../HttpError.ts";
 import type { Marker, Response as MarkerResponse } from "@postpin-io/shared/db";
 import { apiAuthorize } from "../access.ts";
 import { can } from "#lib/roles.ts";
+import { notifyMarkers } from "#lib/server/live.ts";
 
 /** Every marker costs up to three queries in the upload transaction */
 const MAX_UPLOAD_MARKERS = 2000;
@@ -143,6 +144,8 @@ export class MarkerController extends Controller {
 				}
 			}
 		});
+		// Browser tabs on this export show the pushed markers right away
+		void notifyMarkers(exportId);
 	}
 }
 

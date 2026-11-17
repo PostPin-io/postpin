@@ -401,7 +401,8 @@ export async function authorizeMarkers(
 
 	const markers = await prisma.marker.findMany({
 		where: { id: { in: unique }, exportId },
-		select: { id: true, authorId: true, categoryId: true },
+		// guestId: live events reach the tabs of guests whose markers change
+		select: { id: true, authorId: true, categoryId: true, guestId: true },
 	});
 
 	if (markers.length !== unique.length) error(404, "Not found");

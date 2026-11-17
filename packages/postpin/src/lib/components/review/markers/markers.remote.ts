@@ -5,6 +5,7 @@ import { error } from "@sveltejs/kit";
 import { shareLinkCategory } from "#lib/server/share-links.ts";
 import { readExport, requireMarkers } from "#lib/server/review-access.ts";
 import { markersKey, scopeOf } from "./marker-scope.ts";
+import { notifyCategories, notifyMarkers, notifyResponses } from "#lib/server/live.ts";
 
 import {
 	accessChecker,
@@ -243,7 +244,12 @@ export const pasteMarkers = command(
 			}
 		});
 
-		// 6. Refresh
+		// 6. Refresh; a cut keeps the guests, so their tabs hear about both sides
+		const movedGuests = data.mode === "cut" ? source.map((m) => m.guestId) : [];
+		void notifyMarkers(data.targetExportId, movedGuests);
+		if (data.mode === "cut" && data.sourceExportId !== data.targetExportId) {
+			void notifyMarkers(data.sourceExportId, movedGuests);
+		}
 		await Promise.all([
 			getMarkers(data.targetExportId).refresh(),
 			...(data.mode === "cut" && data.sourceExportId !== data.targetExportId
@@ -289,6 +295,7 @@ export const createMarker = command(
 					},
 				}),
 			);
+			void notifyMarkers(data.exportId, [reader.guest.id]);
 			await getMarkers(markersKey(data.exportId, data.shareToken)).refresh();
 			return marker;
 		}
@@ -314,6 +321,7 @@ export const createMarker = command(
 				authorId: user.id,
 			},
 		});
+		void notifyMarkers(data.exportId);
 		await getMarkers(data.exportId).refresh();
 		return marker;
 	},
@@ -347,6 +355,7 @@ export const updateMarker = command(
 					duration: data.duration,
 				},
 			});
+			void notifyMarkers(exportId, [marker.guestId]);
 			await getMarkers(markersKey(exportId, data.shareToken)).refresh();
 			return marker;
 		}
@@ -372,6 +381,7 @@ export const updateMarker = command(
 				categoryId: data.categoryId,
 			},
 		});
+		void notifyMarkers(marker.exportId, [marker.guestId]);
 		await getMarkers(marker.exportId).refresh();
 		return marker;
 	},
@@ -384,6 +394,7 @@ export const deleteMarker = command(
 		if (typeof arg !== "string") {
 			const { exportId } = await guestMarker(arg.id, arg.shareToken);
 			const marker = await prisma.marker.delete({ where: { id: arg.id } });
+			void notifyMarkers(exportId, [marker.guestId]);
 			await getMarkers(markersKey(exportId, arg.shareToken)).refresh();
 			return marker;
 		}
@@ -393,6 +404,7 @@ export const deleteMarker = command(
 		await authorize("marker", "delete", { type: "marker", id });
 
 		const marker = await prisma.marker.delete({ where: { id } });
+		void notifyMarkers(marker.exportId, [marker.guestId]);
 
 		await Promise.all([
 			getMarkers(marker.exportId).refresh(),
@@ -418,6 +430,7 @@ export const deleteMarkers = command(
 			const result = await prisma.marker.deleteMany({
 				where: { id: { in: data.ids }, exportId: data.exportId, guestId: reader.guest.id },
 			});
+			void notifyMarkers(data.exportId, [reader.guest.id]);
 			await getMarkers(markersKey(data.exportId, data.shareToken)).refresh();
 			return result;
 		}
@@ -428,6 +441,10 @@ export const deleteMarkers = command(
 		const result = await prisma.marker.deleteMany({
 			where: { id: { in: markers.map((m) => m.id) }, exportId: data.exportId },
 		});
+		void notifyMarkers(
+			data.exportId,
+			markers.map((m) => m.guestId),
+		);
 
 		const categoryIds = new Set(markers.map((m) => m.categoryId));
 		await Promise.all([
@@ -485,6 +502,12 @@ export const moveMarker = command(
 			}
 		}
 
+		void notifyMarkers(
+			data.exportId,
+			markers.map((m) => m.guestId),
+		);
+		if (deletedCategoryIds.length > 0) void notifyCategories(target.projectId!);
+
 		// Don't refresh deleted categories anymore: getCategoryUsage would return a 404 there
 		const stillExisting = sourceCategoryIds.filter((id) => !deletedCategoryIds.includes(id));
 
@@ -507,10 +530,12 @@ export const changeDescription = command(
 	async (data) => {
 		await authorize("marker", "update", { type: "marker", id: data.id });
 
-		return await prisma.marker.update({
+		const marker = await prisma.marker.update({
 			where: { id: data.id },
 			data: { description: data.description },
 		});
+		void notifyMarkers(marker.exportId, [marker.guestId]);
+		return marker;
 	},
 );
 
@@ -541,6 +566,7 @@ export const createResponse = command(
 			where: { id: data.markerId },
 			select: { exportId: true },
 		});
+		void notifyResponses(marker.exportId, data.markerId);
 		await Promise.all([
 			getResponses(data.markerId).refresh(),
 			getMarkers(marker.exportId).refresh(),
@@ -601,6 +627,7 @@ export const deleteUnusedCategories = command(
 					...(!mayDeleteForeign && { createdById: user.id }),
 				},
 			});
+			if (count > 0) void notifyCategories(projectId);
 			await getCategories(projectId).refresh();
 			return { count };
 		} catch (e) {
@@ -636,6 +663,7 @@ export const createCategory = command(
 				},
 			})
 			.catch(conflictOnDuplicate(data.name));
+		void notifyCategories(data.projectId);
 		await getCategories(data.projectId).refresh();
 		return category;
 	},
@@ -683,6 +711,7 @@ export const changeCategoryColor = command(
 			where: { id: data.id },
 			data: { color: data.color },
 		});
+		void notifyCategories(category.projectId);
 		await getCategories(category.projectId).refresh();
 		return category;
 	},
@@ -746,6 +775,8 @@ export const deleteCategory = command(
 			throw e;
 		}
 		if (!result.success) return result;
+		// A merge moves markers of every export in the project; clients reload them on this event too
+		void notifyCategories(target.projectId!);
 
 		// getCategoryUsage(id) der gelöschten Kategorie nicht refreshen: würde jetzt 404 werfen
 		await Promise.all([
@@ -776,6 +807,7 @@ export const renameCategory = command(
 				data: { name: data.name },
 			})
 			.catch(conflictOnDuplicate(data.name));
+		void notifyCategories(category.projectId);
 		await Promise.all([
 			getCategories(category.projectId).refresh(),
 			...(data.exportId ? [getMarkers(data.exportId).refresh()] : []),
