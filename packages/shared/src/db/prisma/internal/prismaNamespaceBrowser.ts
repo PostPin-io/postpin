@@ -54,6 +54,7 @@ export const ModelName = {
 	Verification: "Verification",
 	DeviceCode: "DeviceCode",
 	Marker: "Marker",
+	MarkerPointer: "MarkerPointer",
 	Category: "Category",
 	CategoryPreset: "CategoryPreset",
 	Response: "Response",
@@ -187,6 +188,22 @@ export const MarkerScalarFieldEnum = {
 
 export type MarkerScalarFieldEnum =
 	(typeof MarkerScalarFieldEnum)[keyof typeof MarkerScalarFieldEnum];
+
+export const MarkerPointerScalarFieldEnum = {
+	id: "id",
+	markerId: "markerId",
+	kind: "kind",
+	x: "x",
+	y: "y",
+	width: "width",
+	height: "height",
+	color: "color",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
+} as const;
+
+export type MarkerPointerScalarFieldEnum =
+	(typeof MarkerPointerScalarFieldEnum)[keyof typeof MarkerPointerScalarFieldEnum];
 
 export const CategoryScalarFieldEnum = {
 	id: "id",

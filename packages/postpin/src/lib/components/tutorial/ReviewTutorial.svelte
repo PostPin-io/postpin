@@ -1,9 +1,10 @@
 <script lang="ts">
 	// Part 2 of the tutorial, on the review page of an export of the tutorial's project. The marker
 	// tour starts on its own; the sharing tour waits behind the Share Guide button next to the breadcrumbs.
-	import { onDestroy } from "svelte";
+	import { onDestroy, type Component } from "svelte";
 	import DiamondPlus from "@lucide/svelte/icons/diamond-plus";
 	import Locate from "@lucide/svelte/icons/locate";
+	import PointerIcon from "../review/markers/PointerIcon.svelte";
 	import RefreshCw from "@lucide/svelte/icons/refresh-cw";
 	import GraduationCap from "@lucide/svelte/icons/graduation-cap";
 	import { commandKeyLabel, isApplePlatform } from "#lib/keyboard.ts";
@@ -75,7 +76,7 @@
 </script>
 
 <!-- An icon within a sentence, as it looks on its button -->
-{#snippet inline(Icon: typeof Locate)}
+{#snippet inline(Icon: Component<{ class?: string }>)}
 	<Icon class="inline size-4 align-text-bottom text-base-content" />
 {/snippet}
 
@@ -101,6 +102,10 @@
 		<p>
 			Jump to it with {@render inline(Locate)} or
 			<kbd class="kbd kbd-sm">{isApplePlatform() ? "⌥" : "Alt"}</kbd> + click.
+		</p>
+		<p>
+			In an open marker, {@render inline(PointerIcon)} or <kbd class="kbd kbd-sm">P</kbd> points at something
+			in the picture.
 		</p>
 		{#snippet actions()}
 			<button type="button" class="btn btn-primary btn-sm" onclick={() => (markerPage = 2)}>

@@ -17,6 +17,12 @@ import { can } from "#lib/roles.ts";
 
 import * as v from "valibot";
 import { isInTimeline, timelineBounds, type FrameRange } from "@postpin-io/shared/logic/ranges";
+import {
+	DEFAULT_POINTER_COLOR,
+	MAX_POINTERS_PER_MARKER,
+	pointerColorSchema,
+	pointerGeometrySchema,
+} from "@postpin-io/shared/logic/pointers";
 
 const MAX_BULK = 500;
 
@@ -99,6 +105,16 @@ async function mapCategories(
 			: (byName.get(m.category.name) ?? fallbackCategoryId);
 }
 
+const pointerSelect = {
+	id: true,
+	kind: true,
+	x: true,
+	y: true,
+	width: true,
+	height: true,
+	color: true,
+} as const;
+
 // ─── Marker: Queries ────────────────────────────────────────────────────────
 export const getMarkers = query(
 	v.union([v.string(), v.object({ exportId: v.string(), shareToken: v.string() })]),
@@ -109,6 +125,7 @@ export const getMarkers = query(
 			author: authorSelect,
 			guest: { select: { name: true } },
 			category: true,
+			pointers: { select: pointerSelect, orderBy: { createdAt: "asc" } },
 		} as const;
 
 		if (reader.kind === "guest") {
@@ -188,6 +205,10 @@ export const pasteMarkers = command(
 			include: {
 				responses: { select: { content: true, authorId: true, createdAt: true } },
 				category: { select: { name: true, projectId: true } },
+				pointers: {
+					select: { kind: true, x: true, y: true, width: true, height: true, color: true },
+					orderBy: { createdAt: "asc" },
+				},
 			},
 		});
 		// Schon gelöschte Marker im Clipboard werden übersprungen, nicht als Fehler gewertet
@@ -233,6 +254,7 @@ export const pasteMarkers = command(
 								createdAt: r.createdAt,
 							})),
 						},
+						pointers: { create: m.pointers },
 					},
 				});
 			}
@@ -515,6 +537,106 @@ export const changeDescription = command(
 );
 
 // ─── Responses ──────────────────────────────────────────────────────────────
+
+// ─── Pointers: arrows and boxes on the picture, part of their marker ─────────
+
+/**
+ * Pointers belong to their marker: whoever may update the marker may add, change and remove them.
+ * Returns the getMarkers key to refresh.
+ */
+async function authorizePointers(markerId: string, shareToken: string | undefined) {
+	if (shareToken) {
+		const { exportId } = await guestMarker(markerId, shareToken);
+		return markersKey(exportId, shareToken);
+	}
+	await authorize("marker", "update", { type: "marker", id: markerId });
+	const { exportId } = await prisma.marker.findUniqueOrThrow({
+		where: { id: markerId },
+		select: { exportId: true },
+	});
+	return markersKey(exportId);
+}
+
+/** A pointer's marker, checked like the marker itself; an unknown pointer is a 404 */
+async function authorizePointer(id: string, shareToken: string | undefined) {
+	const pointer = await prisma.markerPointer.findUnique({
+		where: { id },
+		select: { markerId: true, kind: true },
+	});
+	if (!pointer) error(404, "Not found");
+	return { pointer, key: await authorizePointers(pointer.markerId, shareToken) };
+}
+
+export const createPointer = command(
+	v.object({
+		markerId: v.string(),
+		geometry: pointerGeometrySchema,
+		color: v.optional(pointerColorSchema, DEFAULT_POINTER_COLOR),
+		shareToken,
+	}),
+	async (data) => {
+		const key = await authorizePointers(data.markerId, data.shareToken);
+		const count = await prisma.markerPointer.count({ where: { markerId: data.markerId } });
+		if (count >= MAX_POINTERS_PER_MARKER) {
+			error(400, `A marker has at most ${MAX_POINTERS_PER_MARKER} pointers`);
+		}
+		const { kind, x, y } = data.geometry;
+		const pointer = await prisma.markerPointer.create({
+			data: {
+				markerId: data.markerId,
+				kind,
+				x,
+				y,
+				...(data.geometry.kind === "RECT"
+					? { width: data.geometry.width, height: data.geometry.height }
+					: {}),
+				color: data.color,
+			},
+			select: pointerSelect,
+		});
+		await getMarkers(key).refresh();
+		return pointer;
+	},
+);
+
+export const updatePointer = command(
+	v.object({
+		id: v.string(),
+		/** Moved or resized; the kind stays (an arrow can't become a box) */
+		geometry: v.optional(pointerGeometrySchema),
+		color: v.optional(pointerColorSchema),
+		shareToken,
+	}),
+	async (data) => {
+		const { pointer, key } = await authorizePointer(data.id, data.shareToken);
+		const geometry = data.geometry;
+		if (geometry && geometry.kind !== pointer.kind) error(400, "A pointer keeps its kind");
+		const updated = await prisma.markerPointer.update({
+			where: { id: data.id },
+			data: {
+				...(geometry
+					? {
+							x: geometry.x,
+							y: geometry.y,
+							...(geometry.kind === "RECT"
+								? { width: geometry.width, height: geometry.height }
+								: {}),
+						}
+					: {}),
+				...(data.color ? { color: data.color } : {}),
+			},
+			select: pointerSelect,
+		});
+		await getMarkers(key).refresh();
+		return updated;
+	},
+);
+
+export const deletePointer = command(v.object({ id: v.string(), shareToken }), async (data) => {
+	const { key } = await authorizePointer(data.id, data.shareToken);
+	await prisma.markerPointer.delete({ where: { id: data.id } });
+	await getMarkers(key).refresh();
+});
 
 export const getResponses = query(v.string(), async (markerId: string) => {
 	await authorize("marker", "read", { type: "marker", id: markerId });

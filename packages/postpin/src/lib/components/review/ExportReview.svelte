@@ -21,6 +21,12 @@
 	import Header from "#lib/components/layout/Header.svelte";
 	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
 	import MarkerPanel from "#lib/components/review/markers/MarkerPanel.svelte";
+	import PointerOverlay from "#lib/components/review/PointerOverlay.svelte";
+	import {
+		PointerSession,
+		setPointerSession,
+	} from "#lib/components/review/markers/pointer-session.svelte.ts";
+	import { pointersVisibleAt } from "@postpin-io/shared/logic/pointers";
 	import { markerFilter } from "#lib/components/review/markers/marker-filter.svelte.ts";
 	import VideoMenuBar from "#lib/components/review/VideoMenuBar.svelte";
 	import VideoPlayer, { HLS, type VideoSource } from "#lib/components/review/VideoPlayer.svelte";
@@ -80,6 +86,13 @@
 	}
 	let { exportId, projectId, timelineId, share }: Props = $props();
 	setShareContext(() => share);
+	// Before any await: context can only be set while the component initializes.
+	// Revealing a marker pauses on it, so its pointers are visible.
+	const pointerSession = new PointerSession((marker) => {
+		videoPaused = true;
+		if (!pointersVisibleAt(marker, currentFrame)) seekToFrame(marker.frame);
+	});
+	setPointerSession(pointerSession);
 
 	const shareToken = $derived(share?.token);
 	// The note greets the guest; the header button hides and shows it again
@@ -168,6 +181,21 @@
 		(creatableCategories.find((c) => c.id === defaultCategory.id) ?? creatableCategories[0])?.color,
 	);
 	let markerPanel = $state<MarkerPanel>();
+
+	// ─── Pointers: shown on the picture for the selected markers the playhead is on ───
+	let selectedMarkerIds = $state<string[]>([]);
+	const selectedMarkers = $derived(allMarkers.filter((m) => selectedMarkerIds.includes(m.id)));
+	const pointerMarkers = $derived(
+		selectedMarkers.filter((m) => pointersVisibleAt(m, currentFrame)),
+	);
+	let videoSize = $state<{ width: number; height: number }>();
+	// Drawing ends when its marker can't be drawn on any more: deselected, playhead elsewhere, playing
+	$effect(() => {
+		const id = pointerSession.drawingMarkerId;
+		if (!id) return;
+		const marker = pointerMarkers.find((m) => m.id === id);
+		if (!marker?.canUpdate || !videoPaused || viewMode !== "timeline") pointerSession.stopDrawing();
+	});
 	let sharingDialog = $state<SharingSetupModal>();
 	let originalUrl = $state<string | undefined>(undefined);
 	let thumbnailUrl = $state<string | undefined>(undefined);
@@ -646,7 +674,8 @@
 					/>
 				{/if}
 			{/snippet}
-			{#snippet note()}
+			{#snippet overlay()}
+				<PointerOverlay markers={pointerMarkers} scope={{ exportId, shareToken }} {videoSize} />
 				{#if share?.note && noteVisible}
 					<NoteOverlay note={share.note} onclose={() => (noteVisible = false)} />
 				{/if}
@@ -674,8 +703,9 @@
 							bind:muted={videoMuted}
 							bind:fullscreen={videoFullscreen}
 							{cssFullscreen}
+							bind:videoSize
 							fullscreenControls={menuBar}
-							overlay={note}
+							{overlay}
 						/>
 					{/key}
 				{:else if viewMode !== "shot-grid" && media.status !== "FAILED"}
@@ -722,6 +752,7 @@
 	{/if}
 	<MarkerPanel
 		bind:this={markerPanel}
+		bind:selectedMarkerIds
 		{exportId}
 		mobile={isMobile.current}
 		{currentFrame}
