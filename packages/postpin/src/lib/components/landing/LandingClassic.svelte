@@ -180,7 +180,7 @@
 		-->
 		<div
 			class="mx-auto max-w-6xl {rail
-				? 'grid grid-cols-[2.75rem_1fr] [grid-template-rows:auto_1fr] gap-x-3 sm:grid-cols-[3.5rem_1fr] sm:gap-x-4 lg:grid-cols-[4rem_1fr] lg:gap-x-6'
+				? 'grid grid-cols-[2.75rem_minmax(0,1fr)] [grid-template-rows:auto_1fr] gap-x-3 sm:grid-cols-[3.5rem_minmax(0,1fr)] sm:gap-x-4 lg:grid-cols-[4rem_minmax(0,1fr)] lg:gap-x-6'
 				: ''}"
 		>
 			<h2 class="text-3xl font-bold tracking-tight sm:text-4xl {rail ? 'col-start-2' : ''}">
@@ -193,7 +193,7 @@
 			{/if}
 			<ol class="{rail ? 'col-start-2 row-start-2 mt-8' : 'mt-12'} space-y-16">
 				{#each steps as step, i (step.title)}
-					<li class="grid items-center gap-8 md:grid-cols-5">
+					<li class="grid grid-cols-1 items-center gap-8 md:grid-cols-5">
 						<div class="md:col-span-2 {i % 2 ? 'md:order-2' : ''}">
 							<span
 								class="grid size-9 place-items-center rounded-full bg-primary font-semibold text-primary-content"
@@ -213,7 +213,7 @@
 	<section id="features" class="scroll-mt-20 px-4 py-16 sm:py-24">
 		<div class="mx-auto max-w-6xl">
 			<h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Features</h2>
-			<div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+			<div class="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 				{#each features as feature (feature.title)}
 					<article class="card border border-base-300 bg-base-100">
 						<div class="card-body">
@@ -234,7 +234,7 @@
 			<p class="mt-4 max-w-2xl text-base-content/70">
 				Upload and pull notes right from your editor, on macOS and Windows.
 			</p>
-			<div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			<div class="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 				{#each editors as editor (editor.name)}
 					<a
 						href="{DOCS}{editor.docs}"
@@ -276,7 +276,11 @@
 	<section id="hosting" class="scroll-mt-20 px-4 py-16 sm:py-24">
 		<div class="mx-auto max-w-6xl">
 			<h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Cloud or self-hosted</h2>
-			<div class="mt-10 grid gap-4 md:grid-cols-2">
+			<!--
+				grid-cols-1 (minmax(0, 1fr)), not the implicit auto column: that one grows to the long
+				install URL below, and the whole page scrolls sideways on phones
+			-->
+			<div class="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
 				<article class="card border border-base-300 bg-base-100">
 					<div class="card-body gap-5">
 						<div>
@@ -305,7 +309,7 @@
 							"Your footage stays on your own hardware",
 							"A setup script asks for your domains and email settings",
 						])}
-						<div class="mockup-code text-sm">
+						<div class="mockup-code min-w-0 text-sm">
 							<pre data-prefix="$"><code>curl -fsSLO {INSTALL_SCRIPT}</code></pre>
 							<pre data-prefix="$"><code>bash install.sh</code></pre>
 						</div>

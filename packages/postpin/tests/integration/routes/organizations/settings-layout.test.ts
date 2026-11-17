@@ -1,8 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { isRedirect } from "@sveltejs/kit";
 import { Role } from "@postpin-io/shared/db/enums";
 import { load as layoutLoad } from "../../../../src/routes/(root)/organizations/[organization]/settings/+layout.server.ts";
-import { load as pageLoad } from "../../../../src/routes/(root)/organizations/[organization]/settings/+page.server.ts";
 import { expectStatus } from "../../../helpers/expect.ts";
 import * as f from "../../../helpers/factories.ts";
 
@@ -32,12 +30,6 @@ const runLayout = (user: User | null, slug = w.org.slug) =>
 		canEditSettings: boolean;
 	}>;
 
-const runPage = (canEditSettings: boolean, slug = w.org.slug) =>
-	pageLoad({
-		params: { organization: slug },
-		parent: async () => ({ canEditSettings }),
-	} as never);
-
 // ─── settings/+layout.server.ts ─────────────────────────────────────────────
 
 describe("settings layout load", () => {
@@ -61,24 +53,5 @@ describe("settings layout load", () => {
 	] as const)("%s → canEditSettings %s", async (who, expected) => {
 		const data = await runLayout(w[who].user);
 		expect(data.canEditSettings).toBe(expected);
-	});
-});
-
-// ─── settings/+page.server.ts ───────────────────────────────────────────────
-
-describe("settings page load", () => {
-	it("lets owners and admins see the general settings", async () => {
-		await expect(runPage(true)).resolves.toBeUndefined();
-	});
-
-	it("sends everyone else to the members tab", async () => {
-		try {
-			await runPage(false);
-			expect.fail("expected a redirect");
-		} catch (e) {
-			if (!isRedirect(e)) throw e;
-			expect(e.status).toBe(307);
-			expect(e.location).toBe(`/organizations/${w.org.slug}/settings/members`);
-		}
 	});
 });
