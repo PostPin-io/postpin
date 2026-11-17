@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Logo from "#lib/components/layout/Logo.svelte";
 	import Menu from "@lucide/svelte/icons/menu";
+	import { page } from "$app/state";
 
 	interface Props {
 		/**
@@ -22,6 +23,9 @@
 		brandHidden?: boolean;
 	}
 	let { floating = false, minimal = false, wide = false, brandHidden = false }: Props = $props();
+
+	// /?about shows the landing page to signed-in users too; they go back to the app instead
+	const signedIn = $derived(!!page.data.signedIn);
 
 	const sections = [
 		{ href: "#how-it-works", label: "How it works" },
@@ -97,8 +101,12 @@
 			</ul>
 		</div>
 		<div class="navbar-end gap-1">
-			<a class="btn btn-ghost" href="/auth/login">Log in</a>
-			<a class="btn btn-primary max-sm:hidden" href="/auth/signup">Create account</a>
+			{#if signedIn}
+				<a class="btn btn-primary" href="/dashboard">Open app</a>
+			{:else}
+				<a class="btn btn-ghost" href="/auth/login">Log in</a>
+				<a class="btn btn-primary max-sm:hidden" href="/auth/signup">Create account</a>
+			{/if}
 		</div>
 	</nav>
 </header>
