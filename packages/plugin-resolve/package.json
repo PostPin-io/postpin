@@ -1,6 +1,6 @@
 {
 	"name": "@postpin-io/resolve-plugin",
-	"version": "1.0.0",
+	"version": "0.5.2",
 	"description": "PostPin workflow integration plugin for DaVinci Resolve",
 	"main": "main.js",
 	"license": "MIT",

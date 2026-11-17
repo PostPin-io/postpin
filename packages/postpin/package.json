@@ -1,8 +1,8 @@
 {
 	"name": "@postpin-io/postpin",
+	"version": "0.5.2",
 	"private": true,
 	"license": "MIT",
-	"version": "0.0.1",
 	"type": "module",
 	"scripts": {
 		"dev": "concurrently -n vite,tsoa,client \"vite dev\" \"pnpm run generate:api:watch\" \"pnpm run build:api-client:watch\"",

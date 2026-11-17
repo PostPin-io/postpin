@@ -1,0 +1,24 @@
+{
+	"$schema": "https://unpkg.com/@changesets/config@4.0.1/schema.json",
+	"baseBranch": "main",
+	"changedFilePatterns": [
+		"**",
+		"!tests/**",
+		"!**/*.test.ts",
+		"!coverage/**",
+		"!README.md",
+		"!CHANGELOG.md"
+	],
+	"access": "restricted",
+	"changelog": "./changelog.mjs",
+	"format": false,
+	"commit": false,
+	"fixed": [["@postpin-io/*"]],
+	"linked": [],
+	"ignore": ["@postpin-io/workspace"],
+	"privatePackages": {
+		"version": true,
+		"tag": false
+	},
+	"updateInternalDependencies": "patch"
+}
