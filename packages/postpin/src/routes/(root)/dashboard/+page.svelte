@@ -21,7 +21,6 @@
 	import Ellipsis from "@lucide/svelte/icons/ellipsis";
 	import FolderOpen from "@lucide/svelte/icons/folder-open";
 	import Pencil from "@lucide/svelte/icons/pencil";
-	import Share from "@lucide/svelte/icons/share";
 	import Trash from "@lucide/svelte/icons/trash";
 	import Plus from "@lucide/svelte/icons/plus";
 	import { MediaQuery } from "svelte/reactivity";
@@ -46,7 +45,7 @@
 	let projectDialog: NewProjectModal | null = null;
 	let renameProjectDialog: RenameProjectModal | null = null;
 	let delProjectDialog: DeleteProjectModal | null = null;
-	let shareProjectDialog: SharingSetupModal | null = null;
+	let inviteDialog: SharingSetupModal | null = null;
 
 	let data = $derived(await getProjects());
 
@@ -81,9 +80,9 @@
 		renameProjectDialog?.open(project);
 	}
 
-	function shareProject(project: (typeof data.projects)[number]) {
+	function inviteToProject(project: (typeof data.projects)[number]) {
 		closeMenu(project);
-		shareProjectDialog?.open({ projectId: project.id });
+		inviteDialog?.open({ projectId: project.id });
 	}
 
 	function deleteProject(project: (typeof data.projects)[number]) {
@@ -122,9 +121,9 @@
 <PageMeta title="Projects" description="Your PostPin projects." />
 
 <!--
-	Ein Dropdown für alle Aktionen eines Projekts (Öffnen, Umbenennen, Löschen).
-	Nutzt das Popover-API von daisyUI 5: Das Menü liegt im Top-Layer des Browsers
-	und wird deshalb nicht von overflow-Containern (Tabelle, Card) abgeschnitten.
+	One dropdown for all actions of a project, in the same groups as on timelines and exports:
+	open, then sharing, then edit. Uses daisyUI 5's popover API: the menu lives in the browser's
+	top layer, so overflow containers (table, card) don't clip it.
 -->
 {#snippet actionsMenu(project: (typeof data.projects)[number], projectHref: string)}
 	<button
@@ -149,24 +148,24 @@
 				Open project
 			</a>
 		</li>
+		{#if project.canShare}
+			<li class="mt-1 border-t border-base-300 pt-1">
+				<button type="button" onclick={() => inviteToProject(project)}>
+					<UserGroup class="size-4" />
+					Invite to project
+				</button>
+			</li>
+		{/if}
 		{#if project.canRename}
-			<li>
+			<li class="mt-1 border-t border-base-300 pt-1">
 				<button type="button" onclick={() => renameProject(project)}>
 					<Pencil class="size-4" />
 					Rename project
 				</button>
 			</li>
 		{/if}
-		{#if project.canShare}
-			<li>
-				<button type="button" onclick={() => shareProject(project)}>
-					<Share class="size-4" />
-					Share project
-				</button>
-			</li>
-		{/if}
 		{#if project.canDelete}
-			<li class="mt-1 border-t border-base-300 pt-1">
+			<li class={project.canRename ? "" : "mt-1 border-t border-base-300 pt-1"}>
 				<button type="button" class="text-error" onclick={() => deleteProject(project)}>
 					<Trash class="size-4" />
 					Delete project
@@ -384,7 +383,11 @@
 								<td class="w-44">
 									<div class="aspect-video w-36 overflow-hidden rounded-md bg-base-300">
 										{#if latest?.media}
-											<a href={projectHref} class="group relative block size-full">
+											<a
+												href={projectHref}
+												class="group relative block size-full"
+												aria-label="Open {project.name}"
+											>
 												<img
 													src={await getUrl({ mediaId: latest.media.id, type: "thumbnail" })}
 													alt="Thumbnail of {project.name}"
@@ -393,17 +396,20 @@
 												/>
 											</a>
 										{:else}
-											<div
-												onclick={() => (window.location.href = projectHref)}
+											<a
+												href={projectHref}
+												aria-label="Open {project.name}"
 												class="flex size-full items-center justify-center text-base-content/30"
 											>
 												<Apeture />
-											</div>
+											</a>
 										{/if}
 									</div>
 								</td>
 
-								<td class="font-medium">{project.name}</td>
+								<td class="font-medium">
+									<a href={projectHref} class="link link-hover">{project.name}</a>
+								</td>
 								<td class="whitespace-nowrap text-base-content/70">
 									{new Date(project.createdAt).toLocaleDateString()}
 								</td>
@@ -446,17 +452,25 @@
 									/>
 								</a>
 							{:else}
-								<div class="flex size-full items-center justify-center text-base-content/30">
+								<a
+									href={projectHref}
+									aria-label="Open {project.name}"
+									class="flex size-full items-center justify-center text-base-content/30"
+								>
 									<Apeture />
-								</div>
+								</a>
 							{/if}
 						</figure>
 
 						<div class="card-body">
-							<h2 class="card-title flex items-center justify-between">
-								<span class="min-w-0 flex-1 truncate" title={project.name}>
+							<h2 class="card-title flex items-center justify-between gap-2">
+								<a
+									href={projectHref}
+									class="min-w-0 flex-1 link truncate link-hover"
+									title={project.name}
+								>
 									{project.name}
-								</span>
+								</a>
 								{@render actionsMenu(project, projectHref)}
 							</h2>
 
@@ -472,7 +486,7 @@
 							</dl>
 
 							<div class="mt-4 card-actions items-center justify-end">
-								<a href={projectHref} class="btn btn-primary">Open</a>
+								<a href={projectHref} class="btn btn-primary btn-sm">Open</a>
 							</div>
 						</div>
 					</article>
@@ -488,7 +502,7 @@
 <NewProjectModal bind:this={projectDialog} />
 <RenameProjectModal bind:this={renameProjectDialog} />
 <DeleteProjectModal bind:this={delProjectDialog} />
-<SharingSetupModal bind:this={shareProjectDialog} />
+<SharingSetupModal bind:this={inviteDialog} />
 {#if canDropHere}
 	<UploadDropOverlay ondropped={(file) => heldUpload.hold(file)}>
 		Then choose the project and the timeline it goes to.

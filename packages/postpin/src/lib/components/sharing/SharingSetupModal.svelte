@@ -58,12 +58,14 @@
 		</div>
 
 		{#if targetQuery?.error}
-			<p class="mt-2 text-sm text-error">Could not load what you are sharing.</p>
+			<p class="mt-2 text-sm text-error">
+				Could not load {target?.exportId ? "what you are sharing" : "who has access"}.
+			</p>
 		{:else if targetQuery?.current}
 			{#if targetQuery.current.type !== "export"}
 				{@const shareTarget = { type: targetQuery.current.type, id: targetQuery.current.id }}
 				<p class="mt-2 text-sm text-base-content/70">
-					You are sharing the {targetQuery.current.type}: {targetQuery.current.name}
+					Invite people to the {targetQuery.current.type}: {targetQuery.current.name}
 				</p>
 				<AccessGrants target={shareTarget} />
 				<div class="divider my-2"></div>

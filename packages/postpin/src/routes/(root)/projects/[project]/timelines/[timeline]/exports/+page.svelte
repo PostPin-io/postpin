@@ -23,7 +23,7 @@
 	import FileDown from "@lucide/svelte/icons/file-down";
 	import Link from "@lucide/svelte/icons/link";
 	import Pencil from "@lucide/svelte/icons/pencil";
-	import Trash2 from "@lucide/svelte/icons/trash-2";
+	import Trash from "@lucide/svelte/icons/trash";
 	import Upload from "@lucide/svelte/icons/upload";
 
 	let viewMode: "table" | "card" = $state("card");
@@ -97,6 +97,11 @@
 		});
 	}
 
+	function showInfo(id: string) {
+		closeMenu(id);
+		document.getElementById(`export-info-${id}`)?.showPopover();
+	}
+
 	function renameExport(singleExport: (typeof exports)[number]) {
 		closeMenu(singleExport.id);
 		renameExportDialog?.open(singleExport);
@@ -138,9 +143,10 @@
 <PageMeta title="{timelineName} exports" description="The exports of {timelineName}." />
 
 <!--
-	Ein Dropdown für alle Aktionen eines Exports (Öffnen, Share-Links, Umbenennen, Löschen).
-	Nutzt das Popover-API von daisyUI 5: Das Menü liegt im Top-Layer des Browsers
-	und wird deshalb nicht von overflow-Containern (Tabelle, Card) abgeschnitten.
+	One dropdown for all actions of an export, in the same groups as on projects and timelines:
+	open, then sharing, then edit.
+	Uses daisyUI 5's popover API: the menu lives in the browser's top layer,
+	so overflow containers (table, card) don't clip it.
 -->
 {#snippet actionsMenu(singleExport: (typeof exports)[number], exportHref: string)}
 	<button
@@ -165,8 +171,16 @@
 				Open export
 			</a>
 		</li>
-		{#if singleExport.canShare}
+		{#if singleExport.storage}
 			<li>
+				<button type="button" onclick={() => showInfo(singleExport.id)}>
+					<Info class="size-4" />
+					Info
+				</button>
+			</li>
+		{/if}
+		{#if singleExport.canShare}
+			<li class="mt-1 border-t border-base-300 pt-1">
 				<button type="button" onclick={() => shareExport(singleExport.id)}>
 					<Link class="size-4" />
 					Share links
@@ -182,35 +196,25 @@
 			</li>
 		{/if}
 		{#if singleExport.canDelete}
-			<li class:mt-1={!singleExport.canRename} class:border-t={!singleExport.canRename}>
+			<li class={singleExport.canRename ? "" : "mt-1 border-t border-base-300 pt-1"}>
 				<button type="button" class="text-error" onclick={() => deleteExport(singleExport)}>
-					<Trash2 class="size-4" />
+					<Trash class="size-4" />
 					Delete export
 				</button>
 			</li>
 		{/if}
 	</ul>
-{/snippet}
 
-<!-- Size of the export's files, tucked away behind a faint "i" -->
-{#snippet sizeInfo(singleExport: (typeof exports)[number])}
-	{@const storage = singleExport.storage}
-	{#if storage}
-		<button
-			type="button"
-			class="btn btn-circle shrink-0 btn-ghost opacity-40 btn-xs hover:opacity-100"
-			aria-label="Storage size of {singleExport.name}"
-			popovertarget="export-size-{singleExport.id}"
-			style="anchor-name: --export-size-{singleExport.id}"
-		>
-			<Info class="size-3.5" />
-		</button>
+	<!-- The size of the export's files, opened from the menu's "Info" at the same anchor -->
+	{#if singleExport.storage}
+		{@const storage = singleExport.storage}
 		<div
-			id="export-size-{singleExport.id}"
+			id="export-info-{singleExport.id}"
 			popover
-			class="dropdown z-50 w-56 rounded-box bg-base-100 p-3 text-sm shadow-lg"
-			style="position-anchor: --export-size-{singleExport.id}"
+			class="dropdown dropdown-end z-50 w-56 rounded-box bg-base-100 p-3 text-sm shadow-lg"
+			style="position-anchor: --export-anchor-{singleExport.id}"
 		>
+			<h3 class="mb-2 font-semibold">Storage</h3>
 			<dl class="space-y-1 tabular-nums">
 				{#each storage.files as file (file.label)}
 					<div class="flex justify-between gap-4 text-base-content/70">
@@ -410,7 +414,11 @@
 								<td class="w-44">
 									<div class="aspect-video w-36 overflow-hidden rounded-md bg-base-300">
 										{#if singleExport.media?.status === "COMPLETED"}
-											<a href={exportHref} class="group relative block size-full">
+											<a
+												href={exportHref}
+												class="group relative block size-full"
+												aria-label="Open {singleExport.name}"
+											>
 												<img
 													src={await getUrl({ mediaId: singleExport.media.id, type: "thumbnail" })}
 													alt="Thumbnail of {singleExport.name}"
@@ -430,7 +438,9 @@
 									</div>
 								</td>
 
-								<td class="max-w-xs font-medium break-words">{singleExport.name}</td>
+								<td class="max-w-xs font-medium break-words">
+									<a href={exportHref} class="link link-hover">{singleExport.name}</a>
+								</td>
 
 								<td class="whitespace-nowrap text-base-content/70">
 									{new Date(singleExport.createdAt).toLocaleDateString()}
@@ -441,8 +451,7 @@
 
 								<td class="text-right whitespace-nowrap">
 									<div class="flex items-center justify-end gap-2">
-										{@render sizeInfo(singleExport)}
-										<a href={exportHref} class="btn btn-primary btn-sm">Open export</a>
+										<a href={exportHref} class="btn btn-primary btn-sm">Open</a>
 										{@render actionsMenu(singleExport, exportHref)}
 									</div>
 								</td>
@@ -483,9 +492,13 @@
 
 						<div class="card-body">
 							<h2 class="card-title flex items-center justify-between gap-2">
-								<span class="min-w-0 flex-1 truncate" title={singleExport.name}>
+								<a
+									href={exportHref}
+									class="min-w-0 flex-1 link truncate link-hover"
+									title={singleExport.name}
+								>
 									{singleExport.name}
-								</span>
+								</a>
 								{@render actionsMenu(singleExport, exportHref)}
 							</h2>
 							<dl class="space-y-1 text-sm text-base-content/70">
@@ -499,9 +512,8 @@
 								</div>
 							</dl>
 
-							<div class="mt-2 card-actions items-center justify-between">
-								{@render sizeInfo(singleExport)}
-								<a href={exportHref} class="btn ms-auto btn-primary btn-sm">Open export</a>
+							<div class="mt-4 card-actions items-center justify-end">
+								<a href={exportHref} class="btn btn-primary btn-sm">Open</a>
 							</div>
 						</div>
 					</article>

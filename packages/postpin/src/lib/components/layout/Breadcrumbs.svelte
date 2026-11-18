@@ -116,7 +116,7 @@
 				siblingHref: projectHref,
 				share: project.canShare
 					? {
-							label: "Share project",
+							label: "Invite to project",
 							icon: UserGroup,
 							open: () => sharingModal?.open({ projectId: project.id }),
 						}
@@ -133,7 +133,7 @@
 			siblingHref: (id) => timelineHref(project.id, id),
 			share: timeline.canShare
 				? {
-						label: "Share timeline",
+						label: "Invite to timeline",
 						icon: UserGroup,
 						open: () => sharingModal?.open({ projectId: project.id, timelineId: timeline.id }),
 					}
