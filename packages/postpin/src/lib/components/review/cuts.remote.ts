@@ -36,6 +36,8 @@ import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot
 /**
  * Builds the shots of a web upload again for another sensitivity, from the scores the cut
  * detection stored, and renders their thumbnails again. No new analysis of the video needed.
+ * Also the way back from a timeline imported from an EDL or FCPXML (a wrong one, say): its tracks
+ * are replaced by the estimate. Markers imported with it stay, they are the team's now.
  */
 export const setCutSensitivity = command(
 	v.object({ exportId: v.string(), level: cutLevel }),
@@ -51,8 +53,6 @@ export const setCutSensitivity = command(
 		});
 		const snapshot = exp?.timelineSnapshot as TimelineSnapshot | null | undefined;
 		if (!exp?.media || !isWebUpload(snapshot)) error(409, "Only web uploads have estimated cuts");
-		if (snapshot.metadata.cutsFrom)
-			error(409, "The cuts come from the editing software's timeline");
 		if (exp.media.status !== "COMPLETED") error(409, "The video is still being processed");
 
 		const scores = exp.media.sceneScores ? v.parse(sceneScores, exp.media.sceneScores) : null;
@@ -66,6 +66,9 @@ export const setCutSensitivity = command(
 			where: { id: exportId },
 			data: {
 				timelineSnapshot: updated as unknown as Prisma.JsonObject,
+				// A timeline imported before is replaced for good: processing again must not bring it back
+				cutListKey: null,
+				cutListError: null,
 				media: {
 					update: {
 						// the old thumbnails belong to the old shots; the job sets this again
