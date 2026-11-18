@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from "$app/state";
+	import { untrack } from "svelte";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
 	import MonitorUp from "@lucide/svelte/icons/monitor-up";
 	import Projector from "@lucide/svelte/icons/projector";
@@ -10,6 +11,7 @@
 	import {
 		createScreeningLink,
 		getScreeningSetup,
+		getShareLinks,
 		resumeScreeningLink,
 	} from "#lib/components/sharing/share-links/share-links.remote.ts";
 	import { formatExpiry, shareLinkUrl } from "#lib/components/sharing/share-links/share-links.ts";
@@ -18,6 +20,7 @@
 		requestStopScreening,
 		screening,
 		startScreening,
+		stopScreening,
 		type ScreeningIds,
 	} from "./screening.svelte.ts";
 
@@ -37,6 +40,18 @@
 	const mayScreen = $derived(role ? roleAllows(role, "shareLink", "create") : false);
 
 	const running = $derived(screening.session?.exportId === ids.exportId);
+
+	// Revoking the link ends the screening for its guests on the server. Whoever revokes it, here
+	// or elsewhere, the session of this tab must go too: otherwise the button stays on "End
+	// screening" for a screening that is over.
+	const sessionLink = $derived(running && mayScreen ? screening.session?.link.id : undefined);
+	const sessionLinks = $derived(sessionLink ? getShareLinks(ids.exportId) : undefined);
+	$effect(() => {
+		const revoked = sessionLinks?.current?.some(
+			(link) => link.id === sessionLink && link.status === "revoked",
+		);
+		if (revoked) untrack(() => stopScreening({ endLive: false }));
+	});
 
 	let dialog = $state<HTMLDialogElement>();
 	let open = $state(false);
