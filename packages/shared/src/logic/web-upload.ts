@@ -301,12 +301,23 @@ function probedFrameCount(probed: ProbedTiming, frameRate: FrameRate): number | 
 	return frames;
 }
 
-/** Rebuilds the clips from the stored scene scores for `level`, and remembers the level. */
+/**
+ * Rebuilds the clips from the stored scene scores for `level`, and remembers the level. Tracks
+ * from a cut list are dropped: the estimate starts over with one video track, as if the list had
+ * never been imported.
+ */
 export function applyCuts(
-	snapshot: TimelineSnapshot & { metadata: WebUploadMetadata },
+	given: TimelineSnapshot & { metadata: WebUploadMetadata },
 	scores: SceneScores | null,
 	level: CutLevel,
 ): TimelineSnapshot & { metadata: WebUploadMetadata } {
+	const snapshot = given.metadata.cutsFrom
+		? withTiming(given, {
+				frameRate: given.frameRate,
+				startFrameIndex: given.startFrameIndex,
+				durationFrameCount: given.durationFrameCount,
+			})
+		: given;
 	const cuts = scores
 		? cutFrames(scores.scores, level, snapshot.frameRate, snapshot.durationFrameCount)
 		: [];

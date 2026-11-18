@@ -112,20 +112,30 @@ describe("setCutSensitivity", () => {
 		});
 	});
 
-	it("409 when the tracks come from a cut list: nothing is estimated to change", async () => {
+	it("replaces the tracks of a cut list with estimated ones, and forgets the list", async () => {
 		signIn(w.owner.user, w.org.id);
 		await webUpload();
 		const s = snapshot();
 		await prisma.export.update({
 			where: { id: w.exp1.id },
-			data: { timelineSnapshot: { ...s, metadata: { ...s.metadata, cutsFrom: "edl" } } as never },
+			data: {
+				timelineSnapshot: { ...s, metadata: { ...s.metadata, cutsFrom: "edl" } } as never,
+				cutListKey: `${w.exp1.mediaId}/cutList`,
+				cutListError: "old",
+			},
 		});
-		const res = await expectStatus(
-			setCutSensitivity({ exportId: w.exp1.id, level: "medium" }),
-			409,
-		);
-		expect(res.body.message).toMatch(/editing software/);
-		expect(fakes.queue).toEqual([]);
+
+		await setCutSensitivity({ exportId: w.exp1.id, level: "medium" });
+		const exp = await prisma.export.findUniqueOrThrow({ where: { id: w.exp1.id } });
+		const snap = exp.timelineSnapshot as unknown as TimelineSnapshot;
+		expect(snap.metadata.cutsFrom).toBeUndefined();
+		expect(snap.metadata.cutLevel).toBe("medium");
+		expect(snap.tracks.map((t) => t.id)).toEqual(["V1"]);
+		expect(snap.tracks[0]!.clips.length).toBeGreaterThan(1);
+		// processing again must not bring the list back
+		expect(exp.cutListKey).toBeNull();
+		expect(exp.cutListError).toBeNull();
+		expect(fakes.queue.map((j) => j.args[0])).toEqual(["shotThumbnails"]);
 	});
 
 	it("409 for a level without scores, while processing and for plugin exports", async () => {
@@ -286,8 +296,14 @@ describe("importCutList", () => {
 				],
 			},
 		]);
-		// estimated cuts can't be changed any more: they are the editing software's now
-		await expectStatus(setCutSensitivity({ exportId: w.exp1.id, level: "medium" }), 409);
+		// A wrong list can be undone: estimated cuts again, the imported markers stay
+		await setCutSensitivity({ exportId: w.exp1.id, level: "medium" });
+		const back = await prisma.export.findUniqueOrThrow({ where: { id: w.exp1.id } });
+		const backSnap = back.timelineSnapshot as unknown as TimelineSnapshot;
+		expect(backSnap.metadata.cutsFrom).toBeUndefined();
+		expect(backSnap.tracks.map((t) => t.id)).toEqual(["V1"]);
+		expect(back.cutListKey).toBeNull();
+		expect(await prisma.marker.count({ where: { exportId: w.exp1.id } })).toBe(2);
 	});
 
 	it.each([

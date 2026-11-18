@@ -78,11 +78,19 @@ describe("getExport", () => {
 		expect((await getExport(ids())).importedMarkers).toEqual({ edl: 2, fcpxml: 1 });
 	});
 
-	it("a reviewer may import markers, a member also change the cuts", async () => {
+	it("a reviewer may import markers, a member also change the cuts and upload", async () => {
 		await signInAs(w.org, REVIEWER, [{ timelineId: w.tl1.id }]);
-		expect(await getExport(ids())).toMatchObject({ canImportMarkers: true, canChangeCuts: false });
+		expect(await getExport(ids())).toMatchObject({
+			canImportMarkers: true,
+			canChangeCuts: false,
+			canUpload: false,
+		});
 		await signInAs(w.org, MEMBER, [{ timelineId: w.tl1.id }]);
-		expect(await getExport(ids())).toMatchObject({ canImportMarkers: true, canChangeCuts: true });
+		expect(await getExport(ids())).toMatchObject({
+			canImportMarkers: true,
+			canChangeCuts: true,
+			canUpload: true,
+		});
 	});
 
 	it("a member may share the export from the review, a reviewer may not", async () => {

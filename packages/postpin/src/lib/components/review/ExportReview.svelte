@@ -65,6 +65,8 @@
 	import { setShareContext, type ShareContext } from "./share-context.ts";
 	import ScreeningButton from "#lib/components/screening/ScreeningButton.svelte";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
+	import UploadModal from "#lib/components/exports/UploadModal.svelte";
+	import UploadDropOverlay from "#lib/components/exports/UploadDropOverlay.svelte";
 	import ReviewTutorial from "#lib/components/tutorial/ReviewTutorial.svelte";
 	import ScreeningRemote from "#lib/components/screening/ScreeningRemote.svelte";
 	import EndScreeningDialog from "#lib/components/screening/EndScreeningDialog.svelte";
@@ -240,6 +242,7 @@
 		if (!marker?.canUpdate || !videoPaused || viewMode !== "timeline") pointerSession.stopDrawing();
 	});
 	let sharingDialog = $state<SharingSetupModal>();
+	let uploadDialog = $state<UploadModal>();
 	let originalUrl = $state<string | undefined>(undefined);
 	let thumbnailUrl = $state<string | undefined>(undefined);
 
@@ -659,6 +662,13 @@
 			{#snippet pending()}{/snippet}
 			{#snippet failed()}{/snippet}
 		</svelte:boundary>
+	{/if}
+	{#if projectId && timelineId && exp?.canUpload}
+		<!-- A new version of the cut, dropped right where it is reviewed: into the same timeline -->
+		<UploadModal bind:this={uploadDialog} {projectId} {timelineId} />
+		<UploadDropOverlay videoOnly ondropped={(file) => uploadDialog?.open(file)}>
+			It becomes a new export of this timeline. This export stays as it is.
+		</UploadDropOverlay>
 	{/if}
 {/if}
 

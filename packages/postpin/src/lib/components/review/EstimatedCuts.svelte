@@ -79,15 +79,22 @@
 	/** After an import the window only says so; it starts over once it is opened again */
 	let imported = $state<ImportResult | null>(null);
 	const resetOnClose = (e: Event) => {
-		if (!(e.currentTarget as HTMLDetailsElement).open) imported = null;
+		if ((e.currentTarget as HTMLDetailsElement).open) return;
+		imported = null;
+		confirmLevel = null;
 	};
 
 	const LEVELS = ["sensitive", "medium", "insensitive", "none"] as const;
 	let saving = $state<CutLevel | null>(null);
 	let error = $state<string | null>(null);
 
+	/** With a cut list's timeline, a level replaces it: asked back first, the list is gone after */
+	let confirmLevel = $state<CutLevel | null>(null);
+
 	async function choose(level: CutLevel) {
-		if (level === cutLevel || saving) return;
+		// the level of the estimate stays in the snapshot while a list is used: picking it replaces the list
+		if ((level === cutLevel && !cutsFrom) || saving) return;
+		confirmLevel = null;
 		saving = level;
 		error = null;
 		try {
@@ -110,6 +117,53 @@
 			Back
 		</button>
 	</div>
+{/snippet}
+
+<!-- The sensitivity of the cut detection; with a cut list's timeline no level is the current one -->
+{#snippet levelPicker()}
+	<div class="join w-full" role="radiogroup" aria-label="Cut sensitivity">
+		{#each LEVELS as level (level)}
+			{@const current = !cutsFrom && level === cutLevel}
+			<button
+				type="button"
+				role="radio"
+				aria-checked={current || confirmLevel === level}
+				class="btn join-item flex-1 px-1 btn-xs"
+				class:btn-active={current || confirmLevel === level}
+				disabled={!!saving || (!detected && level !== "none")}
+				onclick={() => (cutsFrom ? (confirmLevel = level) : void choose(level))}
+			>
+				{#if saving === level}<span class="loading loading-xs loading-spinner"></span>{/if}
+				{CUT_LEVEL_LABELS[level]}
+			</button>
+		{/each}
+	</div>
+	{#if !detected}
+		<p class="mt-2 text-xs text-base-content/60">Cut detection was off.</p>
+	{/if}
+	{#if confirmLevel}
+		<div class="mt-2 rounded-field bg-base-200 p-2 text-xs" role="alert">
+			<p>
+				Replace the timeline from the {cutsFrom ? FORMATS[cutsFrom] : "file"} with estimated cuts? Imported
+				markers stay.
+			</p>
+			<div class="mt-2 flex justify-end gap-1">
+				<button type="button" class="btn btn-ghost btn-xs" onclick={() => (confirmLevel = null)}>
+					Cancel
+				</button>
+				<button
+					type="button"
+					class="btn btn-warning btn-xs"
+					onclick={() => void choose(confirmLevel!)}
+				>
+					Replace
+				</button>
+			</div>
+		</div>
+	{/if}
+	{#if error}
+		<p class="mt-2 text-xs text-error" role="alert">{error}</p>
+	{/if}
 {/snippet}
 
 {#snippet importZone()}
@@ -163,6 +217,13 @@
 					· {markersText.count}{/if}
 			</p>
 			{@render importZone()}
+			<!-- The way back, when the file was the wrong one -->
+			{#if canChange}
+				<div class="mt-3 border-t border-base-300 pt-3">
+					<p class="mb-2 text-xs text-base-content/60">Or detect the cuts from the video</p>
+					{@render levelPicker()}
+				</div>
+			{/if}
 		{:else}
 			<p class="mb-2 font-semibold">Estimate Cuts</p>
 			{#if markersText}
@@ -177,28 +238,7 @@
 			{/if}
 
 			{#if canChange}
-				<div class="join w-full" role="radiogroup" aria-label="Cut sensitivity">
-					{#each LEVELS as level (level)}
-						<button
-							type="button"
-							role="radio"
-							aria-checked={level === cutLevel}
-							class="btn join-item flex-1 px-1 btn-xs"
-							class:btn-active={level === cutLevel}
-							disabled={!!saving || (!detected && level !== "none")}
-							onclick={() => void choose(level)}
-						>
-							{#if saving === level}<span class="loading loading-xs loading-spinner"></span>{/if}
-							{CUT_LEVEL_LABELS[level]}
-						</button>
-					{/each}
-				</div>
-				{#if !detected}
-					<p class="mt-2 text-xs text-base-content/60">Cut detection was off.</p>
-				{/if}
-			{/if}
-			{#if error}
-				<p class="mt-2 text-xs text-error" role="alert">{error}</p>
+				{@render levelPicker()}
 			{/if}
 			{@render importZone()}
 		{/if}
