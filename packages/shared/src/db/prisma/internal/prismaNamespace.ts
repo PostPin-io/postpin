@@ -396,6 +396,7 @@ export const ModelName = {
 	Verification: "Verification",
 	DeviceCode: "DeviceCode",
 	Marker: "Marker",
+	MarkerPointer: "MarkerPointer",
 	Category: "Category",
 	CategoryPreset: "CategoryPreset",
 	Response: "Response",
@@ -439,6 +440,7 @@ export type TypeMap<
 			| "verification"
 			| "deviceCode"
 			| "marker"
+			| "markerPointer"
 			| "category"
 			| "categoryPreset"
 			| "response"
@@ -901,6 +903,81 @@ export type TypeMap<
 				count: {
 					args: Prisma.MarkerCountArgs<ExtArgs>;
 					result: runtime.Types.Utils.Optional<Prisma.MarkerCountAggregateOutputType> | number;
+				};
+			};
+		};
+		MarkerPointer: {
+			payload: Prisma.$MarkerPointerPayload<ExtArgs>;
+			fields: Prisma.MarkerPointerFieldRefs;
+			operations: {
+				findUnique: {
+					args: Prisma.MarkerPointerFindUniqueArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerPointerPayload> | null;
+				};
+				findUniqueOrThrow: {
+					args: Prisma.MarkerPointerFindUniqueOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerPointerPayload>;
+				};
+				findFirst: {
+					args: Prisma.MarkerPointerFindFirstArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerPointerPayload> | null;
+				};
+				findFirstOrThrow: {
+					args: Prisma.MarkerPointerFindFirstOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerPointerPayload>;
+				};
+				findMany: {
+					args: Prisma.MarkerPointerFindManyArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerPointerPayload>[];
+				};
+				create: {
+					args: Prisma.MarkerPointerCreateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerPointerPayload>;
+				};
+				createMany: {
+					args: Prisma.MarkerPointerCreateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				createManyAndReturn: {
+					args: Prisma.MarkerPointerCreateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerPointerPayload>[];
+				};
+				delete: {
+					args: Prisma.MarkerPointerDeleteArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerPointerPayload>;
+				};
+				update: {
+					args: Prisma.MarkerPointerUpdateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerPointerPayload>;
+				};
+				deleteMany: {
+					args: Prisma.MarkerPointerDeleteManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateMany: {
+					args: Prisma.MarkerPointerUpdateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateManyAndReturn: {
+					args: Prisma.MarkerPointerUpdateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerPointerPayload>[];
+				};
+				upsert: {
+					args: Prisma.MarkerPointerUpsertArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerPointerPayload>;
+				};
+				aggregate: {
+					args: Prisma.MarkerPointerAggregateArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.AggregateMarkerPointer>;
+				};
+				groupBy: {
+					args: Prisma.MarkerPointerGroupByArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.MarkerPointerGroupByOutputType>[];
+				};
+				count: {
+					args: Prisma.MarkerPointerCountArgs<ExtArgs>;
+					result:
+						runtime.Types.Utils.Optional<Prisma.MarkerPointerCountAggregateOutputType> | number;
 				};
 			};
 		};
@@ -2307,6 +2384,22 @@ export const MarkerScalarFieldEnum = {
 export type MarkerScalarFieldEnum =
 	(typeof MarkerScalarFieldEnum)[keyof typeof MarkerScalarFieldEnum];
 
+export const MarkerPointerScalarFieldEnum = {
+	id: "id",
+	markerId: "markerId",
+	kind: "kind",
+	x: "x",
+	y: "y",
+	width: "width",
+	height: "height",
+	color: "color",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
+} as const;
+
+export type MarkerPointerScalarFieldEnum =
+	(typeof MarkerPointerScalarFieldEnum)[keyof typeof MarkerPointerScalarFieldEnum];
+
 export const CategoryScalarFieldEnum = {
 	id: "id",
 	name: "name",
@@ -2648,6 +2741,32 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "In
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Int[]">;
 
 /**
+ * Reference to a field of type 'PointerKind'
+ */
+export type EnumPointerKindFieldRefInput<$PrismaModel> = FieldRefInputType<
+	$PrismaModel,
+	"PointerKind"
+>;
+
+/**
+ * Reference to a field of type 'PointerKind[]'
+ */
+export type ListEnumPointerKindFieldRefInput<$PrismaModel> = FieldRefInputType<
+	$PrismaModel,
+	"PointerKind[]"
+>;
+
+/**
+ * Reference to a field of type 'Float'
+ */
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Float">;
+
+/**
+ * Reference to a field of type 'Float[]'
+ */
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Float[]">;
+
+/**
  * Reference to a field of type 'Json'
  */
 export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Json">;
@@ -2672,16 +2791,6 @@ export type ListEnumMediaStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
 	$PrismaModel,
 	"MediaStatus[]"
 >;
-
-/**
- * Reference to a field of type 'Float'
- */
-export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Float">;
-
-/**
- * Reference to a field of type 'Float[]'
- */
-export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Float[]">;
 
 /**
  * Reference to a field of type 'Role'
@@ -2872,6 +2981,7 @@ export type GlobalOmitConfig = {
 	verification?: Prisma.VerificationOmit;
 	deviceCode?: Prisma.DeviceCodeOmit;
 	marker?: Prisma.MarkerOmit;
+	markerPointer?: Prisma.MarkerPointerOmit;
 	category?: Prisma.CategoryOmit;
 	categoryPreset?: Prisma.CategoryPresetOmit;
 	response?: Prisma.ResponseOmit;

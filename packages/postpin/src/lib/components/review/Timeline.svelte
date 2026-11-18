@@ -43,6 +43,8 @@
 		inOut?: InOut;
 
 		onCollapsedHeight: (height: number) => void;
+		/** A marker on the timeline was clicked: the review selects it in the marker panel */
+		onmarkerclick?: (markerId: string) => void;
 	}
 
 	const getShare = useShare();
@@ -58,6 +60,7 @@
 		mode = "full",
 		inOut = $bindable({ in: null, out: null }),
 		onCollapsedHeight,
+		onmarkerclick,
 	}: Props = $props();
 
 	let hover = $state<{ time: number; x: number; y: number } | null>(null);
@@ -187,6 +190,8 @@
 		if (event.button !== 0) return;
 		// Keep the ruler from starting a scrub, and the bar from moving when a handle is grabbed
 		event.stopPropagation();
+		// Grabbing a marker's head selects it, whether it then gets dragged or only clicked
+		onmarkerclick?.(marker.id);
 		if (!marker.canUpdate) {
 			seek(marker.frame);
 			return;
@@ -653,7 +658,10 @@
 							: 'border border-l-2'}"
 						style="left: {toX(range.frame)}px; border-color: {marker.category.color}"
 						title={marker.name}
-						onclick={() => seek(range.frame)}
+						onclick={() => {
+							seek(range.frame);
+							onmarkerclick?.(marker.id);
+						}}
 					></div>
 				{/each}
 			</div>

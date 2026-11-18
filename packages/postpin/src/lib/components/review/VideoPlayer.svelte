@@ -27,6 +27,7 @@
 
 		muted = $bindable(false),
 		fullscreen = $bindable(false),
+		videoSize = $bindable<{ width: number; height: number }>(),
 		cssFullscreen = false,
 		fullscreenControls,
 		overlay,
@@ -43,6 +44,8 @@
 		qualities?: number[];
 		muted?: boolean;
 		fullscreen?: boolean;
+		/** Intrinsic size of the video once known: overlays find the picture inside the letterbox */
+		videoSize?: { width: number; height: number };
 		/** Covers the viewport with CSS: where the Fullscreen API is missing (iPhone) or on a phone turned sideways */
 		cssFullscreen?: boolean;
 		/** Control bar shown over the video while in fullscreen, where the page's own bar is out of view */
@@ -161,7 +164,15 @@
 			});
 			video.addEventListener("ratechange", () => (playbackRate = video.playbackRate));
 			video.addEventListener("volumechange", () => (muted = video.muted));
+			// Renditions can differ in size (resize), the aspect ratio stays
+			const updateSize = () => {
+				if (video.videoWidth > 0 && video.videoHeight > 0) {
+					videoSize = { width: video.videoWidth, height: video.videoHeight };
+				}
+			};
+			video.addEventListener("resize", updateSize);
 			video.addEventListener("loadedmetadata", () => {
+				updateSize();
 				ready = true;
 				updateQualities();
 				video.videoRenditions?.addEventListener("addrendition", updateQualities);
