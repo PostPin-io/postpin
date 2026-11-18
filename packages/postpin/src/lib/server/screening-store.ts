@@ -13,6 +13,28 @@ import { LiveScreeningSchema, redisClient, type LiveScreening } from "@postpin-i
 export const SCREENING_LIVE_TTL_SECONDS = 20;
 
 const key = (linkId: string) => `screening:live:${linkId}`;
+/** The presenter's session that runs it: only that one may move the playhead or end it */
+const ownerKey = (linkId: string) => `screening:owner:${linkId}`;
+
+// Checked and written in one go, so two sessions can't interleave and hand it back and forth.
+// A session takes the screening over with `claim`; otherwise it may only go on with its own.
+// The owner's key expiring with the state means a session that was gone long may go on.
+// Ending leaves ENDED as the owner for a while: a report still on its way from the session
+// that ended it must not start the screening again for the guests.
+const SET_SCRIPT = `
+local owner = redis.call('GET', KEYS[2])
+if ARGV[3] ~= '1' and owner and owner ~= ARGV[1] then return 0 end
+redis.call('SET', KEYS[1], ARGV[2], 'EX', ARGV[4])
+redis.call('SET', KEYS[2], ARGV[1], 'EX', ARGV[4])
+return 1`;
+const DELETE_SCRIPT = `
+local owner = redis.call('GET', KEYS[2])
+if ARGV[1] ~= '' and owner and owner ~= ARGV[1] then return 0 end
+redis.call('DEL', KEYS[1])
+redis.call('SET', KEYS[2], ARGV[2], 'EX', ARGV[3])
+return 1`;
+/** Never a session's id (those are UUIDs) */
+const ENDED = "-";
 
 // Survive Vite HMR in dev without piling up Redis connections
 const g = globalThis as typeof globalThis & { __postpinRedis?: Redis };
@@ -34,10 +56,31 @@ export const screeningStore = {
 			return null;
 		}
 	},
-	async set(linkId: string, state: LiveScreening) {
-		await redis().set(key(linkId), JSON.stringify(state), "EX", SCREENING_LIVE_TTL_SECONDS);
+	/** False when another session runs the screening now (it took it over) */
+	async set(linkId: string, sessionId: string, state: LiveScreening, claim: boolean) {
+		const done = await redis().eval(
+			SET_SCRIPT,
+			2,
+			key(linkId),
+			ownerKey(linkId),
+			sessionId,
+			JSON.stringify(state),
+			claim ? "1" : "0",
+			SCREENING_LIVE_TTL_SECONDS,
+		);
+		return done === 1;
 	},
-	async delete(linkId: string) {
-		await redis().del(key(linkId));
+	/** Only the owner's session ends it; without `sessionId` it ends whoever runs it */
+	async delete(linkId: string, sessionId?: string) {
+		const done = await redis().eval(
+			DELETE_SCRIPT,
+			2,
+			key(linkId),
+			ownerKey(linkId),
+			sessionId ?? "",
+			ENDED,
+			SCREENING_LIVE_TTL_SECONDS,
+		);
+		return done === 1;
 	},
 };

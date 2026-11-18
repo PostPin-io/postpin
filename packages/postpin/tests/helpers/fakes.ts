@@ -18,6 +18,8 @@ export const fakes = {
 	queue: [] as QueueCall[],
 	/** Running screenings by link: what Redis holds in production (screening-store.ts) */
 	screenings: new Map<string, LiveScreening>(),
+	/** The presenter's session that runs each of them */
+	screeningOwners: new Map<string, string>(),
 	/** Override per test to return something from S3, e.g. a listObjectsV2 page */
 	s3Respond: (() => ({})) as S3Responder,
 	/** Override per test for flowProducer.getFlow() */
@@ -29,6 +31,7 @@ export const fakes = {
 		this.s3.length = 0;
 		this.queue.length = 0;
 		this.screenings.clear();
+		this.screeningOwners.clear();
 		this.s3Respond = () => ({});
 		this.getFlow = () => undefined;
 		this.transcodeMode = "plugin";
@@ -48,13 +51,26 @@ export const fakeEmailModule = {
 	},
 };
 
-/** screening-store.ts without Redis; nothing expires by itself */
+/** screening-store.ts without Redis, same rules as its scripts; nothing expires by itself */
 export const fakeScreeningStoreModule = {
 	SCREENING_LIVE_TTL_SECONDS: 20,
 	screeningStore: {
 		get: async (linkId: string) => fakes.screenings.get(linkId) ?? null,
-		set: async (linkId: string, state: LiveScreening) => void fakes.screenings.set(linkId, state),
-		delete: async (linkId: string) => void fakes.screenings.delete(linkId),
+		set: async (linkId: string, sessionId: string, state: LiveScreening, claim: boolean) => {
+			const owner = fakes.screeningOwners.get(linkId);
+			if (!claim && owner && owner !== sessionId) return false;
+			fakes.screenings.set(linkId, state);
+			fakes.screeningOwners.set(linkId, sessionId);
+			return true;
+		},
+		delete: async (linkId: string, sessionId?: string) => {
+			const owner = fakes.screeningOwners.get(linkId);
+			if (sessionId && owner && owner !== sessionId) return false;
+			fakes.screenings.delete(linkId);
+			// ended: a late report of the ended session is turned away, a claim takes it over
+			fakes.screeningOwners.set(linkId, "-");
+			return true;
+		},
 	},
 };
 

@@ -4,13 +4,13 @@ import type { RedisEnv } from "../env/index.ts";
 
 /**
  * Channel names: members listen per export and project, guests only to their own markers.
- * A screening's guests also listen to its link, for the presenter's playhead.
+ * Every guest also listens to their link: whether it was deleted, and a screening's playhead.
  */
 export const liveChannel = {
 	export: (exportId: string) => `live:export:${exportId}`,
 	guest: (guestId: string) => `live:guest:${guestId}`,
 	project: (projectId: string) => `live:project:${projectId}`,
-	screening: (linkId: string) => `live:screening:${linkId}`,
+	shareLink: (linkId: string) => `live:share-link:${linkId}`,
 };
 
 /** Where the presenter's playhead is. `at`: server time (ms) when `time` was current. */
@@ -37,6 +37,8 @@ export const LiveEventSchema = v.variant("type", [
 		linkId: v.string(),
 		state: v.nullable(LiveScreeningSchema),
 	}),
+	/** Its guests are sent away at once, not with their next request */
+	v.object({ type: v.literal("shareLinkRevoked"), linkId: v.string() }),
 ]);
 export type LiveEvent = v.InferOutput<typeof LiveEventSchema>;
 

@@ -66,6 +66,8 @@ export class ScreeningSession {
 	activated = $state(true);
 	fullscreen = $state(false);
 	qualities = $state<number[]>([]);
+	/** Another tab or window runs this link's screening now: the guests follow that one */
+	superseded = $state(false);
 
 	/** Called with every report from the window; the view takes it over as its player state */
 	onStatus: ((state: ScreeningState) => void) | undefined;
@@ -200,6 +202,12 @@ export class ScreeningSession {
 		this.#popup.focus();
 	}
 
+	/** The server said another session runs the screening: stop telling the guests anything */
+	supersede() {
+		this.#broadcaster?.stop();
+		this.superseded = true;
+	}
+
 	/** `endLive: false`: the same link's screening goes on in a new session */
 	dispose({ endLive = true } = {}) {
 		if (this.#disposed) return;
@@ -247,13 +255,31 @@ function writeStored(stored: Stored | null) {
 	}
 }
 
-const liveFor = (linkId: string): ScreeningLive => ({
-	publish: (playhead) => publishScreening({ linkId, playhead }),
-	end: () => endScreening({ linkId }),
-});
+/**
+ * One session runs a link's screening (the server checks): a new one takes it over with its
+ * first report, a reloaded one goes on with its own. Taken over (409): `onLost`.
+ */
+function liveFor(
+	linkId: string,
+	sessionId: string,
+	{ claim = false, onLost }: { claim?: boolean; onLost?: () => void } = {},
+): ScreeningLive {
+	return {
+		publish: async (playhead) => {
+			try {
+				await publishScreening({ linkId, sessionId, playhead, claim });
+				claim = false;
+			} catch (e) {
+				if ((e as { status?: number }).status === 409) onLost?.();
+				throw e;
+			}
+		},
+		end: () => endScreening({ linkId, sessionId }),
+	};
+}
 
 function run(win: ScreeningWindow, link: ScreeningLink, shareUrl: string, restored: boolean) {
-	const session = new ScreeningSession(
+	const session: ScreeningSession = new ScreeningSession(
 		win,
 		link,
 		shareUrl,
@@ -261,13 +287,13 @@ function run(win: ScreeningWindow, link: ScreeningLink, shareUrl: string, restor
 			if (screening.session === session) stopScreening();
 		},
 		restored,
-		liveFor(link.id),
+		liveFor(link.id, win.sessionId, { claim: !restored, onLost: () => session.supersede() }),
 	);
 	screening.session = session;
 }
 
 export function startScreening(win: ScreeningWindow, link: ScreeningLink, shareUrl: string) {
-	// Continuing the same link: its guests stay in the screening, an `end` now could arrive late
+	// Continuing the same link: its guests stay in the screening, the new session takes it over
 	stopScreening({ endLive: screening.session?.link.id !== link.id });
 	run(win, link, shareUrl, false);
 	writeStored({
@@ -291,7 +317,7 @@ export function restoreScreening(exportId: string) {
 		const channel = new BroadcastChannel(screeningChannelName(stored.sessionId));
 		channel.postMessage({ type: "close" } satisfies ToScreeningWindow);
 		channel.close();
-		liveFor(stored.link.id)
+		liveFor(stored.link.id, stored.sessionId)
 			.end()
 			.catch(() => {
 				// its guests notice by themselves once the heartbeat is missing

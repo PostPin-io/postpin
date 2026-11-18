@@ -99,6 +99,15 @@
 			</div>
 		</div>
 
+		{#if session.superseded}
+			<div role="alert" class="alert text-sm alert-warning">
+				<TriangleAlert size={18} />
+				<span>
+					This screening was started again in another tab or window. The guests follow that one now;
+					end this one here.
+				</span>
+			</div>
+		{/if}
 		{#if session.connected && !session.activated}
 			<div role="alert" class="alert text-sm alert-warning">
 				<TriangleAlert size={18} />

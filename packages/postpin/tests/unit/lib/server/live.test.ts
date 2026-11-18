@@ -100,11 +100,11 @@ describe("LiveHub", () => {
 	it("hands on the screening's playhead, and its end", () => {
 		const { hub, message } = setup();
 		const guest = vi.fn();
-		hub.subscribe(["live:screening:l1"], guest);
+		hub.subscribe(["live:share-link:l1"], guest);
 		const state = { time: 12.5, paused: false, rate: 1, at: 1000 };
 
-		message("live:screening:l1", { type: "screening", linkId: "l1", state });
-		message("live:screening:l1", { type: "screening", linkId: "l1", state: null });
+		message("live:share-link:l1", { type: "screening", linkId: "l1", state });
+		message("live:share-link:l1", { type: "screening", linkId: "l1", state: null });
 
 		expect(guest.mock.calls).toEqual([
 			[{ type: "screening", linkId: "l1", state }],

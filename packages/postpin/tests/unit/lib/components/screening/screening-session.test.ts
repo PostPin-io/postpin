@@ -403,6 +403,17 @@ describe("ScreeningSession and the guests", () => {
 		);
 	});
 
+	it("taken over by another session: tells the guests nothing more", async () => {
+		session.push(state(), FRAME);
+		live.publish.mockClear();
+		session.supersede();
+		expect(session.superseded).toBe(true);
+		const rev = await connect();
+		win.status(rev, state({ time: 30, paused: false }));
+		await delivered();
+		expect(live.publish).not.toHaveBeenCalled();
+	});
+
 	it("ending the session ends the screening for the guests", () => {
 		session.dispose();
 		expect(live.end).toHaveBeenCalledOnce();
@@ -410,6 +421,26 @@ describe("ScreeningSession and the guests", () => {
 });
 
 describe("startScreening / stopScreening", () => {
+	it("a new screening takes the link over with its first report; taken over, it stops", async () => {
+		remote.publishScreening.mockClear();
+		startScreening(open("f"), { id: "l5", token: "t5" }, "u5");
+		const session = screening.session!;
+		session.push(state(), FRAME);
+		await vi.waitFor(() =>
+			expect(remote.publishScreening).toHaveBeenCalledWith(
+				expect.objectContaining({ linkId: "l5", sessionId: "f", claim: true }),
+			),
+		);
+
+		remote.publishScreening.mockRejectedValueOnce(Object.assign(new Error(), { status: 409 }));
+		session.push(state({ paused: false }), FRAME);
+		await vi.waitFor(() => expect(session.superseded).toBe(true));
+		expect(remote.publishScreening).toHaveBeenLastCalledWith(
+			expect.objectContaining({ claim: false }),
+		);
+		stopScreening();
+	});
+
 	const open = (sessionId: string, p = fakePopup()) => ({
 		popup: p as unknown as Window,
 		sessionId,
@@ -453,6 +484,6 @@ describe("startScreening / stopScreening", () => {
 		expect(remote.endScreening).not.toHaveBeenCalled();
 
 		stopScreening();
-		expect(remote.endScreening).toHaveBeenCalledExactlyOnceWith({ linkId: "l4" });
+		expect(remote.endScreening).toHaveBeenCalledExactlyOnceWith({ linkId: "l4", sessionId: "e" });
 	});
 });

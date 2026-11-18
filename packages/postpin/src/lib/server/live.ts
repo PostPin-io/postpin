@@ -195,17 +195,34 @@ export const guestStreamLifetime = (expiresAt: Date | null) =>
 // Not awaited, like the other events: one connection publishes them in the order they come,
 // and a guest who missed one gets the current state on reconnecting
 
-/** The presenter's playhead, as of now; guests hear it at once (see screening-live.ts) */
-export async function setLiveScreening(linkId: string, playhead: LivePlayhead) {
+/**
+ * The presenter's playhead, as of now; guests hear it at once (see screening-live.ts). From
+ * one session of the presenter at a time: false when another one runs it (`claim` takes over).
+ */
+export async function setLiveScreening(
+	linkId: string,
+	sessionId: string,
+	playhead: LivePlayhead,
+	claim = false,
+) {
 	const state: LiveScreening = { ...playhead, at: Date.now() };
-	await screeningStore.set(linkId, state);
-	void publish([liveChannel.screening(linkId)], { type: "screening", linkId, state });
+	if (!(await screeningStore.set(linkId, sessionId, state, claim))) return false;
+	void publish([liveChannel.shareLink(linkId)], { type: "screening", linkId, state });
+	return true;
 }
 
-/** The screening ended: its guests watch on their own again */
-export async function endLiveScreening(linkId: string) {
-	await screeningStore.delete(linkId);
-	void publish([liveChannel.screening(linkId)], { type: "screening", linkId, state: null });
+/**
+ * The screening ended: its guests watch on their own again. With `sessionId` only when that
+ * session runs it, so an old one going away doesn't end the screening of a newer one.
+ */
+export async function endLiveScreening(linkId: string, sessionId?: string) {
+	if (!(await screeningStore.delete(linkId, sessionId))) return;
+	void publish([liveChannel.shareLink(linkId)], { type: "screening", linkId, state: null });
+}
+
+/** The link was deleted: its guests are sent away */
+export function notifyShareLinkRevoked(linkId: string) {
+	return publish([liveChannel.shareLink(linkId)], { type: "shareLinkRevoked", linkId });
 }
 
 export const getLiveScreening = (linkId: string) => screeningStore.get(linkId);

@@ -70,6 +70,7 @@
 	import EndScreeningDialog from "#lib/components/screening/EndScreeningDialog.svelte";
 	import ScreeningFollowView from "#lib/components/screening/ScreeningFollowView.svelte";
 	import { ScreeningFollower } from "#lib/components/screening/screening-follow.svelte.ts";
+	import { connectShareLink } from "#lib/components/share-view/share-live.ts";
 	import {
 		requestStopScreening,
 		restoreScreening,
@@ -104,9 +105,28 @@
 	// screen, and their playhead follows the presenter's, so everybody is at the same frame.
 	// Before and after it, the link is an ordinary share link.
 	const follower = new ScreeningFollower(untrack(() => share?.live ?? null));
+	// Every guest: deleting the link sends them away at once (see connectShareLink)
 	$effect(() => {
-		const token = share?.screening ? share.token : undefined;
-		if (token) return follower.connect(token);
+		const token = shareToken;
+		const screeningLink = !!share?.screening;
+		const ongone = share?.ongone;
+		if (!token) return;
+		const link = connectShareLink(token, {
+			screening: (message) => follower.receive(message),
+			open: () => follower.heard(),
+			gone: () => ongone?.(),
+		});
+		// Not while reconnecting: a phone coming back from standby reconnects first, and the
+		// silence before isn't the presenter's. Until then the playhead moves on by the clock.
+		const stale = screeningLink
+			? setInterval(() => {
+					if (!link.reconnecting) follower.checkStale();
+				}, 1000)
+			: undefined;
+		return () => {
+			clearInterval(stale);
+			link.close();
+		};
 	});
 	const following = $derived(!!share?.screening && follower.live);
 	// The note greets the guest; the header button hides and shows it again

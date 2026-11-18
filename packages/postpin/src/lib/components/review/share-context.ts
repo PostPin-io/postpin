@@ -16,6 +16,8 @@ export type ShareContext = {
 	screening: boolean;
 	/** Whether the screening ran when the page loaded; the stream says from then on */
 	live: ScreeningMessage | null;
+	/** The link was deleted or no longer lets the guest in: the share page shows why */
+	ongone?: () => void;
 };
 
 const KEY = Symbol("share");
