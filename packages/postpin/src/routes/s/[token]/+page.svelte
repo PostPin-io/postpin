@@ -116,6 +116,9 @@
 			timelinePanelVisible: info.timelinePanelVisible,
 			markerPanelVisible: info.markerPanelVisible,
 			screening: info.screening,
+			live: info.live,
+			// Asking again shows why: the link's error page, or the name form for a lost cookie
+			ongone: () => void infoQuery.refresh(),
 		}}
 	/>
 {/if}

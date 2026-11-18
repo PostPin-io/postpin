@@ -111,6 +111,9 @@
 		hello();
 		const helloTimer = setInterval(hello, 500);
 		const orphanTimer = setTimeout(() => (orphaned = !connected), 5000);
+		// Also without a change: the view passes it on to the guests as the screening's heartbeat,
+		// and this window is on screen, while the view's tab may be throttled in the background
+		const statusTimer = setInterval(sendStatus, 1000);
 		// The export view closes this window when it goes; this catches the cases where it couldn't
 		const openerTimer = setInterval(() => {
 			if (window.opener && (window.opener as Window).closed) window.close();
@@ -121,6 +124,7 @@
 		return () => {
 			clearInterval(helloTimer);
 			clearTimeout(orphanTimer);
+			clearInterval(statusTimer);
 			clearTimeout(awayTimer);
 			clearInterval(openerTimer);
 			window.removeEventListener("pagehide", bye);

@@ -390,6 +390,10 @@
 	export function createMarkerAtPlayhead() {
 		return addAndSelectMarker();
 	}
+	/** Only sets the marker: nothing is selected or opened, so the next one can follow at once */
+	export function createQuickMarker() {
+		return addMarkerAtPlayhead();
+	}
 	export function setSelectedMarkerId(id: string | null) {
 		selectedMarkerIds = id ? [id] : [];
 		// Like a click on the card: a shift-click next selects the range from here

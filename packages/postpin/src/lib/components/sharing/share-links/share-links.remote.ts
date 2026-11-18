@@ -17,6 +17,7 @@ import {
 } from "@postpin-io/shared/logic/share-links";
 import { sendEmail } from "#lib/server/email.ts";
 import { recipientsSentToday } from "#lib/server/share-link-mails.ts";
+import { endLiveScreening, notifyShareLinkRevoked } from "#lib/server/live.ts";
 
 import { prisma } from "#lib/server/database.ts";
 import { accessChecker, authorize } from "#lib/server/org-access.ts";
@@ -255,6 +256,10 @@ export const revokeShareLink = command(v.object({ id: v.string() }), async ({ id
 		where: { id, revokedAt: null },
 		data: { revokedAt: new Date() },
 	});
+	// A screening of it ends for its guests now, not when the presenter's heartbeat runs out
+	await endLiveScreening(id).catch((e) => console.error("[screening] end failed", e));
+	// Guests who have it open are sent away now, not with their next request
+	void notifyShareLinkRevoked(id);
 
 	await getShareLinks(exportId).refresh();
 });

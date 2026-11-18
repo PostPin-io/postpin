@@ -8,6 +8,8 @@ import {
 	type ScreeningState,
 	type ToScreeningWindow,
 } from "./screening-protocol.ts";
+import { ScreeningBroadcaster, type LivePlayhead } from "./screening-live.ts";
+import { endScreening, publishScreening } from "./screening.remote.ts";
 
 export type ScreeningIds = { projectId: string; timelineId: string; exportId: string };
 export type ScreeningLink = { id: string; token: string };
@@ -17,6 +19,12 @@ export type ScreeningLink = { id: string; token: string };
  * the view was reloaded: the window is still there, but only reachable over the channel.
  */
 export type ScreeningWindow = { popup: Window | null; sessionId: string; ids: ScreeningIds };
+
+/** Tells the screening's guests where its playhead is (see screening-live.ts) */
+export type ScreeningLive = {
+	publish: (playhead: LivePlayhead) => Promise<unknown>;
+	end: () => Promise<unknown>;
+};
 
 /**
  * Opens the presentation window. Call it directly in the click handler, before anything is
@@ -43,6 +51,7 @@ export function openScreeningWindow(ids: ScreeningIds): ScreeningWindow | null {
 /**
  * The export view's side of a running screening: keeps the presentation window in step with
  * the view's player state (see screening-protocol.ts) and notices when the window is gone.
+ * What the window shows also goes to the guests, whose playhead follows it (`live`).
  */
 export class ScreeningSession {
 	readonly exportId: string;
@@ -57,6 +66,8 @@ export class ScreeningSession {
 	activated = $state(true);
 	fullscreen = $state(false);
 	qualities = $state<number[]>([]);
+	/** Another tab or window runs this link's screening now: the guests follow that one */
+	superseded = $state(false);
 
 	/** Called with every report from the window; the view takes it over as its player state */
 	onStatus: ((state: ScreeningState) => void) | undefined;
@@ -74,6 +85,8 @@ export class ScreeningSession {
 	#resumingSince: number | null;
 	/** The window said `bye` and hasn't come back yet */
 	#byeAt: number | null = null;
+	#live: ScreeningLive | undefined;
+	#broadcaster: ScreeningBroadcaster | undefined;
 
 	constructor(
 		win: ScreeningWindow,
@@ -81,6 +94,7 @@ export class ScreeningSession {
 		shareUrl: string,
 		onclosed: () => void,
 		restored = false,
+		live?: ScreeningLive,
 	) {
 		this.exportId = win.ids.exportId;
 		this.link = link;
@@ -89,6 +103,8 @@ export class ScreeningSession {
 		this.#popup = win.popup;
 		this.#sessionId = win.sessionId;
 		this.#resumingSince = restored ? Date.now() : null;
+		this.#live = live;
+		this.#broadcaster = live && new ScreeningBroadcaster(live.publish);
 		this.#channel = new BroadcastChannel(screeningChannelName(win.sessionId));
 		this.#channel.onmessage = (event: MessageEvent<FromScreeningWindow>) =>
 			this.#receive(event.data);
@@ -101,8 +117,10 @@ export class ScreeningSession {
 				this.#popup?.closed ||
 				(this.#byeAt !== null && now - this.#byeAt > SCREENING_BYE_TIMEOUT_MS) ||
 				(this.#resumingSince !== null && now - this.#resumingSince > SCREENING_RESUME_TIMEOUT_MS);
-			if (closed) onclosed();
-			else if (this.#resumingSince !== null) this.#post({ type: "resume" });
+			if (closed) return onclosed();
+			if (this.#resumingSince !== null) this.#post({ type: "resume" });
+			// the heartbeat: guests know the screening still runs
+			this.#broadcaster?.tick();
 		}, 500);
 		// A reload keeps the screening (restoreScreening); the window waits a moment for that
 		window.addEventListener("pagehide", this.#away);
@@ -132,6 +150,7 @@ export class ScreeningSession {
 				state: this.#desired,
 				shareUrl: this.shareUrl,
 			});
+			this.#broadcaster?.update(this.#desired);
 			return;
 		}
 		if (this.#resumingSince !== null) {
@@ -148,12 +167,19 @@ export class ScreeningSession {
 		this.qualities = message.qualities;
 		this.#remote = { ...message.state };
 		this.onStatus?.(message.state);
+		// What the window shows, not what was asked of it: that is what the room sees
+		this.#broadcaster?.update(message.state);
 	}
 
 	/** The state the view wants; only what differs from the window's goes out */
 	push(desired: ScreeningState, frameSeconds: number) {
 		this.#desired = desired;
-		if (!this.#remote) return; // `init` will carry everything, or `resume` brings the window's
+		if (!this.#remote) {
+			// `init` will carry everything, or `resume` brings the window's. Until the window is
+			// there, a new screening waits at its start: guests switch over right away.
+			if (!this.restored) this.#broadcaster?.update(desired);
+			return;
+		}
 		const patch = screeningPatch(this.#remote, desired, frameSeconds);
 		if (!patch) return;
 		Object.assign(this.#remote, patch);
@@ -176,8 +202,20 @@ export class ScreeningSession {
 		this.#popup.focus();
 	}
 
-	dispose() {
+	/** The server said another session runs the screening: stop telling the guests anything */
+	supersede() {
+		this.#broadcaster?.stop();
+		this.superseded = true;
+	}
+
+	/** `endLive: false`: the same link's screening goes on in a new session */
+	dispose({ endLive = true } = {}) {
 		if (this.#disposed) return;
+		this.#broadcaster?.stop();
+		if (endLive)
+			this.#live?.end().catch(() => {
+				// the guests notice by themselves once the heartbeat is missing
+			});
 		clearInterval(this.#watch);
 		window.removeEventListener("pagehide", this.#away);
 		// the window closes itself on this; close() below only works with the handle
@@ -217,8 +255,31 @@ function writeStored(stored: Stored | null) {
 	}
 }
 
+/**
+ * One session runs a link's screening (the server checks): a new one takes it over with its
+ * first report, a reloaded one goes on with its own. Taken over (409): `onLost`.
+ */
+function liveFor(
+	linkId: string,
+	sessionId: string,
+	{ claim = false, onLost }: { claim?: boolean; onLost?: () => void } = {},
+): ScreeningLive {
+	return {
+		publish: async (playhead) => {
+			try {
+				await publishScreening({ linkId, sessionId, playhead, claim });
+				claim = false;
+			} catch (e) {
+				if ((e as { status?: number }).status === 409) onLost?.();
+				throw e;
+			}
+		},
+		end: () => endScreening({ linkId, sessionId }),
+	};
+}
+
 function run(win: ScreeningWindow, link: ScreeningLink, shareUrl: string, restored: boolean) {
-	const session = new ScreeningSession(
+	const session: ScreeningSession = new ScreeningSession(
 		win,
 		link,
 		shareUrl,
@@ -226,12 +287,14 @@ function run(win: ScreeningWindow, link: ScreeningLink, shareUrl: string, restor
 			if (screening.session === session) stopScreening();
 		},
 		restored,
+		liveFor(link.id, win.sessionId, { claim: !restored, onLost: () => session.supersede() }),
 	);
 	screening.session = session;
 }
 
 export function startScreening(win: ScreeningWindow, link: ScreeningLink, shareUrl: string) {
-	stopScreening();
+	// Continuing the same link: its guests stay in the screening, the new session takes it over
+	stopScreening({ endLive: screening.session?.link.id !== link.id });
 	run(win, link, shareUrl, false);
 	writeStored({
 		sessionId: win.sessionId,
@@ -254,6 +317,11 @@ export function restoreScreening(exportId: string) {
 		const channel = new BroadcastChannel(screeningChannelName(stored.sessionId));
 		channel.postMessage({ type: "close" } satisfies ToScreeningWindow);
 		channel.close();
+		liveFor(stored.link.id, stored.sessionId)
+			.end()
+			.catch(() => {
+				// its guests notice by themselves once the heartbeat is missing
+			});
 		writeStored(null);
 		return;
 	}
@@ -265,8 +333,8 @@ export function restoreScreening(exportId: string) {
 	);
 }
 
-export function stopScreening() {
-	screening.session?.dispose();
+export function stopScreening(options?: { endLive?: boolean }) {
+	screening.session?.dispose(options);
 	screening.session = null;
 	screening.endRequest = null;
 	writeStored(null);
