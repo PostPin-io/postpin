@@ -8,6 +8,7 @@ import { shareGuestCookieName } from "#lib/server/share-guests.ts";
 import { fakeCookies } from "../../../../helpers/cookies.ts";
 import { prisma } from "../../../../helpers/db.ts";
 import { expectStatus } from "../../../../helpers/expect.ts";
+import { fakes } from "../../../../helpers/fakes.ts";
 import * as f from "../../../../helpers/factories.ts";
 import { useCookies } from "../../../../helpers/request-event.ts";
 
@@ -32,15 +33,22 @@ describe("getShareInfo", () => {
 			timelinePanelVisible: false,
 			markerPanelVisible: true,
 			screening: false,
+			live: null,
 			full: false,
 			guest: null,
 			needsName: true,
 		});
 	});
 
-	it("a screening link says so", async () => {
+	it("a screening link says so, and whether its screening runs", async () => {
 		await prisma.shareLink.update({ where: { id: link.id }, data: { kind: "SCREENING" } });
-		expect((await getShareInfo(link.token)).screening).toBe(true);
+		const before = await getShareInfo(link.token);
+		expect(before.screening).toBe(true);
+		expect(before.live).toEqual({ state: null, now: expect.any(Number) });
+
+		const state = { time: 12.5, paused: false, rate: 1, at: Date.now() };
+		fakes.screenings.set(link.id, state);
+		expect((await getShareInfo(link.token)).live?.state).toEqual(state);
 	});
 
 	it("404 for an unknown token", async () => {

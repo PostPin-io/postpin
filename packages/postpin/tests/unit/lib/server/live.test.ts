@@ -96,4 +96,29 @@ describe("LiveHub", () => {
 		hub.subscribe(["live:export:e2"], vi.fn());
 		expect(hub.streamCount).toBe(2);
 	});
+
+	it("hands on the screening's playhead, and its end", () => {
+		const { hub, message } = setup();
+		const guest = vi.fn();
+		hub.subscribe(["live:screening:l1"], guest);
+		const state = { time: 12.5, paused: false, rate: 1, at: 1000 };
+
+		message("live:screening:l1", { type: "screening", linkId: "l1", state });
+		message("live:screening:l1", { type: "screening", linkId: "l1", state: null });
+
+		expect(guest.mock.calls).toEqual([
+			[{ type: "screening", linkId: "l1", state }],
+			[{ type: "screening", linkId: "l1", state: null }],
+		]);
+	});
+
+	it("parses with the parser it is given: a hub that outlived HMR learns new event types", () => {
+		const { hub, message } = setup();
+		const listener = vi.fn();
+		hub.subscribe(["live:export:e1"], listener);
+		hub.parse = () => ({ type: "markers", exportId: "swapped" });
+
+		message("live:export:e1", markersEvent);
+		expect(listener).toHaveBeenCalledWith({ type: "markers", exportId: "swapped" });
+	});
 });

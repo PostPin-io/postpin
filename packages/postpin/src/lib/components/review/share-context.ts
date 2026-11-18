@@ -1,4 +1,5 @@
 import { getContext, setContext } from "svelte";
+import type { ScreeningMessage } from "#lib/components/screening/screening-live.ts";
 
 /** Set on a share link: the same view, limited to what the link shows */
 export type ShareContext = {
@@ -8,8 +9,13 @@ export type ShareContext = {
 	note: string | null;
 	timelinePanelVisible: boolean;
 	markerPanelVisible: boolean;
-	/** A screening link: the guest sits in the room, so their own player starts muted */
+	/**
+	 * A screening link: while its screening runs, the guest has no video and their playhead
+	 * follows the presenter's. Otherwise it is an ordinary share link.
+	 */
 	screening: boolean;
+	/** Whether the screening ran when the page loaded; the stream says from then on */
+	live: ScreeningMessage | null;
 };
 
 const KEY = Symbol("share");

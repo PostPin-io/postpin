@@ -83,7 +83,8 @@ model ShareLink {
   markerPanelVisible   Boolean         @default(true)
   /// Plain text, length checked in the app (NOTE_MAX_LENGTH)
   note                 String?
-  /// SCREENING: made for a live screening (guests join by QR code, start muted, low-quality video)
+  /// SCREENING: made for a live screening (guests join by QR code; while it runs, they have no
+  /// video and follow the presenter's playhead, see screening-live.ts)
   kind                 ShareLinkKind   @default(STANDARD)
   /// How many guests may join; null = only the app-wide limit (MAX_GUESTS_PER_LINK)
   maxGuests            Int?

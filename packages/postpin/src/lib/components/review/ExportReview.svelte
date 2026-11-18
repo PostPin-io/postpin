@@ -68,6 +68,8 @@
 	import ReviewTutorial from "#lib/components/tutorial/ReviewTutorial.svelte";
 	import ScreeningRemote from "#lib/components/screening/ScreeningRemote.svelte";
 	import EndScreeningDialog from "#lib/components/screening/EndScreeningDialog.svelte";
+	import ScreeningFollowView from "#lib/components/screening/ScreeningFollowView.svelte";
+	import { ScreeningFollower } from "#lib/components/screening/screening-follow.svelte.ts";
 	import {
 		requestStopScreening,
 		restoreScreening,
@@ -96,6 +98,17 @@
 	setPointerSession(pointerSession);
 
 	const shareToken = $derived(share?.token);
+
+	// ─── Screening guests ───────────────────────────────────────────────────
+	// While the screening of their link runs, guests have no video: the picture is on the big
+	// screen, and their playhead follows the presenter's, so everybody is at the same frame.
+	// Before and after it, the link is an ordinary share link.
+	const follower = new ScreeningFollower(untrack(() => share?.live ?? null));
+	$effect(() => {
+		const token = share?.screening ? share.token : undefined;
+		if (token) return follower.connect(token);
+	});
+	const following = $derived(!!share?.screening && follower.live);
 	// The note greets the guest; the header button hides and shows it again
 	let noteVisible = $state(true);
 
@@ -129,7 +142,8 @@
 	}
 
 	const isMarkerVisible = $derived(share?.markerPanelVisible ?? true);
-	const isTimelineVisible = $derived(share?.timelinePanelVisible ?? true);
+	// Hidden while following: seeking there would only be undone by the presenter's playhead
+	const isTimelineVisible = $derived((share?.timelinePanelVisible ?? true) && !following);
 	// Phones and small tablets: video on top, marker panel below, no timeline
 	const isMobile = new MediaQuery("max-width: 1023px");
 	const showTimeline = $derived(isTimelineVisible && !isMobile.current);
@@ -463,6 +477,23 @@
 			videoPaused = true;
 		};
 	});
+	// The guest's playhead, every frame, from the presenter's last report and the clock
+	$effect(() => {
+		if (!following) return;
+		untrack(() => {
+			// When the screening ends, the video appears where it stopped, without starting
+			videoPaused = true;
+			videoPlaybackRate = 1;
+		});
+		let frame = requestAnimationFrame(function follow() {
+			const end = snapshot
+				? secondsAtFrame(snapshot.startFrameIndex + snapshot.durationFrameCount - 1, snapshot)
+				: undefined;
+			videoPosition = follower.position(end) ?? videoPosition;
+			frame = requestAnimationFrame(follow);
+		});
+		return () => cancelAnimationFrame(frame);
+	});
 	// After the effect above, so the first push already starts at the beginning
 	$effect(() => {
 		session?.push(
@@ -485,6 +516,8 @@
 	// Single global keyboard handler. Shortcuts work wherever focus is, except while typing or
 	// inside modals. Components with their own shortcuts (MarkerPanel) skip the same targets.
 	function onGlobalKeyDown(event: KeyboardEvent) {
+		// The presenter plays and seeks
+		if (following) return;
 		handleReviewShortcut(event, {
 			timeline,
 			player,
@@ -501,7 +534,7 @@
 	// Absolute timeline frame, like marker frames
 	const currentFrame = $derived(snapshot ? frameAtSeconds(videoPosition, snapshot) : 0);
 	const seekToFrame = (frame: number) => {
-		if (snapshot) videoPosition = secondsAtFrame(frame, snapshot);
+		if (snapshot && !following) videoPosition = secondsAtFrame(frame, snapshot);
 	};
 
 	// HLS as soon as one rendition is ready, the original until then
@@ -579,11 +612,7 @@
 	let player = $state<VideoPlayer>();
 	let videoFullscreen = $state(false);
 	let videoQualities = $state<number[]>([]);
-	// Guests of a screening sit in the room and hear the sound there; they can still unmute
-	let videoMuted = $state(startsMuted());
-	function startsMuted() {
-		return share?.screening ?? false;
-	}
+	let videoMuted = $state(false);
 </script>
 
 <!-- The share page sets its own title -->
@@ -690,9 +719,29 @@
 				{/if}
 			{/snippet}
 			<div
-				class={compact ? "aspect-video w-full overflow-hidden" : "min-h-0 flex-1 overflow-hidden"}
+				class={compact
+					? // Following: no picture to keep at 16:9, the live panel takes the room it needs
+						following
+						? "w-full"
+						: "aspect-video w-full overflow-hidden"
+					: "min-h-0 flex-1 overflow-hidden"}
 			>
-				{#if viewMode === "shot-grid" && snapshot}
+				{#if following && snapshot}
+					<ScreeningFollowView
+						timing={snapshot}
+						durationFrames={snapshot.durationFrameCount}
+						currentTime={videoPosition}
+						paused={follower.paused}
+						rate={follower.rate}
+						{markers}
+						{compact}
+						onCreateMarker={isMarkerVisible
+							? () => void markerPanel?.createMarkerAtPlayhead()
+							: undefined}
+						onQuickMarker={isMarkerVisible ? () => markerPanel?.createQuickMarker() : undefined}
+						markerColor={newMarkerColor}
+					/>
+				{:else if viewMode === "shot-grid" && snapshot}
 					<ShotGrid {snapshot} thumbnailUrls={shotUrls} {currentFrame} onSeek={seekToFrame} />
 				{:else if session}
 					<ScreeningRemote {session} bind:qr={screeningQr} />
@@ -727,7 +776,8 @@
 					{/if}
 				{/if}
 			</div>
-			{#if snapshot && !cssFullscreen}
+			<!-- Following: no controls, the presenter has them -->
+			{#if snapshot && !cssFullscreen && !following}
 				{@render menuBar()}
 			{/if}
 		{/if}

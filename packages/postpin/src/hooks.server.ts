@@ -35,7 +35,8 @@ const sessionHandler: Handle = async ({ event, resolve }) => {
 	// /_app/remote/: share-link visitors call remote functions too. Every remote function checks
 	// access itself (authorize / readExport / requireShareGuest / …); a new one MUST do so as well.
 	// /media/: HLS playlists, for guests too (`?share=<token>`); each route checks via readMedia.
-	// /live/: SSE streams for live markers, for guests too (`?share=<token>`); the route checks access
+	// /live/: SSE streams for live markers (guests too, `?share=<token>`) and for the playhead of a
+	// screening (its guests); each route checks access
 	// /landing/1-4: versions of the landing page side by side, to compare them
 	const publicPaths = [
 		"/",

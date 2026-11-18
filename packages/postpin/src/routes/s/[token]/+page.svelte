@@ -116,6 +116,7 @@
 			timelinePanelVisible: info.timelinePanelVisible,
 			markerPanelVisible: info.markerPanelVisible,
 			screening: info.screening,
+			live: info.live,
 		}}
 	/>
 {/if}

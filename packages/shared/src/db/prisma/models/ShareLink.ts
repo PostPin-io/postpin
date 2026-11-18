@@ -1902,7 +1902,8 @@ export type $ShareLinkPayload<
 			 */
 			note: string | null;
 			/**
-			 * SCREENING: made for a live screening (guests join by QR code, start muted, low-quality video)
+			 * SCREENING: made for a live screening (guests join by QR code; while it runs, they have no
+			 * video and follow the presenter's playhead, see screening-live.ts)
 			 */
 			kind: $Enums.ShareLinkKind;
 			/**

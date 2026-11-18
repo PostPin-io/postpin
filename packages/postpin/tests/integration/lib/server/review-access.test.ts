@@ -178,7 +178,7 @@ describe("playlists as guest", () => {
 		expect(text).toContain(`\n${fileId}.m3u8?share=${encodeURIComponent(link.token)}\n`);
 	});
 
-	it("screening guests only get the smallest rendition, also when asking by id", async () => {
+	it("screening guests get every rendition, like other guests", async () => {
 		const small = await prisma.mediaFile.create({
 			data: {
 				proxyOfId: mediaId,
@@ -191,15 +191,12 @@ describe("playlists as guest", () => {
 				hls: hls as object,
 			},
 		});
-		// other guests choose between both
-		expect(await (await master({ media: mediaId })).text()).toContain(`${fileId}.m3u8`);
-
 		await prisma.shareLink.update({ where: { id: link.id }, data: { kind: "SCREENING" } });
 		const text = await (await master({ media: mediaId })).text();
 		expect(text).toContain(`${small.id}.m3u8`);
-		expect(text).not.toContain(`${fileId}.m3u8`);
+		expect(text).toContain(`${fileId}.m3u8`);
 		expect((await rendition({ media: mediaId, file: small.id })).status).toBe(200);
-		await expectStatus(rendition({ media: mediaId, file: fileId }), 404);
+		expect((await rendition({ media: mediaId, file: fileId })).status).toBe(200);
 	});
 
 	it("rendition URLs never outlive the link", async () => {

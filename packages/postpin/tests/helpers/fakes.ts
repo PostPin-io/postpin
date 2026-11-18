@@ -1,4 +1,5 @@
 import { S3 } from "@aws-sdk/client-s3";
+import type { LiveScreening } from "@postpin-io/shared/live";
 
 /**
  * In-memory stand-ins for e-mail, S3 and the job queue. They record every call;
@@ -15,6 +16,8 @@ export const fakes = {
 	emails: [] as SentEmail[],
 	s3: [] as S3Call[],
 	queue: [] as QueueCall[],
+	/** Running screenings by link: what Redis holds in production (screening-store.ts) */
+	screenings: new Map<string, LiveScreening>(),
 	/** Override per test to return something from S3, e.g. a listObjectsV2 page */
 	s3Respond: (() => ({})) as S3Responder,
 	/** Override per test for flowProducer.getFlow() */
@@ -25,6 +28,7 @@ export const fakes = {
 		this.emails.length = 0;
 		this.s3.length = 0;
 		this.queue.length = 0;
+		this.screenings.clear();
 		this.s3Respond = () => ({});
 		this.getFlow = () => undefined;
 		this.transcodeMode = "plugin";
@@ -41,6 +45,16 @@ export const fakeEmailModule = {
 		// replyTo only when set, so the existing tests' toEqual(...) still match
 		fakes.emails.push({ to, subject, text, ...(options.replyTo && { replyTo: options.replyTo }) });
 		return { messageId: `fake-${fakes.emails.length}` };
+	},
+};
+
+/** screening-store.ts without Redis; nothing expires by itself */
+export const fakeScreeningStoreModule = {
+	SCREENING_LIVE_TTL_SECONDS: 20,
+	screeningStore: {
+		get: async (linkId: string) => fakes.screenings.get(linkId) ?? null,
+		set: async (linkId: string, state: LiveScreening) => void fakes.screenings.set(linkId, state),
+		delete: async (linkId: string) => void fakes.screenings.delete(linkId),
 	},
 };
 

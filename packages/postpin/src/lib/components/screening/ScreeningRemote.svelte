@@ -80,6 +80,11 @@
 					screen, click <strong>Activate Player</strong> there and go fullscreen with
 					<kbd class="kbd kbd-sm">F</kbd>. You control playback from here.
 				</p>
+				<p class="text-sm text-base-content/70">
+					Guests see no video on their phones while the screening runs: their playhead follows
+					yours, so their markers land where the screen is. Once it ends, they can watch on their
+					own.
+				</p>
 				{#if link}
 					<p class="flex items-center gap-1.5 text-sm text-base-content/70">
 						<Users size={14} />
