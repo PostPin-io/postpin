@@ -66,6 +66,9 @@ export const getExport = query(
 		const hideClips = reader.kind === "guest" && !reader.link.timelinePanelVisible;
 		// where the cut list lies is the server's business; whether it worked is the team's
 		const { cutListKey, cutListError, ...fields } = exp;
+		// the reader got here through authorize("export", "read"), so their grant covers the export
+		const mayUpload =
+			reader.kind === "member" && can(reader.member.role, "export", "upload", { hasGrant: true });
 		return {
 			...fields,
 			media,
@@ -73,9 +76,9 @@ export const getExport = query(
 			/** Markers imported from timeline data, by format; the team's business only */
 			importedMarkers:
 				reader.kind === "guest" ? null : await importedMarkerCounts(prisma, exportId),
-			// the reader got here through authorize("export", "read"), so their grant covers the export
-			canChangeCuts:
-				reader.kind === "member" && can(reader.member.role, "export", "upload", { hasGrant: true }),
+			canChangeCuts: mayUpload,
+			/** May upload a new export into this export's timeline (a video dropped on the page) */
+			canUpload: mayUpload,
 			/** May share the export: the tutorial explains sharing only to those who can */
 			canShare:
 				reader.kind === "member" &&

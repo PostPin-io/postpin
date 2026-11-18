@@ -10,8 +10,17 @@
 		/** What happens with the video, under the heading */
 		children: Snippet;
 		ondropped: (file: File) => void;
+		/**
+		 * Only for drags that are recognizably a video. For pages with drop targets of their own for
+		 * other files (timeline data on the review page), which the overlay would cover otherwise.
+		 */
+		videoOnly?: boolean;
 	}
-	let { children, ondropped }: Props = $props();
+	let { children, ondropped, videoOnly = false }: Props = $props();
+
+	// During the drag only the MIME types are known, not the names. MXF has none on some systems:
+	// it isn't caught then, the upload button still takes it.
+	const isVideoType = (type: string) => type.startsWith("video/") || type === "application/mxf";
 
 	let dragging = $state(false);
 	let fileCount = $state(1);
@@ -22,6 +31,7 @@
 		if (dragging || fromPage || !e.dataTransfer?.types.includes("Files")) return;
 		// An open dialog has its own drop targets, and lies above this overlay anyway
 		if (document.querySelector("dialog[open]")) return;
+		if (videoOnly && ![...e.dataTransfer.items].some((item) => isVideoType(item.type))) return;
 		e.preventDefault();
 		fileCount = e.dataTransfer.items.length;
 		dragging = true;
