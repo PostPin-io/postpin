@@ -12,6 +12,7 @@ export type * from "./models/Session.ts";
 export type * from "./models/Account.ts";
 export type * from "./models/Verification.ts";
 export type * from "./models/DeviceCode.ts";
+export type * from "./models/GuideProgress.ts";
 export type * from "./models/Marker.ts";
 export type * from "./models/MarkerPointer.ts";
 export type * from "./models/Category.ts";

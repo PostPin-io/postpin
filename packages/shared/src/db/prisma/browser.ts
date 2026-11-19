@@ -42,6 +42,12 @@ export type Verification = Prisma.VerificationModel;
  */
 export type DeviceCode = Prisma.DeviceCodeModel;
 /**
+ * Model GuideProgress
+ * PostPin Guides (tutorials and tours, see docs/guides/): one row per user and guide once it was
+ * started. No row = never started, so the guide may start on its own.
+ */
+export type GuideProgress = Prisma.GuideProgressModel;
+/**
  * Model Marker
  *
  */

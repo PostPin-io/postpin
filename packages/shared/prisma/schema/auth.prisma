@@ -7,10 +7,6 @@ model User {
   emailVerified   Boolean  @default(false)
   image           String?
   storageQuota    BigInt? // null = STORAGE_DEFAULT_USER_QUOTA
-  /// Onboarding tutorial: set when it was finished or skipped; null = still running
-  tutorialCompletedAt DateTime?
-  /// Tutorial steps that can't be derived from the data (explanations seen), see TUTORIAL_SEEN_STEPS
-  tutorialSeenSteps   String[]  @default([])
   uploadedExports Export[] @relation("ExportUploader")
 
   sessions        Session[]
@@ -29,6 +25,7 @@ model User {
   createdCategories        Category[]
   createdCategoryPresets   CategoryPreset[]
   inviteLinks              InviteLink[]
+  guideProgress            GuideProgress[]
 
   @@unique([email])
   @@map("user")

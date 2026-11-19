@@ -395,6 +395,7 @@ export const ModelName = {
 	Account: "Account",
 	Verification: "Verification",
 	DeviceCode: "DeviceCode",
+	GuideProgress: "GuideProgress",
 	Marker: "Marker",
 	MarkerPointer: "MarkerPointer",
 	Category: "Category",
@@ -439,6 +440,7 @@ export type TypeMap<
 			| "account"
 			| "verification"
 			| "deviceCode"
+			| "guideProgress"
 			| "marker"
 			| "markerPointer"
 			| "category"
@@ -829,6 +831,81 @@ export type TypeMap<
 				count: {
 					args: Prisma.DeviceCodeCountArgs<ExtArgs>;
 					result: runtime.Types.Utils.Optional<Prisma.DeviceCodeCountAggregateOutputType> | number;
+				};
+			};
+		};
+		GuideProgress: {
+			payload: Prisma.$GuideProgressPayload<ExtArgs>;
+			fields: Prisma.GuideProgressFieldRefs;
+			operations: {
+				findUnique: {
+					args: Prisma.GuideProgressFindUniqueArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$GuideProgressPayload> | null;
+				};
+				findUniqueOrThrow: {
+					args: Prisma.GuideProgressFindUniqueOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$GuideProgressPayload>;
+				};
+				findFirst: {
+					args: Prisma.GuideProgressFindFirstArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$GuideProgressPayload> | null;
+				};
+				findFirstOrThrow: {
+					args: Prisma.GuideProgressFindFirstOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$GuideProgressPayload>;
+				};
+				findMany: {
+					args: Prisma.GuideProgressFindManyArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$GuideProgressPayload>[];
+				};
+				create: {
+					args: Prisma.GuideProgressCreateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$GuideProgressPayload>;
+				};
+				createMany: {
+					args: Prisma.GuideProgressCreateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				createManyAndReturn: {
+					args: Prisma.GuideProgressCreateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$GuideProgressPayload>[];
+				};
+				delete: {
+					args: Prisma.GuideProgressDeleteArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$GuideProgressPayload>;
+				};
+				update: {
+					args: Prisma.GuideProgressUpdateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$GuideProgressPayload>;
+				};
+				deleteMany: {
+					args: Prisma.GuideProgressDeleteManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateMany: {
+					args: Prisma.GuideProgressUpdateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateManyAndReturn: {
+					args: Prisma.GuideProgressUpdateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$GuideProgressPayload>[];
+				};
+				upsert: {
+					args: Prisma.GuideProgressUpsertArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$GuideProgressPayload>;
+				};
+				aggregate: {
+					args: Prisma.GuideProgressAggregateArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.AggregateGuideProgress>;
+				};
+				groupBy: {
+					args: Prisma.GuideProgressGroupByArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.GuideProgressGroupByOutputType>[];
+				};
+				count: {
+					args: Prisma.GuideProgressCountArgs<ExtArgs>;
+					result:
+						runtime.Types.Utils.Optional<Prisma.GuideProgressCountAggregateOutputType> | number;
 				};
 			};
 		};
@@ -2294,8 +2371,6 @@ export const UserScalarFieldEnum = {
 	emailVerified: "emailVerified",
 	image: "image",
 	storageQuota: "storageQuota",
-	tutorialCompletedAt: "tutorialCompletedAt",
-	tutorialSeenSteps: "tutorialSeenSteps",
 	lastActiveOrganizationId: "lastActiveOrganizationId",
 } as const;
 
@@ -2365,6 +2440,20 @@ export const DeviceCodeScalarFieldEnum = {
 
 export type DeviceCodeScalarFieldEnum =
 	(typeof DeviceCodeScalarFieldEnum)[keyof typeof DeviceCodeScalarFieldEnum];
+
+export const GuideProgressScalarFieldEnum = {
+	id: "id",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
+	userId: "userId",
+	guideId: "guideId",
+	status: "status",
+	step: "step",
+	context: "context",
+} as const;
+
+export type GuideProgressScalarFieldEnum =
+	(typeof GuideProgressScalarFieldEnum)[keyof typeof GuideProgressScalarFieldEnum];
 
 export const MarkerScalarFieldEnum = {
 	id: "id",
@@ -2655,12 +2744,6 @@ export const SortOrder = {
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder];
 
-export const JsonNullValueInput = {
-	JsonNull: JsonNull,
-} as const;
-
-export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
-
 export const NullableJsonNullValueInput = {
 	DbNull: DbNull,
 	JsonNull: JsonNull,
@@ -2668,6 +2751,12 @@ export const NullableJsonNullValueInput = {
 
 export type NullableJsonNullValueInput =
 	(typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput];
+
+export const JsonNullValueInput = {
+	JsonNull: JsonNull,
+} as const;
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
 
 export const QueryMode = {
 	default: "default",
@@ -2741,6 +2830,32 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "In
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Int[]">;
 
 /**
+ * Reference to a field of type 'GuideStatus'
+ */
+export type EnumGuideStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
+	$PrismaModel,
+	"GuideStatus"
+>;
+
+/**
+ * Reference to a field of type 'GuideStatus[]'
+ */
+export type ListEnumGuideStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
+	$PrismaModel,
+	"GuideStatus[]"
+>;
+
+/**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Json">;
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "QueryMode">;
+
+/**
  * Reference to a field of type 'PointerKind'
  */
 export type EnumPointerKindFieldRefInput<$PrismaModel> = FieldRefInputType<
@@ -2765,16 +2880,6 @@ export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "
  * Reference to a field of type 'Float[]'
  */
 export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Float[]">;
-
-/**
- * Reference to a field of type 'Json'
- */
-export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Json">;
-
-/**
- * Reference to a field of type 'QueryMode'
- */
-export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "QueryMode">;
 
 /**
  * Reference to a field of type 'MediaStatus'
@@ -2980,6 +3085,7 @@ export type GlobalOmitConfig = {
 	account?: Prisma.AccountOmit;
 	verification?: Prisma.VerificationOmit;
 	deviceCode?: Prisma.DeviceCodeOmit;
+	guideProgress?: Prisma.GuideProgressOmit;
 	marker?: Prisma.MarkerOmit;
 	markerPointer?: Prisma.MarkerPointerOmit;
 	category?: Prisma.CategoryOmit;

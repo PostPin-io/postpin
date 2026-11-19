@@ -53,6 +53,7 @@ export const ModelName = {
 	Account: "Account",
 	Verification: "Verification",
 	DeviceCode: "DeviceCode",
+	GuideProgress: "GuideProgress",
 	Marker: "Marker",
 	MarkerPointer: "MarkerPointer",
 	Category: "Category",
@@ -99,8 +100,6 @@ export const UserScalarFieldEnum = {
 	emailVerified: "emailVerified",
 	image: "image",
 	storageQuota: "storageQuota",
-	tutorialCompletedAt: "tutorialCompletedAt",
-	tutorialSeenSteps: "tutorialSeenSteps",
 	lastActiveOrganizationId: "lastActiveOrganizationId",
 } as const;
 
@@ -170,6 +169,20 @@ export const DeviceCodeScalarFieldEnum = {
 
 export type DeviceCodeScalarFieldEnum =
 	(typeof DeviceCodeScalarFieldEnum)[keyof typeof DeviceCodeScalarFieldEnum];
+
+export const GuideProgressScalarFieldEnum = {
+	id: "id",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
+	userId: "userId",
+	guideId: "guideId",
+	status: "status",
+	step: "step",
+	context: "context",
+} as const;
+
+export type GuideProgressScalarFieldEnum =
+	(typeof GuideProgressScalarFieldEnum)[keyof typeof GuideProgressScalarFieldEnum];
 
 export const MarkerScalarFieldEnum = {
 	id: "id",
@@ -460,12 +473,6 @@ export const SortOrder = {
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder];
 
-export const JsonNullValueInput = {
-	JsonNull: JsonNull,
-} as const;
-
-export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
-
 export const NullableJsonNullValueInput = {
 	DbNull: DbNull,
 	JsonNull: JsonNull,
@@ -473,6 +480,12 @@ export const NullableJsonNullValueInput = {
 
 export type NullableJsonNullValueInput =
 	(typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput];
+
+export const JsonNullValueInput = {
+	JsonNull: JsonNull,
+} as const;
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
 
 export const QueryMode = {
 	default: "default",
