@@ -34,7 +34,10 @@ feature you can discover later, it's a **tour**.
 
 ## Rules
 
-1. **Icon:** every guide uses lucide `graduation-cap`, nothing else.
+1. **Icon:** guides as such are lucide `graduation-cap`, nothing else (guide button, tour and
+   tutorial cards, the PostPin Guides page). Only the rows on the PostPin Guides page also show an
+   icon for what each guide is about (`GUIDE_ICONS` on that page, one per guide), in the guide's
+   style.
 2. **Style:** all tutorials look alike (daisyUI `primary`), all tours look alike (daisyUI `accent`).
    The color tells tutorial from tour, not one guide from another. Never `secondary`.
 3. **Tutorials start automatically:** they are essential, so each starts on its own as soon as its
@@ -76,10 +79,14 @@ feature you can discover later, it's a **tour**.
 10. **Progress per user:** started, completed and skipped guides are stored per user. A completed
     or skipped guide never starts on its own again and has no guide button any more.
 11. **PostPin Guides page** (`/guides`, in the account menu): the on/off switch for all guides, and
-    two columns, tutorials and tours, one compact row per guide (title, status, button; the
-    description behind an info icon). One text filter for both columns, and a "Not completed"
+    two columns, tutorials and tours, a daisyUI `list` with one compact row per guide (the
+    guide's icon, title, status, a check for completed ones, button; the description behind an
+    info icon). One text filter for both columns, and a "Not completed"
     toggle that hides completed guides. Every guide can be started (again) from here, also while
-    guides are switched off. The `description` in `GUIDES` is that info text.
+    guides are switched off, and it takes the user to where its first step is: nobody has to look
+    for the feature first (`startFrom` in `GUIDES`: a fixed page, right here, or a page the server
+    finds, e.g. the latest export the user may share). With nothing to start it on (no such
+    export), the row says so (`restartHint`). The `description` in `GUIDES` is that info text.
 12. **Prerequisites:** a guide only starts when its prerequisites are met (e.g. the sync tutorial
     needs a connected plugin). Prerequisites are listed in the guide's frontmatter.
 13. **Guests:** guides for share-link visitors (no account) can't store progress on a user; they
@@ -192,7 +199,8 @@ guide button next to the element of its first step.
   highlighted, nothing blocked behind it except the dimming. "Done" stores the tour as completed
   and removes the tour immediately, without waiting for the server.
 - **Start:** from its guide button (or the PostPin Guides page), always at the first step. The
-  button starts it in place: the first step's element is right next to it.
+  button starts it in place: the first step's element is right next to it. The PostPin Guides page
+  first goes to the page of the first step (rule 11), then starts it.
 - **Skip:** the "Skip tour" button in the card switches the card to a confirmation ("Skip this
   tour? You can start it again under PostPin Guides in the account menu." · "Skip" / "Continue tour").
 

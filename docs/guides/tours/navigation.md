@@ -5,7 +5,7 @@ title: Finding your way
 status: implemented
 audience: editor
 trigger: manual
-starts: guide button next to the dashboard button (logo and organization name) in the header, on every page with the header
+starts: guide button next to the dashboard button (logo and organization name) in the header, on every page with the header · from PostPin Guides: right there (its first step is in the header)
 prerequisites: [at least one export in the active organization that the user can open]
 code:
   - packages/postpin/src/lib/components/guides/tours/navigation.ts

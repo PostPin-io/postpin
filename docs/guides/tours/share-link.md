@@ -5,7 +5,7 @@ title: Share links
 status: implemented
 audience: editor
 trigger: manual
-starts: guide button next to the share button of the export in the breadcrumbs (review page)
+starts: guide button next to the share button of the export in the breadcrumbs (review page) · from PostPin Guides: the latest export the user may share (`getGuideStart`)
 prerequisites: [may create share links for the export]
 code:
   - packages/postpin/src/lib/components/guides/tours/share-link.ts
