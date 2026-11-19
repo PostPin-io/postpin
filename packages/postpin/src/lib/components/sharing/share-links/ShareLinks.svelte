@@ -137,6 +137,7 @@
 			class="btn btn-square btn-primary btn-sm"
 			title="New link"
 			aria-label="New link"
+			data-guide="share-link/new"
 			disabled={creating}
 			onclick={startCreate}
 		>

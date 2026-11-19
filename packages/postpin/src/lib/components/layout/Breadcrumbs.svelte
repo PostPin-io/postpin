@@ -246,6 +246,7 @@
 								: 'btn-square'}"
 							title={label}
 							aria-label={count ? `${label} (${count} active links)` : label}
+							data-guide={crumb.level === "export" ? "share-link/open" : undefined}
 							onclick={open}
 						>
 							<Icon class="size-3.5" />

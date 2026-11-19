@@ -7,7 +7,9 @@
 	import type { GuideId } from "#lib/guides.ts";
 	import { roleAllows, toRole } from "#lib/roles.ts";
 	import GuideFeedback from "./GuideFeedback.svelte";
+	import Tour from "./Tour.svelte";
 	import { getGuideProgress, saveGuideProgress } from "./guides.remote.ts";
+	import { shareLinkTour } from "./tours/share-link.ts";
 	import FirstUploadTutorial from "./tutorials/FirstUploadTutorial.svelte";
 
 	const progress = $derived(await getGuideProgress());
@@ -50,6 +52,14 @@
 				noOrganization ||
 				(!!role && roleAllows(role, "project", "create"))),
 	);
+
+	// Waits for its first element, the share button: without the right to share it never shows.
+	// Not while the tutorial is still running: one guide at a time.
+	const shareTour = $derived(
+		page.route.id === "/(root)/projects/[project]/timelines/[timeline]/exports/[export]" &&
+			pending("share-link") &&
+			statusOf("first-upload") !== GuideStatus.STARTED,
+	);
 </script>
 
 {#if firstUpload}
@@ -57,6 +67,16 @@
 		progress={progress["first-upload"]}
 		hasOrganization={!!$activeMember.data}
 		save={save("first-upload")}
+	/>
+{/if}
+
+{#if shareTour}
+	{@const saveTour = save("share-link")}
+	<Tour
+		tour={shareLinkTour}
+		onstep={(step) => saveTour(GuideStatus.STARTED, step)}
+		onfinish={() => saveTour(GuideStatus.COMPLETED)}
+		onskip={() => saveTour(GuideStatus.SKIPPED)}
 	/>
 {/if}
 
