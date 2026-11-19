@@ -7,31 +7,31 @@ export const shareLinkTour: TourDefinition = {
 		{
 			id: "open",
 			title: "Share this export",
-			text: "Send this export to people who don't have a PostPin account. Open the share links here.",
+			text: "Send it to people without a PostPin account. Open the share links.",
 			advance: "click",
 		},
 		{
 			id: "new",
 			title: "Share links",
-			text: "Anyone with a share link can watch this export and leave markers, without an account. Create a new link with +.",
+			text: "Anyone with a link can watch and leave markers. Create one with +.",
 			advance: "appears",
 		},
 		{
 			id: "panels",
 			title: "What guests see",
-			text: "Choose the panels guests get: the timeline, the markers, or just the video. Click a panel to switch it on or off. The note is shown in the player.",
+			text: "Switch the timeline and marker panels on or off. The note shows in their player.",
 			advance: "next",
 		},
 		{
 			id: "expiry",
 			title: "How long it works",
-			text: "Pick how long the link works. You can renew or revoke it anytime.",
+			text: "You can renew or revoke the link anytime.",
 			advance: "next",
 		},
 		{
 			id: "save",
 			title: "Create the link",
-			text: "Save the link to create it.",
+			text: "Save it.",
 			advance: "click",
 		},
 		{
@@ -43,7 +43,7 @@ export const shareLinkTour: TourDefinition = {
 		{
 			id: "done",
 			title: "Your share link is ready",
-			text: "It's copied, paste it anywhere. Next to it you can also show a QR code or send it by e-mail. You can start this tour again under PostPin Guides in the account menu.",
+			text: "Paste it anywhere. A QR code and e-mail are right next to it. Restart this tour under PostPin Guides.",
 			advance: "done",
 		},
 	],
