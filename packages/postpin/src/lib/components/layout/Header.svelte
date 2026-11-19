@@ -8,6 +8,9 @@
 	import Menu from "@lucide/svelte/icons/menu";
 	import Monitor from "@lucide/svelte/icons/monitor";
 	import Moon from "@lucide/svelte/icons/moon";
+	import Settings from "@lucide/svelte/icons/settings";
+	import Shield from "@lucide/svelte/icons/shield";
+	import User from "@lucide/svelte/icons/user";
 	import Sun from "@lucide/svelte/icons/sun";
 	import { theme, type ThemePreference } from "#lib/theme.svelte.ts";
 
@@ -74,14 +77,23 @@
 		{/each}
 		<li></li>
 	{/if}
-	<li><a href={resolve("/(root)/profile")}>Profile</a></li>
+	<!-- links to other pages: all with an icon -->
+	<li>
+		<a href={resolve("/(root)/profile")}>
+			<User class="size-4" />
+			Profile
+		</a>
+	</li>
 	{#if activeOrganization}
 		<li>
 			<a
 				href={resolve("/(root)/organizations/[organization]/settings", {
 					organization: activeOrganization.slug,
-				})}>Settings</a
+				})}
 			>
+				<Settings class="size-4" />
+				Settings
+			</a>
 		</li>
 	{/if}
 	<li>
@@ -91,8 +103,15 @@
 		</a>
 	</li>
 	{#if mobile && page.data.isSystemAdmin}
-		<li><a href={resolve("/(root)/admin")}>System</a></li>
+		<li>
+			<a href={resolve("/(root)/admin")}>
+				<Shield class="size-4" />
+				System
+			</a>
+		</li>
 	{/if}
+	<li></li>
+	<!-- actions: theme and logout -->
 	<!-- a row like the items above, so it lines up with them and the dividers -->
 	<li>
 		<div class="cursor-default justify-between py-1 hover:bg-transparent active:bg-transparent!">
