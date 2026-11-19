@@ -6,7 +6,7 @@
 	import { page } from "$app/state";
 	import { GUIDES, GUIDE_STYLE, type GuideId } from "#lib/guides.ts";
 	import { guideState, isOpen, requestGuide } from "./guide-state.svelte.ts";
-	import { getGuideProgress, getGuidesEnabled } from "./guides.remote.ts";
+	import { getGuideAvailability, getGuideProgress, getGuidesEnabled } from "./guides.remote.ts";
 
 	interface Props {
 		guide: GuideId;
@@ -20,9 +20,15 @@
 	// .current, not await: a button must never hold up the header it sits in
 	const progress = $derived(signedIn ? getGuideProgress().current : undefined);
 	const enabled = $derived(guideState.enabled ?? (signedIn ? getGuidesEnabled().current : false));
+	const availability = $derived(signedIn ? getGuideAvailability().current : undefined);
 
 	const visible = $derived(
-		enabled === true && !!progress && isOpen(progress, guide) && guideState.running === null,
+		enabled === true &&
+			!!progress &&
+			!!availability &&
+			availability[guide] !== false &&
+			isOpen(progress, guide) &&
+			guideState.running === null,
 	);
 </script>
 

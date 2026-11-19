@@ -8,7 +8,11 @@
 	import { page } from "$app/state";
 	import GuideHost from "#lib/components/guides/GuideHost.svelte";
 	import { resetGuideState } from "#lib/components/guides/guide-state.svelte.ts";
-	import { getGuideProgress, getGuidesEnabled } from "#lib/components/guides/guides.remote.ts";
+	import {
+		getGuideAvailability,
+		getGuideProgress,
+		getGuidesEnabled,
+	} from "#lib/components/guides/guides.remote.ts";
 	import { authClient } from "#lib/auth-client.ts";
 
 	let { children }: LayoutProps = $props();
@@ -25,11 +29,13 @@
 		const id = userId;
 		if (!id || id === guidesReadyFor) return;
 		resetGuideState();
-		void Promise.allSettled([getGuideProgress().refresh(), getGuidesEnabled().refresh()]).then(
-			() => {
-				if (userId === id) guidesReadyFor = id;
-			},
-		);
+		void Promise.allSettled([
+			getGuideProgress().refresh(),
+			getGuidesEnabled().refresh(),
+			getGuideAvailability().refresh(),
+		]).then(() => {
+			if (userId === id) guidesReadyFor = id;
+		});
 	});
 </script>
 

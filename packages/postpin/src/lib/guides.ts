@@ -47,6 +47,15 @@ export const GUIDES = [
 		startFrom: "here",
 	},
 	{
+		id: "navigation",
+		type: "tour",
+		trigger: "manual",
+		title: "Finding your way",
+		description:
+			"From the dashboard through projects and timelines to an export, and back with the breadcrumbs.",
+		restartHint: "Its guide button is back next to the dashboard button in the header.",
+	},
+	{
 		id: "share-link",
 		type: "tour",
 		trigger: "manual",

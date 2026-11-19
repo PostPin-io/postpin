@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { GuideStatus } from "@postpin-io/shared/db/enums";
+import { GuideStatus, Role } from "@postpin-io/shared/db/enums";
 import {
+	getGuideAvailability,
 	getGuideProgress,
 	getGuidesEnabled,
 	restartGuide,
@@ -146,5 +147,39 @@ describe("guides on and off", () => {
 		signIn(await f.createUser());
 		// @ts-expect-error not a boolean
 		await expectStatus(setGuidesEnabled("off"), 400);
+	});
+});
+
+describe("guide availability", () => {
+	it("401 without a session", async () => {
+		signOut();
+		await expectStatus(getGuideAvailability(), 401);
+	});
+
+	it("has no navigation tour without an organization", async () => {
+		signIn(await f.createUser());
+		expect((await getGuideAvailability()).navigation).toBe(false);
+	});
+
+	it("has the navigation tour once there is an export to walk to", async () => {
+		const org = await f.createOrg();
+		const me = await f.createMember(org, Role.OWNER);
+		signIn(me.user, org.id);
+		expect((await getGuideAvailability()).navigation).toBe(false);
+		const timeline = await f.createTimeline(await f.createProject(org, { creator: me.user }));
+		expect((await getGuideAvailability()).navigation).toBe(false);
+		await f.createExport(timeline);
+		expect((await getGuideAvailability()).navigation).toBe(true);
+	});
+
+	it("only counts exports the member may open", async () => {
+		const org = await f.createOrg();
+		const owner = await f.createMember(org, Role.OWNER);
+		await f.createExport(
+			await f.createTimeline(await f.createProject(org, { creator: owner.user })),
+		);
+		const reviewer = await f.createMember(org, Role.REVIEWER);
+		signIn(reviewer.user, org.id);
+		expect((await getGuideAvailability()).navigation).toBe(false);
 	});
 });

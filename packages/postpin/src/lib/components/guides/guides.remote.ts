@@ -4,6 +4,7 @@ import * as v from "valibot";
 import { Prisma } from "@postpin-io/shared/db";
 import { GuideStatus } from "@postpin-io/shared/db/enums";
 import { prisma } from "#lib/server/database.ts";
+import { accessibleExports, getActiveMember } from "#lib/server/org-access.ts";
 import { GUIDE_IDS, type GuideId } from "#lib/guides.ts";
 
 // All of these are about the signed-in user's own progress: no target to authorize, but a session
@@ -89,4 +90,17 @@ export const setGuidesEnabled = command(v.boolean(), async (enabled) => {
 	const { id } = requireUser();
 	await prisma.user.update({ where: { id }, data: { guidesEnabled: enabled } });
 	await getGuidesEnabled().refresh();
+});
+
+/**
+ * Whether a guide can run for the user right now; guides not listed always can. Their guide
+ * buttons only show when it can: navigation walks into a real export, so it needs one.
+ */
+export const getGuideAvailability = query(async () => {
+	requireUser();
+	const member = await getActiveMember();
+	const anExport = member
+		? await prisma.export.findFirst({ where: accessibleExports(member), select: { id: true } })
+		: null;
+	return { navigation: !!anExport } as Partial<Record<GuideId, boolean>>;
 });

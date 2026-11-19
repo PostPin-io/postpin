@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
 	GUIDE_BUTTON_TOKEN,
 	fallbackStep,
@@ -10,6 +10,7 @@ import {
 import { shareLinkTour } from "#lib/components/guides/tours/share-link.ts";
 import { GUIDES, GUIDE_IDS } from "#lib/guides.ts";
 import { postpinGuidesTour } from "#lib/components/guides/tours/postpin-guides.ts";
+import { navigationTour } from "#lib/components/guides/tours/navigation.ts";
 
 const viewport = { width: 1000, height: 800 };
 const card = { width: 300, height: 200 };
@@ -54,7 +55,7 @@ describe("fallbackStep", () => {
 	});
 });
 
-const TOURS = [shareLinkTour, postpinGuidesTour];
+const TOURS = [shareLinkTour, postpinGuidesTour, navigationTour];
 
 describe.each(TOURS.map((t) => [t.guideId, t] as const))("%s tour", (_, tour) => {
 	it("is a known tour with unique step ids", () => {
@@ -139,5 +140,38 @@ describe("postpin-guides tour", () => {
 
 	it("shows the guide button in the explanation of tours", () => {
 		expect(byId("tours").text).toContain(GUIDE_BUTTON_TOKEN);
+	});
+});
+describe("navigation tour", () => {
+	const byId = (id: string) => navigationTour.steps.find((s) => s.id === id)!;
+
+	it("leads through several pages, so leaving a page doesn't pause it", () => {
+		expect(navigationTour.spansPages).toBe(true);
+	});
+
+	it("only the open steps are clicked, everything explained is inert", () => {
+		for (const step of navigationTour.steps) {
+			if (step.advance === "done") continue;
+			const acts = step.id === "go-home" || step.id.startsWith("open-");
+			expect(step.advance === "click", step.id).toBe(acts);
+			expect(!!step.inert, step.id).toBe(!acts);
+		}
+	});
+
+	it("waits for the page after every step that navigates", () => {
+		const ids = navigationTour.steps.map((s) => s.id);
+		for (const open of ["open-project", "open-timeline", "open-export"]) {
+			expect(navigationTour.steps[ids.indexOf(open) + 1]!.waitForElement, open).toBe(true);
+		}
+	});
+
+	it("shows exactly one breadcrumb variant per screen size", () => {
+		const desktop = byId("breadcrumbs").skipIf!;
+		const phone = byId("back").skipIf!;
+		for (const matches of [true, false]) {
+			vi.stubGlobal("window", { matchMedia: () => ({ matches }) });
+			expect(desktop() !== phone()).toBe(true);
+		}
+		vi.unstubAllGlobals();
 	});
 });

@@ -252,6 +252,7 @@
 					<button
 						class="btn rounded-full btn-sm"
 						aria-label="New timeline"
+						data-guide="navigation/new-timeline"
 						onclick={() => timelineDialog?.open()}
 					>
 						<Plus />
@@ -283,7 +284,7 @@
 					{/if}
 				</button>
 
-				<div class="join max-md:hidden" role="group">
+				<div class="join max-md:hidden" role="group" data-guide="navigation/views">
 					<button
 						class="btn join-item btn-sm"
 						class:btn-active={viewMode === "table"}
@@ -312,6 +313,7 @@
 						role="button"
 						class="btn btn-circle btn-ghost"
 						aria-label="Sort options"
+						data-guide="navigation/sort"
 					>
 						<Ellipsis class="h-6 w-6" />
 					</div>
@@ -354,8 +356,14 @@
 				return (sortDirection == "asc" ? 1 : -1) * comparison || a.id.localeCompare(b.id);
 			})}
 
+		<!-- the tour opens a timeline that has an export -->
+		{@const leadsOn = sortedTimelines.find((t) => t.exports.length > 0)?.id}
+
 		{#if shownView === "table"}
-			<div class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 shadow">
+			<div
+				class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 shadow"
+				data-guide="navigation/timelines"
+			>
 				<table class="table table-zebra">
 					<thead>
 						<tr>
@@ -423,7 +431,12 @@
 								</td>
 
 								<td class="font-medium">
-									<a href={exportListHref} class="link link-hover">{timeline.name}</a>
+									<a
+										href={exportListHref}
+										class="link link-hover"
+										data-guide={timeline.id === leadsOn ? "navigation/open-timeline" : undefined}
+										>{timeline.name}</a
+									>
 								</td>
 								<td class="whitespace-nowrap text-base-content/70">
 									{new Date(timeline.createdAt).toLocaleDateString()}
@@ -460,7 +473,10 @@
 				</table>
 			</div>
 		{:else}
-			<div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+			<div
+				class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+				data-guide="navigation/timelines"
+			>
 				{#each sortedTimelines as timeline (timeline.id)}
 					{@const { latest, exportHref, exportListHref, uploadHere } = exportLinks(timeline)}
 					<article
@@ -498,6 +514,7 @@
 								<a
 									href={exportListHref}
 									class="min-w-0 flex-1 link truncate link-hover"
+									data-guide={timeline.id === leadsOn ? "navigation/open-timeline" : undefined}
 									title={timeline.name}
 								>
 									{timeline.name}

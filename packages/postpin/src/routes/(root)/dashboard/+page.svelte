@@ -234,6 +234,7 @@
 					<button
 						class="btn rounded-full btn-sm"
 						aria-label="New project"
+						data-guide="navigation/new-project"
 						onclick={() => projectDialog?.open()}
 					>
 						<Plus />
@@ -247,6 +248,7 @@
 						type="search"
 						placeholder="Search projects"
 						aria-label="Search projects"
+						data-guide="navigation/search"
 						class="input input-sm max-md:w-full"
 						bind:value={searchQuery}
 					/>
@@ -264,7 +266,7 @@
 						<ChevronDown />
 					{/if}
 				</button>
-				<div class="join max-md:hidden" role="group">
+				<div class="join max-md:hidden" role="group" data-guide="navigation/views">
 					<button
 						class="btn join-item btn-sm"
 						class:btn-active={viewMode === "table"}
@@ -293,6 +295,7 @@
 						role="button"
 						class="btn btn-circle btn-ghost"
 						aria-label="Sort options"
+						data-guide="navigation/sort"
 					>
 						<Ellipsis class="h-6 w-6" />
 					</div>
@@ -335,8 +338,14 @@
 				return (sortDirection == "asc" ? 1 : -1) * comparison || a.id.localeCompare(b.id);
 			})}
 
+		<!-- the tour opens a project that leads on to an export -->
+		{@const leadsOn = sortedProjects.find((p) => p.timelines.some((t) => t.exports.length > 0))?.id}
+
 		{#if shownView === "table"}
-			<div class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 shadow">
+			<div
+				class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 shadow"
+				data-guide="navigation/projects"
+			>
 				<table class="table table-zebra">
 					<thead>
 						<tr>
@@ -406,7 +415,12 @@
 								</td>
 
 								<td class="font-medium">
-									<a href={projectHref} class="link link-hover">{project.name}</a>
+									<a
+										href={projectHref}
+										class="link link-hover"
+										data-guide={project.id === leadsOn ? "navigation/open-project" : undefined}
+										>{project.name}</a
+									>
 								</td>
 								<td class="whitespace-nowrap text-base-content/70">
 									{new Date(project.createdAt).toLocaleDateString()}
@@ -431,7 +445,10 @@
 				</table>
 			</div>
 		{:else}
-			<div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+			<div
+				class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+				data-guide="navigation/projects"
+			>
 				{#each sortedProjects as project (project.id)}
 					{@const latest = project.timelines[0]?.exports[0]}
 					{@const projectHref = `/projects/${project.id}`}
@@ -465,6 +482,7 @@
 								<a
 									href={projectHref}
 									class="min-w-0 flex-1 link truncate link-hover"
+									data-guide={project.id === leadsOn ? "navigation/open-project" : undefined}
 									title={project.name}
 								>
 									{project.name}

@@ -11,14 +11,21 @@
 	import GuideFeedback from "./GuideFeedback.svelte";
 	import Tour from "./Tour.svelte";
 	import { endGuide, guideState, isOpen, statusOf, syncEnded } from "./guide-state.svelte.ts";
-	import { getGuideProgress, getGuidesEnabled, saveGuideProgress } from "./guides.remote.ts";
+	import {
+		getGuideAvailability,
+		getGuideProgress,
+		getGuidesEnabled,
+		saveGuideProgress,
+	} from "./guides.remote.ts";
 	import type { TourDefinition } from "./tour.ts";
+	import { navigationTour } from "./tours/navigation.ts";
 	import { postpinGuidesTour } from "./tours/postpin-guides.ts";
 	import { shareLinkTour } from "./tours/share-link.ts";
 	import FirstUploadTutorial from "./tutorials/FirstUploadTutorial.svelte";
 
 	const TOURS: Partial<Record<GuideId, TourDefinition>> = {
 		"postpin-guides": postpinGuidesTour,
+		navigation: navigationTour,
 		"share-link": shareLinkTour,
 	};
 
@@ -87,10 +94,17 @@
 		guideState.running = firstUpload ? "first-upload" : tour;
 	});
 
-	// A tour started from a guide button belongs to that page: leaving it pauses the tour
 	afterNavigate(({ from, to }) => {
+		// a first export may have come in on the way: guide buttons waiting for one can show
+		const availability = getGuideAvailability();
+		if (availability.current && Object.values(availability.current).includes(false)) {
+			void availability.refresh();
+		}
+		// A tour started from a guide button belongs to that page: leaving it pauses the tour,
+		// unless its way leads through several pages
 		const requested = guideState.requested;
 		if (!requested || from?.url.pathname === to?.url.pathname) return;
+		if (TOURS[requested]?.spansPages) return;
 		if (GUIDES.find((g) => g.id === requested)?.trigger === "manual") guideState.requested = null;
 	});
 </script>

@@ -180,6 +180,7 @@
 			class="btn btn-square btn-ghost text-base-content/50 btn-sm lg:btn-xs"
 			title="Switch {crumb.level}"
 			aria-label="Switch {crumb.level}"
+			data-guide={crumb.level === "project" ? undefined : "navigation/switcher"}
 			onfocus={() => openMenu(crumb.level)}
 		>
 			<ChevronRight
@@ -213,7 +214,7 @@
 {/snippet}
 
 {#if crumbs.length}
-	<nav aria-label="Breadcrumb" class="min-w-0">
+	<nav aria-label="Breadcrumb" class="min-w-0" data-guide="navigation/breadcrumbs">
 		<ol class="flex min-w-0 items-center text-sm">
 			<!-- Mobile: only the current segment, plus a back link to its parent -->
 			<li class="lg:hidden">
@@ -221,6 +222,7 @@
 					href={crumbs.at(-2)?.href ?? resolve("/(root)/dashboard")}
 					class="btn btn-square btn-ghost btn-sm"
 					aria-label="Back"
+					data-guide="navigation/back"
 					title="Back"
 				>
 					<ChevronLeft class="size-4" />

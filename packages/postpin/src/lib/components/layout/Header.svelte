@@ -15,6 +15,7 @@
 	import Logo from "#lib/components/layout/Logo.svelte";
 
 	import Breadcrumbs from "#lib/components/layout/Breadcrumbs.svelte";
+	import GuideButton from "#lib/components/guides/GuideButton.svelte";
 
 	const session = authClient.useSession();
 	const organizations = authClient.useListOrganizations();
@@ -139,6 +140,7 @@
 				href={resolve("/(root)/dashboard")}
 				class="btn btn-ghost text-xl max-lg:btn-square"
 				aria-label="Dashboard"
+				data-guide="navigation/go-home navigation/home"
 			>
 				<Logo class="h-6 w-auto" />
 				<span class="flex items-center gap-2 max-lg:hidden">
@@ -149,6 +151,7 @@
 					PostPin
 				</span>
 			</a>
+			<GuideButton guide="navigation" />
 			<Breadcrumbs />
 			{#if page.data.isSystemAdmin}
 				<ul class="menu menu-horizontal px-1 max-lg:hidden">
