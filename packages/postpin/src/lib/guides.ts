@@ -9,31 +9,50 @@ export type GuideType = "tutorial" | "tour";
 export interface Guide {
 	id: string;
 	type: GuideType;
+	/**
+	 * automatic: starts on its own once its prerequisites are met (tutorials, and the tour that
+	 * explains the guide system). manual: started with its guide button at the feature.
+	 */
+	trigger: "automatic" | "manual";
 	title: string;
 	/** One sentence for the PostPin Guides page */
 	description: string;
-	/** Where it starts once started from the PostPin Guides page */
+	/** Shown on the PostPin Guides page after "Start" when it can't start right there */
 	restartHint: string;
-	/** The page it runs on, if there is one to go to right away */
-	href?: "/(root)/dashboard";
+	/**
+	 * How the PostPin Guides page starts it: on the page it runs on (`href`), right there on the
+	 * guides page (`here`), or else by bringing back its guide button (see `restartHint`)
+	 */
+	startFrom?: { href: "/(root)/dashboard" } | "here";
 }
 
 export const GUIDES = [
 	{
 		id: "first-upload",
 		type: "tutorial",
+		trigger: "automatic",
 		title: "Your first upload",
 		description:
 			"Create your organization, a project and a timeline, and upload your first export.",
 		restartHint: "Starts on the dashboard.",
-		href: "/(root)/dashboard",
+		startFrom: { href: "/(root)/dashboard" },
+	},
+	{
+		id: "postpin-guides",
+		type: "tour",
+		trigger: "automatic",
+		title: "PostPin Guides",
+		description: "How guides work: the guide buttons, this page, and switching guides off.",
+		restartHint: "Starts right here.",
+		startFrom: "here",
 	},
 	{
 		id: "share-link",
 		type: "tour",
+		trigger: "manual",
 		title: "Share links",
 		description: "Share an export with people who don't have an account.",
-		restartHint: "Starts the next time you open an export you may share.",
+		restartHint: "Its guide button is back next to the share button of an export you may share.",
 	},
 ] as const satisfies readonly Guide[];
 

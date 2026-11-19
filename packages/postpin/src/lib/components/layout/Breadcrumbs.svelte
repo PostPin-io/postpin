@@ -7,6 +7,7 @@
 	import UserGroup from "@lucide/svelte/icons/user-group";
 	import Link from "@lucide/svelte/icons/link";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
+	import GuideButton from "#lib/components/guides/GuideButton.svelte";
 	import { getShareLinks } from "#lib/components/sharing/share-links/share-links.remote.ts";
 	import {
 		getBreadcrumbNames,
@@ -252,6 +253,10 @@
 							<Icon class="size-3.5" />
 							{#if count}<span>{count}</span>{/if}
 						</button>
+						{#if crumb.level === "export"}
+							<!-- the tour starts at the share button right before it -->
+							<GuideButton guide="share-link" class="max-lg:order-3" />
+						{/if}
 					{/if}
 				</li>
 			{/each}

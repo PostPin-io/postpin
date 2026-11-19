@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { fallbackStep, placeCard } from "#lib/components/guides/tour.ts";
 import { shareLinkTour } from "#lib/components/guides/tours/share-link.ts";
-import { GUIDE_IDS } from "#lib/guides.ts";
+import { GUIDES, GUIDE_IDS } from "#lib/guides.ts";
+import { postpinGuidesTour } from "#lib/components/guides/tours/postpin-guides.ts";
 
 const viewport = { width: 1000, height: 800 };
 const card = { width: 300, height: 200 };
@@ -46,22 +47,36 @@ describe("fallbackStep", () => {
 	});
 });
 
-describe("share-link tour", () => {
-	it("is a known guide with unique step ids", () => {
-		expect(GUIDE_IDS).toContain(shareLinkTour.guideId);
-		const ids = shareLinkTour.steps.map((s) => s.id);
+const TOURS = [shareLinkTour, postpinGuidesTour];
+
+describe.each(TOURS.map((t) => [t.guideId, t] as const))("%s tour", (_, tour) => {
+	it("is a known tour with unique step ids", () => {
+		expect(GUIDES.find((g) => g.id === tour.guideId)?.type).toBe("tour");
+		const ids = tour.steps.map((s) => s.id);
 		expect(new Set(ids).size).toBe(ids.length);
 	});
 
 	it("ends with exactly one completion card, as its last step", () => {
-		const done = shareLinkTour.steps.filter((s) => s.advance === "done");
+		const done = tour.steps.filter((s) => s.advance === "done");
 		expect(done).toHaveLength(1);
-		expect(shareLinkTour.steps.at(-1)).toBe(done[0]);
+		expect(tour.steps.at(-1)).toBe(done[0]);
 	});
 
 	it("never goes on by itself into the completion card", () => {
 		// "appears" waits for the next step's element; the completion card has none
-		const beforeLast = shareLinkTour.steps.at(-2)!;
-		expect(beforeLast.advance).not.toBe("appears");
+		expect(tour.steps.at(-2)!.advance).not.toBe("appears");
+	});
+});
+
+describe("guide registry", () => {
+	it("starts tutorials and the tour about guides on their own, all other tours by hand", () => {
+		for (const guide of GUIDES) {
+			const automatic = guide.type === "tutorial" || guide.id === "postpin-guides";
+			expect(guide.trigger, guide.id).toBe(automatic ? "automatic" : "manual");
+		}
+	});
+
+	it("has a guide id for every tour definition", () => {
+		for (const tour of TOURS) expect(GUIDE_IDS).toContain(tour.guideId);
 	});
 });

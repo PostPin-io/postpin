@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { GuideStatus } from "@postpin-io/shared/db/enums";
 import {
 	getGuideProgress,
+	getGuidesEnabled,
 	restartGuide,
 	saveGuideProgress,
+	setGuidesEnabled,
 } from "#lib/components/guides/guides.remote.ts";
 import { prisma } from "../../../../helpers/db.ts";
 import { expectStatus } from "../../../../helpers/expect.ts";
@@ -104,5 +106,45 @@ describe("guide progress", () => {
 			saveGuideProgress({ guideId: "first-upload", status: "DONE" }),
 			400,
 		);
+	});
+});
+
+describe("guides on and off", () => {
+	it("401 without a session", async () => {
+		signOut();
+		await expectStatus(getGuidesEnabled(), 401);
+		await expectStatus(setGuidesEnabled(false), 401);
+	});
+
+	it("is on for a fresh account, and stays as the user switched it", async () => {
+		const me = await f.createUser();
+		signIn(me);
+		expect(await getGuidesEnabled()).toBe(true);
+		await setGuidesEnabled(false);
+		expect(await getGuidesEnabled()).toBe(false);
+		await setGuidesEnabled(true);
+		expect(await getGuidesEnabled()).toBe(true);
+	});
+
+	it("only switches the signed-in user's guides", async () => {
+		const me = await f.createUser();
+		const someone = await f.createUser();
+		signIn(me);
+		await setGuidesEnabled(false);
+		signIn(someone);
+		expect(await getGuidesEnabled()).toBe(true);
+	});
+
+	it("keeps the progress when switched off", async () => {
+		signIn(await f.createUser());
+		await saveGuideProgress({ guideId: "share-link", status: STARTED, step: "panels" });
+		await setGuidesEnabled(false);
+		expect((await getGuideProgress())["share-link"]?.status).toBe(STARTED);
+	});
+
+	it("rejects anything but a boolean", async () => {
+		signIn(await f.createUser());
+		// @ts-expect-error not a boolean
+		await expectStatus(setGuidesEnabled("off"), 400);
 	});
 });

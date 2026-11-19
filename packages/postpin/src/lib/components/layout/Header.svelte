@@ -84,7 +84,7 @@
 		</li>
 	{/if}
 	<li>
-		<a href={resolve("/(root)/guides")}>
+		<a href={resolve("/(root)/guides")} data-guide="postpin-guides/page">
 			<GraduationCap class="size-4" />
 			PostPin Guides
 		</a>
@@ -127,7 +127,12 @@
 
 	<nav class="collapse-title navbar max-lg:px-2">
 		<div class="navbar-start min-w-0 max-lg:w-full">
-			<label for="navbar-1-toggle" class="btn btn-square btn-ghost lg:hidden" aria-label="Menu">
+			<label
+				for="navbar-1-toggle"
+				class="btn btn-square btn-ghost lg:hidden"
+				aria-label="Menu"
+				data-guide="postpin-guides/menu"
+			>
 				<Menu class="size-5" />
 			</label>
 			<a
@@ -157,7 +162,7 @@
 		<div class="navbar-end gap-1 max-lg:hidden">
 			{#if actions}{@render actions()}{/if}
 			<div class="dropdown dropdown-end">
-				<div tabindex="0" role="button" class="btn btn-ghost">
+				<div tabindex="0" role="button" class="btn btn-ghost" data-guide="postpin-guides/menu">
 					{$session.data?.user.name ?? "Account"}
 				</div>
 				<ul

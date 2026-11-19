@@ -104,7 +104,11 @@
 	const visible = $derived(isDone || !!rect);
 	/** May be used while the tour runs: the highlighted element and the card */
 	const allowed = (target: EventTarget | null) =>
-		target instanceof Node && (!!card?.contains(target) || !!anchor?.contains(target));
+		target instanceof Node &&
+		(!!card?.contains(target) ||
+			!!anchor?.contains(target) ||
+			// a label passes its click on to its input (e.g. the checkbox of the mobile menu)
+			(anchor instanceof HTMLLabelElement && anchor.control === target));
 
 	$effect(() => {
 		// "click" steps: the click itself does its job, the tour only takes note
@@ -132,11 +136,20 @@
 		const onFocus = (event: FocusEvent) => {
 			if (visible && !allowed(event.target)) card?.focus();
 		};
+		// A press on the dimming must not take the focus away either: menus that are open while
+		// they have it (the account menu) would close under the tour
+		const onPointerDown = (event: MouseEvent) => {
+			if (visible && !allowed(event.target)) event.preventDefault();
+		};
+		window.addEventListener("pointerdown", onPointerDown, true);
+		window.addEventListener("mousedown", onPointerDown, true);
 		window.addEventListener("click", onClick, true);
 		window.addEventListener("keydown", onKey, true);
 		window.addEventListener("cancel", onCancel, true);
 		window.addEventListener("focusin", onFocus, true);
 		return () => {
+			window.removeEventListener("pointerdown", onPointerDown, true);
+			window.removeEventListener("mousedown", onPointerDown, true);
 			window.removeEventListener("click", onClick, true);
 			window.removeEventListener("keydown", onKey, true);
 			window.removeEventListener("cancel", onCancel, true);
@@ -222,6 +235,10 @@
 		role="dialog"
 		aria-label="{style.label}: {title}"
 		tabindex="-1"
+		onmousedown={(e) => {
+			// its buttons work without taking the focus: an open menu stays open behind it
+			if (e.target !== e.currentTarget) e.preventDefault();
+		}}
 	>
 		<div class="flex items-center gap-2 text-xs font-semibold {style.text}">
 			<GraduationCap class="size-4" />

@@ -68,9 +68,25 @@ export const saveGuideProgress = command(
 	},
 );
 
-/** PostPin Guides page: as if never started, so it starts on its own again */
+/** PostPin Guides page: as if never started (a tour gets its guide button back) */
 export const restartGuide = command(v.picklist(GUIDE_IDS), async (guideId) => {
 	const { id } = requireUser();
 	await prisma.guideProgress.deleteMany({ where: { userId: id, guideId } });
 	await getGuideProgress().refresh();
+});
+
+/** Off: nothing starts on its own and there are no guide buttons; the guides page still works */
+export const getGuidesEnabled = query(async () => {
+	const { id } = requireUser();
+	const { guidesEnabled } = await prisma.user.findUniqueOrThrow({
+		where: { id },
+		select: { guidesEnabled: true },
+	});
+	return guidesEnabled;
+});
+
+export const setGuidesEnabled = command(v.boolean(), async (enabled) => {
+	const { id } = requireUser();
+	await prisma.user.update({ where: { id }, data: { guidesEnabled: enabled } });
+	await getGuidesEnabled().refresh();
 });

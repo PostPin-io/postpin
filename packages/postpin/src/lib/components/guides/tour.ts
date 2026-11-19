@@ -22,12 +22,21 @@ export interface TourDefinition {
 	steps: TourStep[];
 }
 
+/**
+ * The step's element on screen. There may be several (e.g. the account menu on desktop and on
+ * phones); hidden ones (other screen sizes, a closed menu) are as good as not there.
+ */
 export function findAnchor(guideId: GuideId, stepId: string): HTMLElement | null {
-	const el = document.querySelector<HTMLElement>(`[data-guide="${guideId}/${stepId}"]`);
-	if (!el) return null;
-	// hidden (e.g. a button only shown on other screen sizes): as good as not there
-	const rect = el.getBoundingClientRect();
-	return rect.width > 0 || rect.height > 0 ? el : null;
+	const all = document.querySelectorAll<HTMLElement>(`[data-guide="${guideId}/${stepId}"]`);
+	for (const el of all) {
+		const rect = el.getBoundingClientRect();
+		if (rect.width === 0 && rect.height === 0) continue;
+		// a closed dropdown keeps its size, it's only invisible
+		if (el.checkVisibility?.({ visibilityProperty: true, opacityProperty: true }) === false)
+			continue;
+		return el;
+	}
+	return null;
 }
 
 /** Below the element if it fits, else above; never off screen */

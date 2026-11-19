@@ -1,65 +1,86 @@
 <script lang="ts">
-	// Decides which guide runs where, see docs/guides/README.md. A guide that was never started
-	// (or not finished) starts on its own; finished or skipped ones only via PostPin Guides.
+	// Decides which guide runs where, see docs/guides/README.md (rules 3–5): tutorials start on
+	// their own, tours from their guide button, except the tour about the guides themselves.
+	// One guide at a time, tutorials first. Switched off, only what was started by hand runs.
+	import { afterNavigate } from "$app/navigation";
 	import { page } from "$app/state";
 	import { GuideStatus } from "@postpin-io/shared/db/enums";
 	import { authClient } from "#lib/auth-client.ts";
-	import type { GuideId } from "#lib/guides.ts";
+	import { GUIDES, type GuideId } from "#lib/guides.ts";
 	import { roleAllows, toRole } from "#lib/roles.ts";
 	import GuideFeedback from "./GuideFeedback.svelte";
 	import Tour from "./Tour.svelte";
-	import { getGuideProgress, saveGuideProgress } from "./guides.remote.ts";
+	import { endGuide, guideState, isOpen, statusOf, syncEnded } from "./guide-state.svelte.ts";
+	import { getGuideProgress, getGuidesEnabled, saveGuideProgress } from "./guides.remote.ts";
+	import type { TourDefinition } from "./tour.ts";
+	import { postpinGuidesTour } from "./tours/postpin-guides.ts";
 	import { shareLinkTour } from "./tours/share-link.ts";
 	import FirstUploadTutorial from "./tutorials/FirstUploadTutorial.svelte";
 
+	const TOURS: Partial<Record<GuideId, TourDefinition>> = {
+		"postpin-guides": postpinGuidesTour,
+		"share-link": shareLinkTour,
+	};
+
 	const progress = $derived(await getGuideProgress());
+	const storedEnabled = $derived(await getGuidesEnabled());
+	const enabled = $derived(guideState.enabled ?? storedEnabled);
+
+	$effect(() => syncEnded(progress));
+	$effect(() => {
+		if (guideState.enabled === storedEnabled) guideState.enabled = null;
+	});
 
 	const activeMember = authClient.useActiveMember();
 	const role = $derived(toRole($activeMember.data?.role));
-
-	// Done or skipped: gone at once, without waiting for the server (nothing may stay behind)
-	let ended = $state<Partial<Record<GuideId, GuideStatus>>>({});
-	// Once the server agrees, its word counts again, so a restart in PostPin Guides works
-	$effect(() => {
-		for (const [id, status] of Object.entries(ended) as [GuideId, GuideStatus][]) {
-			if (progress[id]?.status === status) delete ended[id];
-		}
-	});
-
-	const statusOf = (id: GuideId) => ended[id] ?? progress[id]?.status;
-	const pending = (id: GuideId) => {
-		const status = statusOf(id);
-		return status === undefined || status === GuideStatus.STARTED;
-	};
-
-	const save =
-		(guideId: GuideId) =>
-		(status: GuideStatus, step?: string, context?: Record<string, string>) => {
-			if (status !== GuideStatus.STARTED) ended[guideId] = status;
-			return saveGuideProgress({ guideId, status, step, context });
-		};
-
 	const organizations = authClient.useListOrganizations();
 	/** A fresh account: the tutorial starts with creating the organization */
 	const noOrganization = $derived($organizations.data?.length === 0);
 
-	// Only for those who can do what it teaches: an invited reviewer can't create projects.
-	// Once running it stays, also while the new organization's membership is still loading.
-	const firstUpload = $derived(
-		page.route.id === "/(root)/dashboard" &&
-			pending("first-upload") &&
-			(statusOf("first-upload") === GuideStatus.STARTED ||
+	const save =
+		(guideId: GuideId) =>
+		(status: GuideStatus, step?: string, context?: Record<string, string>) => {
+			// done or skipped: gone at once, without waiting for the server
+			if (status !== GuideStatus.STARTED) endGuide(guideId, status);
+			return saveGuideProgress({ guideId, status, step, context });
+		};
+
+	// For those who can do what it teaches: an invited reviewer can't create projects. Once
+	// running it stays, also while the new organization's membership is still loading.
+	const firstUploadDue = $derived(
+		isOpen(progress, "first-upload") &&
+			(statusOf(progress, "first-upload") === GuideStatus.STARTED ||
 				noOrganization ||
 				(!!role && roleAllows(role, "project", "create"))),
 	);
-
-	// Waits for its first element, the share button: without the right to share it never shows.
-	// Not while the tutorial is still running: one guide at a time.
-	const shareTour = $derived(
-		page.route.id === "/(root)/projects/[project]/timelines/[timeline]/exports/[export]" &&
-			pending("share-link") &&
-			statusOf("first-upload") !== GuideStatus.STARTED,
+	const firstUpload = $derived(
+		page.route.id === "/(root)/dashboard" &&
+			((enabled && firstUploadDue) || guideState.requested === "first-upload"),
 	);
+
+	// The tour about guides starts on its own, but only once nothing else comes first: with a
+	// known membership (not while it loads) and no tutorial due
+	const postpinGuidesDue = $derived(
+		enabled && isOpen(progress, "postpin-guides") && role !== null && !firstUploadDue,
+	);
+
+	const tour = $derived.by((): GuideId | null => {
+		if (firstUpload) return null;
+		const requested = guideState.requested;
+		if (requested && TOURS[requested]) return requested;
+		return postpinGuidesDue ? "postpin-guides" : null;
+	});
+
+	$effect(() => {
+		guideState.running = firstUpload ? "first-upload" : tour;
+	});
+
+	// A tour started from a guide button belongs to that page: leaving it pauses the tour
+	afterNavigate(({ from, to }) => {
+		const requested = guideState.requested;
+		if (!requested || from?.url.pathname === to?.url.pathname) return;
+		if (GUIDES.find((g) => g.id === requested)?.trigger === "manual") guideState.requested = null;
+	});
 </script>
 
 {#if firstUpload}
@@ -70,14 +91,16 @@
 	/>
 {/if}
 
-{#if shareTour}
-	{@const saveTour = save("share-link")}
-	<Tour
-		tour={shareLinkTour}
-		onstep={(step) => saveTour(GuideStatus.STARTED, step)}
-		onfinish={() => saveTour(GuideStatus.COMPLETED)}
-		onskip={() => saveTour(GuideStatus.SKIPPED)}
-	/>
+{#if tour}
+	{@const saveTour = save(tour)}
+	{#key tour}
+		<Tour
+			tour={TOURS[tour]!}
+			onstep={(step) => saveTour(GuideStatus.STARTED, step)}
+			onfinish={() => saveTour(GuideStatus.COMPLETED)}
+			onskip={() => saveTour(GuideStatus.SKIPPED)}
+		/>
+	{/key}
 {/if}
 
 <GuideFeedback />
