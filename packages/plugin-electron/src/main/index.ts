@@ -202,6 +202,8 @@ export function exposeNleBridge(win: BrowserWindow, bridge: NleBridge) {
 		getRenderPresets: () => bridge.getRenderPresets(),
 		renderPreview: () =>
 			bridge.renderPreview((progress) => dispatcher.dispatchRenderProgress(progress)),
+		renderToDisk: (options) =>
+			bridge.renderToDisk(options, (progress) => dispatcher.dispatchDiskRenderProgress(progress)),
 		buildTimelineSnapshot: () => bridge.buildTimelineSnapshot(),
 	});
 }

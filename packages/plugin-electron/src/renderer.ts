@@ -119,6 +119,8 @@ export function connectNleBridge(): NleBridge {
 		getRenderPresets: () => api.getRenderPresets(),
 		renderPreview: (onProgress) =>
 			withEvents(api.onRenderProgress, onProgress, () => api.renderPreview()),
+		renderToDisk: (options, onProgress) =>
+			withEvents(api.onDiskRenderProgress, onProgress, () => api.renderToDisk(options)),
 		buildTimelineSnapshot: async () =>
 			(await api.buildTimelineSnapshot()) as TimelineSnapshot | null,
 	});

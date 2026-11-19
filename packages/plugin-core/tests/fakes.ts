@@ -46,6 +46,7 @@ export function fakeNle(
 		clearMarkers: vi.fn(async () => {}),
 		getRenderPresets: vi.fn(async () => []),
 		renderPreview: vi.fn(async () => "/renders/cut3.mp4"),
+		renderToDisk: vi.fn(async () => "/masters/cut3.mov"),
 		buildTimelineSnapshot: vi.fn(async () => ({ id: "nle-timeline" }) as never),
 	} satisfies NleBridge & { state: unknown };
 	return nle;

@@ -11,6 +11,7 @@ import type { Client } from "@postpin-io/api-client-ts/client";
 import { displaySize, selectRenditions, type Rendition } from "@postpin-io/shared/media/hls";
 
 import type {
+	DiskRenderOptions,
 	EncodedProxy,
 	HostBridge,
 	NleBridge,
@@ -36,7 +37,13 @@ export interface RenderAndUploadOptions {
 	 * join, the render starts uploading while they are still encoded.
 	 */
 	onUploadProgress?: (progress: UploadProgress) => void;
+	/** renders a second file into a folder, after the preview and while it uploads */
+	diskRender?: DiskRenderOptions;
+	onDiskRenderProgress?: (progress: RenderProgress) => void;
 }
+
+/** How the disk render ended: it never fails the upload, so its error comes back as a value */
+export type DiskRenderResult = { path: string } | { error: string };
 
 function formatMegabytes(bytes: number) {
 	return `${(bytes / 1024 / 1024).toFixed(0)} MB`;
@@ -90,7 +97,13 @@ export async function renderAndUpload({
 	onRenderProgress = () => {},
 	onTranscodeProgress = () => {},
 	onUploadProgress = () => {},
-}: RenderAndUploadOptions) {
+	diskRender: diskRenderOptions,
+	onDiskRenderProgress = () => {},
+}: RenderAndUploadOptions): Promise<{
+	exportId: string;
+	/** set with `diskRender`; resolves once the disk render is done, which can be after the upload */
+	diskRender?: Promise<DiskRenderResult>;
+}> {
 	// the config first: a server with another API version answers 426 before a long render
 	const [nleProjectId, nleTimelineInfo, { data: config }] = await Promise.all([
 		nle.getProjectId(),
@@ -109,145 +122,162 @@ export async function renderAndUpload({
 	}
 	const renderedPath = await nle.renderPreview(onRenderProgress);
 
-	onStep("Render complete. Creating export...");
-	const { data: createdExport } = await createExport({
-		client,
-		path: { projectId, timelineId },
-		body: { nleProjectId, nleTimelineId: nleTimelineInfo.id },
-		throwOnError: true,
-	});
-	const exportId = createdExport.id;
-	const path = { projectId, timelineId, exportId };
+	// The NLE renders one file at a time, so the disk render waits for the preview. It runs while
+	// the preview uploads.
+	const diskRender: Promise<DiskRenderResult> | null = diskRenderOptions
+		? nle.renderToDisk(diskRenderOptions, onDiskRenderProgress).then(
+				(path) => ({ path }),
+				(err: unknown) => ({ error: errorMessage(err) }),
+			)
+		: null;
 
-	onStep(`Export created with ID: ${exportId}. Initializing upload...`);
-	const fileSize = await host.getFileSize(renderedPath);
-	const { data: upload } = await initUpload({
-		client,
-		path,
-		body: { fileSize },
-		throwOnError: true,
-	});
+	try {
+		onStep("Render complete. Creating export...");
+		const { data: createdExport } = await createExport({
+			client,
+			path: { projectId, timelineId },
+			body: { nleProjectId, nleTimelineId: nleTimelineInfo.id },
+			throwOnError: true,
+		});
+		const exportId = createdExport.id;
+		const path = { projectId, timelineId, exportId };
 
-	// one progress over every file known so far
-	const progress = new Map<string, { uploaded: number; total: number }>();
-	const uploadOne = (
-		key: string,
-		filePath: string,
-		bytes: number,
-		target: { partSize: number; parts: typeof upload.parts },
-	): Promise<UploadedPart[]> => {
-		const report = (uploaded: number) => {
-			progress.set(key, { uploaded, total: bytes });
-			let uploadedBytes = 0;
-			let totalBytes = 0;
-			for (const file of progress.values()) {
-				uploadedBytes += file.uploaded;
-				totalBytes += file.total;
-			}
-			onUploadProgress({ uploadedBytes, totalBytes });
+		onStep(`Export created with ID: ${exportId}. Initializing upload...`);
+		const fileSize = await host.getFileSize(renderedPath);
+		const { data: upload } = await initUpload({
+			client,
+			path,
+			body: { fileSize },
+			throwOnError: true,
+		});
+
+		// one progress over every file known so far
+		const progress = new Map<string, { uploaded: number; total: number }>();
+		const uploadOne = (
+			key: string,
+			filePath: string,
+			bytes: number,
+			target: { partSize: number; parts: typeof upload.parts },
+		): Promise<UploadedPart[]> => {
+			const report = (uploaded: number) => {
+				progress.set(key, { uploaded, total: bytes });
+				let uploadedBytes = 0;
+				let totalBytes = 0;
+				for (const file of progress.values()) {
+					uploadedBytes += file.uploaded;
+					totalBytes += file.total;
+				}
+				onUploadProgress({ uploadedBytes, totalBytes });
+			};
+			progress.set(key, { uploaded: 0, total: bytes });
+			return host.uploadFile(filePath, target.partSize, target.parts, (p) =>
+				report(p.uploadedBytes),
+			);
 		};
-		progress.set(key, { uploaded: 0, total: bytes });
-		return host.uploadFile(filePath, target.partSize, target.parts, (p) => report(p.uploadedBytes));
-	};
 
-	let encoded: Encoded | null = null;
-	let proxyTargets: { proxyId: string; uploadId: string }[] = [];
-	// set when the render's upload failed: the review versions stop where they are
-	let aborted = false;
+		let encoded: Encoded | null = null;
+		let proxyTargets: { proxyId: string; uploadId: string }[] = [];
+		// set when the render's upload failed: the review versions stop where they are
+		let aborted = false;
 
-	/**
-	 * Encodes the review versions while the render uploads, then uploads them next to it. Never
-	 * throws: anything that fails leaves them out and the server encodes instead.
-	 */
-	const uploadReviewVersions = async () => {
-		if (config.transcode.mode !== "plugin") return null;
-		encoded = await encodeProxies(
-			host,
-			renderedPath,
-			config.transcode.renditions,
-			onStep,
-			onTranscodeProgress,
-		);
-		if (!encoded || aborted) return null;
-		const { proxies, hasAudio } = encoded;
+		/**
+		 * Encodes the review versions while the render uploads, then uploads them next to it. Never
+		 * throws: anything that fails leaves them out and the server encodes instead.
+		 */
+		const uploadReviewVersions = async () => {
+			if (config.transcode.mode !== "plugin") return null;
+			encoded = await encodeProxies(
+				host,
+				renderedPath,
+				config.transcode.renditions,
+				onStep,
+				onTranscodeProgress,
+			);
+			if (!encoded || aborted) return null;
+			const { proxies, hasAudio } = encoded;
+			try {
+				const { data } = await initProxyUploads({
+					client,
+					path,
+					body: {
+						proxies: proxies.map(({ rendition, bytes }) => ({ ...rendition, fileSize: bytes })),
+					},
+					throwOnError: true,
+				});
+				proxyTargets = data.proxies;
+				onStep(`Uploading ${proxies.length} review versions...`);
+				const uploaded = [];
+				for (const [i, target] of data.proxies.entries()) {
+					if (aborted) return null;
+					const parts = await uploadOne(`proxy-${i}`, proxies[i]!.path, proxies[i]!.bytes, target);
+					uploaded.push({
+						proxyId: target.proxyId,
+						uploadId: target.uploadId,
+						parts,
+						hls: proxies[i]!.hls,
+						hasAudio,
+					});
+				}
+				return uploaded;
+			} catch (err) {
+				// complete-upload without them drops what was uploaded of them already
+				onStep(
+					`Uploading the review versions failed, PostPin encodes them instead: ${errorMessage(err)}`,
+				);
+				return null;
+			}
+		};
+		const removeReviewVersions = () =>
+			Promise.all(
+				(encoded?.proxies ?? []).map((proxy) => host.removeFile?.(proxy.path).catch(() => {})),
+			);
+
+		const reviewVersions = uploadReviewVersions();
 		try {
-			const { data } = await initProxyUploads({
+			onStep(`Uploading ${formatMegabytes(fileSize)} in ${upload.parts.length} parts...`);
+			const [parts, uploadedProxies] = await Promise.all([
+				uploadOne("render", renderedPath, fileSize, upload),
+				reviewVersions,
+			]);
+
+			onStep("Upload complete. Starting processing...");
+			const { data: completed } = await completeUpload({
 				client,
 				path,
 				body: {
-					proxies: proxies.map(({ rendition, bytes }) => ({ ...rendition, fileSize: bytes })),
+					uploadId: upload.uploadId,
+					parts,
+					timelineSnapshot,
+					...(uploadedProxies && { proxies: uploadedProxies }),
 				},
 				throwOnError: true,
 			});
-			proxyTargets = data.proxies;
-			onStep(`Uploading ${proxies.length} review versions...`);
-			const uploaded = [];
-			for (const [i, target] of data.proxies.entries()) {
-				if (aborted) return null;
-				const parts = await uploadOne(`proxy-${i}`, proxies[i]!.path, proxies[i]!.bytes, target);
-				uploaded.push({
-					proxyId: target.proxyId,
-					uploadId: target.uploadId,
-					parts,
-					hls: proxies[i]!.hls,
-					hasAudio,
-				});
+			if (uploadedProxies && completed?.transcodedBy === "server") {
+				onStep("PostPin couldn't use the review versions and encodes them itself.");
 			}
-			return uploaded;
 		} catch (err) {
-			// complete-upload without them drops what was uploaded of them already
-			onStep(
-				`Uploading the review versions failed, PostPin encodes them instead: ${errorMessage(err)}`,
-			);
-			return null;
+			aborted = true;
+			// Discard the uploaded parts, the export stays without media
+			await abortUpload({
+				client,
+				path,
+				body: {
+					uploadId: upload.uploadId,
+					...(proxyTargets.length > 0 && {
+						proxies: proxyTargets.map(({ proxyId, uploadId }) => ({ proxyId, uploadId })),
+					}),
+				},
+			}).catch(() => {});
+			// the encoding may still run: clean up once it's done, without making the caller wait
+			void reviewVersions.then(removeReviewVersions);
+			throw err;
 		}
-	};
-	const removeReviewVersions = () =>
-		Promise.all(
-			(encoded?.proxies ?? []).map((proxy) => host.removeFile?.(proxy.path).catch(() => {})),
-		);
-
-	const reviewVersions = uploadReviewVersions();
-	try {
-		onStep(`Uploading ${formatMegabytes(fileSize)} in ${upload.parts.length} parts...`);
-		const [parts, uploadedProxies] = await Promise.all([
-			uploadOne("render", renderedPath, fileSize, upload),
-			reviewVersions,
-		]);
-
-		onStep("Upload complete. Starting processing...");
-		const { data: completed } = await completeUpload({
-			client,
-			path,
-			body: {
-				uploadId: upload.uploadId,
-				parts,
-				timelineSnapshot,
-				...(uploadedProxies && { proxies: uploadedProxies }),
-			},
-			throwOnError: true,
-		});
-		if (uploadedProxies && completed?.transcodedBy === "server") {
-			onStep("PostPin couldn't use the review versions and encodes them itself.");
-		}
+		// the review versions are only needed for the upload
+		await removeReviewVersions();
+		return diskRender ? { exportId, diskRender } : { exportId };
 	} catch (err) {
-		aborted = true;
-		// Discard the uploaded parts, the export stays without media
-		await abortUpload({
-			client,
-			path,
-			body: {
-				uploadId: upload.uploadId,
-				...(proxyTargets.length > 0 && {
-					proxies: proxyTargets.map(({ proxyId, uploadId }) => ({ proxyId, uploadId })),
-				}),
-			},
-		}).catch(() => {});
-		// the encoding may still run: clean up once it's done, without making the caller wait
-		void reviewVersions.then(removeReviewVersions);
+		// the NLE is still rendering: the caller must not start anything new before it's done
+		await diskRender;
 		throw err;
 	}
-	// the review versions are only needed for the upload
-	await removeReviewVersions();
-	return { exportId };
 }

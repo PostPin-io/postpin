@@ -41,6 +41,10 @@ export function createProToolsAdapter(): NleBridge {
 		clearMarkers: () => markers.clearMarkers(),
 		getRenderPresets: async () => [],
 		renderPreview: async (onProgress) => renderPreview(await getSessionTiming(), onProgress),
+		// Capabilities.renderToDisk is false, so the UI never offers it
+		renderToDisk: async () => {
+			throw new Error("Pro Tools can't render to disk from PostPin yet");
+		},
 		buildTimelineSnapshot: async () => buildTimelineSnapshot(await getSessionTiming()),
 	};
 }

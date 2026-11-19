@@ -7,9 +7,16 @@
 		/** encoding the review versions, 0 to 1 */
 		transcodeProgress?: number | null;
 		uploadProgress: UploadProgress | null;
+		/** the extra render into a folder, runs while the preview uploads */
+		diskRenderProgress?: RenderProgress | null;
 	}
 
-	let { renderProgress, transcodeProgress = null, uploadProgress }: Props = $props();
+	let {
+		renderProgress,
+		transcodeProgress = null,
+		uploadProgress,
+		diskRenderProgress = null,
+	}: Props = $props();
 </script>
 
 {#if renderProgress && renderProgress.percent < 100}
@@ -50,6 +57,25 @@
 		<span class="text-sm whitespace-nowrap tabular-nums">
 			{Math.floor((uploadProgress.uploadedBytes / uploadProgress.totalBytes) * 100)}% ·
 			{formatMegabytes(uploadProgress.uploadedBytes)} / {formatMegabytes(uploadProgress.totalBytes)}
+		</span>
+	</div>
+{/if}
+
+{#if diskRenderProgress && diskRenderProgress.percent < 100}
+	<div class="flex items-center gap-2">
+		{#if diskRenderProgress.percent > 0}
+			<progress class="progress progress-secondary" value={diskRenderProgress.percent} max="100"
+			></progress>
+		{:else}
+			<progress class="progress progress-secondary"></progress>
+		{/if}
+		<span class="text-sm whitespace-nowrap tabular-nums">
+			To disk {diskRenderProgress.percent > 0
+				? `${Math.round(diskRenderProgress.percent)}%`
+				: "preparing…"}
+			{#if diskRenderProgress.estimatedTimeRemainingMs > 0}
+				· {formatDuration(diskRenderProgress.estimatedTimeRemainingMs)} left
+			{/if}
 		</span>
 	</div>
 {/if}

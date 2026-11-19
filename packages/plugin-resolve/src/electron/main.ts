@@ -35,7 +35,12 @@ import type {
 	TimelineSnapshot,
 	Track,
 } from "@postpin-io/shared/types/TimelineSnapshot";
-import type { NleBridge, NleMarker, RenderProgress } from "@postpin-io/plugin-core/bridge";
+import type {
+	DiskRenderOptions,
+	NleBridge,
+	NleMarker,
+	RenderProgress,
+} from "@postpin-io/plugin-core/bridge";
 import { createWindow, exposeHostBridge, exposeNleBridge } from "@postpin-io/plugin-electron/main";
 
 declare const DEV_SERVER_URL: string;
@@ -239,6 +244,11 @@ async function renderPreview(
 		FrameRate: frameRate,
 	});
 
+	return await runRenderJob(project, onProgress);
+}
+
+// Queues a job with the current render settings, renders it and returns the output file path
+async function runRenderJob(project: Project, onProgress: (progress: RenderProgress) => void) {
 	const jobId = await project.AddRenderJob();
 	if (!jobId) throw new Error("Failed to add render job");
 
@@ -256,6 +266,30 @@ async function renderPreview(
 		// Keep the user's render queue clean
 		await orNull(() => project.DeleteRenderJob(jobId));
 	}
+}
+
+// Renders the current timeline with one of the user's render presets into a folder of their
+// choice, e.g. a master next to the upload. Format, codec and the rest come from the preset.
+async function renderToDisk(
+	{ preset, targetDir, filename }: DiskRenderOptions,
+	onProgress: (progress: RenderProgress) => void,
+) {
+	const project = await getCurrentProject();
+	if (!project) throw new Error("No project open in Resolve");
+	if (!(await project.GetCurrentTimeline())) throw new Error("No timeline open in Resolve");
+	if (await project.IsRenderingInProgress()) throw new Error("Resolve is already rendering");
+
+	if (!(await project.LoadRenderPreset(preset))) {
+		throw new Error(`Resolve couldn't load the render preset "${preset}"`);
+	}
+	// without a name Resolve keeps the one from the preset
+	await applyRenderSettings(project, {
+		SelectAllFrames: true,
+		TargetDir: targetDir,
+		...(filename && { CustomName: filename }),
+	});
+
+	return await runRenderJob(project, onProgress);
 }
 
 async function buildTimelineSnapshot(): Promise<TimelineSnapshot | null> {
@@ -589,6 +623,7 @@ const resolveBridge: NleBridge = {
 	},
 	renderPreview: (onProgress) =>
 		renderPreview(os.tmpdir(), `postpin-preview-${Date.now()}`, onProgress),
+	renderToDisk,
 	buildTimelineSnapshot,
 };
 

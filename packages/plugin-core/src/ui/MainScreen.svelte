@@ -27,8 +27,11 @@
 	import { syncMarkersDown, syncMarkersUp } from "../sync";
 	import { getBridges } from "./context";
 	import Destination from "./Destination.svelte";
+	import DisabledHint from "./DisabledHint.svelte";
 	import FlowArrow from "./FlowArrow.svelte";
 	import HostNode from "./HostNode.svelte";
+	import MarkerHeads from "./MarkerHeads.svelte";
+	import MarkerSyncButton from "./MarkerSyncButton.svelte";
 	import ProgressBars from "./ProgressBars.svelte";
 	import RenderToDisk from "./RenderToDisk.svelte";
 	import SettingsIcon from "@lucide/svelte/icons/settings";
@@ -321,12 +324,16 @@
 	let uploadProgress = $state<UploadProgress | null>(null);
 	// encoding the review versions, 0 to 1
 	let transcodeProgress = $state<number | null>(null);
+	let diskRenderProgress = $state<RenderProgress | null>(null);
 	let error = $state<string | null>(null);
+	// something went wrong that didn't stop the action, e.g. the disk render next to an upload
+	let warning = $state<string | null>(null);
 
 	// Runs a button action, showing its error and blocking the other buttons meanwhile
 	async function runLong(action: () => Promise<void>) {
 		isBusy = "rendering";
 		error = null;
+		warning = null;
 		try {
 			await action();
 		} catch (err) {
@@ -339,6 +346,7 @@
 	async function runShort(type: typeof isBusy, action: () => Promise<void>) {
 		isBusy = type;
 		error = null;
+		warning = null;
 		log = [];
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 		try {
@@ -371,11 +379,12 @@
 		renderProgress = null;
 		transcodeProgress = null;
 		uploadProgress = null;
+		diskRenderProgress = null;
 		log = [];
 		return runLong(async () => {
 			await host.saveSettings($state.snapshot(settings));
 
-			const { exportId } = await runRenderAndUpload({
+			const { exportId, diskRender } = await runRenderAndUpload({
 				nle,
 				host,
 				client,
@@ -392,6 +401,12 @@
 					uploadProgress = progress;
 					setDockProgress(0.45 + (progress.uploadedBytes / progress.totalBytes) * 0.55);
 				},
+				...(diskRenderOptions && {
+					diskRender: diskRenderOptions,
+					onDiskRenderProgress: (progress) => {
+						diskRenderProgress = progress;
+					},
+				}),
 			}).finally(() => setDockProgress(null));
 
 			// Marker actions continue on the new export
@@ -402,7 +417,19 @@
 			await host.openInBrowser(
 				`/projects/${ids.projectId}/timelines/${ids.timelineId}/exports/${exportId}`,
 			);
-			log.push(`Done`);
+			if (!diskRender) {
+				log.push("Done");
+				return;
+			}
+			// the upload is done, the NLE may still render the disk file
+			log.push("Uploaded. Still rendering to disk...");
+			const result = await diskRender;
+			if ("error" in result) {
+				warning = `The export is uploaded, but the disk render failed: ${result.error}`;
+				log.push("Done");
+			} else {
+				log.push(`Done. Rendered to ${result.path}`);
+			}
 		});
 	}
 
@@ -431,14 +458,57 @@
 		return runShort("deletingMarkers", () => nle.clearMarkers());
 	}
 
-	const canRender = $derived(nleState.status === "connected" && !!uploadTarget && !isBusy);
+	// What the disk render needs, null when it's off or this NLE can't do it
+	const diskRenderOptions = $derived(
+		capabilities?.renderToDisk && settings.renderToDisk
+			? {
+					preset: settings.renderPreset,
+					targetDir: settings.outputPath.trim(),
+					filename: settings.filename.trim(),
+				}
+			: null,
+	);
+	// The disk render is switched on but can't run like this
+	const diskRenderProblem = $derived.by(() => {
+		if (!diskRenderOptions) return null;
+		if (capabilities?.renderPresets && !diskRenderOptions.preset) {
+			return "Choose a render preset for the disk render.";
+		}
+		if (!diskRenderOptions.targetDir) return "Choose a folder for the disk render.";
+		return null;
+	});
+	// the disk render settings stay reachable when they are what blocks the render
+	const canEditRenderSettings = $derived(
+		nleState.status === "connected" && !!uploadTarget && !isBusy,
+	);
+	const canRender = $derived(canEditRenderSettings && !diskRenderProblem);
 	const canSync = $derived(nleState.status === "connected" && !!markerTarget?.export && !isBusy);
+	// The running sync stays bright, so its animation doesn't look disabled
+	const isSyncing = $derived(isBusy === "syncingMarkersUp" || isBusy === "syncingMarkersDown");
+	// Why Render & Upload and the marker buttons are disabled, shown below them. Nothing while
+	// another action runs, that one has its own progress.
+	const renderHint = $derived.by(() => {
+		if (isBusy) return null;
+		if (nleState.status !== "connected") return "Waiting for the connection to your editing app.";
+		if (!uploadTarget) return "Choose a destination timeline.";
+		return diskRenderProblem;
+	});
+	const syncHint = $derived.by(() => {
+		if (isBusy) return null;
+		if (nleState.status !== "connected") return "Waiting for the connection to your editing app.";
+		if (!markerTarget) return "Choose an export to exchange markers with.";
+		if (!markerTarget.export) {
+			// a timeline can be picked without one of its exports
+			return exportsByTimeline[markerTarget.timeline.id]?.length
+				? "Choose an export to exchange markers with."
+				: "This timeline has no export yet. Render & Upload one first.";
+		}
+		return null;
+	});
 </script>
 
-<!-- Label arrows point at PostPin: up when stacked, right when PostPin is on the right -->
+<!-- The label arrow points at PostPin: up when stacked, right when PostPin is on the right -->
 {#snippet toPostPin()}<span class="@3xl:hidden">↑</span><span class="hidden @3xl:inline">→</span
-	>{/snippet}
-{#snippet fromPostPin()}<span class="@3xl:hidden">↓</span><span class="hidden @3xl:inline">←</span
 	>{/snippet}
 
 {#if versionMismatch}
@@ -521,7 +591,7 @@
 							onBeforeChoose={refreshProjects}
 							onCreateProject={createNewProject}
 							onCreateTimeline={createNewTimeline}
-							emptyText="This timeline isn't linked to a PostPin timeline yet."
+							emptyText="No PostPin timeline chosen for the export yet."
 							highlightChoose={!uploadTarget}
 							browserUrl={uploadTarget
 								? `/projects/${uploadTarget.project.id}/timelines/${uploadTarget.timeline.id}/exports`
@@ -534,7 +604,8 @@
 					>
 						<Destination
 							framed={false}
-							title="Markers with"
+							title="Exchange markers with"
+							highlightChoose={!markerTarget?.export}
 							path={markerTarget
 								? `${markerTarget.project.name} › ${markerTarget.timeline.name}`
 								: undefined}
@@ -568,7 +639,12 @@
 					<div
 						class="flex flex-col justify-center gap-3 py-4 @md:col-span-2 @md:col-start-1 @md:row-start-2 @3xl:col-span-1 @3xl:col-start-2 @3xl:row-span-2 @3xl:row-start-1 @3xl:px-4 @3xl:py-0"
 					>
-						<ProgressBars {renderProgress} {transcodeProgress} {uploadProgress} />
+						<ProgressBars
+							{renderProgress}
+							{transcodeProgress}
+							{uploadProgress}
+							{diskRenderProgress}
+						/>
 						{#if log.length}
 							<p class="text-center text-sm text-base-content/60">{log.at(-1)}</p>
 						{/if}
@@ -578,32 +654,38 @@
 						class="flex min-w-0 flex-col @md:col-start-1 @md:row-start-2 @3xl:col-start-2 @3xl:row-start-1 @3xl:flex-row @3xl:items-center"
 					>
 						<FlowArrow direction="right" disabled={!canRender}>
-							<div class="join max-w-full">
-								<button
-									type="button"
-									class="btn join-item h-auto min-w-0 flex-col gap-0 py-2 whitespace-normal btn-primary"
-									disabled={!canRender}
-									onclick={renderAndUpload}
-								>
-									Render & Upload {@render toPostPin()}
-									<span class="text-xs font-normal break-words opacity-75">
-										{uploadTarget
-											? `new export in ${uploadTarget.timeline.name}`
-											: "choose a location first"}
-									</span>
-								</button>
-								{#if capabilities?.renderToDisk}
+							<div class="flex max-w-full flex-col items-center gap-2">
+								<div class="join max-w-full">
 									<button
 										type="button"
-										class={[
-											"btn join-item h-auto btn-primary border-left-2 border-base-content/20 border-0 flex-col gap-0 py-2",
-											showDiskSettings && "btn-active",
-										]}
-										aria-label="Render to disk settings"
-										onclick={() => (showDiskSettings = !showDiskSettings)}
+										class="btn join-item h-auto min-w-0 flex-col gap-0 py-2 whitespace-normal btn-primary"
+										disabled={!canRender}
+										onclick={renderAndUpload}
 									>
-										<SettingsIcon />
+										Render & Upload {@render toPostPin()}
+										<span class="text-xs font-normal break-words opacity-75">
+											{uploadTarget
+												? `new export in ${uploadTarget.timeline.name}`
+												: "no location chosen"}
+										</span>
 									</button>
+									{#if capabilities?.renderToDisk}
+										<button
+											type="button"
+											class={[
+												"btn join-item h-auto btn-primary border-left-2 border-base-content/20 border-0 flex-col gap-0 py-2",
+												showDiskSettings && "btn-active",
+											]}
+											aria-label="Render to disk settings"
+											disabled={!canEditRenderSettings}
+											onclick={() => (showDiskSettings = !showDiskSettings)}
+										>
+											<SettingsIcon />
+										</button>
+									{/if}
+								</div>
+								{#if renderHint}
+									<DisabledHint text={renderHint} />
 								{/if}
 							</div>
 						</FlowArrow>
@@ -612,28 +694,33 @@
 					<div
 						class="flex min-w-0 flex-col @md:col-start-2 @md:row-start-2 @3xl:col-start-2 @3xl:row-start-2 @3xl:flex-row @3xl:items-center"
 					>
-						<FlowArrow direction="both" disabled={!canSync}>
+						<FlowArrow direction="both" disabled={!canSync && !isSyncing}>
 							<div
 								class="flex w-48 max-w-full flex-col gap-2 rounded-box border-2 border-base-content/50 p-3"
 							>
 								<!-- the export's name is in the PostPin box already -->
-								<h3 class="text-center text-xs tracking-widest text-base-content/60 uppercase">
-									Markers
+								<h3
+									class="flex items-center justify-center gap-2 text-xs tracking-widest text-base-content/60 uppercase"
+								>
+									<MarkerHeads class="text-sm" /> Markers
 								</h3>
-								<button type="button" class="btn" disabled={!canSync} onclick={syncUp}>
-									{#if isBusy == "syncingMarkersUp"}
-										<span class="loading loading-spinner loading-sm ms-2"></span>
-									{:else}
-										Push markers {@render toPostPin()}
-									{/if}
-								</button>
-								<button type="button" class="btn" disabled={!canSync} onclick={syncDown}>
-									{#if isBusy == "syncingMarkersDown"}
-										<span class="loading loading-spinner loading-sm ms-2"></span>
-									{:else}
-										{@render fromPostPin()} Pull comments
-									{/if}
-								</button>
+								<MarkerSyncButton
+									from="nle"
+									hostName={capabilities?.hostName ?? null}
+									busy={isBusy === "syncingMarkersUp"}
+									disabled={!canSync && isBusy !== "syncingMarkersUp"}
+									onclick={syncUp}
+								/>
+								<MarkerSyncButton
+									from="postpin"
+									hostName={capabilities?.hostName ?? null}
+									busy={isBusy === "syncingMarkersDown"}
+									disabled={!canSync && isBusy !== "syncingMarkersDown"}
+									onclick={syncDown}
+								/>
+								{#if syncHint}
+									<DisabledHint text={syncHint} />
+								{/if}
 							</div>
 						</FlowArrow>
 					</div>
@@ -657,7 +744,8 @@
 				</div>
 			</div>
 
-			{#if showDiskSettings && capabilities?.renderToDisk && !isBusy}
+			<!-- settings for a render that can't start yet would only confuse -->
+			{#if showDiskSettings && capabilities?.renderToDisk && canEditRenderSettings}
 				<div
 					class="mx-4 mb-4 flex flex-col gap-2 rounded-box border-2 border-dashed border-base-content/30 p-4"
 				>
@@ -668,6 +756,12 @@
 			{#if !isBusy && log.length}
 				<div class="mx-4 mb-4 rounded-box border-2 border-base-content/50 p-3 text-sm">
 					{log.at(-1)}
+				</div>
+			{/if}
+
+			{#if warning}
+				<div role="alert" class="mx-4 mb-4 alert alert-warning">
+					<span>{warning}</span>
 				</div>
 			{/if}
 

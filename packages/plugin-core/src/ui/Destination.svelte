@@ -102,7 +102,7 @@
 				modal?.open();
 			}}
 		>
-			Choose export
+			{mode === "timeline" ? "Choose timeline" : "Choose export"}
 		</button>
 		{#if browserUrl}
 			<button

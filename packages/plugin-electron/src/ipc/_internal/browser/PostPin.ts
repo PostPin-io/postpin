@@ -11,6 +11,7 @@ import {
 	UploadedPart,
 	UploadProgress,
 	Settings,
+	DiskRenderOptions,
 	LoginConfig,
 	LoginCode,
 	ProbedMedia,
@@ -34,6 +35,7 @@ import {
 	$eipc_validator$_UploadedPart,
 	$eipc_validator$_UploadProgress,
 	$eipc_validator$_Settings,
+	$eipc_validator$_DiskRenderOptions,
 	$eipc_validator$_LoginConfig,
 	$eipc_validator$_LoginCode,
 	$eipc_validator$_ProbedMedia,
@@ -45,7 +47,7 @@ import {
 	$eipc_validator$_TimelineInfo,
 } from "../common-runtime/PostPin.js";
 import * as $eipc$ from "../browser-runtime.js";
-const $$ipcPrefix$$ = "$eipc_message$_d189e49b54d277201894f5c9d4e5f531_$_PostPin_$_";
+const $$ipcPrefix$$ = "$eipc_message$_7c18d40f7e3b38512816e4a3bf1eb423_$_PostPin_$_";
 // Interfaces are declared as data and wired up by ../browser-runtime.ts:
 //   methods: [name, [[argName, validator], ...], resultValidator?]  ([Sync] methods append null|validator, 'sync')
 //   stores:  [name, stateValidator]
@@ -109,6 +111,7 @@ export const CommonAPI = /*#__PURE__*/ $eipc$.defineInterface<
 });
 export interface INleAPIDispatcher {
 	dispatchRenderProgress(arg_progress: RenderProgress): void;
+	dispatchDiskRenderProgress(arg_progress: RenderProgress): void;
 }
 export const NleAPI = /*#__PURE__*/ $eipc$.defineInterface<
 	INleAPIImpl,
@@ -128,7 +131,11 @@ export const NleAPI = /*#__PURE__*/ $eipc$.defineInterface<
 		["clearMarkers", [], $eipc$.boolean],
 		["getRenderPresets", [], $eipc$.arrayOf($eipc$.string)],
 		["renderPreview", [], $eipc$.string],
+		["renderToDisk", [["options", $eipc_validator$_DiskRenderOptions]], $eipc$.string],
 		["buildTimelineSnapshot", [], $eipc$.unknown],
 	],
-	events: [["renderProgress", [["progress", $eipc_validator$_RenderProgress]]]],
+	events: [
+		["renderProgress", [["progress", $eipc_validator$_RenderProgress]]],
+		["diskRenderProgress", [["progress", $eipc_validator$_RenderProgress]]],
+	],
 });

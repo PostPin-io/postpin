@@ -47,6 +47,12 @@ export interface Settings {
 	renderToDisk: boolean;
 	outputPath: string;
 	filename: string;
+	renderPreset: string;
+}
+export interface DiskRenderOptions {
+	preset: string;
+	targetDir: string;
+	filename: string;
 }
 export interface LoginConfig {
 	serverBaseUrl: string;
@@ -151,6 +157,7 @@ export interface INleAPIImpl {
 	clearMarkers(): Promise<boolean> | boolean;
 	getRenderPresets(): Promise<string[]> | string[];
 	renderPreview(): Promise<string> | string;
+	renderToDisk(options: DiskRenderOptions): Promise<string> | string;
 	buildTimelineSnapshot(): Promise<unknown> | unknown;
 }
 export interface INleAPIRenderer {
@@ -162,6 +169,8 @@ export interface INleAPIRenderer {
 	clearMarkers(): Promise<boolean>;
 	getRenderPresets(): Promise<string[]>;
 	renderPreview(): Promise<string>;
+	renderToDisk(options: DiskRenderOptions): Promise<string>;
 	buildTimelineSnapshot(): Promise<unknown>;
 	onRenderProgress(fn: (progress: RenderProgress) => void): () => void;
+	onDiskRenderProgress(fn: (progress: RenderProgress) => void): () => void;
 }

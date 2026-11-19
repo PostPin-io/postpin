@@ -85,6 +85,17 @@ export interface Settings {
 	renderToDisk: boolean;
 	outputPath: string;
 	filename: string;
+	/** render preset for the disk render, empty when none is chosen yet */
+	renderPreset: string;
+}
+
+/** An extra render into a folder of the user's choice, next to the upload */
+export interface DiskRenderOptions {
+	/** one of getRenderPresets() */
+	preset: string;
+	targetDir: string;
+	/** without extension; empty keeps the name from the preset */
+	filename: string;
 }
 
 export interface LoginCode {
@@ -115,6 +126,14 @@ export interface NleBridge {
 	clearMarkers(): Promise<void>;
 	getRenderPresets(): Promise<string[]>;
 	renderPreview(onProgress: (progress: RenderProgress) => void): Promise<string>;
+	/**
+	 * renders the current timeline with a preset into a folder and returns the file's path.
+	 * Only called when Capabilities.renderToDisk is set, the others may throw.
+	 */
+	renderToDisk(
+		options: DiskRenderOptions,
+		onProgress: (progress: RenderProgress) => void,
+	): Promise<string>;
 	buildTimelineSnapshot(): Promise<TimelineSnapshot | null>;
 }
 

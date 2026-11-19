@@ -53,6 +53,13 @@ structure Settings {
   renderToDisk: boolean
   outputPath: string
   filename: string
+  renderPreset: string
+}
+
+structure DiskRenderOptions {
+  preset: string
+  targetDir: string
+  filename: string
 }
 
 structure LoginConfig {
@@ -156,5 +163,8 @@ interface NleAPI {
   renderPreview() -> string
   [Event]
   renderProgress(progress: RenderProgress)
+  renderToDisk(options: DiskRenderOptions) -> string
+  [Event]
+  diskRenderProgress(progress: RenderProgress)
   buildTimelineSnapshot() -> unknown
 }
