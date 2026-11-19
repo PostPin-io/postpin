@@ -93,21 +93,24 @@ export const setGuidesEnabled = command(v.boolean(), async (enabled) => {
 	await getGuidesEnabled().refresh();
 });
 
+/** What a guide needs on the export it starts on: sharing it, or leaving markers on it */
+const START_RIGHTS = {
+	"share-link": ["shareLink", "create"],
+	"first-review": ["marker", "create"],
+} as const;
+
 /**
- * Whether a guide can run for the user right now; guides not listed always can. Their guide
- * buttons only show when it can: navigation walks into a real export, so it needs one.
- */
-/**
- * Where the PostPin Guides page sends a tour that starts at a feature deep in the app, or null when
- * the user has nothing to start it on. share-link: the latest export the user may share.
+ * Where the PostPin Guides page sends a guide that starts on an export, or null when the user has
+ * nothing to start it on: the latest export they may use it on (see START_RIGHTS).
  */
 export const getGuideStart = query(v.picklist(GUIDE_IDS), async (guideId) => {
 	requireUser();
-	if (guideId !== "share-link") return null;
+	if (!(guideId in START_RIGHTS)) return null;
+	const [area, action] = START_RIGHTS[guideId as keyof typeof START_RIGHTS];
 	const member = await getActiveMember();
 	if (!member) return null;
 	const allowed = await accessChecker(member);
-	// sharing is decided per project/timeline: look through the latest ones, not all
+	// rights are decided per project/timeline: look through the latest ones, not all
 	const exports = await prisma.export.findMany({
 		where: accessibleExports(member),
 		select: { id: true, timeline: { select: { id: true, projectId: true } } },
@@ -115,7 +118,7 @@ export const getGuideStart = query(v.picklist(GUIDE_IDS), async (guideId) => {
 		take: 50,
 	});
 	const exp = exports.find((e) =>
-		allowed("shareLink", "create", { projectId: e.timeline.projectId, timelineId: e.timeline.id }),
+		allowed(area, action, { projectId: e.timeline.projectId, timelineId: e.timeline.id }),
 	);
 	return exp
 		? `/projects/${exp.timeline.projectId}/timelines/${exp.timeline.id}/exports/${exp.id}`
@@ -139,6 +142,10 @@ export const getPluginSignIn = query(
 	},
 );
 
+/**
+ * Whether a guide can run for the user right now; guides not listed always can. Their guide
+ * buttons only show when it can: navigation walks into a real export, so it needs one.
+ */
 export const getGuideAvailability = query(async () => {
 	requireUser();
 	const member = await getActiveMember();

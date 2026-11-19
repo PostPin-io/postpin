@@ -244,6 +244,7 @@
 					style:--marker-contrast={markerColor ? contrastColor(markerColor) : undefined}
 					title="Add marker at playhead (M)"
 					aria-label="Add marker at playhead"
+					data-guide={playerAvailable ? "first-review/add-marker" : undefined}
 					onclick={() => onCreateMarker()}
 				>
 					<DiamondPlus size={iconSize} />
@@ -258,7 +259,11 @@
 					<ArrowLeft size={iconSize} />
 				</button>
 			{/if}
-			<button class="btn btn-square btn-ghost {btnSize}" onclick={togglePlayback}>
+			<button
+				class="btn btn-square btn-ghost {btnSize}"
+				onclick={togglePlayback}
+				data-guide={playerAvailable ? "first-review/play" : undefined}
+			>
 				{#if paused}
 					<Play size={iconSize} />
 				{:else}

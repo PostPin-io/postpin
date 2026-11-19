@@ -22,6 +22,7 @@
 	import { useShare } from "../share-context.ts";
 	import { markersKey } from "./marker-scope.ts";
 	import DiamondPlus from "@lucide/svelte/icons/diamond-plus";
+	import { signalGuide } from "../../guides/guide-signals.svelte.ts";
 	import {
 		getMarkers,
 		getCategories,
@@ -373,8 +374,10 @@
 	}
 
 	async function addAndSelectMarker() {
+		const isNew = !existingAtNext;
 		const marker = await addMarkerAtPlayhead();
 		if (!marker) return;
+		if (isNew) signalGuide("first-review", "add-marker");
 		selectedMarkerIds = [marker.id];
 		// Phones: a new marker opens straight in the modal, ready for its title
 		if (mobile) {
@@ -587,7 +590,10 @@
 						}}
 						onrange={() => selectRange(marker.id)}
 						ontoggle={() => toggleMarkerSelection(marker.id)}
-						onselect={onseek}
+						onselect={(frame) => {
+							onseek(frame);
+							signalGuide("first-review", "jump");
+						}}
 						onreposition={(frame) => repositionMarker(marker, frame)}
 						onresize={(duration) => resizeMarker(marker, duration)}
 						onrespond={() => respondTo(marker.id)}

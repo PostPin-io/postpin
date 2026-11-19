@@ -4,6 +4,8 @@ import {
 	fallbackStep,
 	nextShownStep,
 	placeCard,
+	STEP_ICONS,
+	icon,
 	splitStepText,
 	stepKind,
 	type TourStep,
@@ -13,6 +15,7 @@ import { GUIDES, GUIDE_IDS, lowestRoleWith, roleCanDo } from "#lib/guides.ts";
 import { Role } from "@postpin-io/shared/db/enums";
 import { postpinGuidesTour } from "#lib/components/guides/tours/postpin-guides.ts";
 import { navigationTour } from "#lib/components/guides/tours/navigation.ts";
+import { firstReviewTour } from "#lib/components/guides/tutorials/first-review.ts";
 
 const viewport = { width: 1000, height: 800 };
 const card = { width: 300, height: 200 };
@@ -88,6 +91,45 @@ describe.each(TOURS.map((t) => [t.guideId, t] as const))("%s tour", (_, tour) =>
 	});
 });
 
+describe("first-review tutorial", () => {
+	it("is a tutorial run by the tour engine, with unique step ids and one completion card", () => {
+		expect(GUIDES.find((g) => g.id === firstReviewTour.guideId)?.type).toBe("tutorial");
+		const ids = firstReviewTour.steps.map((s) => s.id);
+		expect(new Set(ids).size).toBe(ids.length);
+		expect(firstReviewTour.steps.filter((s) => s.advance === "done")).toHaveLength(1);
+		expect(firstReviewTour.steps.at(-1)!.advance).toBe("done");
+	});
+
+	it("only goes on once the user did each step, never by Next", () => {
+		// a tutorial: the user does it, the guide reacts (docs/guides/README.md)
+		for (const step of firstReviewTour.steps.slice(0, -1)) {
+			expect(["signal", "click"], step.id).toContain(step.advance);
+		}
+	});
+
+	it("goes play/pause, marker, title, category, jump, then the conversation", () => {
+		expect(firstReviewTour.steps.map((s) => s.id)).toEqual([
+			"play",
+			"add-marker",
+			"title",
+			"category",
+			"jump",
+			"expand",
+			"open-responses",
+			"reply",
+			"done",
+		]);
+	});
+
+	it("lets only the shortcut of the step's own action through", () => {
+		const keys = (id: string) => firstReviewTour.steps.find((s) => s.id === id)!.keys ?? [];
+		expect(keys("play")).toContain(" ");
+		expect(keys("play")).not.toContain("m");
+		expect(keys("add-marker")).toEqual(["m", "M"]);
+		for (const step of firstReviewTour.steps) expect(step.keys ?? []).not.toContain("Escape");
+	});
+});
+
 describe("stepKind", () => {
 	it("tells looking, trying and acting apart", () => {
 		expect(stepKind({ advance: "next", inert: true })).toBe("look");
@@ -95,6 +137,7 @@ describe("stepKind", () => {
 		expect(stepKind({ advance: "next" })).toBe("try");
 		expect(stepKind({ advance: "click" })).toBe("act");
 		expect(stepKind({ advance: "appears" })).toBe("act");
+		expect(stepKind({ advance: "signal" })).toBe("act");
 		expect(stepKind({ advance: "done" })).toBe("done");
 	});
 });
@@ -114,7 +157,7 @@ describe("guide roles (rule 17)", () => {
 			expect(roleCanDo(byId(id), Role.REVIEWER), id).toBe(false);
 			expect(roleCanDo(byId(id), Role.MEMBER), id).toBe(true);
 		}
-		expect(roleCanDo(byId("navigation"), Role.REVIEWER)).toBe(true);
+		expect(roleCanDo(byId("first-review"), Role.REVIEWER)).toBe(true);
 	});
 
 	it("without an organization: what everyone can do, and what creates the organization", () => {
@@ -164,9 +207,27 @@ describe("splitStepText", () => {
 	it("splits around every guide button", () => {
 		expect(splitStepText(`look for ${GUIDE_BUTTON_TOKEN} next to it`)).toEqual([
 			"look for ",
+			{ icon: "guide-button" },
 			" next to it",
 		]);
 		expect(splitStepText("no icon")).toEqual(["no icon"]);
+	});
+
+	it("splits around lucide icons, also several and at the edges", () => {
+		expect(splitStepText(`${icon("play")} then ${icon("pause")}`)).toEqual([
+			{ icon: "play" },
+			" then ",
+			{ icon: "pause" },
+		]);
+	});
+
+	it("keeps an unknown icon as text, so a typo shows", () => {
+		expect(splitStepText("press {icon:nope}")).toEqual(["press {icon:nope}"]);
+	});
+
+	it("only knows icons that are drawn", async () => {
+		const { STEP_ICON_COMPONENTS } = await import("#lib/components/guides/step-icons.ts");
+		expect(Object.keys(STEP_ICON_COMPONENTS).sort()).toEqual([...STEP_ICONS].sort());
 	});
 });
 

@@ -4,6 +4,7 @@
 	// One guide at a time, tutorials first. Switched off, only what was started by hand runs.
 	import { afterNavigate } from "$app/navigation";
 	import { page } from "$app/state";
+	import { MediaQuery } from "svelte/reactivity";
 	import { GuideStatus } from "@postpin-io/shared/db/enums";
 	import { authClient } from "#lib/auth-client.ts";
 	import { GUIDES, roleCanDo, type GuideId } from "#lib/guides.ts";
@@ -25,6 +26,7 @@
 	import InstallDesktopTutorial from "./tutorials/InstallDesktopTutorial.svelte";
 	import InstallPremiereTutorial from "./tutorials/InstallPremiereTutorial.svelte";
 	import InstallResolveTutorial from "./tutorials/InstallResolveTutorial.svelte";
+	import { firstReviewTour } from "./tutorials/first-review.ts";
 
 	const TOURS: Partial<Record<GuideId, TourDefinition>> = {
 		"postpin-guides": postpinGuidesTour,
@@ -120,14 +122,35 @@
 			(firstUploadSettled || cannotUpload),
 	);
 
+	// On the review page itself, through the tour engine. Desktop only for now: on phones the
+	// marker editor and the replies are in a modal of their own. A guide started by hand goes
+	// first (e.g. the share links tour started from the PostPin Guides page on this very export).
+	const reviewPage = $derived(
+		page.route.id === "/(root)/projects/[project]/timelines/[timeline]/exports/[export]",
+	);
+	const wide = new MediaQuery("min-width: 1024px");
+	const firstReview = $derived.by(() => {
+		if (firstUpload || install || !reviewPage || !wide.current) return false;
+		if (requested === "first-review") return true;
+		return (
+			enabled &&
+			!guideState.requested &&
+			isOpen(progress, "first-review") &&
+			!!role &&
+			roleAllowsGuide("first-review")
+		);
+	});
+
 	const tour = $derived.by((): GuideId | null => {
-		if (firstUpload || install) return null;
+		if (firstUpload || install || firstReview) return null;
 		if (requested && TOURS[requested]) return requested;
 		return postpinGuidesDue ? "postpin-guides" : null;
 	});
 
 	$effect(() => {
-		guideState.running = firstUpload ? "first-upload" : (install ?? tour);
+		guideState.running = firstUpload
+			? "first-upload"
+			: (install ?? (firstReview ? "first-review" : tour));
 	});
 
 	afterNavigate(({ from, to }) => {
@@ -158,6 +181,16 @@
 	{#key install}
 		<InstallGuide progress={progress[install]} save={save(install)} />
 	{/key}
+{/if}
+
+{#if firstReview}
+	{@const saveReview = save("first-review")}
+	<Tour
+		tour={firstReviewTour}
+		onstep={(step) => saveReview(GuideStatus.STARTED, step)}
+		onfinish={() => saveReview(GuideStatus.COMPLETED)}
+		onskip={() => saveReview(GuideStatus.SKIPPED)}
+	/>
 {/if}
 
 {#if tour}

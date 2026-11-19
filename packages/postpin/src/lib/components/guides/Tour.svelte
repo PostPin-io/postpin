@@ -2,12 +2,15 @@
 	// A tour: one popover at a time on the element it explains, everything else dimmed and
 	// blocked, see docs/guides/README.md ("How a tour behaves"). It follows the page instead of
 	// driving it: steps wait for their element, and the user does the real thing (opens the
-	// dialog, saves the link) rather than a demo of it.
+	// dialog, saves the link) rather than a demo of it. Tutorials that happen on a page (not in a
+	// screen of their own, e.g. first-review) run on it too, in the tutorial style.
 	import CircleCheck from "@lucide/svelte/icons/circle-check";
 	import GraduationCap from "@lucide/svelte/icons/graduation-cap";
 	import MousePointerClick from "@lucide/svelte/icons/mouse-pointer-click";
 	import { GUIDES, GUIDE_STYLE } from "#lib/guides.ts";
 	import { showGuideFeedback } from "./guide-feedback.svelte.ts";
+	import { signaledAt } from "./guide-signals.svelte.ts";
+	import { STEP_ICON_COMPONENTS } from "./step-icons.ts";
 	import { untrack } from "svelte";
 	import {
 		fallbackStep,
@@ -29,8 +32,12 @@
 	}
 	let { tour, onstep, onfinish, onskip }: Props = $props();
 
-	const style = GUIDE_STYLE.tour;
-	const title = $derived(GUIDES.find((g) => g.id === tour.guideId)?.title ?? "");
+	const guide = $derived(GUIDES.find((g) => g.id === tour.guideId));
+	const type = $derived(guide?.type ?? "tour");
+	const style = $derived(GUIDE_STYLE[type]);
+	const title = $derived(guide?.title ?? "");
+	/** "tour" / "tutorial" in the card's own buttons */
+	const noun = $derived(style.label.toLowerCase());
 
 	let index = $state(untrack(() => nextShownStep(tour.steps, 0) ?? 0));
 	const step = $derived(tour.steps[index]!);
@@ -63,16 +70,19 @@
 
 	let scrolled = false;
 	let missingSince = 0;
+	/** A "signal" step counts only what the user did after it began */
+	let stepSince = performance.now();
 
 	function go(next: number) {
 		index = next;
+		stepSince = performance.now();
 		scrolled = false;
 		confirmSkip = false;
 		onstep?.(tour.steps[next]!.id);
 	}
 
 	function advance() {
-		if (step.feedback) showGuideFeedback(step.feedback, "tour");
+		if (step.feedback) showGuideFeedback(step.feedback, type);
 		const next = nextShownStep(tour.steps, index + 1);
 		if (next === null) onfinish();
 		else go(next);
@@ -94,6 +104,10 @@
 			const nextIndex = nextShownStep(tour.steps, index + 1);
 			const next = nextIndex === null ? undefined : tour.steps[nextIndex];
 			if (current.advance === "appears" && next && findAnchor(tour.guideId, next.id)) {
+				advance();
+				return;
+			}
+			if (current.advance === "signal" && signaledAt(tour.guideId, current.id) > stepSince) {
 				advance();
 				return;
 			}
@@ -157,6 +171,7 @@
 		// Escape neither closes a dialog nor the tour; shortcuts only where the user may act
 		const onKey = (event: KeyboardEvent) => {
 			if (!visible) return;
+			if (event.key !== "Escape" && step.keys?.includes(event.key)) return;
 			if (event.key === "Escape" || !allowed(event.target)) {
 				event.preventDefault();
 				event.stopImmediatePropagation();
@@ -217,18 +232,29 @@
 	);
 </script>
 
-<!-- The guide button, as the user will meet it next to a feature -->
+<!-- Icons in the text as the user meets them: the guide button next to a feature, the lucide
+icon of the button a step talks about -->
 {#snippet stepText(text: string)}
 	{#each splitStepText(text) as part, i (i)}
-		{#if i > 0}
+		{#if typeof part === "string"}{part}{:else if part.icon === "guide-button"}
 			<span
-				class="mx-0.5 inline-flex size-5 items-center justify-center rounded-full align-middle {style.dot} text-accent-content"
+				class="mx-0.5 inline-flex size-5 items-center justify-center rounded-full align-middle {GUIDE_STYLE
+					.tour.dot} text-accent-content"
 				role="img"
 				aria-label="guide button"
 			>
 				<GraduationCap class="size-3" />
 			</span>
-		{/if}{part}
+		{:else}
+			{@const Icon = STEP_ICON_COMPONENTS[part.icon]}
+			<span
+				class="mx-0.5 inline-flex size-5 items-center justify-center rounded-md bg-base-200 align-middle"
+				role="img"
+				aria-label={part.icon.replaceAll("-", " ")}
+			>
+				<Icon class="size-3.5" />
+			</span>
+		{/if}
 	{/each}
 {/snippet}
 
@@ -236,6 +262,7 @@
 	bind:this={root}
 	class="pointer-events-none fixed inset-0 z-[1000]"
 	class:hidden={!visible}
+	style:--guide-color={type === "tutorial" ? "var(--color-primary)" : "var(--color-accent)"}
 	{@attach owned}
 >
 	{#if hole}
@@ -299,7 +326,7 @@
 		</div>
 
 		{#if confirmSkip}
-			<h3 class="mt-2 font-bold">Skip this tour?</h3>
+			<h3 class="mt-2 font-bold">Skip this {noun}?</h3>
 			<p class="mt-1 text-sm text-base-content/80">
 				You can start it again under PostPin Guides in the account menu.
 			</p>
@@ -310,7 +337,7 @@
 					class="btn btn-sm {style.button}"
 					onclick={() => (confirmSkip = false)}
 				>
-					Continue tour
+					Continue {noun}
 				</button>
 			</div>
 		{:else if isDone}
@@ -327,7 +354,7 @@
 			<p class="mt-1 text-sm text-base-content/80">{@render stepText(step.text)}</p>
 			{#if kind === "act"}
 				<p
-					class="mt-3 flex items-center gap-2 rounded-lg bg-accent/15 px-2.5 py-1.5 text-sm font-semibold {style.text}"
+					class="mt-3 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-semibold {style.tile} {style.text}"
 				>
 					<MousePointerClick class="size-4 shrink-0" />
 					<span>
@@ -341,7 +368,7 @@
 			{/if}
 			<div class="mt-3 flex items-center gap-2">
 				<button type="button" class="btn btn-ghost btn-xs" onclick={() => (confirmSkip = true)}>
-					Skip tour
+					Skip {noun}
 				</button>
 				<span class="flex-1"></span>
 				{#if step.advance === "next"}
@@ -361,12 +388,12 @@
 		position: absolute;
 		inset: 0;
 		border-radius: inherit;
-		box-shadow: 0 0 0 0 var(--color-accent);
+		box-shadow: 0 0 0 0 var(--guide-color);
 		animation: tour-act-pulse 1.6s ease-out infinite;
 	}
 	@keyframes tour-act-pulse {
 		from {
-			box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-accent) 70%, transparent);
+			box-shadow: 0 0 0 0 color-mix(in oklch, var(--guide-color) 70%, transparent);
 		}
 		to {
 			box-shadow: 0 0 0 10px transparent;
@@ -375,7 +402,7 @@
 	@media (prefers-reduced-motion: reduce) {
 		.tour-act::after {
 			animation: none;
-			box-shadow: 0 0 0 4px color-mix(in oklch, var(--color-accent) 40%, transparent);
+			box-shadow: 0 0 0 4px color-mix(in oklch, var(--guide-color) 40%, transparent);
 		}
 	}
 </style>

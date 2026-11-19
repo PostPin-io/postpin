@@ -27,10 +27,10 @@ does the real thing (opens the dialog, saves the link); the tour follows.
 
 1. `open` (click): **Highlights:** the share button of the export in the breadcrumbs. **Title:**
    "Share this export". **Text:** "Send it to people without a PostPin account. Open the share
-   links."
+   links with [link]."
 2. `new` (appears: goes on once the form is open): **Highlights:** the + button of the share links.
    **Title:** "Share links". **Text:** "Anyone with a link can watch and leave markers. Create one
-   with +." Skipped by itself when the form opens right away (no links yet).
+   with [plus]." Skipped by itself when the form opens right away (no links yet).
 3. `panels` (next): **Highlights:** panel layout and note of the form. **Title:** "What guests
    see". **Text:** "Switch the timeline and marker panels on or off. The note shows in their
    player."
@@ -39,7 +39,7 @@ does the real thing (opens the dialog, saves the link); the tour follows.
 5. `save` (click): **Highlights:** the save button. **Title:** "Create the link". **Text:** "Save
    it."
 6. `copy` (click): **Highlights:** the copy button of the new link. **Title:** "Send it". **Text:**
-   "Copy the link and send it to your reviewer."
+   "Copy the link with [copy] and send it to your reviewer."
 7. `done` (done): **Completion card. Title:** "✓ Your share link is ready". **Text:** "Paste it
    anywhere. A QR code and e-mail are right next to it. Restart this tour under PostPin Guides."
    **Button:** "Done". The tour disappears; the sharing dialog stays open with the new link.

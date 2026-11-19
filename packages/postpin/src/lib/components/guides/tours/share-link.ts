@@ -1,5 +1,5 @@
 // docs/guides/tours/share-link.md: keep both in step
-import type { TourDefinition } from "../tour.ts";
+import { icon, type TourDefinition } from "../tour.ts";
 
 export const shareLinkTour: TourDefinition = {
 	guideId: "share-link",
@@ -7,13 +7,13 @@ export const shareLinkTour: TourDefinition = {
 		{
 			id: "open",
 			title: "Share this export",
-			text: "Send it to people without a PostPin account. Open the share links.",
+			text: `Send it to people without a PostPin account. Open the share links with ${icon("link")}.`,
 			advance: "click",
 		},
 		{
 			id: "new",
 			title: "Share links",
-			text: "Anyone with a link can watch and leave markers. Create one with +.",
+			text: `Anyone with a link can watch and leave markers. Create one with ${icon("plus")}.`,
 			advance: "appears",
 		},
 		{
@@ -37,7 +37,7 @@ export const shareLinkTour: TourDefinition = {
 		{
 			id: "copy",
 			title: "Send it",
-			text: "Copy the link and send it to your reviewer.",
+			text: `Copy the link with ${icon("copy")} and send it to your reviewer.`,
 			advance: "click",
 		},
 		{

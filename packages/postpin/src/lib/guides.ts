@@ -25,7 +25,8 @@ export interface Guide {
 	/**
 	 * How the PostPin Guides page starts it, always where its first step is: on a fixed page
 	 * (`href`), right there (`here`: its first step is in the header or on the guides page), or on
-	 * a page the server picks (`found`: `getGuideStart`, e.g. an export the user may share)
+	 * a page the server picks (`found`: `getGuideStart`, e.g. an export the user may share or
+	 * leave markers on)
 	 */
 	startFrom: { href: "/(root)/dashboard" } | "here" | "found";
 	/**
@@ -55,6 +56,18 @@ export const GUIDES = [
 		minRole: Role.MEMBER,
 		permission: ["project", "create"],
 		withoutOrganization: true,
+	},
+	{
+		id: "first-review",
+		type: "tutorial",
+		trigger: "automatic",
+		title: "Your first review",
+		description:
+			"Leave a marker on a frame, give it a category, jump between markers and reply to one.",
+		restartHint: "Needs an export you can open: it starts there.",
+		startFrom: "found",
+		minRole: Role.REVIEWER,
+		permission: ["marker", "create"],
 	},
 	{
 		id: "install-resolve",

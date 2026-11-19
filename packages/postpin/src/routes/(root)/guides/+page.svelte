@@ -6,6 +6,7 @@
 	import CircleCheck from "@lucide/svelte/icons/circle-check";
 	import GraduationCap from "@lucide/svelte/icons/graduation-cap";
 	import Compass from "@lucide/svelte/icons/compass";
+	import DiamondPlus from "@lucide/svelte/icons/diamond-plus";
 	import Unplug from "@lucide/svelte/icons/unplug";
 	import Info from "@lucide/svelte/icons/info";
 	import Link from "@lucide/svelte/icons/link";
@@ -53,6 +54,7 @@
 	/** What each guide is about, at a glance; the guide button keeps the graduation cap */
 	const GUIDE_ICONS: Record<GuideId, Component<{ class?: string }>> = {
 		"first-upload": Upload,
+		"first-review": DiamondPlus,
 		"install-resolve": Unplug,
 		"install-premiere": Unplug,
 		"install-desktop": Unplug,

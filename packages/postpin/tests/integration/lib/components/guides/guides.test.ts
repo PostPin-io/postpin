@@ -216,6 +216,21 @@ describe("guide start", () => {
 		expect(await getGuideStart("share-link")).toBeNull();
 	});
 
+	it("sends first-review to the latest export the member may leave markers on", async () => {
+		const org = await f.createOrg();
+		const owner = await f.createMember(org, Role.OWNER);
+		const timeline = await f.createTimeline(await f.createProject(org, { creator: owner.user }));
+		const exp = await f.createExport(timeline);
+		// a reviewer of the whole org reaches nothing without a grant; the owner reaches all
+		signIn(owner.user, org.id);
+		expect(await getGuideStart("first-review")).toBe(
+			`/projects/${timeline.projectId}/timelines/${timeline.id}/exports/${exp.id}`,
+		);
+		const reviewer = await f.createMember(org, Role.REVIEWER);
+		signIn(reviewer.user, org.id);
+		expect(await getGuideStart("first-review")).toBeNull();
+	});
+
 	it("only looks something up for guides that need it", async () => {
 		signIn(await f.createUser());
 		expect(await getGuideStart("navigation")).toBeNull();

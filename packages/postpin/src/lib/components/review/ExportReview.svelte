@@ -21,6 +21,7 @@
 	import Header from "#lib/components/layout/Header.svelte";
 	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
 	import MarkerPanel from "#lib/components/review/markers/MarkerPanel.svelte";
+	import { signalGuide } from "#lib/components/guides/guide-signals.svelte.ts";
 	import PointerOverlay from "#lib/components/review/PointerOverlay.svelte";
 	import {
 		PointerSession,
@@ -535,6 +536,16 @@
 
 	// Single global keyboard handler. Shortcuts work wherever focus is, except while typing or
 	// inside modals. Components with their own shortcuts (MarkerPanel) skip the same targets.
+	// first-review: played and paused again, by button or key, so there is a frame to mark
+	let playedSincePause = false;
+	$effect(() => {
+		if (!videoPaused) playedSincePause = true;
+		else if (playedSincePause) {
+			playedSincePause = false;
+			signalGuide("first-review", "play");
+		}
+	});
+
 	function onGlobalKeyDown(event: KeyboardEvent) {
 		// The presenter plays and seeks
 		if (following) return;

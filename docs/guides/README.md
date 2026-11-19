@@ -62,6 +62,10 @@ feature you can discover later, it's a **tour**.
    itself keeps working: any guide can still be started there by hand, and guides can be switched
    on again. The setting is stored per user (default: on).
 6. **One action at a time:** while a guide runs, only what the current step is about can be used.
+   A step highlights exactly the element of its action (the play button, the title field), not
+   the area around it: everything inside the highlighted element works, so a bigger element would
+   let the user do something else (e.g. open the category settings in the marker editor) and the
+   guide would wait for an action that never comes.
    A tour blocks clicks, keyboard focus and shortcuts everywhere except on the highlighted element
    and the tour card; Escape does nothing (it neither closes a dialog nor the tour). Scrolling stays
    possible.
@@ -92,7 +96,10 @@ feature you can discover later, it's a **tour**.
     right to use the feature is one of them and is named by `permission` (rule 17).
 13. **Guests:** guides for share-link visitors (no account) can't store progress on a user; they
     must work without it.
-14. **Copy:** UI text in guides is English and addresses the user directly.
+14. **Copy:** UI text in guides is English and addresses the user directly. A text that talks
+    about a button shows its lucide icon inline, the one on the button (`icon("diamond-plus")` in
+    a step text, written as [diamond-plus] in the guide files): "Add a marker with [diamond-plus]".
+    The icons a text may use are listed in `STEP_ICONS` (`tour.ts`).
 15. **As short as possible, as long as necessary.** Every tour text has to earn its place:
     - one idea per step; the title names it, the text says what to do or why it matters,
     - usually one or two short sentences (aim for 25 words at most),
@@ -202,6 +209,8 @@ All in `packages/postpin/src/`:
 | Install tutorials (one frame, per plugin) | `tutorials/InstallTutorial.svelte`, `Install<Plugin>Tutorial.svelte`   |
 | Tour engine (spotlight + popover)         | `lib/components/guides/Tour.svelte`, `tour.ts`                         |
 | Tours (step lists)                        | `lib/components/guides/tours/<id>.ts`                                  |
+| Tutorials on a page (tour engine)         | `lib/components/guides/tutorials/<id>.ts`, e.g. `first-review.ts`      |
+| What the page reports to a guide          | `signalGuide()` in `guide-signals.svelte.ts`                           |
 | Positive feedback                         | `showGuideFeedback()` in `guide-feedback.svelte.ts`                    |
 | PostPin Guides page                       | `routes/(root)/guides/+page.svelte` (filter: `filter.ts`)              |
 | Guide button at a feature                 | `lib/components/guides/GuideButton.svelte`: `<GuideButton guide="…">`  |
@@ -210,21 +219,28 @@ All in `packages/postpin/src/`:
 
 Adding a guide: write its file here, add it to `GUIDES`, implement it (a tour is a step list plus
 `data-guide` anchors). A tutorial: decide in `GuideHost` where and when it starts; existing accounts
-should not be surprised by it, so mark it completed for them in the migration. A tour: put its
-guide button next to the element of its first step.
+should not be surprised by it, so mark it completed for them in the migration. A tutorial that
+happens on a page of the app instead of in a screen of its own (first-review on the review page)
+is a step list for the tour engine; `Tour` shows it in the tutorial style. A tour: put its guide
+button next to the element of its first step.
 
 ### How a tour behaves
 
 - **Step kinds** (rule 16): Look, Try and Your turn follow from `advance` and `inert`
   (`stepKind`); the card renders the hint and the pulsing ring from that, nothing per tour.
 - **Steps advance** by `"next"` (Next button), `"click"` (the user clicks the highlighted element,
-  which does what it always does) or `"appears"` (as soon as the next step's element shows up).
+  which does what it always does), `"appears"` (as soon as the next step's element shows up) or
+  `"signal"` (once the page reports that the user did it: `signalGuide(guideId, stepId)` where it
+  happens, e.g. after a marker was created; only what happens after the step began counts). Use
+  `"signal"` for what a click alone doesn't show: typing, saving, a choice. It is a Your-turn step.
 - **Step options** (`TourStep` in `tour.ts`): `centered` (no element, a card in the middle with
   Next, e.g. a welcome), `nextLabel`, `skipIf` (left out as the tour gets to it, e.g. the way to a
   page the tour already is on), `optional` (left out when its element isn't there),
   `waitForElement` (after a navigation: waits instead of going back), `inert` (the element is only
-  explained, clicks on it are blocked too). `{guide-button}` in a step's text shows the guide
-  button icon. One element can serve several steps: `data-guide="tour/one tour/two"`.
+  explained, clicks on it are blocked too), `keys` (keys that work anywhere on this step, the page's
+  own shortcuts for what it asks, only those: space on the play step, M on the add-marker step).
+  `{guide-button}` in a step's text shows the guide
+  button icon, `icon(name)` a lucide icon (rule 14). One element can serve several steps: `data-guide="tour/one tour/two"`.
 - **Tour options** (`TourDefinition`): `spansPages` for a tour whose steps navigate (otherwise a
   tour started from a guide button pauses when the user leaves the page).
 - **Availability:** a tour that needs something to exist (e.g. an export to walk to) reports it in
@@ -246,6 +262,9 @@ guide button next to the element of its first step.
   first goes to the page of the first step (rule 11), then starts it.
 - **Skip:** the "Skip tour" button in the card switches the card to a confirmation ("Skip this
   tour? You can start it again under PostPin Guides in the account menu." · "Skip" / "Continue tour").
+  A tutorial on the tour engine says "tutorial" instead.
+- **Style:** the guide's type decides it (`GUIDE_STYLE`): tours in `accent`, tutorials on the
+  tour engine in `primary`, ring and "Your turn" line included.
 
 ## Keeping guides up to date
 

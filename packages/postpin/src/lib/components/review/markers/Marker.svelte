@@ -219,6 +219,7 @@
 				type="button"
 				class="btn btn-square btn-ghost btn-sm"
 				title="Press alt + click to jump to marker"
+				data-guide={active ? "first-review/jump" : undefined}
 				onclick={(e) => {
 					e.stopPropagation();
 					// Jumping to a marker selects it too, like alt + click on the card
@@ -234,6 +235,7 @@
 				title={expanded ? "Collapse" : "Expand"}
 				aria-label={expanded ? "Collapse marker" : "Expand marker"}
 				aria-expanded={expanded}
+				data-guide={active && !expanded ? "first-review/expand" : undefined}
 				onclick={(e) => {
 					e.stopPropagation();
 					onexpand?.(!expanded);
@@ -301,6 +303,7 @@
 						<button
 							type="button"
 							class="btn btn-ghost btn-xs"
+							data-guide={active ? "first-review/open-responses" : undefined}
 							onclick={(e) => {
 								e.stopPropagation();
 								onrespond?.();
