@@ -5,6 +5,7 @@
 	// dialog, saves the link) rather than a demo of it.
 	import CircleCheck from "@lucide/svelte/icons/circle-check";
 	import GraduationCap from "@lucide/svelte/icons/graduation-cap";
+	import MousePointerClick from "@lucide/svelte/icons/mouse-pointer-click";
 	import { GUIDES, GUIDE_STYLE } from "#lib/guides.ts";
 	import { showGuideFeedback } from "./guide-feedback.svelte.ts";
 	import { untrack } from "svelte";
@@ -14,6 +15,7 @@
 		nextShownStep,
 		placeCard,
 		splitStepText,
+		stepKind,
 		type TourDefinition,
 	} from "./tour.ts";
 	import { layerOf, moveInto } from "./top-layer.ts";
@@ -33,6 +35,8 @@
 	let index = $state(untrack(() => nextShownStep(tour.steps, 0) ?? 0));
 	const step = $derived(tour.steps[index]!);
 	const isDone = $derived(step.advance === "done");
+	// Next or your turn: the card and the ring say which (rule 16)
+	const kind = $derived(stepKind(step));
 	/** A card in the middle of the screen, nothing highlighted */
 	const isCentered = $derived(isDone || !!step.centered);
 	/**
@@ -238,6 +242,7 @@
 		<!-- The dimming, with a ring around the highlighted element -->
 		<div
 			class="absolute rounded-lg ring-2 transition-all duration-150 {style.ring}"
+			class:tour-act={kind === "act"}
 			style:top="{hole.top}px"
 			style:left="{hole.left}px"
 			style:width="{hole.width}px"
@@ -320,6 +325,20 @@
 		{:else}
 			<h3 class="mt-2 font-bold">{step.title}</h3>
 			<p class="mt-1 text-sm text-base-content/80">{@render stepText(step.text)}</p>
+			{#if kind === "act"}
+				<p
+					class="mt-3 flex items-center gap-2 rounded-lg bg-accent/15 px-2.5 py-1.5 text-sm font-semibold {style.text}"
+				>
+					<MousePointerClick class="size-4 shrink-0" />
+					<span>
+						Your turn: {step.advance === "click"
+							? "click the highlighted element"
+							: "use the highlighted element"}
+					</span>
+				</p>
+			{:else if kind === "try"}
+				<p class="mt-3 text-xs text-base-content/60">Try it, then click Next.</p>
+			{/if}
 			<div class="mt-3 flex items-center gap-2">
 				<button type="button" class="btn btn-ghost btn-xs" onclick={() => (confirmSkip = true)}>
 					Skip tour
@@ -329,10 +348,34 @@
 					<button type="button" class="btn btn-sm {style.button}" onclick={advance}>
 						{step.nextLabel ?? "Next"}
 					</button>
-				{:else if step.advance === "click"}
-					<span class="text-xs text-base-content/60">Click the highlighted element</span>
 				{/if}
 			</div>
 		{/if}
 	</div>
 </div>
+
+<style>
+	/* Your turn: the ring pulses outward, the dimming (its shadow) stays as it is */
+	.tour-act::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		box-shadow: 0 0 0 0 var(--color-accent);
+		animation: tour-act-pulse 1.6s ease-out infinite;
+	}
+	@keyframes tour-act-pulse {
+		from {
+			box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-accent) 70%, transparent);
+		}
+		to {
+			box-shadow: 0 0 0 10px transparent;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.tour-act::after {
+			animation: none;
+			box-shadow: 0 0 0 4px color-mix(in oklch, var(--color-accent) 40%, transparent);
+		}
+	}
+</style>

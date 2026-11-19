@@ -46,12 +46,12 @@ the explanations of tutorials, tours and the switch point at the real thing ther
 4. `tutorials` (next): **Highlights:** the tutorials column. **Title:** "Tutorials". **Text:**
    "They teach the basics step by step and start on their own when you need them."
 5. `tours` (next): **Highlights:** the tours column. **Title:** "Tours". **Text:** "They explain one
-   feature, right where it is. Start one with [guide button] next to the feature; it disappears
+   feature, right where it is. You start one with [guide button] next to the feature; it disappears
    once you're done."
 6. `start` (next): **Highlights:** the button of the first row in the tours column. **Title:**
-   "Start again". **Text:** "Start any guide again here."
+   "Start again". **Text:** "You can start any guide again from here."
 7. `filter` (next): **Highlights:** the text filter and the "Not completed" button. **Title:** "Find
-   a guide". **Text:** "Filter by topic, or show only what you haven't completed."
+   a guide". **Text:** "You can filter by topic, or show only what you haven't completed."
 8. `switch` (next): **Highlights:** the "Guides on/off" switch. **Title:** "Switch guides off".
    **Text:** "Nothing starts on its own and the guide buttons disappear. You can still start guides
    here."

@@ -41,7 +41,7 @@ export const postpinGuidesTour: TourDefinition = {
 		{
 			id: "tours",
 			title: "Tours",
-			text: `They explain one feature, right where it is. Start one with ${GUIDE_BUTTON_TOKEN} next to the feature; it disappears once you're done.`,
+			text: `They explain one feature, right where it is. You start one with ${GUIDE_BUTTON_TOKEN} next to the feature; it disappears once you're done.`,
 			advance: "next",
 			waitForElement: true,
 			inert: true,
@@ -49,7 +49,7 @@ export const postpinGuidesTour: TourDefinition = {
 		{
 			id: "start",
 			title: "Start again",
-			text: "Start any guide again here.",
+			text: "You can start any guide again from here.",
 			advance: "next",
 			optional: true,
 			inert: true,
@@ -57,7 +57,7 @@ export const postpinGuidesTour: TourDefinition = {
 		{
 			id: "filter",
 			title: "Find a guide",
-			text: "Filter by topic, or show only what you haven't completed.",
+			text: "You can filter by topic, or show only what you haven't completed.",
 			advance: "next",
 			waitForElement: true,
 			inert: true,

@@ -32,6 +32,20 @@ export interface TourStep {
 	inert?: boolean;
 }
 
+/**
+ * What the user does on a step, shown the same way in every tour (docs/guides/README.md, rule 16):
+ * look (only Next), try (the element works, Next goes on) or act (the element is the way on, no
+ * Next). The completion card is none of them.
+ */
+export type StepKind = "look" | "try" | "act" | "done";
+
+export function stepKind(step: Pick<TourStep, "advance" | "inert" | "centered">): StepKind {
+	if (step.advance === "done") return "done";
+	if (step.advance === "click" || step.advance === "appears") return "act";
+	// a centered card has no element to try
+	return step.inert || step.centered ? "look" : "try";
+}
+
 /** Stands for the guide button in a step's text; shown as the real icon in the tour style */
 export const GUIDE_BUTTON_TOKEN = "{guide-button}";
 

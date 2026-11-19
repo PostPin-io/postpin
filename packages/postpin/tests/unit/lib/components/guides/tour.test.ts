@@ -5,6 +5,7 @@ import {
 	nextShownStep,
 	placeCard,
 	splitStepText,
+	stepKind,
 	type TourStep,
 } from "#lib/components/guides/tour.ts";
 import { shareLinkTour } from "#lib/components/guides/tours/share-link.ts";
@@ -73,6 +74,27 @@ describe.each(TOURS.map((t) => [t.guideId, t] as const))("%s tour", (_, tour) =>
 	it("never goes on by itself into the completion card", () => {
 		// "appears" waits for the next step's element; the completion card has none
 		expect(tour.steps.at(-2)!.advance).not.toBe("appears");
+	});
+
+	it("never asks for a click on a step that is only looked at (rule 16)", () => {
+		// a Look text describes; asking to do something belongs on a Your-turn step
+		const asks = /^(click|open|create|add|go|switch|filter|find|start|drop|save|copy)\b/i;
+		for (const step of tour.steps.filter((s) => stepKind(s) === "look")) {
+			for (const sentence of step.text.split(/(?<=\.)\s+/)) {
+				expect(sentence, step.id).not.toMatch(asks);
+			}
+		}
+	});
+});
+
+describe("stepKind", () => {
+	it("tells looking, trying and acting apart", () => {
+		expect(stepKind({ advance: "next", inert: true })).toBe("look");
+		expect(stepKind({ advance: "next", centered: true })).toBe("look");
+		expect(stepKind({ advance: "next" })).toBe("try");
+		expect(stepKind({ advance: "click" })).toBe("act");
+		expect(stepKind({ advance: "appears" })).toBe("act");
+		expect(stepKind({ advance: "done" })).toBe("done");
 	});
 });
 

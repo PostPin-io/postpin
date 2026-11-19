@@ -90,6 +90,21 @@ feature you can discover later, it's a **tour**.
     - usually one or two short sentences (aim for 25 words at most),
     - don't describe what the highlighted element already shows, and don't repeat earlier steps,
     - longer only where the user would otherwise be stuck (e.g. a step they have to act on).
+16. **Next or your turn: always clear.** In a tour the user must see at a glance whether to click
+    "Next" or to use the highlighted element. Every step is one of three kinds, and the card shows
+    which, the same way in every tour (`stepKind` in `tour.ts`):
+    - **Look** (`next` + `inert`): the element is only explained and can't be used. The card has
+      "Next". The text describes; it never asks the user to do something ("This is where you
+      create a project", not "Create a project here").
+    - **Try** (`next`, not inert): the element can be used, but doesn't have to be. The card has
+      "Next" and the line "Try it, then click Next." The text may invite ("Switch them on or
+      off").
+    - **Your turn** (`click` / `appears`): the user has to use the element; there is no "Next". The
+      card has a "Your turn" line with a pointer icon ("Click the highlighted element" /
+      "Use the highlighted element"), and the ring around the element pulses. The text says
+      exactly what to do, as an instruction ("Open the share links").
+
+    Never mixed: a Look step doesn't ask for a click, a Your-turn step doesn't offer "Next".
 
 ## Guide files
 
@@ -149,6 +164,8 @@ guide button next to the element of its first step.
 
 ### How a tour behaves
 
+- **Step kinds** (rule 16): Look, Try and Your turn follow from `advance` and `inert`
+  (`stepKind`); the card renders the hint and the pulsing ring from that, nothing per tour.
 - **Steps advance** by `"next"` (Next button), `"click"` (the user clicks the highlighted element,
   which does what it always does) or `"appears"` (as soon as the next step's element shows up).
 - **Step options** (`TourStep` in `tour.ts`): `centered` (no element, a card in the middle with

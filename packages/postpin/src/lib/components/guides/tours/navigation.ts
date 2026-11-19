@@ -20,7 +20,7 @@ export const navigationTour: TourDefinition = {
 		{
 			id: "home",
 			title: "Your home",
-			text: "It shows the organization you're in. Switch organizations in your account menu.",
+			text: "It shows the organization you're in. You switch organizations in your account menu.",
 			advance: "next",
 			inert: true,
 		},
@@ -35,7 +35,7 @@ export const navigationTour: TourDefinition = {
 		{
 			id: "new-project",
 			title: "New project",
-			text: "Create a project here.",
+			text: "This is where you create a project.",
 			advance: "next",
 			optional: true,
 			inert: true,
@@ -43,7 +43,7 @@ export const navigationTour: TourDefinition = {
 		{
 			id: "search",
 			title: "Search",
-			text: "Find a project by name.",
+			text: "Finds a project by name.",
 			advance: "next",
 			inert: true,
 		},
@@ -80,7 +80,7 @@ export const navigationTour: TourDefinition = {
 		{
 			id: "new-timeline",
 			title: "New timeline",
-			text: "Add a timeline here.",
+			text: "This is where you add a timeline.",
 			advance: "next",
 			optional: true,
 			inert: true,
@@ -94,7 +94,7 @@ export const navigationTour: TourDefinition = {
 		{
 			id: "exports",
 			title: "Exports",
-			text: "Every render you upload is an export. Drop a video on the page to add the next version.",
+			text: "Every render you upload is an export. Dropping a video on the page adds the next version.",
 			advance: "next",
 			waitForElement: true,
 			inert: true,
@@ -108,7 +108,7 @@ export const navigationTour: TourDefinition = {
 		{
 			id: "breadcrumbs",
 			title: "Where you are",
-			text: "Click a name to go back up.",
+			text: "Each name takes you back up to that level.",
 			advance: "next",
 			waitForElement: true,
 			inert: true,
@@ -117,7 +117,7 @@ export const navigationTour: TourDefinition = {
 		{
 			id: "back",
 			title: "Where you are",
-			text: "Go one level up here.",
+			text: "This takes you one level up.",
 			advance: "next",
 			waitForElement: true,
 			inert: true,
@@ -126,7 +126,7 @@ export const navigationTour: TourDefinition = {
 		{
 			id: "switcher",
 			title: "Jump sideways",
-			text: "Switch to another timeline or export without going back.",
+			text: "This switches to another timeline or export without going back.",
 			advance: "next",
 			inert: true,
 		},

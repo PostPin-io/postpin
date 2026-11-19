@@ -34,14 +34,12 @@ next page (`waitForElement`). Everything only explained is `inert`.
    (logo and organization name). **Title:** "Your dashboard". **Text:** "Click here to go home,
    from anywhere."
 2. `home` (next; waits for the dashboard): **Highlights:** the dashboard button. **Title:** "Your
-   home". **Text:** "It shows the organization you're in. Switch organizations in your account
-   menu."
+   home". **Text:** "It shows the organization you're in. You switch organizations in your account menu."
 3. `projects` (next): **Highlights:** the project list. **Title:** "Projects". **Text:** "One
    project per production: a film, a series, a commercial."
 4. `new-project` (next; optional: only for those who may create projects): **Highlights:** the +
-   button next to "Your Projects". **Title:** "New project". **Text:** "Create a project here."
-5. `search` (next): **Highlights:** the search field. **Title:** "Search". **Text:** "Find a project
-   by name."
+   button next to "Your Projects". **Title:** "New project". **Text:** "This is where you create a project."
+5. `search` (next): **Highlights:** the search field. **Title:** "Search". **Text:** "Finds a project by name."
 6. `sort` (next): **Highlights:** the sort options. **Title:** "Sort". **Text:** "By name, creation
    or last change."
 7. `views` (next; optional: not on phones, where it's always cards): **Highlights:** the
@@ -53,17 +51,16 @@ next page (`waitForElement`). Everything only explained is `inert`.
    "Timelines". **Text:** "One timeline per sequence you edit. Search, sort and views work as on
    the dashboard."
 10. `new-timeline` (next; optional: only for those who may create timelines): **Highlights:** the
-    - button next to "Your Timelines". **Title:** "New timeline". **Text:** "Add a timeline here."
+    - button next to "Your Timelines". **Title:** "New timeline". **Text:** "This is where you add a timeline."
 11. `open-timeline` (click): **Highlights:** the first timeline. **Title:** "Open a timeline".
     **Text:** "Click it to see its exports."
 12. `exports` (next; waits for the export list): **Highlights:** the export list. **Title:**
-    "Exports". **Text:** "Every render you upload is an export. Drop a video on the page to add the
-    next version."
+    "Exports". **Text:** "Every render you upload is an export. Dropping a video on the page adds the next version."
 13. `open-export` (click): **Highlights:** the first export. **Title:** "Open an export".
     **Text:** "Click it to review it."
 14. `breadcrumbs` (next; waits for the review page): **Highlights:** the breadcrumbs in the header.
-    **Title:** "Where you are". **Text:** "Click a name to go back up." On phones:
-    **Highlights:** the back button instead; **Text:** "Go one level up here."
+    **Title:** "Where you are". **Text:** "Each name takes you back up to that level." On phones:
+    **Highlights:** the back button instead; **Text:** "This takes you one level up."
 15. `switcher` (next): **Highlights:** the arrow next to the timeline in the breadcrumbs.
     **Title:** "Jump sideways". **Text:** "Switch to another timeline without going back."
 16. `done` (done): **Completion card. Title:** "✓ You know your way around". **Text:** "Next: share
