@@ -23,3 +23,5 @@ tools/ffmpeg/out/
 
 # local planning notes for tutorials and tours
 Plan_Tutorials_and_Tours/
+# Obsidian vault settings (docs/guides opened as a vault)
+.obsidian/
