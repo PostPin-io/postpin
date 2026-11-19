@@ -4,6 +4,7 @@
 	import { authClient } from "#lib/auth-client.ts";
 	import { afterNavigate, goto, refreshAll } from "$app/navigation";
 
+	import GraduationCap from "@lucide/svelte/icons/graduation-cap";
 	import Menu from "@lucide/svelte/icons/menu";
 	import Monitor from "@lucide/svelte/icons/monitor";
 	import Moon from "@lucide/svelte/icons/moon";
@@ -82,6 +83,12 @@
 			>
 		</li>
 	{/if}
+	<li>
+		<a href={resolve("/(root)/guides")}>
+			<GraduationCap class="size-4" />
+			PostPin Guides
+		</a>
+	</li>
 	{#if mobile && page.data.isSystemAdmin}
 		<li><a href={resolve("/(root)/admin")}>System</a></li>
 	{/if}
