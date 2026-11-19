@@ -79,10 +79,6 @@ export const getExport = query(
 			canChangeCuts: mayUpload,
 			/** May upload a new export into this export's timeline (a video dropped on the page) */
 			canUpload: mayUpload,
-			/** May share the export: the tutorial explains sharing only to those who can */
-			canShare:
-				reader.kind === "member" &&
-				can(reader.member.role, "shareLink", "create", { hasGrant: true }),
 			/** May import markers from timeline data, see importCutList */
 			canImportMarkers:
 				reader.kind === "member" && can(reader.member.role, "marker", "create", { hasGrant: true }),

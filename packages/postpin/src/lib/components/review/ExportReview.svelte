@@ -64,10 +64,8 @@
 
 	import { setShareContext, type ShareContext } from "./share-context.ts";
 	import ScreeningButton from "#lib/components/screening/ScreeningButton.svelte";
-	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
 	import UploadModal from "#lib/components/exports/UploadModal.svelte";
 	import UploadDropOverlay from "#lib/components/exports/UploadDropOverlay.svelte";
-	import ReviewTutorial from "#lib/components/tutorial/ReviewTutorial.svelte";
 	import ScreeningRemote from "#lib/components/screening/ScreeningRemote.svelte";
 	import EndScreeningDialog from "#lib/components/screening/EndScreeningDialog.svelte";
 	import ScreeningFollowView from "#lib/components/screening/ScreeningFollowView.svelte";
@@ -241,7 +239,6 @@
 		const marker = pointerMarkers.find((m) => m.id === id);
 		if (!marker?.canUpdate || !videoPaused || viewMode !== "timeline") pointerSession.stopDrawing();
 	});
-	let sharingDialog = $state<SharingSetupModal>();
 	let uploadDialog = $state<UploadModal>();
 	let originalUrl = $state<string | undefined>(undefined);
 	let thumbnailUrl = $state<string | undefined>(undefined);
@@ -647,22 +644,6 @@
 
 {#if !share}<EndScreeningDialog />{/if}
 {#if !share}
-	<SharingSetupModal bind:this={sharingDialog} />
-	{#if projectId && timelineId && exp?.canShare}
-		<!-- on its own boundary: the tutorial must never hold up or break the review -->
-		<svelte:boundary>
-			<ReviewTutorial
-				{projectId}
-				{timelineId}
-				{exportId}
-				exportName={exp.name}
-				ready={hlsReady && !!snapshot}
-				onshare={(target) => sharingDialog?.open(target)}
-			/>
-			{#snippet pending()}{/snippet}
-			{#snippet failed()}{/snippet}
-		</svelte:boundary>
-	{/if}
 	{#if projectId && timelineId && exp?.canUpload}
 		<!-- A new version of the cut, dropped right where it is reviewed: into the same timeline -->
 		<UploadModal bind:this={uploadDialog} {projectId} {timelineId} />

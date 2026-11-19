@@ -10,7 +10,6 @@
 	import DeleteProjectModal from "#lib/components/projects/DeleteProjectModal.svelte";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
 	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
-	import ContinueTutorialCard from "#lib/components/tutorial/ContinueTutorialCard.svelte";
 	import UploadDropOverlay from "#lib/components/exports/UploadDropOverlay.svelte";
 	import { heldUpload } from "#lib/upload/held-upload.svelte.ts";
 
@@ -226,7 +225,6 @@
 			</div>
 		</div>
 	{:else}
-		<ContinueTutorialCard />
 		<header
 			class="flex flex-col gap-3 border-b border-base-300 pb-4 md:flex-row md:items-center md:justify-between"
 		>

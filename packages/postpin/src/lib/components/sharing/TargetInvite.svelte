@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { reviewTour } from "#lib/components/tutorial/review-tour.svelte.ts";
-	import TutorialHint from "#lib/components/tutorial/TutorialHint.svelte";
 	import { page } from "$app/state";
 	import { authClient } from "#lib/auth-client.ts";
 	import {
@@ -133,12 +131,6 @@
 	{/if}
 
 	<h4 class="mt-4 font-semibold">Invite links</h4>
-	{#if reviewTour.hint === "invite-link"}
-		<TutorialHint>
-			One link per role: reviewers watch and comment, members can also upload. Turn a link on, copy
-			it and send it to your team.
-		</TutorialHint>
-	{/if}
 	<p class="text-sm text-base-content/70">
 		Anyone with the link joins with that role and gets access to this {target.type}.
 	</p>

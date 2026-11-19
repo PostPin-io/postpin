@@ -7,8 +7,8 @@
 	import { DPA_URL, PRIVACY_URL, TERMS_URL } from "$app/env/public";
 
 	// Someone who signs up to get somewhere (an invitation, a share link, a plugin login) goes
-	// there. Everyone else is new to PostPin and starts with the tutorial.
-	const redirectTo = safeRedirect(page.url.searchParams.get("redirect"), "/welcome");
+	// there. Everyone else starts on the dashboard, which sets up the first organization.
+	const redirectTo = safeRedirect(page.url.searchParams.get("redirect"), "/dashboard");
 	// keeps ?redirect= (and the invited email) when switching between login and signup
 	const authQuery = page.url.search;
 
