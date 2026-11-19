@@ -7,6 +7,8 @@ model User {
   emailVerified   Boolean  @default(false)
   image           String?
   storageQuota    BigInt? // null = STORAGE_DEFAULT_USER_QUOTA
+  /// PostPin Guides: off = nothing starts on its own and no guide buttons (the guides page still works)
+  guidesEnabled   Boolean  @default(true)
   uploadedExports Export[] @relation("ExportUploader")
 
   sessions        Session[]
