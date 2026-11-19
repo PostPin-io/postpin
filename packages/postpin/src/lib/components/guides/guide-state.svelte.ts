@@ -17,6 +17,14 @@ export const guideState = $state<{
 	running: GuideId | null;
 }>({ ended: {}, requested: null, enabled: null, running: null });
 
+/** Another user signed in (in the same tab): nothing of the last one may carry over */
+export function resetGuideState() {
+	guideState.ended = {};
+	guideState.requested = null;
+	guideState.enabled = null;
+	guideState.running = null;
+}
+
 type Progress = Partial<Record<GuideId, GuideProgressEntry>>;
 
 export const statusOf = (progress: Progress, id: GuideId) =>

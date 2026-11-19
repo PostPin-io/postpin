@@ -58,10 +58,22 @@
 			((enabled && firstUploadDue) || guideState.requested === "first-upload"),
 	);
 
-	// The tour about guides starts on its own, but only once nothing else comes first: with a
-	// known membership (not while it loads) and no tutorial due
+	// The tour about guides comes after the tutorial: only once first-upload is completed or
+	// skipped, or for someone who can't do it (in an organization without the right to create
+	// projects). Not while memberships load: that would look like "nothing due".
+	const firstUploadSettled = $derived.by(() => {
+		const status = statusOf(progress, "first-upload");
+		return status === GuideStatus.COMPLETED || status === GuideStatus.SKIPPED;
+	});
+	const cannotUpload = $derived(
+		!!$organizations.data?.length && role !== null && !roleAllows(role, "project", "create"),
+	);
 	const postpinGuidesDue = $derived(
-		enabled && isOpen(progress, "postpin-guides") && role !== null && !firstUploadDue,
+		enabled &&
+			isOpen(progress, "postpin-guides") &&
+			role !== null &&
+			!firstUploadDue &&
+			(firstUploadSettled || cannotUpload),
 	);
 
 	const tour = $derived.by((): GuideId | null => {
