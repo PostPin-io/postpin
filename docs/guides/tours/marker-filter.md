@@ -4,7 +4,8 @@ type: tour
 title: Filtering markers
 status: planned
 audience: editor
-starts: from the marker panel or PostPin Guides
+trigger: manual
+starts: guide button next to the filter of the marker panel
 prerequisites: [first-review]
 code:
   - packages/postpin/src/lib/components/review/markers/MarkerPanel.svelte

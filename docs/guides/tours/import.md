@@ -4,7 +4,8 @@ type: tour
 title: Importing markers
 status: planned
 audience: editor
-starts: from the import menu or PostPin Guides
+trigger: manual
+starts: guide button next to the import menu on the review page
 prerequisites: [first-review]
 code:
   - packages/postpin/src/lib/components/review/MarkerImport.svelte

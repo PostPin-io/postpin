@@ -4,7 +4,8 @@ type: tour
 title: Organization settings
 status: planned
 audience: admin
-starts: from organization settings or PostPin Guides
+trigger: manual
+starts: guide button in the header of the organization settings
 prerequisites: []
 code:
   - packages/postpin/src/routes/(root)/organizations/[organization]/settings/+page.svelte

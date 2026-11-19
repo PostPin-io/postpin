@@ -4,7 +4,8 @@ type: tour
 title: Screenings
 status: planned
 audience: editor
-starts: from the screening button or PostPin Guides
+trigger: manual
+starts: guide button next to the screening button
 prerequisites: [first-review]
 code:
   - packages/postpin/src/lib/components/screening/

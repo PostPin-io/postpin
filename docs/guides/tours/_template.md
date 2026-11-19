@@ -4,6 +4,7 @@ type: tour
 title: Title shown in PostPin Guides
 status: planned
 audience: editor
+trigger: manual
 starts: when / from where it starts
 prerequisites: []
 code: []

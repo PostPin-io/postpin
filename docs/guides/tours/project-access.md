@@ -4,7 +4,8 @@ type: tour
 title: Project access
 status: planned
 audience: admin
-starts: from the sharing dialog or PostPin Guides
+trigger: manual
+starts: guide button in the access section of the sharing dialog
 prerequisites: []
 code:
   - packages/postpin/src/lib/components/sharing/AccessGrants.svelte

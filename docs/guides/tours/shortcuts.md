@@ -4,7 +4,8 @@ type: tour
 title: Keyboard shortcuts
 status: planned
 audience: editor
-starts: from the player or PostPin Guides
+trigger: manual
+starts: guide button in the player's menu bar
 prerequisites: [first-review]
 code:
   - packages/postpin/src/lib/components/review/review-shortcuts.ts

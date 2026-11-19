@@ -4,7 +4,8 @@ type: tour
 title: Inviting your team
 status: planned
 audience: admin
-starts: from members settings or PostPin Guides
+trigger: manual
+starts: guide button next to the invite button of the members settings
 prerequisites: []
 code:
   - packages/postpin/src/routes/(root)/organizations/[organization]/settings/members/+page.svelte

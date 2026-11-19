@@ -4,6 +4,7 @@ type: tutorial
 title: Your first upload
 status: implemented
 audience: editor
+trigger: automatic
 starts: automatically on the dashboard for a fresh account (no organization yet) or someone who may create projects in the active organization; or from the PostPin Guides page
 prerequisites: [no organization yet, or may create projects in the active organization]
 code:
@@ -46,3 +47,5 @@ again under PostPin Guides in the account menu.").
 - Not yet: choosing the plugin path at `welcome` ([plugin-workflow](plugin-workflow.md)), offering an
   existing project to people who joined an organization with projects in it.
 - An interrupted or cancelled upload goes back to `upload-export` ("Upload again").
+- Doesn't start while guides are switched off on the PostPin Guides page; can still be started
+  there by hand. The [postpin-guides](../tours/postpin-guides.md) tour follows it.

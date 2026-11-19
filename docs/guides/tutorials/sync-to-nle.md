@@ -4,7 +4,8 @@ type: tutorial
 title: Feedback back in the NLE
 status: planned
 audience: editor
-starts: after first-review, when a plugin is connected
+trigger: automatic
+starts: automatically after first-review, when a plugin is connected
 prerequisites: [plugin-workflow, first-review]
 code:
   - packages/plugin-core/src/sync.ts

@@ -21,10 +21,13 @@ docs/guides/
 | Purpose      | Learn the essential mechanics of PostPin, step by step     | Learn a single feature                                    |
 | Interaction  | Interactive: the user performs each step, the guide reacts | Popovers next to the relevant UI elements                 |
 | Presentation | Usually takes up the whole screen                          | Everything except the relevant area is dimmed (spotlight) |
+| Start        | Automatically, as soon as its prerequisites are met        | Manually, with the guide button at its feature (¹)        |
 | Icon         | `graduation-cap` (lucide)                                  | `graduation-cap` (lucide)                                 |
 | Style        | One shared style for all tutorials: `primary`              | One shared style for all tours: `accent`                  |
 | Input        | Only the tutorial screen (and dialogs it opens)            | Only the highlighted element and the tour card            |
 | Ending       | Completion screen, then the tutorial closes                | Completion card, then the tour disappears entirely        |
+
+(¹) Exception: the [postpin-guides](tours/postpin-guides.md) tour starts automatically, see rule 4.
 
 Rule of thumb: if you can't work with PostPin meaningfully without it, it's a **tutorial**. If it's a
 feature you can discover later, it's a **tour**.
@@ -34,29 +37,52 @@ feature you can discover later, it's a **tour**.
 1. **Icon:** every guide uses lucide `graduation-cap`, nothing else.
 2. **Style:** all tutorials look alike (daisyUI `primary`), all tours look alike (daisyUI `accent`).
    The color tells tutorial from tour, not one guide from another. Never `secondary`.
-3. **One action at a time:** while a guide runs, only what the current step is about can be used.
+3. **Tutorials start automatically:** they are essential, so each starts on its own as soon as its
+   prerequisites are met (e.g. first-upload on the dashboard of a fresh account). Only one guide
+   runs at a time; tutorials go first.
+4. **Tours start manually,** with a **guide button** at the feature they explain: a small
+   `graduation-cap` button in the tour style (`accent`), right next to the element the tour's first
+   step highlights (e.g. next to the share button of an export). It shows while the tour is not
+   started, or started but not finished; it disappears once the tour is completed or skipped (from
+   then on it starts again only from the PostPin Guides page). Its tooltip names the tour
+   ("Tour: Share links"). It is only there for users who may use the feature (no button for a
+   reviewer at a feature only members have).
+   **Exception:** the [postpin-guides](tours/postpin-guides.md) tour explains the guide system
+   itself (guide buttons, the PostPin Guides page, switching guides off), so it starts
+   automatically: once per user, as soon as no tutorial is running (for a new account right after
+   first-upload, for an existing account on its next visit).
+5. **Guides can be switched off** on the PostPin Guides page, for the user, all at once: then no
+   tutorial and no tour starts on its own and no guide button is shown. A guide that is running
+   when they are switched off disappears at once and stays "in progress". The PostPin Guides page
+   itself keeps working: any guide can still be started there by hand, and guides can be switched
+   on again. The setting is stored per user (default: on).
+6. **One action at a time:** while a guide runs, only what the current step is about can be used.
    A tour blocks clicks, keyboard focus and shortcuts everywhere except on the highlighted element
    and the tour card; Escape does nothing (it neither closes a dialog nor the tour). Scrolling stays
    possible.
-4. **Skipping is explicit:** a guide ends only by finishing it or by its "Skip" button, which asks
-   once for confirmation ("Skip this tour? You can start it again under PostPin Guides in the account menu.").
-   Clicking outside, Escape or closing a dialog never skips. Leaving the page pauses it; it is
-   still "in progress" and starts again on its own next time.
-5. **Clean ending:** every guide ends with a completion step: a confirmation of what the user can
+7. **Skipping is explicit:** a guide ends only by finishing it or by its "Skip" button, which asks
+   once for confirmation ("Skip this tour? You can start it again under PostPin Guides in the
+   account menu."). Clicking outside, Escape or closing a dialog never skips. Leaving the page
+   pauses it: it stays "in progress"; a tutorial (and the postpin-guides tour) goes on by itself
+   next time, any other tour from its guide button.
+8. **Clean ending:** every guide ends with a completion step: a confirmation of what the user can
    do now, a pointer to PostPin Guides, and a single "Done" button. On "Done" the guide disappears
    at once (overlay, dimming, highlight; nothing may stay behind) and is stored as completed. What
    the user made along the way stays, e.g. the share link and the open dialog it is in.
-6. **Success feedback:** after a meaningful step (sign-up done, upload done, sync done, link copied)
+9. **Success feedback:** after a meaningful step (sign-up done, upload done, sync done, link copied)
    the user gets a short positive confirmation. Each guide lists its feedback moments.
-7. **Progress per user:** completed (and skipped) guides are stored per user. A completed guide never
-   starts automatically again.
-8. **Restart:** every guide can be started (again) on the **PostPin Guides** page (`/guides`, in the
-   account menu): two columns, tutorials and tours, with their status and one text filter for both.
-9. **Prerequisites:** a guide only starts when its prerequisites are met (e.g. the sync tutorial needs
-   a connected plugin). Prerequisites are listed in the guide's frontmatter.
-10. **Guests:** guides for share-link visitors (no account) can't store progress on a user; they
+10. **Progress per user:** started, completed and skipped guides are stored per user. A completed
+    or skipped guide never starts on its own again and has no guide button any more.
+11. **PostPin Guides page** (`/guides`, in the account menu): the on/off switch for all guides, and
+    two columns, tutorials and tours, one compact row per guide (title, status, button; the
+    description behind an info icon). One text filter for both columns, and a "Not completed"
+    toggle that hides completed guides. Every guide can be started (again) from here, also while
+    guides are switched off. The `description` in `GUIDES` is that info text.
+12. **Prerequisites:** a guide only starts when its prerequisites are met (e.g. the sync tutorial
+    needs a connected plugin). Prerequisites are listed in the guide's frontmatter.
+13. **Guests:** guides for share-link visitors (no account) can't store progress on a user; they
     must work without it.
-11. **Copy:** UI text in guides is English, short, and addresses the user directly.
+14. **Copy:** UI text in guides is English, short, and addresses the user directly.
 
 ## Guide files
 
@@ -71,7 +97,8 @@ type: tutorial # tutorial | tour
 title: Your first upload # as shown on the PostPin Guides page
 status: planned # planned | in-progress | implemented
 audience: editor # editor | reviewer | admin | guest
-starts: automatically after sign-up # when / from where the guide starts
+trigger: automatic # automatic (tutorials, the postpin-guides tour) | manual (all other tours)
+starts: on the dashboard after sign-up # automatic: when and where; manual: where the guide button sits
 prerequisites: [] # guide ids or conditions
 code: [] # files that implement the guide or the UI it explains
 ```
@@ -93,21 +120,25 @@ code can be matched by searching for the id.
 
 All in `packages/postpin/src/`:
 
-| What                                      | Where                                                                 |
-| ----------------------------------------- | --------------------------------------------------------------------- |
-| Registry: ids, titles, type styles        | `lib/guides.ts` (`GUIDES`, `GUIDE_STYLE`)                             |
-| Progress per user (`GuideProgress` table) | `lib/components/guides/guides.remote.ts`                              |
-| Which guide runs where                    | `lib/components/guides/GuideHost.svelte` (in `routes/+layout.svelte`) |
-| Tutorial frame (full screen)              | `lib/components/guides/TutorialShell.svelte`                          |
-| Tutorials                                 | `lib/components/guides/tutorials/<Name>Tutorial.svelte`               |
-| Tour engine (spotlight + popover)         | `lib/components/guides/Tour.svelte`, `tour.ts`                        |
-| Tours (step lists)                        | `lib/components/guides/tours/<id>.ts`                                 |
-| Positive feedback                         | `showGuideFeedback()` in `guide-feedback.svelte.ts`                   |
-| PostPin Guides page                       | `routes/(root)/guides/+page.svelte` (filter: `filter.ts`)             |
+| What                                      | Where                                                                  |
+| ----------------------------------------- | ---------------------------------------------------------------------- |
+| Registry: ids, titles, type styles        | `lib/guides.ts` (`GUIDES`, `GUIDE_STYLE`)                              |
+| Progress per user (`GuideProgress` table) | `lib/components/guides/guides.remote.ts`                               |
+| Which guide runs where                    | `lib/components/guides/GuideHost.svelte` (in `routes/+layout.svelte`)  |
+| Tutorial frame (full screen)              | `lib/components/guides/TutorialShell.svelte`                           |
+| Tutorials                                 | `lib/components/guides/tutorials/<Name>Tutorial.svelte`                |
+| Tour engine (spotlight + popover)         | `lib/components/guides/Tour.svelte`, `tour.ts`                         |
+| Tours (step lists)                        | `lib/components/guides/tours/<id>.ts`                                  |
+| Positive feedback                         | `showGuideFeedback()` in `guide-feedback.svelte.ts`                    |
+| PostPin Guides page                       | `routes/(root)/guides/+page.svelte` (filter: `filter.ts`)              |
+| Guide button at a feature                 | `lib/components/guides/GuideButton.svelte`: `<GuideButton guide="…">`  |
+| Guides on/off per user                    | `User.guidesEnabled`, `getGuidesEnabled` / `setGuidesEnabled`          |
+| State shared in the tab                   | `lib/components/guides/guide-state.svelte.ts` (started by hand, ended) |
 
 Adding a guide: write its file here, add it to `GUIDES`, implement it (a tour is a step list plus
-`data-guide` anchors), and decide in `GuideHost` where and when it starts. Existing accounts should
-not be surprised by it: mark it completed for them in the migration if it starts on its own.
+`data-guide` anchors). A tutorial: decide in `GuideHost` where and when it starts; existing accounts
+should not be surprised by it, so mark it completed for them in the migration. A tour: put its
+guide button next to the element of its first step.
 
 ### How a tour behaves
 
@@ -115,7 +146,8 @@ not be surprised by it: mark it completed for them in the migration if it starts
   which does what it always does) or `"appears"` (as soon as the next step's element shows up).
 - **Blocking:** a transparent layer over the whole screen takes every click, except in a cut-out over
   the highlighted element. Focus is kept inside the highlighted element and the tour card; Escape
-  and the app's keyboard shortcuts are swallowed. The dimming is the visible part of that layer.
+  and the app's keyboard shortcuts are swallowed. Presses on the dimming or the card don't move
+  the focus, so menus that are open while focused (the account menu) stay open. The dimming is the visible part of that layer.
 - **Dialogs:** overlays move into an open modal dialog when their element is in one, so they stay
   visible and clickable (`top-layer.ts`). Since Escape and clicks outside are blocked, the user
   can't close a dialog the tour is in by accident.
@@ -124,6 +156,8 @@ not be surprised by it: mark it completed for them in the migration if it starts
 - **Last step:** the completion card (`advance: "done"`), centered on the screen, nothing
   highlighted, nothing blocked behind it except the dimming. "Done" stores the tour as completed
   and removes the tour immediately, without waiting for the server.
+- **Start:** from its guide button (or the PostPin Guides page), always at the first step. The
+  button starts it in place: the first step's element is right next to it.
 - **Skip:** the "Skip tour" button in the card switches the card to a confirmation ("Skip this
   tour? You can start it again under PostPin Guides in the account menu." · "Skip" / "Continue tour").
 
@@ -162,4 +196,4 @@ not be surprised by it: mark it completed for them in the migration if it starts
 | [project-access](tours/project-access.md) | Project access          | Collaboration |
 | [screening](tours/screening.md)           | Screenings              | Collaboration |
 | [org-settings](tours/org-settings.md)     | Organization settings   | Organization  |
-| [postpin-guides](tours/postpin-guides.md) | PostPin Guides          | Organization  |
+| [postpin-guides](tours/postpin-guides.md) | PostPin Guides          | Guides        |

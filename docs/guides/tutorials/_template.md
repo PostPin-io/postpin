@@ -4,6 +4,7 @@ type: tutorial
 title: Title shown in PostPin Guides
 status: planned
 audience: editor
+trigger: automatic
 starts: when / from where it starts
 prerequisites: []
 code: []

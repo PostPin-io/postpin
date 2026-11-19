@@ -4,10 +4,10 @@ type: tutorial
 title: Your first review
 status: planned
 audience: editor
+trigger: automatic
 starts: automatically when the first export is playable
 prerequisites: [first-upload or plugin-workflow]
 code:
-  - packages/postpin/src/lib/components/tutorial/ReviewTutorial.svelte
   - packages/postpin/src/lib/components/review/ExportReview.svelte
   - packages/postpin/src/lib/components/review/markers/
 ---

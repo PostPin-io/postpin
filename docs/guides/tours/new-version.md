@@ -4,7 +4,8 @@ type: tour
 title: Uploading a new version
 status: planned
 audience: editor
-starts: when a timeline already has an export, or from PostPin Guides
+trigger: manual
+starts: guide button next to the upload of a new version on the review page
 prerequisites: [first-upload or plugin-workflow]
 code:
   - packages/postpin/src/lib/components/exports/UploadModal.svelte

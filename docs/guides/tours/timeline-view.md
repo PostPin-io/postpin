@@ -4,7 +4,8 @@ type: tour
 title: Timeline view
 status: planned
 audience: editor
-starts: from the timeline or PostPin Guides
+trigger: manual
+starts: guide button in the timeline toolbar
 prerequisites: [first-review]
 code:
   - packages/postpin/src/lib/components/review/ShotGrid.svelte

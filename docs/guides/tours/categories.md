@@ -4,7 +4,8 @@ type: tour
 title: Categories
 status: planned
 audience: editor
-starts: from the category selector or PostPin Guides
+trigger: manual
+starts: guide button next to the category selector
 prerequisites: [first-review]
 code:
   - packages/postpin/src/lib/components/categories/

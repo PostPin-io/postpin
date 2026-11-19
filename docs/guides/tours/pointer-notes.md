@@ -4,7 +4,8 @@ type: tour
 title: Drawing and pointing
 status: planned
 audience: editor
-starts: from the video menu bar or PostPin Guides
+trigger: manual
+starts: guide button next to the pointer selector in the video menu bar
 prerequisites: [first-review]
 code:
   - packages/postpin/src/lib/components/review/PointerOverlay.svelte

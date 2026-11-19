@@ -4,7 +4,8 @@ type: tour
 title: Reviewing as a guest
 status: planned
 audience: guest
-starts: automatically on first visit of a share link
+trigger: manual
+starts: guide button in the header of the share view (guests have no PostPin Guides page)
 prerequisites: []
 code:
   - packages/postpin/src/routes/s/[token]/+page.svelte

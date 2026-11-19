@@ -4,10 +4,10 @@ type: tutorial
 title: Working from your NLE
 status: planned
 audience: editor
-starts: from the welcome step of first-upload, or from PostPin Guides
+trigger: automatic
+starts: from the welcome step of first-upload (the user picks the plugin path)
 prerequisites: []
 code:
-  - packages/postpin/src/lib/components/tutorial/PluginGuide.svelte
   - packages/postpin/src/routes/auth/device/+page.svelte
   - packages/plugin-core/
 ---

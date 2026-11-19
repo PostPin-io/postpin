@@ -4,7 +4,8 @@ type: tour
 title: Marker ranges
 status: planned
 audience: editor
-starts: from the marker editor or PostPin Guides
+trigger: manual
+starts: guide button in the marker editor
 prerequisites: [first-review]
 code:
   - packages/postpin/src/lib/components/review/RangeEdgeIcon.svelte
