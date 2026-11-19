@@ -3,6 +3,7 @@
 	import wasmUrl from "@lottiefiles/dotlottie-web/dotlottie-player.wasm?url";
 	import { onMount } from "svelte";
 	import type { HTMLAttributes } from "svelte/elements";
+	import { theme } from "#lib/theme.svelte.ts";
 
 	let { ...props }: HTMLAttributes<HTMLCanvasElement> = $props();
 
@@ -13,22 +14,14 @@
 	let player: DotLottie | undefined;
 	let loadedSrc: string | undefined;
 	// The light variant has a dark bar, the dark variant a light one.
-	let isDark = $state(false);
+	let isDark = $derived(theme.isDark);
 
 	onMount(() => {
-		const query = window.matchMedia("(prefers-color-scheme: dark)");
-		const update = () => (isDark = query.matches);
-		update();
-		query.addEventListener("change", update);
-
 		DotLottie.setWasmUrl(wasmUrl);
 		loadedSrc = isDark ? darkSrc : lightSrc;
 		player = new DotLottie({ canvas, src: loadedSrc, loop: true, autoplay: true });
 
-		return () => {
-			query.removeEventListener("change", update);
-			player?.destroy();
-		};
+		return () => player?.destroy();
 	});
 
 	$effect(() => {

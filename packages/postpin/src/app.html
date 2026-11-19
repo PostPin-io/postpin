@@ -8,6 +8,20 @@
 		<meta name="apple-mobile-web-app-title" content="PostPin" />
 		<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
 		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1d232a" />
+		<script>
+			// The theme picked in the account menu (#lib/theme.svelte.ts), set before the first
+			// paint so a forced theme doesn't flash the system one
+			try {
+				var theme = localStorage.getItem("postpin-theme");
+				if (theme === "light" || theme === "dark") {
+					document.documentElement.dataset.theme = theme;
+					var color = theme === "dark" ? "#1d232a" : "#ffffff";
+					document.querySelectorAll('meta[name="theme-color"]').forEach(function (meta) {
+						meta.content = color;
+					});
+				}
+			} catch (e) {}
+		</script>
 		<meta property="og:site_name" content="PostPin" />
 		<meta property="og:type" content="website" />
 		<meta property="og:locale" content="en" />
