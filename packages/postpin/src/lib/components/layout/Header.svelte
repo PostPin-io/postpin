@@ -6,6 +6,10 @@
 
 	import GraduationCap from "@lucide/svelte/icons/graduation-cap";
 	import Menu from "@lucide/svelte/icons/menu";
+	import Monitor from "@lucide/svelte/icons/monitor";
+	import Moon from "@lucide/svelte/icons/moon";
+	import Sun from "@lucide/svelte/icons/sun";
+	import { theme, type ThemePreference } from "#lib/theme.svelte.ts";
 	import { reviewTour } from "#lib/components/tutorial/review-tour.svelte.ts";
 
 	import type { Snippet } from "svelte";
@@ -39,6 +43,12 @@
 		await authClient.signOut();
 		await goto(resolve("/auth/login"));
 	}
+
+	const themes: { value: ThemePreference; label: string; icon: typeof Sun }[] = [
+		{ value: "system", label: "System", icon: Monitor },
+		{ value: "light", label: "Light", icon: Sun },
+		{ value: "dark", label: "Dark", icon: Moon },
+	];
 
 	interface Props {
 		children?: Snippet;
@@ -77,6 +87,28 @@
 	{#if mobile && page.data.isSystemAdmin}
 		<li><a href={resolve("/(root)/admin")}>System</a></li>
 	{/if}
+	<!-- a row like the items above, so it lines up with them and the dividers -->
+	<li>
+		<div class="cursor-default justify-between py-1 hover:bg-transparent active:bg-transparent!">
+			Theme
+			<div class="join" role="group" aria-label="Theme">
+				{#each themes as { value, label, icon: Icon } (value)}
+					<button
+						type="button"
+						class="btn join-item btn-square btn-xs"
+						class:btn-active={theme.preference === value}
+						aria-pressed={theme.preference === value}
+						title={label}
+						onclick={() => theme.set(value)}
+					>
+						<Icon class="size-3.5" />
+						<span class="sr-only">{label}</span>
+					</button>
+				{/each}
+			</div>
+		</div>
+	</li>
+	<li></li>
 	<li><button onclick={logout}>Logout</button></li>
 {/snippet}
 
