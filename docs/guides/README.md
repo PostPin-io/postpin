@@ -149,6 +149,7 @@ All in `packages/postpin/src/`:
 | Which guide runs where                    | `lib/components/guides/GuideHost.svelte` (in `routes/+layout.svelte`)  |
 | Tutorial frame (full screen)              | `lib/components/guides/TutorialShell.svelte`                           |
 | Tutorials                                 | `lib/components/guides/tutorials/<Name>Tutorial.svelte`                |
+| Install tutorials (one frame, per plugin) | `tutorials/InstallTutorial.svelte`, `Install<Plugin>Tutorial.svelte`   |
 | Tour engine (spotlight + popover)         | `lib/components/guides/Tour.svelte`, `tour.ts`                         |
 | Tours (step lists)                        | `lib/components/guides/tours/<id>.ts`                                  |
 | Positive feedback                         | `showGuideFeedback()` in `guide-feedback.svelte.ts`                    |
@@ -205,15 +206,15 @@ guide button next to the element of its first step.
 
 ### Tutorials
 
-| id                                                | Title                                 | Audience |
-| ------------------------------------------------- | ------------------------------------- | -------- |
-| [first-upload](tutorials/first-upload.md)         | Your first upload                     | editor   |
-| [plugin-workflow](tutorials/plugin-workflow.md)   | Working from your NLE                 | editor   |
-| [install-resolve](tutorials/install-resolve.md)   | Installing the DaVinci Resolve plugin | editor   |
-| [install-premiere](tutorials/install-premiere.md) | Installing the Premiere Pro plugin    | editor   |
-| [install-desktop](tutorials/install-desktop.md)   | Installing PostPin Desktop            | editor   |
-| [first-review](tutorials/first-review.md)         | Your first review                     | editor   |
-| [sync-to-nle](tutorials/sync-to-nle.md)           | Feedback back in the NLE              | editor   |
+| id                                                | Title                              | Audience |
+| ------------------------------------------------- | ---------------------------------- | -------- |
+| [first-upload](tutorials/first-upload.md)         | Your first upload                  | editor   |
+| [plugin-workflow](tutorials/plugin-workflow.md)   | Working from your NLE              | editor   |
+| [install-resolve](tutorials/install-resolve.md)   | Installing the Resolve plugin      | editor   |
+| [install-premiere](tutorials/install-premiere.md) | Installing the Premiere Pro plugin | editor   |
+| [install-desktop](tutorials/install-desktop.md)   | Installing PostPin Desktop         | editor   |
+| [first-review](tutorials/first-review.md)         | Your first review                  | editor   |
+| [sync-to-nle](tutorials/sync-to-nle.md)           | Feedback back in the NLE           | editor   |
 
 ### Tours
 

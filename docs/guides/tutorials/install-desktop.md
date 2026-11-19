@@ -2,64 +2,66 @@
 id: install-desktop
 type: tutorial
 title: Installing PostPin Desktop
-status: planned
+status: implemented
 audience: editor
 trigger: automatic
-starts: from plugin-workflow when the user picks Pro Tools; or from the PostPin Guides page
+starts: from the PostPin Guides page (later from plugin-workflow, when the user picks Pro Tools); one in progress goes on on the dashboard
 prerequisites: []
 code:
+  - packages/postpin/src/lib/components/guides/tutorials/InstallDesktopTutorial.svelte
+  - packages/postpin/src/lib/components/guides/tutorials/InstallTutorial.svelte
+  - packages/postpin/src/lib/downloads.ts
   - packages/desktop/electron-builder.yml
   - packages/desktop/src/adapters/pro-tools/ptsl.ts
-  - packages/postpin/src/routes/auth/device/+page.svelte
-  - packages/postpin/src/lib/device-clients.ts
+  - packages/plugin-core/src/ui/Login.svelte
 ---
 
 # Installing PostPin Desktop
 
-**Goal:** PostPin Desktop is installed, signed in to the user's PostPin account and connected to
-the NLE (for now: Pro Tools).
+**Goal:** PostPin Desktop is installed, signed in to the user's PostPin account and next to a
+running Pro Tools.
 
 ## Steps
 
-Full screen, with a "macOS | Windows" switch in the header, preset from the detected OS (see
-[plugin-workflow](plugin-workflow.md#install-tutorials)). Steps 2–4 happen outside the browser, so
-they complete with "Next". The NLE-specific part is `open-in-nle`; further NLEs that run through
-the desktop app add their own variant there instead of a new tutorial.
+The shared install tutorial frame (see [plugin-workflow](plugin-workflow.md#install-tutorials)):
+full screen, "Installing on: macOS | Windows" at the top of the card, "Back" / "Next" on the steps
+outside the browser, progress stored on every step. The NLE-specific part is `open-in-nle`;
+further programs that run through the desktop app get their variant there instead of a new
+tutorial.
 
-1. `download`: "Download for macOS" / "Download for Windows" (one button for the selected OS, a
-   small link to the other one). States the requirement up front: **Pro Tools 2025.10 or newer**.
-   **Done when:** the download is clicked.
-2. `install`: **Done when:** "Next".
+1. `download`: What PostPin Desktop does (bounces of the session up, markers back as memory
+   locations); requires **Pro Tools 2025.10 or newer**. "Need it for <other OS>?" switches,
+   "Already installed" goes to `open-in-nle`. **Done when:** the download is clicked.
+2. `os-security`: Only on Windows (the macOS app is signed and notarized). Opening
+   `PostPin-Desktop-<version>-x64.exe` brings "Windows protected your PC": "More info", then "Run
+   anyway". **Done when:** "Next".
+3. `install`: **Done when:** "Next".
    - **macOS:** open `PostPin-Desktop-<version>-universal.dmg`, drag PostPin Desktop into
-     Applications, start it from there. Signed and notarized, so no Gatekeeper warning beyond the
-     usual "downloaded from the internet" confirmation.
-   - **Windows:** run `PostPin-Desktop-<version>-x64.exe`; it installs in one click and starts.
-3. `os-security`: Only on Windows. The installer is not signed yet, so SmartScreen shows "Windows
-   protected your PC": click "More info", then "Run anyway". A screenshot shows both clicks.
-   Left out on macOS. **Done when:** "Next".
-4. `open-in-nle`: **Pro Tools:** start Pro Tools and open a session; PostPin Desktop shows that it
-   is connected to Pro Tools. **Done when:** "Next".
-5. `connect`: Click "Sign in" in PostPin Desktop; the browser opens `/auth/device` with the code, the
-   user approves it. **Done when:** a device authorization for `io.postpin.desktop` is approved
-   for this user.
-6. `done`: **Completion screen:** "✓ PostPin Desktop is connected", it can now create timelines and
-   upload renders from Pro Tools, a pointer to PostPin Guides. **Done when:** "Done" (started from
-   plugin-workflow: "Continue", which goes on there).
+     Applications, open it from there and confirm "Open" once.
+   - **Windows:** the installer runs by itself (one click, per user) and starts the app.
+
+   PostPin Desktop updates itself from then on.
+
+4. `open-in-nle`: Start Pro Tools and open a session; keep PostPin Desktop open next to it.
+   "PostPin Desktop can't reach Pro Tools?" explains its two errors ("Pro Tools is not running, or
+   its scripting interface is disabled", "Pro Tools 2025.10 or newer is required"). **Done when:**
+   "Next".
+5. `connect`: Click "Login" in PostPin Desktop; the server hint as in every install tutorial;
+   approve the code in the browser. **Done when:** the app is signed in for this user (client
+   `io.postpin.desktop`).
+6. `done`: **Completion screen:** "PostPin Desktop is connected", what it can do now, a pointer to
+   PostPin Guides. **Done when:** "Done"; the tutorial closes at once.
 
 ## Success feedback
 
-- After `download`: "✓ Download started"
+- After `download` (only when the file itself downloads): "✓ Download started"
 - After `connect`: "✓ PostPin Desktop connected"
 
 ## Notes
 
-- Open: does Pro Tools need its scripting interface (PTSL) switched on, and where? PostPin
-  Desktop reports "Pro Tools is not running, or its scripting interface is disabled" when it
-  can't reach it on `localhost:31416`. If there is a setting, `open-in-nle` explains it per OS.
-- An older Pro Tools fails with "Pro Tools 2025.10 or newer is required"; `open-in-nle` links to
-  that requirement.
-- Updates come through the app itself (electron-updater), so this tutorial is only for the first
-  install.
-- `connect` and `open-in-nle` could also run the other way round (sign in before Pro Tools is
-  open); the web app only sees `connect`, so either order completes the tutorial.
+- Open: does Pro Tools need its scripting interface (PTSL) switched on somewhere? If so,
+  `open-in-nle` explains it per OS.
+- The Windows build is x64 (built on an x64 runner); an ARM64 build would need its own file name in
+  `downloads.ts`.
 - Once the Windows installer is signed, drop `os-security` for Windows too (keep the step id).
+- Not yet: screenshots; "Continue" into plugin-workflow.

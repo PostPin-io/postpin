@@ -44,28 +44,39 @@ the NLE (DaVinci Resolve, Premiere Pro, or Pro Tools via the desktop app).
 One install tutorial per plugin, not per operating system: the plugins differ far more from each
 other than macOS from Windows (Resolve: `.pkg` / `.exe`; Premiere: the same `.ccx` on both;
 Pro Tools: the PostPin Desktop app). All three share the same step ids, so they can be built as one
-tutorial component with data per NLE and OS:
+tutorial component with data per NLE and OS. The security prompt comes as soon as the installer
+is opened, so `os-security` goes before `install`:
 
 | Step          | What it is                                                              |
 | ------------- | ----------------------------------------------------------------------- |
 | `download`    | Download button for the selected OS, requirements stated up front       |
-| `install`     | Run the installer                                                       |
 | `os-security` | Security prompt (SmartScreen, Creative Cloud warning); left out if none |
+| `install`     | Run the installer                                                       |
 | `open-in-nle` | Where the plugin shows up in the NLE                                    |
 | `connect`     | Sign in via the device-code flow; the one step the web app can observe  |
 | `done`        | Completion screen; "Continue" when started from plugin-workflow         |
 
-- **OS switch:** a "macOS | Windows" switch in the tutorial header, preset from the detected OS
+- **OS switch:** a "macOS | Windows" switch at the top of the tutorial card, preset from the detected OS
   (`navigator.userAgentData.platform`, falling back to the user agent). Users often read in the
   browser on one machine and install on another (the edit workstation), so the preset is only a
   default. The selected OS is stored on the tutorial's progress, like the step.
 - **OS differences** are written per step as **macOS** / **Windows** sub-items, and only where they
   differ. A step that doesn't apply to an OS is left out for it (it keeps its id).
 - **Steps outside the browser** (`install`, `os-security`, `open-in-nle`) complete with "Next".
-  `connect` completes by itself as soon as a device authorization for the plugin's client id
-  (`DEVICE_CLIENTS` in `#lib/device-clients.ts`) is approved for this user, also from another tab;
-  it then jumps there from any earlier step.
-- **Downloads** point at the latest release (currently `https://docs.postpin.io/downloads`).
+  `connect` completes by itself as soon as the plugin is signed in for this user: a valid session
+  of its client id (`DEVICE_CLIENTS` in `#lib/device-clients.ts`), polled with `getPluginSignIn`;
+  a new sign-in also jumps there from any earlier step. Details in
+  [install-resolve](install-resolve.md#notes).
+- **Sign-in (`connect`):** the plugins' login screen has "Use hosted PostPin server" (on by
+  default) and a server URL field. On the hosted server (`https://postpin.io`, in dev the dev
+  server) the step says to leave it on; on any other server it says to switch it off and enter
+  this server's address, shown right there. The plugin's button is "Login".
+- **Built as** one frame, `tutorials/InstallTutorial.svelte` (steps, OS switch, download,
+  sign-in, ending, polling), and one small component per plugin with its texts as snippets
+  (`Install<Plugin>Tutorial.svelte`). Steps per OS: `install-steps.ts`.
+- **Icon on the PostPin Guides page:** lucide `unplug` for every install tutorial (`GUIDE_ICONS`).
+- **Downloads** are the installers of the server's own release (`#lib/downloads.ts`), so plugin
+  and server speak the same API; builds without a release link to the downloads page.
 
 ## Notes
 

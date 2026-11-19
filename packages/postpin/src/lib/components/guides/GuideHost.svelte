@@ -22,6 +22,9 @@
 	import { postpinGuidesTour } from "./tours/postpin-guides.ts";
 	import { shareLinkTour } from "./tours/share-link.ts";
 	import FirstUploadTutorial from "./tutorials/FirstUploadTutorial.svelte";
+	import InstallDesktopTutorial from "./tutorials/InstallDesktopTutorial.svelte";
+	import InstallPremiereTutorial from "./tutorials/InstallPremiereTutorial.svelte";
+	import InstallResolveTutorial from "./tutorials/InstallResolveTutorial.svelte";
 
 	const TOURS: Partial<Record<GuideId, TourDefinition>> = {
 		"postpin-guides": postpinGuidesTour,
@@ -60,10 +63,36 @@
 				noOrganization ||
 				(!!role && roleAllows(role, "project", "create"))),
 	);
+	// Another tutorial started by hand goes first: it was asked for right now
+	const otherTutorialRequested = $derived(
+		!!guideState.requested &&
+			guideState.requested !== "first-upload" &&
+			GUIDES.find((g) => g.id === guideState.requested)?.type === "tutorial",
+	);
 	const firstUpload = $derived(
 		page.route.id === "/(root)/dashboard" &&
-			((enabled && firstUploadDue) || guideState.requested === "first-upload"),
+			((enabled && firstUploadDue && !otherTutorialRequested) ||
+				guideState.requested === "first-upload"),
 	);
+
+	const INSTALL_TUTORIALS = {
+		"install-resolve": InstallResolveTutorial,
+		"install-premiere": InstallPremiereTutorial,
+		"install-desktop": InstallDesktopTutorial,
+	} as const;
+	type InstallId = keyof typeof INSTALL_TUTORIALS;
+	const INSTALL_IDS = Object.keys(INSTALL_TUTORIALS) as InstallId[];
+
+	// Started by hand (for now only from the PostPin Guides page, later from plugin-workflow), it
+	// runs where it was started; one in progress goes on on the dashboard. Never over the sign-in
+	// pages: the device approval it waits for may happen in this very tab.
+	const install = $derived.by((): InstallId | null => {
+		if (firstUpload || page.route.id?.startsWith("/auth")) return null;
+		const requested = INSTALL_IDS.find((id) => id === guideState.requested);
+		if (requested) return requested;
+		if (!enabled || page.route.id !== "/(root)/dashboard") return null;
+		return INSTALL_IDS.find((id) => statusOf(progress, id) === GuideStatus.STARTED) ?? null;
+	});
 
 	// The tour about guides comes after the tutorial: only once first-upload is completed or
 	// skipped, or for someone who can't do it (in an organization without the right to create
@@ -84,14 +113,14 @@
 	);
 
 	const tour = $derived.by((): GuideId | null => {
-		if (firstUpload) return null;
+		if (firstUpload || install) return null;
 		const requested = guideState.requested;
 		if (requested && TOURS[requested]) return requested;
 		return postpinGuidesDue ? "postpin-guides" : null;
 	});
 
 	$effect(() => {
-		guideState.running = firstUpload ? "first-upload" : tour;
+		guideState.running = firstUpload ? "first-upload" : (install ?? tour);
 	});
 
 	afterNavigate(({ from, to }) => {
@@ -115,6 +144,13 @@
 		hasOrganization={!!$activeMember.data}
 		save={save("first-upload")}
 	/>
+{/if}
+
+{#if install}
+	{@const InstallGuide = INSTALL_TUTORIALS[install]}
+	{#key install}
+		<InstallGuide progress={progress[install]} save={save(install)} />
+	{/key}
 {/if}
 
 {#if tour}

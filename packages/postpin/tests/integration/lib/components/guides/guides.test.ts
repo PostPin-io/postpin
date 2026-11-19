@@ -1,9 +1,12 @@
+import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { GuideStatus, Role } from "@postpin-io/shared/db/enums";
 import {
 	getGuideAvailability,
+	getGuideStart,
 	getGuideProgress,
 	getGuidesEnabled,
+	getPluginSignIn,
 	restartGuide,
 	saveGuideProgress,
 	setGuidesEnabled,
@@ -181,5 +184,82 @@ describe("guide availability", () => {
 		const reviewer = await f.createMember(org, Role.REVIEWER);
 		signIn(reviewer.user, org.id);
 		expect((await getGuideAvailability()).navigation).toBe(false);
+	});
+});
+
+describe("guide start", () => {
+	it("401 without a session", async () => {
+		signOut();
+		await expectStatus(getGuideStart("share-link"), 401);
+	});
+
+	it("sends the share links tour to the latest export the member may share", async () => {
+		const org = await f.createOrg();
+		const me = await f.createMember(org, Role.OWNER);
+		signIn(me.user, org.id);
+		expect(await getGuideStart("share-link")).toBeNull();
+		const timeline = await f.createTimeline(await f.createProject(org, { creator: me.user }));
+		const exp = await f.createExport(timeline);
+		expect(await getGuideStart("share-link")).toBe(
+			`/projects/${timeline.projectId}/timelines/${timeline.id}/exports/${exp.id}`,
+		);
+	});
+
+	it("has no start for exports the member can't reach", async () => {
+		const org = await f.createOrg();
+		const owner = await f.createMember(org, Role.OWNER);
+		await f.createExport(
+			await f.createTimeline(await f.createProject(org, { creator: owner.user })),
+		);
+		const reviewer = await f.createMember(org, Role.REVIEWER);
+		signIn(reviewer.user, org.id);
+		expect(await getGuideStart("share-link")).toBeNull();
+	});
+
+	it("only looks something up for guides that need it", async () => {
+		signIn(await f.createUser());
+		expect(await getGuideStart("navigation")).toBeNull();
+	});
+});
+
+describe("plugin sign-in", () => {
+	const CLIENT = "io.postpin.plugin.resolve";
+	const session = (
+		userId: string,
+		data: { clientId?: string; createdAt?: Date; expiresAt?: Date },
+	) =>
+		prisma.session.create({
+			data: {
+				id: randomUUID(),
+				token: randomUUID(),
+				userId,
+				expiresAt: data.expiresAt ?? new Date(Date.now() + 60_000),
+				createdAt: data.createdAt,
+				clientId: data.clientId,
+			},
+		});
+
+	it("401 without a session", async () => {
+		signOut();
+		await expectStatus(getPluginSignIn(CLIENT), 401);
+	});
+
+	it("is the latest valid sign-in of that plugin, for this user only", async () => {
+		const me = await f.createUser();
+		const other = await f.createUser();
+		signIn(me);
+		expect(await getPluginSignIn(CLIENT)).toBeNull();
+
+		await session(me.id, {}); // the browser
+		await session(me.id, { clientId: "io.postpin.desktop" });
+		await session(other.id, { clientId: CLIENT });
+		await session(me.id, { clientId: CLIENT, expiresAt: new Date(Date.now() - 1000) });
+		expect(await getPluginSignIn(CLIENT)).toBeNull();
+
+		const older = new Date("2026-01-01T00:00:00Z");
+		const newer = new Date("2026-02-01T00:00:00Z");
+		await session(me.id, { clientId: CLIENT, createdAt: older });
+		await session(me.id, { clientId: CLIENT, createdAt: newer });
+		expect(await getPluginSignIn(CLIENT)).toBe(newer.toISOString());
 	});
 });

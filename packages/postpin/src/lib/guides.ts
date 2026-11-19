@@ -17,13 +17,14 @@ export interface Guide {
 	title: string;
 	/** One sentence for the PostPin Guides page */
 	description: string;
-	/** Shown on the PostPin Guides page after "Start" when it can't start right there */
+	/** Shown on the PostPin Guides page after "Start" when there's nothing to start it on */
 	restartHint: string;
 	/**
-	 * How the PostPin Guides page starts it: on the page it runs on (`href`), right there on the
-	 * guides page (`here`), or else by bringing back its guide button (see `restartHint`)
+	 * How the PostPin Guides page starts it, always where its first step is: on a fixed page
+	 * (`href`), right there (`here`: its first step is in the header or on the guides page), or on
+	 * a page the server picks (`found`: `getGuideStart`, e.g. an export the user may share)
 	 */
-	startFrom?: { href: "/(root)/dashboard" } | "here";
+	startFrom: { href: "/(root)/dashboard" } | "here" | "found";
 }
 
 export const GUIDES = [
@@ -36,6 +37,35 @@ export const GUIDES = [
 			"Create your organization, a project and a timeline, and upload your first export.",
 		restartHint: "Starts on the dashboard.",
 		startFrom: { href: "/(root)/dashboard" },
+	},
+	{
+		id: "install-resolve",
+		type: "tutorial",
+		trigger: "automatic",
+		title: "Installing the Resolve plugin",
+		description:
+			"Install the PostPin plugin in DaVinci Resolve Studio on macOS or Windows and sign it in.",
+		restartHint: "Starts right here.",
+		startFrom: "here",
+	},
+	{
+		id: "install-premiere",
+		type: "tutorial",
+		trigger: "automatic",
+		title: "Installing the Premiere Pro plugin",
+		description: "Install the PostPin panel in Premiere Pro on macOS or Windows and sign it in.",
+		restartHint: "Starts right here.",
+		startFrom: "here",
+	},
+	{
+		id: "install-desktop",
+		type: "tutorial",
+		trigger: "automatic",
+		title: "Installing PostPin Desktop",
+		description:
+			"Install PostPin Desktop for Pro Tools on macOS or Windows, connect it and sign it in.",
+		restartHint: "Starts right here.",
+		startFrom: "here",
 	},
 	{
 		id: "postpin-guides",
@@ -53,7 +83,8 @@ export const GUIDES = [
 		title: "Finding your way",
 		description:
 			"From the dashboard through projects and timelines to an export, and back with the breadcrumbs.",
-		restartHint: "Its guide button is back next to the dashboard button in the header.",
+		restartHint: "Starts at the dashboard button in the header.",
+		startFrom: "here",
 	},
 	{
 		id: "share-link",
@@ -61,7 +92,9 @@ export const GUIDES = [
 		trigger: "manual",
 		title: "Share links",
 		description: "Share an export with people who don't have an account.",
-		restartHint: "Its guide button is back next to the share button of an export you may share.",
+		restartHint:
+			"Needs an export you may share: its guide button is back next to the share button.",
+		startFrom: "found",
 	},
 ] as const satisfies readonly Guide[];
 
@@ -81,6 +114,7 @@ export const GUIDE_STYLE = {
 		ring: "ring-primary",
 		border: "border-l-primary",
 		dot: "bg-primary",
+		tile: "bg-primary/15",
 	},
 	tour: {
 		label: "Tour",
@@ -90,6 +124,7 @@ export const GUIDE_STYLE = {
 		ring: "ring-accent",
 		border: "border-l-accent",
 		dot: "bg-accent",
+		tile: "bg-accent/15",
 	},
 } as const satisfies Record<GuideType, Record<string, string>>;
 
