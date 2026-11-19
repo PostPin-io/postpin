@@ -11,6 +11,7 @@
 	import Link from "@lucide/svelte/icons/link";
 	import Upload from "@lucide/svelte/icons/upload";
 	import ListTodo from "@lucide/svelte/icons/list-todo";
+	import Lock from "@lucide/svelte/icons/lock";
 	import Search from "@lucide/svelte/icons/search";
 	import { GuideStatus } from "@postpin-io/shared/db/enums";
 	import PageMeta from "#lib/components/layout/PageMeta.svelte";
@@ -22,13 +23,21 @@
 		setGuidesEnabled,
 	} from "#lib/components/guides/guides.remote.ts";
 	import { guideState, requestGuide, statusOf } from "#lib/components/guides/guide-state.svelte.ts";
-	import { GUIDES, GUIDE_STYLE, type GuideId, type GuideType } from "#lib/guides.ts";
+	import { GUIDES, GUIDE_STYLE, roleCanDo, type GuideId, type GuideType } from "#lib/guides.ts";
+	import { authClient } from "#lib/auth-client.ts";
+	import { ROLE_LABELS, toRole } from "#lib/roles.ts";
 	import type { Component } from "svelte";
 	import { matchesGuide } from "./filter.ts";
 
 	const progress = $derived(await getGuideProgress());
 	const storedEnabled = $derived(await getGuidesEnabled());
 	const enabled = $derived(guideState.enabled ?? storedEnabled);
+
+	// Every guide has a lowest role (rule 17): below it the row is greyed out and says which
+	const activeMember = authClient.useActiveMember();
+	const role = $derived(toRole($activeMember.data?.role));
+	const roleLoading = $derived($activeMember.isPending);
+	const locked = (guide: (typeof GUIDES)[number]) => !roleLoading && !roleCanDo(guide, role);
 
 	async function toggleGuides(on: boolean) {
 		guideState.enabled = on;
@@ -185,23 +194,37 @@
 					{#each guides as guide, i (guide.id)}
 						{@const status = statusOf(progress, guide.id) ?? "NEW"}
 						{@const GuideIcon = GUIDE_ICONS[guide.id]}
+						{@const isLocked = locked(guide)}
 						<li class="list-row items-center">
-							<div class="grid size-9 place-items-center rounded-box {style.tile}">
-								<GuideIcon class="size-5 {style.text}" />
+							<div
+								class="grid size-9 place-items-center rounded-box {isLocked
+									? 'bg-base-200'
+									: style.tile}"
+							>
+								<GuideIcon class="size-5 {isLocked ? 'text-base-content/40' : style.text}" />
 							</div>
-							<div class="min-w-0">
+							<div class="min-w-0 {isLocked ? 'opacity-50' : ''}">
 								<h3 class="truncate text-sm font-semibold" title={guide.title}>{guide.title}</h3>
-								<div
-									class="flex items-center gap-1 text-xs font-semibold tracking-wide uppercase {status ===
-									GuideStatus.STARTED
-										? style.text
-										: status === GuideStatus.COMPLETED
-											? 'text-success'
-											: 'text-base-content/50'}"
-								>
-									{#if status === GuideStatus.COMPLETED}<CircleCheck class="size-3.5" />{/if}
-									{STATUS_LABELS[status]}
-								</div>
+								{#if isLocked}
+									<div
+										class="flex items-center gap-1 text-xs font-semibold tracking-wide text-base-content uppercase"
+									>
+										<Lock class="size-3.5" />
+										Needs the {ROLE_LABELS[guide.minRole]} role
+									</div>
+								{:else}
+									<div
+										class="flex items-center gap-1 text-xs font-semibold tracking-wide uppercase {status ===
+										GuideStatus.STARTED
+											? style.text
+											: status === GuideStatus.COMPLETED
+												? 'text-success'
+												: 'text-base-content/50'}"
+									>
+										{#if status === GuideStatus.COMPLETED}<CircleCheck class="size-3.5" />{/if}
+										{STATUS_LABELS[status]}
+									</div>
+								{/if}
 							</div>
 							<button
 								type="button"
@@ -220,7 +243,10 @@
 								status === GuideStatus.SKIPPED
 									? 'btn-ghost'
 									: style.button}"
-								disabled={busy}
+								disabled={busy || isLocked}
+								title={isLocked
+									? `Your role in this organization is ${role ? ROLE_LABELS[role] : "none"}: ask an admin for the ${ROLE_LABELS[guide.minRole]} role.`
+									: undefined}
 								data-guide={column.type === "tour" && i === 0 ? "postpin-guides/start" : undefined}
 								onclick={() => start(guide)}
 							>
@@ -238,6 +264,12 @@
 										<p id="guide-info-{guide.id}" class="text-base-content/70">
 											{guide.description}
 										</p>
+										{#if isLocked}
+											<p class="text-base-content/70">
+												It needs the {ROLE_LABELS[guide.minRole]} role or higher in the organization;
+												yours is {role ? ROLE_LABELS[role] : "none yet"}.
+											</p>
+										{/if}
 									{/if}
 									{#if started === guide.id}
 										<p class={enabled ? "text-success" : "text-warning"} role="status">

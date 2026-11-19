@@ -9,7 +9,8 @@ import {
 	type TourStep,
 } from "#lib/components/guides/tour.ts";
 import { shareLinkTour } from "#lib/components/guides/tours/share-link.ts";
-import { GUIDES, GUIDE_IDS } from "#lib/guides.ts";
+import { GUIDES, GUIDE_IDS, lowestRoleWith, roleCanDo } from "#lib/guides.ts";
+import { Role } from "@postpin-io/shared/db/enums";
 import { postpinGuidesTour } from "#lib/components/guides/tours/postpin-guides.ts";
 import { navigationTour } from "#lib/components/guides/tours/navigation.ts";
 
@@ -95,6 +96,31 @@ describe("stepKind", () => {
 		expect(stepKind({ advance: "click" })).toBe("act");
 		expect(stepKind({ advance: "appears" })).toBe("act");
 		expect(stepKind({ advance: "done" })).toBe("done");
+	});
+});
+
+describe("guide roles (rule 17)", () => {
+	const byId = (id: string) => GUIDES.find((g) => g.id === id)!;
+
+	it.each(GUIDES.filter((g) => "permission" in g).map((g) => [g.id, g] as const))(
+		"%s: its lowest role is the lowest one with its right",
+		(_, guide) => {
+			expect(lowestRoleWith(guide.permission!)).toBe(guide.minRole);
+		},
+	);
+
+	it("lets only Member and up do what has an upload or sharing in it", () => {
+		for (const id of ["first-upload", "share-link"]) {
+			expect(roleCanDo(byId(id), Role.REVIEWER), id).toBe(false);
+			expect(roleCanDo(byId(id), Role.MEMBER), id).toBe(true);
+		}
+		expect(roleCanDo(byId("navigation"), Role.REVIEWER)).toBe(true);
+	});
+
+	it("without an organization: what everyone can do, and what creates the organization", () => {
+		expect(roleCanDo(byId("first-upload"), null)).toBe(true);
+		expect(roleCanDo(byId("postpin-guides"), null)).toBe(true);
+		expect(roleCanDo(byId("share-link"), null)).toBe(false);
 	});
 });
 

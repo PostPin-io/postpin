@@ -4,7 +4,9 @@
 	// Put it next to the element the tour's first step highlights.
 	import GraduationCap from "@lucide/svelte/icons/graduation-cap";
 	import { page } from "$app/state";
-	import { GUIDES, GUIDE_STYLE, type GuideId } from "#lib/guides.ts";
+	import { authClient } from "#lib/auth-client.ts";
+	import { GUIDES, GUIDE_STYLE, roleCanDo, type GuideId } from "#lib/guides.ts";
+	import { toRole } from "#lib/roles.ts";
 	import { guideState, isOpen, requestGuide } from "./guide-state.svelte.ts";
 	import { getGuideAvailability, getGuideProgress, getGuidesEnabled } from "./guides.remote.ts";
 
@@ -14,7 +16,11 @@
 	}
 	let { guide, class: className = "" }: Props = $props();
 
-	const title = $derived(GUIDES.find((g) => g.id === guide)?.title ?? "");
+	const definition = $derived(GUIDES.find((g) => g.id === guide)!);
+	const title = $derived(definition.title);
+	// The role's minimum (rule 17): no button for a tour the user's role can't do
+	const activeMember = authClient.useActiveMember();
+	const role = $derived(toRole($activeMember.data?.role));
 	// Signed-in pages only: guests have no progress to read
 	const signedIn = $derived(!!page.route.id?.startsWith("/(root)/"));
 	// .current, not await: a button must never hold up the header it sits in
@@ -28,6 +34,7 @@
 			!!availability &&
 			availability[guide] !== false &&
 			isOpen(progress, guide) &&
+			roleCanDo(definition, role) &&
 			guideState.running === null,
 	);
 </script>

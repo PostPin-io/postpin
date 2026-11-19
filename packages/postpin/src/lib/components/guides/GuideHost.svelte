@@ -6,8 +6,8 @@
 	import { page } from "$app/state";
 	import { GuideStatus } from "@postpin-io/shared/db/enums";
 	import { authClient } from "#lib/auth-client.ts";
-	import { GUIDES, type GuideId } from "#lib/guides.ts";
-	import { roleAllows, toRole } from "#lib/roles.ts";
+	import { GUIDES, roleCanDo, type GuideId } from "#lib/guides.ts";
+	import { toRole } from "#lib/roles.ts";
 	import GuideFeedback from "./GuideFeedback.svelte";
 	import Tour from "./Tour.svelte";
 	import { endGuide, guideState, isOpen, statusOf, syncEnded } from "./guide-state.svelte.ts";
@@ -46,6 +46,15 @@
 	const organizations = authClient.useListOrganizations();
 	/** A fresh account: the tutorial starts with creating the organization */
 	const noOrganization = $derived($organizations.data?.length === 0);
+	/** Only what the user's role can do at all runs, also when started by hand (rule 17) */
+	const roleAllowsGuide = (id: GuideId) =>
+		roleCanDo(
+			GUIDES.find((g) => g.id === id)!,
+			role,
+		);
+	const requested = $derived(
+		guideState.requested && roleAllowsGuide(guideState.requested) ? guideState.requested : null,
+	);
 
 	const save =
 		(guideId: GuideId) =>
@@ -61,18 +70,17 @@
 		isOpen(progress, "first-upload") &&
 			(statusOf(progress, "first-upload") === GuideStatus.STARTED ||
 				noOrganization ||
-				(!!role && roleAllows(role, "project", "create"))),
+				(!!role && roleAllowsGuide("first-upload"))),
 	);
 	// Another tutorial started by hand goes first: it was asked for right now
 	const otherTutorialRequested = $derived(
-		!!guideState.requested &&
-			guideState.requested !== "first-upload" &&
-			GUIDES.find((g) => g.id === guideState.requested)?.type === "tutorial",
+		!!requested &&
+			requested !== "first-upload" &&
+			GUIDES.find((g) => g.id === requested)?.type === "tutorial",
 	);
 	const firstUpload = $derived(
 		page.route.id === "/(root)/dashboard" &&
-			((enabled && firstUploadDue && !otherTutorialRequested) ||
-				guideState.requested === "first-upload"),
+			((enabled && firstUploadDue && !otherTutorialRequested) || requested === "first-upload"),
 	);
 
 	const INSTALL_TUTORIALS = {
@@ -88,8 +96,8 @@
 	// pages: the device approval it waits for may happen in this very tab.
 	const install = $derived.by((): InstallId | null => {
 		if (firstUpload || page.route.id?.startsWith("/auth")) return null;
-		const requested = INSTALL_IDS.find((id) => id === guideState.requested);
-		if (requested) return requested;
+		const byHand = INSTALL_IDS.find((id) => id === requested);
+		if (byHand) return byHand;
 		if (!enabled || page.route.id !== "/(root)/dashboard") return null;
 		return INSTALL_IDS.find((id) => statusOf(progress, id) === GuideStatus.STARTED) ?? null;
 	});
@@ -102,7 +110,7 @@
 		return status === GuideStatus.COMPLETED || status === GuideStatus.SKIPPED;
 	});
 	const cannotUpload = $derived(
-		!!$organizations.data?.length && role !== null && !roleAllows(role, "project", "create"),
+		!!$organizations.data?.length && role !== null && !roleAllowsGuide("first-upload"),
 	);
 	const postpinGuidesDue = $derived(
 		enabled &&
@@ -114,7 +122,6 @@
 
 	const tour = $derived.by((): GuideId | null => {
 		if (firstUpload || install) return null;
-		const requested = guideState.requested;
 		if (requested && TOURS[requested]) return requested;
 		return postpinGuidesDue ? "postpin-guides" : null;
 	});
