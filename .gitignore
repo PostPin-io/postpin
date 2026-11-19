@@ -20,3 +20,6 @@ packages/worker/tests/fixtures/three-cuts.mp4
 # ffmpeg build (tools/ffmpeg/build.sh)
 tools/ffmpeg/.work/
 tools/ffmpeg/out/
+
+# local planning notes for tutorials and tours
+Plan_Tutorials_and_Tours/
