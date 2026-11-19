@@ -12,6 +12,16 @@ import { uploadFile } from "./upload";
 import { killAll, probe, removeFile, transcode } from "./transcode";
 import { findFfmpeg, type FfmpegPaths } from "./ffmpeg";
 
+// stdout/stderr are pipes to whoever started the app, e.g. Resolve or the dev terminal. Once that
+// end is closed, the next console.log or Node warning fails with EPIPE, which arrives as an
+// "error" event and, unhandled, as Electron's "JavaScript error in the main process" dialog.
+// Losing the log line is fine; other stream errors still surface.
+for (const stream of [process.stdout, process.stderr]) {
+	stream.on("error", (error: NodeJS.ErrnoException) => {
+		if (error.code !== "EPIPE") throw error;
+	});
+}
+
 export interface WindowOptions {
 	// bundled preload script, which imports @postpin-io/plugin-electron/preload
 	preloadPath: string;

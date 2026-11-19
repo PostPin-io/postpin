@@ -27,9 +27,17 @@
 	let loading = $state(true);
 	let loggedIn = $state(false);
 
+	// the session check asks the server, which may be down, offline, or a wrong URL
+	let authError = $state<string | null>(null);
+
 	async function checkAuth() {
-		const session = await host.getSession();
-		loggedIn = !!session;
+		loading = true;
+		authError = null;
+		try {
+			loggedIn = !!(await host.getSession());
+		} catch (error) {
+			authError = `Can't reach the PostPin server at ${await host.getServerUrl()}: ${errorMessage(error)}`;
+		}
 		loading = false;
 	}
 
@@ -46,6 +54,16 @@
 	<main class="w-screen h-screen flex items-center justify-center">
 		<span class="loading loading-lg loading-spinner"></span>
 	</main>
+{:else if authError}
+	<DragBar />
+	<div class="p-4 pt-10">
+		<p>{authError}</p>
+		<p class="text-sm opacity-70">Check that it's running and that you're online.</p>
+		<div class="mt-2 flex gap-2">
+			<button class="btn btn-sm" onclick={checkAuth}>Retry</button>
+			<button class="btn btn-sm btn-ghost" onclick={() => host.logout()}>Logout</button>
+		</div>
+	</div>
 {:else if loggedIn}
 	<svelte:boundary>
 		{#snippet failed(error: unknown, reset: () => void)}
@@ -53,7 +71,10 @@
 			<div class="p-4 pt-10">
 				An error occurred:<br />
 				<pre class="whitespace-pre-wrap">{errorMessage(error)}</pre>
-				<button class="btn btn-sm" onclick={reset}>Restart</button>
+				<div class="flex gap-2">
+					<button class="btn btn-sm" onclick={reset}>Restart</button>
+					<button class="btn btn-sm btn-ghost" onclick={() => host.logout()}>Logout</button>
+				</div>
 			</div>
 		{/snippet}
 		<MainScreen {header} {titleBarInset} {fetch} />

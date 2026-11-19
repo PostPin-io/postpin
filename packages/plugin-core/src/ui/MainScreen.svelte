@@ -58,8 +58,9 @@
 		timeline: Timeline;
 	}
 
+	const serverUrl = await host.getServerUrl();
 	const client = createClient({
-		baseUrl: `${await host.getServerUrl()}/api`,
+		baseUrl: `${serverUrl}/api`,
 		auth: async () => (await host.getToken()) ?? undefined,
 		// the API answers 426 unless this plugin speaks exactly the server's API version
 		headers: { [API_VERSION_HEADER]: String(POSTPIN_API_VERSION) },
@@ -70,6 +71,13 @@
 	// Several requests can fail at once, so log out only once.
 	let loggingOut = false;
 	client.interceptors.response.use(async (response) => {
+		const contentType = response.headers.get("Content-Type") ?? "";
+		if (response.ok && response.status !== 204 && !contentType.includes("json")) {
+			throw new Error(
+				`${serverUrl} doesn't look like a PostPin server: it answered with ` +
+					`${contentType || "no content type"} instead of JSON. Check the server URL.`,
+			);
+		}
 		if (response.status === 401 && !loggingOut) {
 			loggingOut = true;
 			await host.logout();
@@ -83,6 +91,15 @@
 			};
 		}
 		return response;
+	});
+	// handle server not reachable
+	client.interceptors.error.use((error, response) => {
+		if (response || !(error instanceof TypeError)) return error;
+		return new Error(
+			`Can't reach the PostPin server at ${serverUrl}. Check that it's running and that ` +
+				`you're online, or log out and pick another server.`,
+			{ cause: error },
+		);
 	});
 
 	let versionMismatch = $state<{

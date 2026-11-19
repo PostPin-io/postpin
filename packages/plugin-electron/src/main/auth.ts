@@ -93,10 +93,13 @@ export function createAuth({ clientId, defaultServerUrl }: AuthOptions) {
 		throw new Error("Code expired");
 	}
 
-	const getSession = async () => (await getAuthClient().getSession()).data;
+	const getSession = async () =>
+		store.get("token") ? (await getAuthClient().getSession()).data : null;
 
 	async function logout() {
-		await getAuthClient().signOut();
+		await getAuthClient()
+			.signOut()
+			.catch(() => {});
 		store.delete("token");
 	}
 
