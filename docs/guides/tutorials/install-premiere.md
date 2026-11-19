@@ -3,7 +3,7 @@ id: install-premiere
 type: tutorial
 title: Installing the Premiere Pro plugin
 status: implemented
-audience: editor
+minRole: reviewer
 trigger: automatic
 starts: from the PostPin Guides page (later from plugin-workflow, when the user picks Premiere Pro); one in progress goes on on the dashboard
 prerequisites: []
@@ -65,3 +65,6 @@ of a link to the other OS. The OS only changes the fallback command in `install`
 - If the plugin is ever published on the Adobe Marketplace, `os-security` is left out (keep the
   step id).
 - Not yet: screenshots; "Continue" into plugin-workflow.
+- Roles: for everyone with an account, reviewers included: the plugin also pulls and pushes markers,
+  which a reviewer may do. They start it from the PostPin Guides page; it only starts on its own
+  from [plugin-workflow](plugin-workflow.md), i.e. for those who upload.

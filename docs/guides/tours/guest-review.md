@@ -3,7 +3,7 @@ id: guest-review
 type: tour
 title: Reviewing as a guest
 status: planned
-audience: guest
+minRole: guest
 trigger: manual
 starts: guide button in the header of the share view (guests have no PostPin Guides page)
 prerequisites: []
@@ -29,3 +29,6 @@ code:
 ## Notes
 
 - Popover copy is a draft.
+- Roles: the only guide for guests. What a guest may do is decided by the share link (panel
+  visibility, who may leave markers), not by a role, so each step is **optional**: a panel the link
+  hides (timeline, markers) is skipped, as is `set-marker` on a link that doesn't allow markers.

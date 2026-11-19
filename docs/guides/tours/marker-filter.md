@@ -3,7 +3,7 @@ id: marker-filter
 type: tour
 title: Filtering markers
 status: planned
-audience: editor
+minRole: reviewer
 trigger: manual
 starts: guide button next to the filter of the marker panel
 prerequisites: [first-review]
@@ -28,3 +28,5 @@ code:
 ## Notes
 
 - Popover copy is a draft.
+- Roles: read-only features, the same for every role from Reviewer up (and none of the steps
+  needs a right beyond `marker.read`).

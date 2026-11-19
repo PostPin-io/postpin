@@ -3,10 +3,11 @@ id: import
 type: tour
 title: Importing markers
 status: planned
-audience: editor
+minRole: reviewer
+permission: marker.create
 trigger: manual
 starts: guide button next to the import menu on the review page
-prerequisites: [first-review]
+prerequisites: [first-review, may create markers (`permission`)]
 code:
   - packages/postpin/src/lib/components/review/MarkerImport.svelte
   - packages/postpin/src/lib/components/review/TimelineDataImport.svelte
@@ -28,3 +29,7 @@ code:
 ## Notes
 
 - Popover copy is a draft.
+- Roles: `marker-import` creates markers (`marker.create`, a Reviewer right). `timeline-data` is
+  **optional**: replacing the timeline's tracks counts as a new version and needs `export.upload` (Member and
+  up, see `importCutList`), so it is left out for a reviewer. Importing only the markers of a cut
+  list is `marker.create`, like `marker-import`.

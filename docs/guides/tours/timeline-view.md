@@ -3,7 +3,7 @@ id: timeline-view
 type: tour
 title: Timeline view
 status: planned
-audience: editor
+minRole: reviewer
 trigger: manual
 starts: guide button in the timeline toolbar
 prerequisites: [first-review]
@@ -30,3 +30,5 @@ code:
 ## Notes
 
 - Popover copy is a draft.
+- Roles: read-only features, the same for every role from Reviewer up (and none of the steps
+  needs a right beyond `marker.read`).

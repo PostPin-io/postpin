@@ -3,10 +3,11 @@ id: sync-to-nle
 type: tutorial
 title: Feedback back in the NLE
 status: planned
-audience: editor
+minRole: reviewer
+permission: marker.read
 trigger: automatic
 starts: automatically after first-review, when a plugin is connected
-prerequisites: [plugin-workflow, first-review]
+prerequisites: [a plugin connected (an install tutorial or plugin-workflow), first-review]
 code:
   - packages/plugin-core/src/sync.ts
 ---
@@ -29,3 +30,6 @@ code:
 
 - Categories travel as a `#Category` tag in the marker description, otherwise they map from the NLE
   color; worth one sentence in the tutorial.
+- Roles: pulling needs `marker.read`, pushing new markers `marker.create`; both are Reviewer rights.
+  Changes to existing markers only go through for markers the user may edit (a reviewer: their
+  own), so `push-markers` asks for a new or own marker.

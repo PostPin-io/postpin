@@ -3,10 +3,12 @@ id: first-upload
 type: tutorial
 title: Your first upload
 status: implemented
-audience: editor
+minRole: member
+permission: project.create
 trigger: automatic
 starts: automatically on the dashboard for a fresh account (no organization yet) or someone who may create projects in the active organization; or from the PostPin Guides page
-prerequisites: [no organization yet, or may create projects in the active organization]
+prerequisites:
+  [no organization yet, or may create projects in the active organization (`permission`)]
 code:
   - packages/postpin/src/lib/components/guides/tutorials/FirstUploadTutorial.svelte
   - packages/postpin/src/lib/components/guides/GuideHost.svelte
@@ -49,3 +51,8 @@ again under PostPin Guides in the account menu.").
 - An interrupted or cancelled upload goes back to `upload-export` ("Upload again").
 - Doesn't start while guides are switched off on the PostPin Guides page; can still be started
   there by hand. The [postpin-guides](../tours/postpin-guides.md) tour follows it.
+- Roles: only for those who may create projects (Member and up, `project.create`), or for someone
+  without an organization, who becomes its owner in `create-organization`. A reviewer never gets it;
+  on the PostPin Guides page it is greyed out ("Needs the Member role"). Their next guide is the
+  [postpin-guides](../tours/postpin-guides.md) tour, then [first-review](first-review.md) once there
+  is an export they can open.

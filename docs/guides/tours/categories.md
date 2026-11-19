@@ -3,10 +3,11 @@ id: categories
 type: tour
 title: Categories
 status: planned
-audience: editor
+minRole: reviewer
+permission: category.create
 trigger: manual
 starts: guide button next to the category selector
-prerequisites: [first-review]
+prerequisites: [first-review, may create categories (`permission`)]
 code:
   - packages/postpin/src/lib/components/categories/
 ---
@@ -28,3 +29,9 @@ code:
 ## Notes
 
 - Popover copy is a draft.
+- Roles: a reviewer creates categories and changes or deletes only their own (`category.create`,
+  own `update`/`delete`); Member and up change all. So `edit` has a text that holds for both
+  ("Change a category's name and color") and, if the tour has the user change one, it is one they
+  created in the tour. `presets` is **optional**: saving a preset is `categoryPreset.create`
+  (Member and up); a reviewer can apply existing presets but has no save button, so the step is
+  left out for them.

@@ -3,10 +3,11 @@ id: screening
 type: tour
 title: Screenings
 status: planned
-audience: editor
+minRole: member
+permission: shareLink.create
 trigger: manual
 starts: guide button next to the screening button
-prerequisites: [first-review]
+prerequisites: [first-review, may create share links (`permission`)]
 code:
   - packages/postpin/src/lib/components/screening/
 ---
@@ -27,3 +28,6 @@ code:
 ## Notes
 
 - Popover copy is a draft.
+- Roles: a screening runs over a share link, so starting and controlling one is for those who may
+  create share links (Member and up); everyone else only follows one. Their guide button sits next to the screening button, which only
+  those people have. (Check `permission` against the actual screening check once implemented.)

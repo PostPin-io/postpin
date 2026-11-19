@@ -3,10 +3,11 @@ id: share-link
 type: tour
 title: Share links
 status: implemented
-audience: editor
+minRole: member
+permission: shareLink.create
 trigger: manual
 starts: guide button next to the share button of the export in the breadcrumbs (review page) · from PostPin Guides: the latest export the user may share (`getGuideStart`)
-prerequisites: [may create share links for the export]
+prerequisites: [may create share links for the export (`permission`)]
 code:
   - packages/postpin/src/lib/components/guides/tours/share-link.ts
   - packages/postpin/src/lib/components/guides/GuideHost.svelte
@@ -50,7 +51,8 @@ does the real thing (opens the dialog, saves the link); the tour follows.
 ## Notes
 
 - Guide button: a `graduation-cap` button in the tour style right next to the share button of the
-  export, tooltip "Tour: Share links". Only where the share button is (reviewers can't create share
-  links, so they get neither).
+  export, tooltip "Tour: Share links". Only where the share button is: share links need
+  `shareLink.create` (Member and up, on the export's project or timeline), so a reviewer gets
+  no button, and on the PostPin Guides page the row is greyed out: "Needs the Member role".
 - Escape and clicks outside are blocked, so the sharing dialog can't be closed during the tour.
 - After a reload the tour is paused; its guide button starts it again at `open`.

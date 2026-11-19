@@ -3,10 +3,11 @@ id: marker-ranges
 type: tour
 title: Marker ranges
 status: planned
-audience: editor
+minRole: reviewer
+permission: marker.create
 trigger: manual
 starts: guide button in the marker editor
-prerequisites: [first-review]
+prerequisites: [first-review, may create markers (`permission`)]
 code:
   - packages/postpin/src/lib/components/review/RangeEdgeIcon.svelte
   - packages/postpin/src/lib/components/review/markers/MarkerPositionModal.svelte
@@ -27,3 +28,6 @@ code:
 ## Notes
 
 - Popover copy is a draft.
+- Roles: creating and shaping markers is a Reviewer right (`marker.create`); changing or deleting
+  someone else's marker isn't, so the tour works on a marker the user creates in it, not on an
+  existing one.

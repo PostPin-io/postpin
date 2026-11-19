@@ -3,7 +3,7 @@ id: install-resolve
 type: tutorial
 title: Installing the Resolve plugin
 status: implemented
-audience: editor
+minRole: reviewer
 trigger: automatic
 starts: from the PostPin Guides page (later from plugin-workflow, when the user picks DaVinci Resolve); one in progress goes on on the dashboard
 prerequisites: []
@@ -88,3 +88,6 @@ stored on every step, so a reload goes on where the user left off.
 - Once the Windows installer is signed, drop `os-security` for Windows too (keep the step id).
 - Linux (Resolve Studio runs there too): no installer yet, not covered; the OS switch offers macOS
   and Windows only.
+- Roles: for everyone with an account, reviewers included: the plugin also pulls and pushes markers,
+  which a reviewer may do. They start it from the PostPin Guides page; it only starts on its own
+  from [plugin-workflow](plugin-workflow.md), i.e. for those who upload.

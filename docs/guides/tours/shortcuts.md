@@ -3,7 +3,7 @@ id: shortcuts
 type: tour
 title: Keyboard shortcuts
 status: planned
-audience: editor
+minRole: reviewer
 trigger: manual
 starts: guide button in the player's menu bar
 prerequisites: [first-review]
@@ -26,3 +26,5 @@ code:
 ## Notes
 
 - Popover copy is a draft.
+- Roles: read-only features, the same for every role from Reviewer up (and none of the steps
+  needs a right beyond `marker.read`).

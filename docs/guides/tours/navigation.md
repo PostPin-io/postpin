@@ -3,7 +3,7 @@ id: navigation
 type: tour
 title: Finding your way
 status: implemented
-audience: editor
+minRole: reviewer
 trigger: manual
 starts: guide button next to the dashboard button (logo and organization name) in the header, on every page with the header · from PostPin Guides: right there (its first step is in the header)
 prerequisites: [at least one export in the active organization that the user can open]
@@ -109,6 +109,10 @@ next page (`waitForElement`). Everything only explained is `inert`.
   account menu and changes the whole dashboard.
 - **Not part of this tour:** sharing and invitations (share buttons in the breadcrumbs and the
   project/timeline menus), renaming and deleting (the actions menus of the items).
+- Roles: every role gets it (Reviewer and up). What the roles differ in is made by the **optional**
+  steps: `new-project` and `new-timeline` only show for those who may create them (`project.create`,
+  `timeline.create`), so a reviewer's tour has no create buttons. No text says "you can"
+  about something an optional step may leave out.
 
 ## How it is built
 

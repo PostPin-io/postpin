@@ -3,7 +3,7 @@ id: postpin-guides
 type: tour
 title: PostPin Guides
 status: implemented
-audience: editor
+minRole: reviewer
 trigger: automatic
 starts: automatically, once per user, once first-upload is completed or skipped, or for someone who can't do it (no right to create projects); new accounts right after first-upload, existing accounts on their next visit; also from the PostPin Guides page
 prerequisites: []
@@ -94,6 +94,9 @@ the explanations of tutorials, tours and the switch point at the real thing ther
   completed for them.
 - While guides are switched off it doesn't start (rule 5); it can still be started from the
   PostPin Guides page.
+- Roles: for every role; none of its steps depends on one. On the PostPin Guides page a
+  reviewer sees some rows greyed out with the role they need (README, rule 17); the tour doesn't
+  comment on that.
 
 ## Tour engine features it uses
 

@@ -83,12 +83,13 @@ feature you can discover later, it's a **tour**.
     guide's icon, title, status, a check for completed ones, button; the description behind an
     info icon). One text filter for both columns, and a "Not completed"
     toggle that hides completed guides. Every guide can be started (again) from here, also while
-    guides are switched off, and it takes the user to where its first step is: nobody has to look
-    for the feature first (`startFrom` in `GUIDES`: a fixed page, right here, or a page the server
+    guides are switched off (below its minimum role a guide is greyed out instead, rule 17), and it
+    takes the user to where its first step is: nobody has to look for the feature first (`startFrom` in `GUIDES`: a fixed page, right here, or a page the server
     finds, e.g. the latest export the user may share). With nothing to start it on (no such
     export), the row says so (`restartHint`). The `description` in `GUIDES` is that info text.
 12. **Prerequisites:** a guide only starts when its prerequisites are met (e.g. the sync tutorial
-    needs a connected plugin). Prerequisites are listed in the guide's frontmatter.
+    needs a connected plugin). Prerequisites are listed in the guide's frontmatter. The user's
+    right to use the feature is one of them and is named by `permission` (rule 17).
 13. **Guests:** guides for share-link visitors (no account) can't store progress on a user; they
     must work without it.
 14. **Copy:** UI text in guides is English and addresses the user directly.
@@ -113,6 +114,47 @@ feature you can discover later, it's a **tour**.
 
     Never mixed: a Look step doesn't ask for a click, a Your-turn step doesn't offer "Next".
 
+17. **Roles: every guide has a minimum role.** The roles are Reviewer < Member < Admin < Owner
+    (permission matrix: `lib/roles.ts`), plus guests, who have no role. A guide never teaches
+    something the user can't do, never points at a button they don't have, and never stops at a
+    step they can't finish. How that is kept:
+    - **Every guide names its minimum role:** `minRole` in the frontmatter and in `GUIDES`, the
+      lowest role in the active organization that can do the guide at all; higher roles inherit
+      it. Anything with an upload needs Member (a reviewer can't upload), sharing too; organization
+      settings need Admin. Reviewer means everyone with an account.
+    - **And the right it is about:** `permission`, the `area.action` of the matrix (e.g.
+      `shareLink.create`). `minRole` must be the lowest role with that right; a test checks it
+      (`lowestRoleWith`), so the two can't drift apart when the matrix changes. Where the right
+      also depends on the target (the export's project or timeline grant), that check runs on the
+      target, like the share-link guide button and `getGuideStart` do.
+    - **Below the minimum role:** no guide button (rule 4), no automatic start (rule 3), and it
+      can't be started by hand either. On the PostPin Guides page the row stays, greyed out, with
+      a lock and "Needs the <role> role" instead of its status, and its button disabled; its info
+      says which role the user has. So everyone sees what PostPin has to offer and what to ask for
+      (`roleCanDo` in `lib/guides.ts`).
+    - **No organization yet:** there is no role. Only guides for everyone (minimum Reviewer) and
+      the one that creates the organization (first-upload, `withoutOrganization`) can be done.
+    - **Role yes, target not (yet):** when the role has the right but nothing to use it on (no
+      export the user may share, no project with a grant), the row stays on the PostPin Guides
+      page and says what's missing (`restartHint`), and there is no guide button until there is a
+      target.
+    - **Write for the minimum role,** and make what higher roles can do on top
+      **optional** steps (`optional: true`, see "How a tour behaves"), like "New project" in the
+      navigation tour or the presets in categories. An optional step is left out when its element
+      isn't there, so the same tour fits every role that gets it. Name the right of each optional
+      step in the guide file ("optional: only for those who may …").
+    - **No claims about rights that differ by role:** "You can …" is fine for what every role from the
+      minimum up can do; for anything else a text says what the element does, never what "admins"
+      or "members" can do. Never offer what nobody can choose (nobody is invited as Owner).
+    - **Own versus all:** a reviewer changes only their own markers and categories, a member all
+      (`onlyOwn`). A guide that has the user change something does so on a thing the user creates
+      in the guide, never on an existing one that may not be theirs.
+    - **Next guide:** a tutorial or tour that suggests another guide only suggests one the user may
+      use (first-review's completion card points to the guide buttons in general, not to the
+      share links tour a reviewer doesn't have).
+    - **Guests** (rule 13) follow the same idea with the share link's settings in place of a role:
+      a panel the link hides is a skipped step.
+
 ## Guide files
 
 One Markdown file per guide, file name = guide `id` (kebab-case). Start from `_template.md` in the
@@ -125,7 +167,8 @@ id: first-upload # stable, never renamed once implemented (progress is stored by
 type: tutorial # tutorial | tour
 title: Your first upload # as shown on the PostPin Guides page
 status: planned # planned | in-progress | implemented
-audience: editor # editor | reviewer | admin | guest
+minRole: member # the lowest role that can do it at all: reviewer | member | admin | owner | guest (higher roles inherit; rule 17)
+permission: project.create # the right of roles.ts (area.action) it is about; minRole is the lowest role with it. Leave out if there is none
 trigger: automatic # automatic (tutorials, the postpin-guides tour) | manual (all other tours)
 starts: on the dashboard after sign-up # automatic: when and where; manual: where the guide button sits
 prerequisites: [] # guide ids or conditions
@@ -214,33 +257,33 @@ guide button next to the element of its first step.
 
 ### Tutorials
 
-| id                                                | Title                              | Audience |
-| ------------------------------------------------- | ---------------------------------- | -------- |
-| [first-upload](tutorials/first-upload.md)         | Your first upload                  | editor   |
-| [plugin-workflow](tutorials/plugin-workflow.md)   | Working from your NLE              | editor   |
-| [install-resolve](tutorials/install-resolve.md)   | Installing the Resolve plugin      | editor   |
-| [install-premiere](tutorials/install-premiere.md) | Installing the Premiere Pro plugin | editor   |
-| [install-desktop](tutorials/install-desktop.md)   | Installing PostPin Desktop         | editor   |
-| [first-review](tutorials/first-review.md)         | Your first review                  | editor   |
-| [sync-to-nle](tutorials/sync-to-nle.md)           | Feedback back in the NLE           | editor   |
+| id                                                | Title                              | Minimum role |
+| ------------------------------------------------- | ---------------------------------- | ------------ |
+| [first-upload](tutorials/first-upload.md)         | Your first upload                  | Member       |
+| [plugin-workflow](tutorials/plugin-workflow.md)   | Working from your NLE              | Member       |
+| [install-resolve](tutorials/install-resolve.md)   | Installing the Resolve plugin      | Reviewer     |
+| [install-premiere](tutorials/install-premiere.md) | Installing the Premiere Pro plugin | Reviewer     |
+| [install-desktop](tutorials/install-desktop.md)   | Installing PostPin Desktop         | Reviewer     |
+| [first-review](tutorials/first-review.md)         | Your first review                  | Reviewer     |
+| [sync-to-nle](tutorials/sync-to-nle.md)           | Feedback back in the NLE           | Reviewer     |
 
 ### Tours
 
-| id                                        | Title                   | Area          |
-| ----------------------------------------- | ----------------------- | ------------- |
-| [navigation](tours/navigation.md)         | Finding your way        | Basics        |
-| [marker-filter](tours/marker-filter.md)   | Filtering markers       | Review        |
-| [categories](tours/categories.md)         | Categories              | Review        |
-| [pointer-notes](tours/pointer-notes.md)   | Drawing and pointing    | Review        |
-| [marker-ranges](tours/marker-ranges.md)   | Marker ranges           | Review        |
-| [shortcuts](tours/shortcuts.md)           | Keyboard shortcuts      | Review        |
-| [timeline-view](tours/timeline-view.md)   | Timeline view           | Review        |
-| [import](tours/import.md)                 | Importing markers       | Review        |
-| [new-version](tours/new-version.md)       | Uploading a new version | Review        |
-| [share-link](tours/share-link.md)         | Share links             | Collaboration |
-| [guest-review](tours/guest-review.md)     | Reviewing as a guest    | Collaboration |
-| [invite-team](tours/invite-team.md)       | Inviting your team      | Collaboration |
-| [project-access](tours/project-access.md) | Project access          | Collaboration |
-| [screening](tours/screening.md)           | Screenings              | Collaboration |
-| [org-settings](tours/org-settings.md)     | Organization settings   | Organization  |
-| [postpin-guides](tours/postpin-guides.md) | PostPin Guides          | Guides        |
+| id                                        | Title                   | Area          | Minimum role |
+| ----------------------------------------- | ----------------------- | ------------- | ------------ |
+| [navigation](tours/navigation.md)         | Finding your way        | Basics        | Reviewer     |
+| [marker-filter](tours/marker-filter.md)   | Filtering markers       | Review        | Reviewer     |
+| [categories](tours/categories.md)         | Categories              | Review        | Reviewer     |
+| [pointer-notes](tours/pointer-notes.md)   | Drawing and pointing    | Review        | Reviewer     |
+| [marker-ranges](tours/marker-ranges.md)   | Marker ranges           | Review        | Reviewer     |
+| [shortcuts](tours/shortcuts.md)           | Keyboard shortcuts      | Review        | Reviewer     |
+| [timeline-view](tours/timeline-view.md)   | Timeline view           | Review        | Reviewer     |
+| [import](tours/import.md)                 | Importing markers       | Review        | Reviewer     |
+| [new-version](tours/new-version.md)       | Uploading a new version | Review        | Member       |
+| [share-link](tours/share-link.md)         | Share links             | Collaboration | Member       |
+| [guest-review](tours/guest-review.md)     | Reviewing as a guest    | Collaboration | Guest        |
+| [invite-team](tours/invite-team.md)       | Inviting your team      | Collaboration | Admin        |
+| [project-access](tours/project-access.md) | Project access          | Collaboration | Member       |
+| [screening](tours/screening.md)           | Screenings              | Collaboration | Member       |
+| [org-settings](tours/org-settings.md)     | Organization settings   | Organization  | Admin        |
+| [postpin-guides](tours/postpin-guides.md) | PostPin Guides          | Guides        | Reviewer     |

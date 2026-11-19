@@ -3,10 +3,11 @@ id: plugin-workflow
 type: tutorial
 title: Working from your NLE
 status: planned
-audience: editor
+minRole: member
+permission: export.upload
 trigger: automatic
 starts: from the welcome step of first-upload (the user picks the plugin path)
-prerequisites: []
+prerequisites: [may upload exports (`permission`)]
 code:
   - packages/postpin/src/routes/auth/device/+page.svelte
   - packages/plugin-core/
@@ -86,3 +87,7 @@ is opened, so `os-security` goes before `install`:
   install tutorial runs and goes on after it), not a nested guide. To decide when implementing
   whether that is two guides in `GuideHost` or one tutorial that includes the install steps.
 - Continues with [first-review](first-review.md).
+- Roles: rendering and uploading from the plugin needs `export.upload` (Member and up). A reviewer
+  can use the plugin to pull and push markers, but never uploads, so this tutorial isn't for them:
+  they start an install tutorial from the PostPin Guides page, and [sync-to-nle](sync-to-nle.md)
+  follows on its own once the plugin is connected and first-review is done.

@@ -3,7 +3,8 @@ id: tour-id
 type: tour
 title: Title shown in PostPin Guides
 status: planned
-audience: editor
+minRole: member # lowest role that can do it at all: reviewer | member | admin | owner | guest (README, rule 17)
+permission: area.action # the right of roles.ts it is about, minRole is the lowest role with it; leave out if none
 trigger: manual
 starts: when / from where it starts
 prerequisites: []
