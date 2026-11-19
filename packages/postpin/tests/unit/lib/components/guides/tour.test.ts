@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { fallbackStep, placeCard } from "#lib/components/guides/tour.ts";
+import {
+	GUIDE_BUTTON_TOKEN,
+	fallbackStep,
+	nextShownStep,
+	placeCard,
+	splitStepText,
+	type TourStep,
+} from "#lib/components/guides/tour.ts";
 import { shareLinkTour } from "#lib/components/guides/tours/share-link.ts";
 import { GUIDES, GUIDE_IDS } from "#lib/guides.ts";
 import { postpinGuidesTour } from "#lib/components/guides/tours/postpin-guides.ts";
@@ -78,5 +85,59 @@ describe("guide registry", () => {
 
 	it("has a guide id for every tour definition", () => {
 		for (const tour of TOURS) expect(GUIDE_IDS).toContain(tour.guideId);
+	});
+});
+
+describe("nextShownStep", () => {
+	const step = (id: string, skip = false): TourStep => ({
+		id,
+		title: id,
+		text: "",
+		advance: "next",
+		skipIf: () => skip,
+	});
+
+	it("is the step itself when it isn't left out", () => {
+		expect(nextShownStep([step("a"), step("b")], 1)).toBe(1);
+	});
+
+	it("goes past steps that are left out", () => {
+		expect(nextShownStep([step("a"), step("b", true), step("c", true), step("d")], 1)).toBe(3);
+	});
+
+	it("is null at the end", () => {
+		expect(nextShownStep([step("a"), step("b", true)], 1)).toBeNull();
+		expect(nextShownStep([step("a")], 1)).toBeNull();
+	});
+});
+
+describe("splitStepText", () => {
+	it("splits around every guide button", () => {
+		expect(splitStepText(`look for ${GUIDE_BUTTON_TOKEN} next to it`)).toEqual([
+			"look for ",
+			" next to it",
+		]);
+		expect(splitStepText("no icon")).toEqual(["no icon"]);
+	});
+});
+
+describe("postpin-guides tour", () => {
+	const byId = (id: string) => postpinGuidesTour.steps.find((s) => s.id === id)!;
+
+	it("starts with a centered welcome card", () => {
+		const first = postpinGuidesTour.steps[0]!;
+		expect(first.id).toBe("welcome");
+		expect(first.centered).toBe(true);
+		expect(first.advance).toBe("next");
+	});
+
+	it("only explains the PostPin Guides page, so nothing there starts another guide", () => {
+		for (const id of ["tutorials", "tours", "start", "filter", "switch"]) {
+			expect(byId(id).inert, id).toBe(true);
+		}
+	});
+
+	it("shows the guide button in the explanation of tours", () => {
+		expect(byId("tours").text).toContain(GUIDE_BUTTON_TOKEN);
 	});
 });

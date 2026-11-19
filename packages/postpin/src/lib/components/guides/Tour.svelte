@@ -7,7 +7,15 @@
 	import GraduationCap from "@lucide/svelte/icons/graduation-cap";
 	import { GUIDES, GUIDE_STYLE } from "#lib/guides.ts";
 	import { showGuideFeedback } from "./guide-feedback.svelte.ts";
-	import { fallbackStep, findAnchor, placeCard, type TourDefinition } from "./tour.ts";
+	import { untrack } from "svelte";
+	import {
+		fallbackStep,
+		findAnchor,
+		nextShownStep,
+		placeCard,
+		splitStepText,
+		type TourDefinition,
+	} from "./tour.ts";
 	import { layerOf, moveInto } from "./top-layer.ts";
 
 	interface Props {
@@ -22,11 +30,19 @@
 	const style = GUIDE_STYLE.tour;
 	const title = $derived(GUIDES.find((g) => g.id === tour.guideId)?.title ?? "");
 
-	let index = $state(0);
+	let index = $state(untrack(() => nextShownStep(tour.steps, 0) ?? 0));
 	const step = $derived(tour.steps[index]!);
 	const isDone = $derived(step.advance === "done");
-	/** Steps the user goes through, without the completion card */
-	const stepCount = $derived(tour.steps.filter((s) => s.advance !== "done").length);
+	/** A card in the middle of the screen, nothing highlighted */
+	const isCentered = $derived(isDone || !!step.centered);
+	/**
+	 * The steps the user goes through (no completion card), as far as known at the start: the
+	 * counter shouldn't jump over steps left out (e.g. the way to a page the tour starts on)
+	 */
+	const counted = untrack(() =>
+		tour.steps.filter((s) => s.advance !== "done" && !s.skipIf?.()).map((s) => s.id),
+	);
+	const stepNumber = $derived(counted.indexOf(step.id) + 1);
 
 	let root = $state<HTMLElement>();
 	let card = $state<HTMLElement>();
@@ -53,8 +69,9 @@
 
 	function advance() {
 		if (step.feedback) showGuideFeedback(step.feedback, "tour");
-		if (index === tour.steps.length - 1) onfinish();
-		else go(index + 1);
+		const next = nextShownStep(tour.steps, index + 1);
+		if (next === null) onfinish();
+		else go(next);
 	}
 
 	// Every frame: elements move (scrolling, dialogs animating in), appear and disappear
@@ -64,13 +81,14 @@
 			frame = requestAnimationFrame(tick);
 			viewport = { width: window.innerWidth, height: window.innerHeight };
 			const current = tour.steps[index]!;
-			if (current.advance === "done") {
+			if (current.advance === "done" || current.centered) {
 				// stays in the layer it is in: a dialog the tour led into stays open behind the card
 				anchor = null;
 				rect = null;
 				return;
 			}
-			const next = tour.steps[index + 1];
+			const nextIndex = nextShownStep(tour.steps, index + 1);
+			const next = nextIndex === null ? undefined : tour.steps[nextIndex];
 			if (current.advance === "appears" && next && findAnchor(tour.guideId, next.id)) {
 				advance();
 				return;
@@ -91,6 +109,13 @@
 			rect = null;
 			missingSince ||= performance.now();
 			if (performance.now() - missingSince < GRACE_MS) return;
+			if (current.optional) {
+				missingSince = 0;
+				advance();
+				return;
+			}
+			// after a navigation: the page is still on its way
+			if (current.waitForElement) return;
 			const back = fallbackStep(index, (i) => !!findAnchor(tour.guideId, tour.steps[i]!.id));
 			if (back !== null) {
 				missingSince = 0;
@@ -101,14 +126,18 @@
 		return () => cancelAnimationFrame(frame);
 	});
 
-	const visible = $derived(isDone || !!rect);
-	/** May be used while the tour runs: the highlighted element and the card */
-	const allowed = (target: EventTarget | null) =>
-		target instanceof Node &&
-		(!!card?.contains(target) ||
-			!!anchor?.contains(target) ||
+	const visible = $derived(isCentered || !!rect);
+	/** May be used while the tour runs: the card, and the highlighted element unless it's inert */
+	const allowed = (target: EventTarget | null) => {
+		if (!(target instanceof Node)) return false;
+		if (card?.contains(target)) return true;
+		if (!anchor || step.inert) return false;
+		return (
+			anchor.contains(target) ||
 			// a label passes its click on to its input (e.g. the checkbox of the mobile menu)
-			(anchor instanceof HTMLLabelElement && anchor.control === target));
+			(anchor instanceof HTMLLabelElement && anchor.control === target)
+		);
+	};
 
 	$effect(() => {
 		// "click" steps: the click itself does its job, the tour only takes note
@@ -184,6 +213,21 @@
 	);
 </script>
 
+<!-- The guide button, as the user will meet it next to a feature -->
+{#snippet stepText(text: string)}
+	{#each splitStepText(text) as part, i (i)}
+		{#if i > 0}
+			<span
+				class="mx-0.5 inline-flex size-5 items-center justify-center rounded-full align-middle {style.dot} text-accent-content"
+				role="img"
+				aria-label="guide button"
+			>
+				<GraduationCap class="size-3" />
+			</span>
+		{/if}{part}
+	{/each}
+{/snippet}
+
 <div
 	bind:this={root}
 	class="pointer-events-none fixed inset-0 z-[1000]"
@@ -221,7 +265,7 @@
 			style:height="{hole.height}px"
 			style:left="{hole.left + hole.width}px"
 		></div>
-	{:else if isDone}
+	{:else if isCentered}
 		<div class="pointer-events-auto absolute inset-0 bg-black/55"></div>
 	{/if}
 
@@ -244,7 +288,8 @@
 			<GraduationCap class="size-4" />
 			{style.label} · {title}
 			{#if !isDone}
-				<span class="ml-auto font-normal text-base-content/50">{index + 1} / {stepCount}</span>
+				<span class="ml-auto font-normal text-base-content/50">{stepNumber} / {counted.length}</span
+				>
 			{/if}
 		</div>
 
@@ -267,21 +312,23 @@
 			<div class="mt-3 flex flex-col items-center gap-2 text-center">
 				<CircleCheck class="size-10 text-success" />
 				<h3 class="font-bold">{step.title}</h3>
-				<p class="text-sm text-base-content/80">{step.text}</p>
+				<p class="text-sm text-base-content/80">{@render stepText(step.text)}</p>
 			</div>
 			<button type="button" class="btn mt-4 w-full btn-sm {style.button}" onclick={onfinish}>
 				Done
 			</button>
 		{:else}
 			<h3 class="mt-2 font-bold">{step.title}</h3>
-			<p class="mt-1 text-sm text-base-content/80">{step.text}</p>
+			<p class="mt-1 text-sm text-base-content/80">{@render stepText(step.text)}</p>
 			<div class="mt-3 flex items-center gap-2">
 				<button type="button" class="btn btn-ghost btn-xs" onclick={() => (confirmSkip = true)}>
 					Skip tour
 				</button>
 				<span class="flex-1"></span>
 				{#if step.advance === "next"}
-					<button type="button" class="btn btn-sm {style.button}" onclick={advance}>Next</button>
+					<button type="button" class="btn btn-sm {style.button}" onclick={advance}>
+						{step.nextLabel ?? "Next"}
+					</button>
 				{:else if step.advance === "click"}
 					<span class="text-xs text-base-content/60">Click the highlighted element</span>
 				{/if}

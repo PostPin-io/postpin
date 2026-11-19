@@ -92,7 +92,7 @@
 			</h1>
 			<p class="mt-1 text-base-content/70">Start any tutorial or tour, as often as you like.</p>
 		</div>
-		<div class="flex w-full gap-2 sm:w-auto">
+		<div class="flex w-full gap-2 sm:w-auto" data-guide="postpin-guides/filter">
 			<label class="input min-w-0 flex-1 sm:w-72">
 				<Search class="size-4 opacity-60" />
 				<input
@@ -117,6 +117,7 @@
 
 	<label
 		class="flex cursor-pointer items-start gap-3 rounded-box border border-base-300 bg-base-100 p-3"
+		data-guide="postpin-guides/switch"
 	>
 		<input
 			type="checkbox"
@@ -138,7 +139,11 @@
 		{#each COLUMNS as column (column.type)}
 			{@const style = GUIDE_STYLE[column.type]}
 			{@const guides = GUIDES.filter((g) => g.type === column.type && shown(g))}
-			<section class="flex flex-col gap-2" aria-labelledby="guides-{column.type}">
+			<section
+				class="flex flex-col gap-2"
+				aria-labelledby="guides-{column.type}"
+				data-guide="postpin-guides/{column.type === 'tutorial' ? 'tutorials' : 'tours'}"
+			>
 				<div>
 					<h2 id="guides-{column.type}" class="flex items-center gap-2 text-lg font-bold">
 						<span class="size-2.5 rounded-full {style.dot}"></span>
@@ -147,7 +152,7 @@
 					<p class="text-sm text-base-content/70">{column.text}</p>
 				</div>
 
-				{#each guides as guide (guide.id)}
+				{#each guides as guide, i (guide.id)}
 					{@const status = statusOf(progress, guide.id) ?? "NEW"}
 					<article
 						class="rounded-box border border-l-4 border-base-300 bg-base-100 px-3 py-2 {style.border}"
@@ -178,6 +183,7 @@
 								type="button"
 								class="btn shrink-0 btn-xs {style.button}"
 								disabled={busy}
+								data-guide={column.type === "tour" && i === 0 ? "postpin-guides/start" : undefined}
 								onclick={() => start(guide)}
 							>
 								{status === "NEW"
