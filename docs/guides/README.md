@@ -49,8 +49,10 @@ feature you can discover later, it's a **tour**.
    reviewer at a feature only members have).
    **Exception:** the [postpin-guides](tours/postpin-guides.md) tour explains the guide system
    itself (guide buttons, the PostPin Guides page, switching guides off), so it starts
-   automatically: once per user, as soon as no tutorial is running (for a new account right after
-   first-upload, for an existing account on its next visit).
+   automatically, once per user, but always after the first tutorial: only once first-upload is
+   completed or skipped, or for someone who can't do it (in an organization without the right to
+   create projects). For a new account that is right after first-upload, for an existing account
+   its next visit.
 5. **Guides can be switched off** on the PostPin Guides page, for the user, all at once: then no
    tutorial and no tour starts on its own and no guide button is shown. A guide that is running
    when they are switched off disappears at once and stays "in progress". The PostPin Guides page
@@ -82,7 +84,12 @@ feature you can discover later, it's a **tour**.
     needs a connected plugin). Prerequisites are listed in the guide's frontmatter.
 13. **Guests:** guides for share-link visitors (no account) can't store progress on a user; they
     must work without it.
-14. **Copy:** UI text in guides is English, short, and addresses the user directly.
+14. **Copy:** UI text in guides is English and addresses the user directly.
+15. **As short as possible, as long as necessary.** Every tour text has to earn its place:
+    - one idea per step; the title names it, the text says what to do or why it matters,
+    - usually one or two short sentences (aim for 25 words at most),
+    - don't describe what the highlighted element already shows, and don't repeat earlier steps,
+    - longer only where the user would otherwise be stuck (e.g. a step they have to act on).
 
 ## Guide files
 
@@ -144,6 +151,16 @@ guide button next to the element of its first step.
 
 - **Steps advance** by `"next"` (Next button), `"click"` (the user clicks the highlighted element,
   which does what it always does) or `"appears"` (as soon as the next step's element shows up).
+- **Step options** (`TourStep` in `tour.ts`): `centered` (no element, a card in the middle with
+  Next, e.g. a welcome), `nextLabel`, `skipIf` (left out as the tour gets to it, e.g. the way to a
+  page the tour already is on), `optional` (left out when its element isn't there),
+  `waitForElement` (after a navigation: waits instead of going back), `inert` (the element is only
+  explained, clicks on it are blocked too). `{guide-button}` in a step's text shows the guide
+  button icon. One element can serve several steps: `data-guide="tour/one tour/two"`.
+- **Tour options** (`TourDefinition`): `spansPages` for a tour whose steps navigate (otherwise a
+  tour started from a guide button pauses when the user leaves the page).
+- **Availability:** a tour that needs something to exist (e.g. an export to walk to) reports it in
+  `getGuideAvailability()`; its guide button only shows when it can run.
 - **Blocking:** a transparent layer over the whole screen takes every click, except in a cut-out over
   the highlighted element. Focus is kept inside the highlighted element and the tour card; Escape
   and the app's keyboard shortcuts are swallowed. Presses on the dimming or the card don't move
@@ -171,17 +188,21 @@ guide button next to the element of its first step.
 
 ### Tutorials
 
-| id                                              | Title                    | Audience |
-| ----------------------------------------------- | ------------------------ | -------- |
-| [first-upload](tutorials/first-upload.md)       | Your first upload        | editor   |
-| [plugin-workflow](tutorials/plugin-workflow.md) | Working from your NLE    | editor   |
-| [first-review](tutorials/first-review.md)       | Your first review        | editor   |
-| [sync-to-nle](tutorials/sync-to-nle.md)         | Feedback back in the NLE | editor   |
+| id                                                | Title                                 | Audience |
+| ------------------------------------------------- | ------------------------------------- | -------- |
+| [first-upload](tutorials/first-upload.md)         | Your first upload                     | editor   |
+| [plugin-workflow](tutorials/plugin-workflow.md)   | Working from your NLE                 | editor   |
+| [install-resolve](tutorials/install-resolve.md)   | Installing the DaVinci Resolve plugin | editor   |
+| [install-premiere](tutorials/install-premiere.md) | Installing the Premiere Pro plugin    | editor   |
+| [install-desktop](tutorials/install-desktop.md)   | Installing PostPin Desktop            | editor   |
+| [first-review](tutorials/first-review.md)         | Your first review                     | editor   |
+| [sync-to-nle](tutorials/sync-to-nle.md)           | Feedback back in the NLE              | editor   |
 
 ### Tours
 
 | id                                        | Title                   | Area          |
 | ----------------------------------------- | ----------------------- | ------------- |
+| [navigation](tours/navigation.md)         | Finding your way        | Basics        |
 | [marker-filter](tours/marker-filter.md)   | Filtering markers       | Review        |
 | [categories](tours/categories.md)         | Categories              | Review        |
 | [pointer-notes](tours/pointer-notes.md)   | Drawing and pointing    | Review        |

@@ -24,23 +24,24 @@ code:
 Each step is a popover on one highlighted element; the rest is dimmed and can't be used. The user
 does the real thing (opens the dialog, saves the link); the tour follows.
 
-1. `open` (click): **Highlights:** the share button of the export in the breadcrumbs. **Text:** "Send
-   this export to people who don't have a PostPin account. Open the share links here."
+1. `open` (click): **Highlights:** the share button of the export in the breadcrumbs. **Title:**
+   "Share this export". **Text:** "Send it to people without a PostPin account. Open the share
+   links."
 2. `new` (appears: goes on once the form is open): **Highlights:** the + button of the share links.
-   **Text:** "Anyone with a share link can watch this export and leave markers, without an account.
-   Create a new link with +." Skipped by itself when the form opens right away (no links yet).
-3. `panels` (next): **Highlights:** panel layout and note of the form. **Text:** "Choose the panels
-   guests get: the timeline, the markers, or just the video. Click a panel to switch it on or off.
-   The note is shown in the player."
-4. `expiry` (next): **Highlights:** the expiry options. **Text:** "Pick how long the link works. You
-   can renew or revoke it anytime."
-5. `save` (click): **Highlights:** the save button. **Text:** "Save the link to create it."
-6. `copy` (click): **Highlights:** the copy button of the new link. **Text:** "Copy the link and send
-   it to your reviewer."
-7. `done` (done): **Completion card. Title:** "✓ Your share link is ready". **Text:** "It's copied,
-   paste it anywhere. Next to it you can also show a QR code or send it by e-mail. You can start
-   this tour again under PostPin Guides in the account menu." **Button:** "Done". The tour disappears; the
-   sharing dialog stays open with the new link.
+   **Title:** "Share links". **Text:** "Anyone with a link can watch and leave markers. Create one
+   with +." Skipped by itself when the form opens right away (no links yet).
+3. `panels` (next): **Highlights:** panel layout and note of the form. **Title:** "What guests
+   see". **Text:** "Switch the timeline and marker panels on or off. The note shows in their
+   player."
+4. `expiry` (next): **Highlights:** the expiry options. **Title:** "How long it works". **Text:**
+   "You can renew or revoke the link anytime."
+5. `save` (click): **Highlights:** the save button. **Title:** "Create the link". **Text:** "Save
+   it."
+6. `copy` (click): **Highlights:** the copy button of the new link. **Title:** "Send it". **Text:**
+   "Copy the link and send it to your reviewer."
+7. `done` (done): **Completion card. Title:** "✓ Your share link is ready". **Text:** "Paste it
+   anywhere. A QR code and e-mail are right next to it. Restart this tour under PostPin Guides."
+   **Button:** "Done". The tour disappears; the sharing dialog stays open with the new link.
 
 ## Success feedback
 
