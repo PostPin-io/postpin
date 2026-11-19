@@ -3,5 +3,8 @@ import { createStore } from "./store";
 
 export const settingsStore = createStore<{ settings: Settings; useMediaEncoder: boolean }>(
 	"settings.json",
-	{ settings: { renderToDisk: false, outputPath: "", filename: "" }, useMediaEncoder: true },
+	{
+		settings: { renderToDisk: false, outputPath: "", filename: "", renderPreset: "" },
+		useMediaEncoder: true,
+	},
 );

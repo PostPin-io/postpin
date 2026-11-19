@@ -446,3 +446,85 @@ describe("renderAndUpload with review versions encoded by the plugin", () => {
 		expect(nle.renderPreview).not.toHaveBeenCalled();
 	});
 });
+
+describe("renderAndUpload with a disk render", () => {
+	const diskRender = { preset: "ProRes Master", targetDir: "/masters", filename: "cut3" };
+	const runWithDisk = (options: { onDiskRenderProgress?: ReturnType<typeof vi.fn> } = {}) =>
+		renderAndUpload({
+			nle,
+			host: host as unknown as HostBridge,
+			client,
+			projectId: "p1",
+			timelineId: "t1",
+			onStep,
+			diskRender,
+			...options,
+		});
+
+	it("renders nothing extra without the option", async () => {
+		await run();
+		expect(nle.renderToDisk).not.toHaveBeenCalled();
+	});
+
+	it("renders to disk after the preview, with the chosen preset and folder", async () => {
+		const onDiskRenderProgress = vi.fn();
+		nle.renderToDisk.mockImplementation(async (_options, onProgress) => {
+			onProgress({ percent: 40, estimatedTimeRemainingMs: 500 });
+			return "/masters/cut3.mov";
+		});
+		const result = await runWithDisk({ onDiskRenderProgress });
+
+		expect(result.exportId).toBe("exp-1");
+		await expect(result.diskRender).resolves.toEqual({ path: "/masters/cut3.mov" });
+		expect(nle.renderToDisk).toHaveBeenCalledWith(diskRender, expect.any(Function));
+		expect(nle.renderPreview.mock.invocationCallOrder[0]).toBeLessThan(
+			nle.renderToDisk.mock.invocationCallOrder[0]!,
+		);
+		expect(onDiskRenderProgress).toHaveBeenCalledWith({
+			percent: 40,
+			estimatedTimeRemainingMs: 500,
+		});
+	});
+
+	it("finishes the upload without waiting for the disk render", async () => {
+		let finishDiskRender: (path: string) => void = () => {};
+		nle.renderToDisk.mockReturnValue(new Promise((resolve) => (finishDiskRender = resolve)));
+		const result = await runWithDisk();
+
+		expect(api.completeUpload).toHaveBeenCalled();
+		finishDiskRender("/masters/cut3.mov");
+		await expect(result.diskRender).resolves.toEqual({ path: "/masters/cut3.mov" });
+	});
+
+	it("still uploads when the disk render fails, and returns its error", async () => {
+		nle.renderToDisk.mockRejectedValue(new Error("Disk full"));
+		const result = await runWithDisk();
+
+		expect(api.completeUpload).toHaveBeenCalled();
+		await expect(result.diskRender).resolves.toEqual({ error: "Disk full" });
+	});
+
+	it("waits for the disk render before failing, the NLE is still busy with it", async () => {
+		let finishDiskRender: (path: string) => void = () => {};
+		nle.renderToDisk.mockReturnValue(new Promise((resolve) => (finishDiskRender = resolve)));
+		api.createExport.mockRejectedValue(new Error("Server down"));
+
+		let settled = false;
+		const running = runWithDisk().catch((err: unknown) => {
+			settled = true;
+			throw err;
+		});
+		await vi.waitFor(() => expect(api.createExport).toHaveBeenCalled());
+		await new Promise((resolve) => setTimeout(resolve, 10));
+		expect(settled).toBe(false);
+
+		finishDiskRender("/masters/cut3.mov");
+		await expect(running).rejects.toThrow("Server down");
+	});
+
+	it("doesn't render to disk when the preview fails", async () => {
+		nle.renderPreview.mockRejectedValue(new Error("Render failed"));
+		await expect(runWithDisk()).rejects.toThrow("Render failed");
+		expect(nle.renderToDisk).not.toHaveBeenCalled();
+	});
+});

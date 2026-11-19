@@ -11,6 +11,7 @@ import {
 	UploadedPart,
 	UploadProgress,
 	Settings,
+	DiskRenderOptions,
 	LoginConfig,
 	LoginCode,
 	ProbedMedia,
@@ -34,6 +35,7 @@ import {
 	$eipc_validator$_UploadedPart,
 	$eipc_validator$_UploadProgress,
 	$eipc_validator$_Settings,
+	$eipc_validator$_DiskRenderOptions,
 	$eipc_validator$_LoginConfig,
 	$eipc_validator$_LoginCode,
 	$eipc_validator$_ProbedMedia,
@@ -44,7 +46,7 @@ import {
 	$eipc_validator$_EncodedProxy,
 	$eipc_validator$_TimelineInfo,
 } from "../common-runtime/PostPin.js";
-const $$ipcPrefix$$ = "$eipc_message$_d189e49b54d277201894f5c9d4e5f531_$_PostPin_$_";
+const $$ipcPrefix$$ = "$eipc_message$_7c18d40f7e3b38512816e4a3bf1eb423_$_PostPin_$_";
 import { webFrame } from "electron/renderer";
 function $eipc_event_validator$_App() {
 	if (
@@ -173,6 +175,17 @@ export const NleAPI: Partial<INleAPIRenderer> = {
 	onRenderProgress(fn: (progress: RenderProgress) => void) {
 		const handler = (e: unknown, progress: RenderProgress) => fn(progress);
 		const $$channel$$ = $$ipcPrefix$$ + "NleAPI_$_renderProgress";
+		ipcRenderer.on($$channel$$, handler);
+		return () => {
+			ipcRenderer.removeListener($$channel$$, handler);
+		};
+	},
+	renderToDisk(options: DiskRenderOptions) {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "NleAPI_$_renderToDisk", options);
+	},
+	onDiskRenderProgress(fn: (progress: RenderProgress) => void) {
+		const handler = (e: unknown, progress: RenderProgress) => fn(progress);
+		const $$channel$$ = $$ipcPrefix$$ + "NleAPI_$_diskRenderProgress";
 		ipcRenderer.on($$channel$$, handler);
 		return () => {
 			ipcRenderer.removeListener($$channel$$, handler);

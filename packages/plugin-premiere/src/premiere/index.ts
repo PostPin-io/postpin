@@ -45,6 +45,10 @@ export function createPremiereBridge(): NleBridge {
 		},
 		getRenderPresets: async () => [],
 		renderPreview: async (onProgress) => renderPreview((await getActive()).sequence, onProgress),
+		// Capabilities.renderToDisk is false, so the UI never offers it
+		renderToDisk: async () => {
+			throw new Error("Premiere Pro can't render to disk from PostPin yet");
+		},
 		buildTimelineSnapshot: async () => {
 			const { sequence } = await getActive();
 			return buildTimelineSnapshot(sequence, await getTiming(sequence));

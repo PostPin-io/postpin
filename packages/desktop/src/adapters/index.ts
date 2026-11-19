@@ -60,6 +60,7 @@ export function createSwitchBridge(): NleBridge {
 		clearMarkers: () => busy(() => current().clearMarkers()),
 		getRenderPresets: async () => current().getRenderPresets(),
 		renderPreview: (onProgress) => busy(() => current().renderPreview(onProgress)),
+		renderToDisk: (options, onProgress) => busy(() => current().renderToDisk(options, onProgress)),
 		buildTimelineSnapshot: async () => current().buildTimelineSnapshot(),
 	};
 }

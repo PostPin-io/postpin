@@ -115,12 +115,15 @@
 	</TutorialCard>
 {:else if showMarkers && markerPage === 2}
 	<TutorialCard title="Sync with your plugin" icon={RefreshCw} progress="3 of 4" onskip={skip}>
-		<p>Both buttons are in the PostPin plugin of your editing software.</p>
 		<p>
-			<strong>Push markers ↑</strong> uploads the markers of your timeline.
+			Both buttons are in the Markers box of the PostPin plugin in your editing software. Their
+			arrow shows which way the markers go.
 		</p>
 		<p>
-			<strong>↓ Pull comments</strong> downloads the notes onto your timeline.
+			<strong>Editing app → PostPin</strong> uploads the markers of your timeline.
+		</p>
+		<p>
+			<strong>Editing app ← PostPin</strong> brings the markers and notes onto your timeline.
 		</p>
 		<p>
 			<a class="link" href={DOC_LINKS.markerSync} target="_blank" rel="noopener noreferrer">

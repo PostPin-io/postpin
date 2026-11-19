@@ -121,6 +121,22 @@ export function $eipc_validator$_Settings(value: any): boolean {
 
 	// Settings.filename
 	if (!(typeof value.filename === "string")) return false;
+
+	// Settings.renderPreset
+	if (!(typeof value.renderPreset === "string")) return false;
+	return true;
+}
+export function $eipc_validator$_DiskRenderOptions(value: any): boolean {
+	if (!value || typeof value !== "object") return false;
+
+	// DiskRenderOptions.preset
+	if (!(typeof value.preset === "string")) return false;
+
+	// DiskRenderOptions.targetDir
+	if (!(typeof value.targetDir === "string")) return false;
+
+	// DiskRenderOptions.filename
+	if (!(typeof value.filename === "string")) return false;
 	return true;
 }
 export function $eipc_validator$_LoginConfig(value: any): boolean {
