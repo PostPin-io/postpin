@@ -1,0 +1,165 @@
+# PostPin Guides
+
+PostPin Guides are the in-app help system: **tutorials** teach the essential mechanics step by step,
+**tours** explain a single feature. This folder is the source of truth for what every guide does. It
+grows with the product: whenever a feature or its UI changes, the affected guides are updated here in
+the same change, and the implementation follows these files (by hand or with AI).
+
+```
+docs/guides/
+├── README.md        system and rules (this file)
+├── tutorials/       one file per tutorial
+│   └── _template.md
+└── tours/           one file per tour
+    └── _template.md
+```
+
+## Tutorials and tours
+
+|              | Tutorial                                                   | Tour                                                      |
+| ------------ | ---------------------------------------------------------- | --------------------------------------------------------- |
+| Purpose      | Learn the essential mechanics of PostPin, step by step     | Learn a single feature                                    |
+| Interaction  | Interactive: the user performs each step, the guide reacts | Popovers next to the relevant UI elements                 |
+| Presentation | Usually takes up the whole screen                          | Everything except the relevant area is dimmed (spotlight) |
+| Icon         | `graduation-cap` (lucide)                                  | `graduation-cap` (lucide)                                 |
+| Style        | One shared style for all tutorials: `primary`              | One shared style for all tours: `accent`                  |
+| Input        | Only the tutorial screen (and dialogs it opens)            | Only the highlighted element and the tour card            |
+| Ending       | Completion screen, then the tutorial closes                | Completion card, then the tour disappears entirely        |
+
+Rule of thumb: if you can't work with PostPin meaningfully without it, it's a **tutorial**. If it's a
+feature you can discover later, it's a **tour**.
+
+## Rules
+
+1. **Icon:** every guide uses lucide `graduation-cap`, nothing else.
+2. **Style:** all tutorials look alike (daisyUI `primary`), all tours look alike (daisyUI `accent`).
+   The color tells tutorial from tour, not one guide from another. Never `secondary`.
+3. **One action at a time:** while a guide runs, only what the current step is about can be used.
+   A tour blocks clicks, keyboard focus and shortcuts everywhere except on the highlighted element
+   and the tour card; Escape does nothing (it neither closes a dialog nor the tour). Scrolling stays
+   possible.
+4. **Skipping is explicit:** a guide ends only by finishing it or by its "Skip" button, which asks
+   once for confirmation ("Skip this tour? You can start it again under PostPin Guides in the account menu.").
+   Clicking outside, Escape or closing a dialog never skips. Leaving the page pauses it; it is
+   still "in progress" and starts again on its own next time.
+5. **Clean ending:** every guide ends with a completion step: a confirmation of what the user can
+   do now, a pointer to PostPin Guides, and a single "Done" button. On "Done" the guide disappears
+   at once (overlay, dimming, highlight; nothing may stay behind) and is stored as completed. What
+   the user made along the way stays, e.g. the share link and the open dialog it is in.
+6. **Success feedback:** after a meaningful step (sign-up done, upload done, sync done, link copied)
+   the user gets a short positive confirmation. Each guide lists its feedback moments.
+7. **Progress per user:** completed (and skipped) guides are stored per user. A completed guide never
+   starts automatically again.
+8. **Restart:** every guide can be started (again) on the **PostPin Guides** page (`/guides`, in the
+   account menu): two columns, tutorials and tours, with their status and one text filter for both.
+9. **Prerequisites:** a guide only starts when its prerequisites are met (e.g. the sync tutorial needs
+   a connected plugin). Prerequisites are listed in the guide's frontmatter.
+10. **Guests:** guides for share-link visitors (no account) can't store progress on a user; they
+    must work without it.
+11. **Copy:** UI text in guides is English, short, and addresses the user directly.
+
+## Guide files
+
+One Markdown file per guide, file name = guide `id` (kebab-case). Start from `_template.md` in the
+respective folder.
+
+### Frontmatter
+
+```yaml
+id: first-upload # stable, never renamed once implemented (progress is stored by id)
+type: tutorial # tutorial | tour
+title: Your first upload # as shown on the PostPin Guides page
+status: planned # planned | in-progress | implemented
+audience: editor # editor | reviewer | admin | guest
+starts: automatically after sign-up # when / from where the guide starts
+prerequisites: [] # guide ids or conditions
+code: [] # files that implement the guide or the UI it explains
+```
+
+### Body
+
+- **Goal:** one or two sentences: what the user can do afterwards.
+- **Steps:** numbered, each with a stable step id in backticks, what the user sees and what
+  completes the step. Step ids are stable like guide ids.
+- **Success feedback:** where confirmations appear and what they say.
+- **Notes:** edge cases, open questions.
+
+### Anchors in code
+
+UI elements a guide points at get a `data-guide="<guide-id>/<step-id>"` attribute, so guide files and
+code can be matched by searching for the id.
+
+## Implementation
+
+All in `packages/postpin/src/`:
+
+| What                                      | Where                                                                 |
+| ----------------------------------------- | --------------------------------------------------------------------- |
+| Registry: ids, titles, type styles        | `lib/guides.ts` (`GUIDES`, `GUIDE_STYLE`)                             |
+| Progress per user (`GuideProgress` table) | `lib/components/guides/guides.remote.ts`                              |
+| Which guide runs where                    | `lib/components/guides/GuideHost.svelte` (in `routes/+layout.svelte`) |
+| Tutorial frame (full screen)              | `lib/components/guides/TutorialShell.svelte`                          |
+| Tutorials                                 | `lib/components/guides/tutorials/<Name>Tutorial.svelte`               |
+| Tour engine (spotlight + popover)         | `lib/components/guides/Tour.svelte`, `tour.ts`                        |
+| Tours (step lists)                        | `lib/components/guides/tours/<id>.ts`                                 |
+| Positive feedback                         | `showGuideFeedback()` in `guide-feedback.svelte.ts`                   |
+| PostPin Guides page                       | `routes/(root)/guides/+page.svelte` (filter: `filter.ts`)             |
+
+Adding a guide: write its file here, add it to `GUIDES`, implement it (a tour is a step list plus
+`data-guide` anchors), and decide in `GuideHost` where and when it starts. Existing accounts should
+not be surprised by it: mark it completed for them in the migration if it starts on its own.
+
+### How a tour behaves
+
+- **Steps advance** by `"next"` (Next button), `"click"` (the user clicks the highlighted element,
+  which does what it always does) or `"appears"` (as soon as the next step's element shows up).
+- **Blocking:** a transparent layer over the whole screen takes every click, except in a cut-out over
+  the highlighted element. Focus is kept inside the highlighted element and the tour card; Escape
+  and the app's keyboard shortcuts are swallowed. The dimming is the visible part of that layer.
+- **Dialogs:** overlays move into an open modal dialog when their element is in one, so they stay
+  visible and clickable (`top-layer.ts`). Since Escape and clicks outside are blocked, the user
+  can't close a dialog the tour is in by accident.
+- **Missing element:** a step waits for its element. If it disappears anyway (e.g. the page
+  re-rendered), the tour goes back to the latest earlier step whose element is there.
+- **Last step:** the completion card (`advance: "done"`), centered on the screen, nothing
+  highlighted, nothing blocked behind it except the dimming. "Done" stores the tour as completed
+  and removes the tour immediately, without waiting for the server.
+- **Skip:** the "Skip tour" button in the card switches the card to a confirmation ("Skip this
+  tour? You can start it again under PostPin Guides in the account menu." · "Skip" / "Continue tour").
+
+## Keeping guides up to date
+
+- Changing a feature that a guide explains → update its guide file in the same PR.
+- Adding a feature → consider whether it needs a tour; if so, add a file with `status: planned`.
+- Implementing or changing a guide → update `status` and `code` in its frontmatter.
+
+## Overview
+
+### Tutorials
+
+| id                                              | Title                    | Audience |
+| ----------------------------------------------- | ------------------------ | -------- |
+| [first-upload](tutorials/first-upload.md)       | Your first upload        | editor   |
+| [plugin-workflow](tutorials/plugin-workflow.md) | Working from your NLE    | editor   |
+| [first-review](tutorials/first-review.md)       | Your first review        | editor   |
+| [sync-to-nle](tutorials/sync-to-nle.md)         | Feedback back in the NLE | editor   |
+
+### Tours
+
+| id                                        | Title                   | Area          |
+| ----------------------------------------- | ----------------------- | ------------- |
+| [marker-filter](tours/marker-filter.md)   | Filtering markers       | Review        |
+| [categories](tours/categories.md)         | Categories              | Review        |
+| [pointer-notes](tours/pointer-notes.md)   | Drawing and pointing    | Review        |
+| [marker-ranges](tours/marker-ranges.md)   | Marker ranges           | Review        |
+| [shortcuts](tours/shortcuts.md)           | Keyboard shortcuts      | Review        |
+| [timeline-view](tours/timeline-view.md)   | Timeline view           | Review        |
+| [import](tours/import.md)                 | Importing markers       | Review        |
+| [new-version](tours/new-version.md)       | Uploading a new version | Review        |
+| [share-link](tours/share-link.md)         | Share links             | Collaboration |
+| [guest-review](tours/guest-review.md)     | Reviewing as a guest    | Collaboration |
+| [invite-team](tours/invite-team.md)       | Inviting your team      | Collaboration |
+| [project-access](tours/project-access.md) | Project access          | Collaboration |
+| [screening](tours/screening.md)           | Screenings              | Collaboration |
+| [org-settings](tours/org-settings.md)     | Organization settings   | Organization  |
+| [postpin-guides](tours/postpin-guides.md) | PostPin Guides          | Organization  |
