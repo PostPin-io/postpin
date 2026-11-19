@@ -56,6 +56,8 @@
 		frameCount: number;
 		/** Phones: markers are edited in a fullscreen modal instead of the pane below the list */
 		mobile?: boolean;
+		/** The review shows the selected markers' pointers on the picture */
+		selectedMarkerIds?: string[];
 	}
 	let {
 		exportId,
@@ -67,6 +69,7 @@
 		startFrame,
 		frameCount,
 		mobile = false,
+		selectedMarkerIds = $bindable([]),
 	}: Props = $props();
 	let updateMarkerComponent: UpdateMarker | null = null;
 
@@ -120,8 +123,6 @@
 	const deletable = $derived(
 		markers.filter((m) => selectedMarkerIds.includes(m.id)).every((m) => m.canDelete),
 	);
-
-	let selectedMarkerIds = $state<string[]>([]);
 
 	let search = $state("");
 
@@ -389,8 +390,14 @@
 	export function createMarkerAtPlayhead() {
 		return addAndSelectMarker();
 	}
+	/** Only sets the marker: nothing is selected or opened, so the next one can follow at once */
+	export function createQuickMarker() {
+		return addMarkerAtPlayhead();
+	}
 	export function setSelectedMarkerId(id: string | null) {
 		selectedMarkerIds = id ? [id] : [];
+		// Like a click on the card: a shift-click next selects the range from here
+		anchorMarkerId = id;
 	}
 
 	let anchorMarkerId: string | null = null;

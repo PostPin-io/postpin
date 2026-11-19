@@ -11,6 +11,8 @@ import {
 import { error } from "@sveltejs/kit";
 
 import { resolveShareLink } from "#lib/server/share-links.ts";
+import { getLiveScreening } from "#lib/server/live.ts";
+import type { ScreeningMessage } from "#lib/components/screening/screening-live.ts";
 
 /**
  * What the share page needs before it hands over to ExportReview. No user involved:
@@ -19,14 +21,19 @@ import { resolveShareLink } from "#lib/server/share-links.ts";
 export const getShareInfo = query(v.string(), async (token) => {
 	const link = await resolveShareLink(token);
 	const guest = await findShareGuest(getRequestEvent().cookies, link);
+	const screening = link.kind === "SCREENING";
 	return {
 		exportId: link.export.id,
 		exportName: link.export.name,
 		note: link.note,
 		timelinePanelVisible: link.timelinePanelVisible,
 		markerPanelVisible: link.markerPanelVisible,
-		/** A screening: guests start muted and get the low-quality video */
-		screening: link.kind === "SCREENING",
+		/** A screening link: while its screening runs, guests follow the presenter's playhead */
+		screening,
+		/** The running screening, so the view starts in the right mode; the stream takes over */
+		live: screening
+			? ({ state: await getLiveScreening(link.id), now: Date.now() } satisfies ScreeningMessage)
+			: null,
 		/** No room for a new guest; who joined before still gets in */
 		full: !guest && (await isShareLinkFull(link)),
 		guest: guest && { name: guest.name },

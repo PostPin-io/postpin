@@ -33,7 +33,7 @@
 		timecodeFor,
 	} from "#lib/upload/upload-form.ts";
 	import { uploads } from "#lib/upload/uploads.svelte.ts";
-	import { hasVideoClips, type CutList } from "@postpin-io/shared/logic/cut-list";
+	import type { CutList } from "@postpin-io/shared/logic/cut-list";
 	import {
 		CUT_LIST_ACCEPT,
 		CUT_LIST_FILE_MAX_BYTES,
@@ -67,6 +67,7 @@
 	let startTimecode = $state("");
 	let changed = $state<UserSetField[]>([]);
 	let detectCuts = $state(true);
+	let cutsOpen = $state(false);
 	let cutLevel = $state<Exclude<CutLevel, "none">>("medium");
 	let starting = $state(false);
 	let submitError = $state<string | null>(null);
@@ -96,8 +97,15 @@
 	const edl = $derived(cutList && rate ? checkCutListAt(cutList, rate) : null);
 	const edlProblem = $derived(edlReadError ?? (edl?.ok === false ? edl.error : null));
 	/** A usable cut list came with the video: its clips are the cuts, nothing is detected */
-	const hasCutList = $derived(!!cutList && hasVideoClips(cutList) && !edlProblem);
+	// only while the timeline is imported: with detected cuts a chosen list is kept, but not used
+	const usesCutList = $derived(!detectCuts && !!cutList && !edlProblem);
 	const summaryText = cutListSummaryText;
+	/** What the closed Cuts section shows of its setting */
+	const cutsSummary = $derived(
+		detectCuts
+			? { text: `Detect · ${CUT_LEVEL_LABELS[cutLevel]}`, problem: false }
+			: { text: edlName ?? "No EDL chosen", problem: !!edlProblem },
+	);
 
 	function useRead(read: CutListRead | null) {
 		cutList = read?.ok ? read.list : null;
@@ -135,7 +143,7 @@
 			inspection.kind !== "invalid" &&
 			!problem &&
 			!startError &&
-			!edlProblem &&
+			!(edlProblem && !detectCuts) &&
 			!!name.trim() &&
 			!starting,
 	);
@@ -158,6 +166,7 @@
 		startTimecode = "";
 		changed = [];
 		detectCuts = true;
+		cutsOpen = false;
 		cutLevel = "medium";
 		submitError = null;
 		removeEdl();
@@ -203,7 +212,7 @@
 			frameRateLabel: frameRate,
 			startTimecode,
 			changed,
-			cutLevel: detectCuts && !hasCutList ? cutLevel : "none",
+			cutLevel: detectCuts ? cutLevel : "none",
 		});
 		if ("error" in form) {
 			submitError = form.error;
@@ -212,7 +221,14 @@
 		starting = true;
 		submitError = null;
 		try {
-			await uploads.start({ file, projectId, timelineId, name: name.trim(), form, cutList });
+			await uploads.start({
+				file,
+				projectId,
+				timelineId,
+				name: name.trim(),
+				form,
+				cutList: usesCutList ? cutList : null,
+			});
 			dialog?.close();
 		} catch (e) {
 			submitError =
@@ -304,8 +320,8 @@
 		{/if}
 
 		{#if file && inspection && inspection.kind !== "invalid" && !problem}
-			<div class="mt-4 flex flex-col gap-4">
-				<label class="flex flex-col gap-1">
+			<div class="mt-5 flex flex-col gap-5">
+				<label class="flex flex-col gap-1.5">
 					<span class="label text-sm">Name</span>
 					<input
 						class="input w-full"
@@ -316,8 +332,8 @@
 					/>
 				</label>
 
-				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-					<label class="flex flex-col gap-1">
+				<div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+					<label class="flex flex-col gap-1.5">
 						<span class="label flex items-center gap-2 text-sm">Frame rate </span>
 						<select
 							class="select w-full"
@@ -334,7 +350,7 @@
 						</select>
 					</label>
 
-					<label class="flex flex-col gap-1">
+					<label class="flex flex-col gap-1.5">
 						<span class="label flex items-center gap-2 text-sm">Start timecode </span>
 						<input
 							class="input w-full font-mono tabular-nums"
@@ -362,125 +378,160 @@
 						Variable frame rate ({inspection.measuredFps.toFixed(3)} fps on average), please check.
 					</div>
 				{/if}
-				<div class="flex flex-col gap-1">
-					<span class="text-sm font-medium">
-						Import Timeline Data<span class="font-normal text-base-content/60"> (optional)</span>
-					</span>
-					<!-- Like the video above: dashed and faded while empty, solid with a list or while dragging -->
-					<div class="relative">
-						<button
-							type="button"
-							class="flex w-full flex-col items-center justify-center gap-2 rounded-box border-2 px-4 py-6 text-center transition-colors hover:border-base-content/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary
-								{edlName || edlDragging
-								? 'border-base-content/50 bg-base-200/50'
-								: 'border-dashed border-base-content/30 text-base-content/50'}"
-							disabled={starting}
-							onclick={() => edlInput?.click()}
-							ondragenter={(e) => {
-								e.preventDefault();
-								edlDragging = true;
-							}}
-							ondragover={(e) => e.preventDefault()}
-							ondragleave={() => (edlDragging = false)}
-							ondrop={(e) => void dropEdl(e)}
+				<!--
+					Where the cuts come from: detected in the picture, or the editing software's timeline.
+					Closed by default: the default is what most uploads want; the title says what is set.
+				-->
+				<div class="collapse-arrow collapse rounded-box border border-base-300">
+					<!-- A checkbox, not <details>: daisyUI animates it both ways, the modal doesn't jump on close -->
+					<input type="checkbox" aria-label="Cuts" bind:checked={cutsOpen} disabled={starting} />
+					<div class="collapse-title flex items-center gap-3 text-sm font-medium">
+						Cuts
+						<span
+							class="min-w-0 flex-1 truncate text-right text-xs font-normal {cutsSummary.problem
+								? 'text-error'
+								: 'text-base-content/60'}"
 						>
-							{#if edlName}
-								<FileText size={28} />
-								<span class="max-w-full truncate font-medium" title={edlName}>{edlName}</span>
-								<span class="text-xs text-base-content/60">
-									{#if cutList && edl?.ok}
-										{FORMATS[cutList.format]} · {summaryText(edl)}
-									{:else if cutList && !rate}
-										{FORMATS[cutList.format]} · the clips are read once the frame rate is known
-									{:else if !edlProblem}
-										Reading…
-									{/if}
-								</span>
-								<span class="text-xs text-base-content/50">Click to choose another file</span>
-							{:else}
-								<ListVideo size={28} />
-								<span class="font-medium">
-									<span class="max-sm:hidden"
-										>Drop an EDL or FCPXML here or click to choose one</span
-									>
-									<span class="sm:hidden">Choose an EDL or FCPXML</span>
-								</span>
-							{/if}
-						</button>
-						{#if edlName}
-							<button
-								type="button"
-								class="btn absolute top-1 right-1 btn-square btn-ghost btn-xs"
-								title="Remove the cut list"
-								aria-label="Remove the cut list"
-								disabled={starting}
-								onclick={removeEdl}
-							>
-								<X size={14} />
-							</button>
-						{/if}
+							{cutsSummary.text}
+						</span>
 					</div>
-					<input
-						bind:this={edlInput}
-						type="file"
-						class="hidden"
-						accept={CUT_LIST_ACCEPT}
-						onchange={(e) => void chooseEdl(e.currentTarget.files?.[0])}
-					/>
-					{#if edlProblem}
-						<div role="alert" class="mt-1 alert text-sm alert-error">{edlProblem}</div>
-					{:else if edl?.ok}
-						<p class="text-xs text-base-content/60">
-							{#if edl.videoClips > 0}Its clips are the cuts of the timeline, so none are detected.{/if}
-							{#if edl.markers > 0}The markers are added to the export, in a category per color.{/if}
-						</p>
-						{#if cutList?.frameRate && rate && frameRateLabel(rate) !== frameRateLabel(cutList.frameRate)}
-							<p class="text-xs text-warning">
-								The timeline runs at {frameRateLabel(cutList.frameRate)} fps, the video at
-								{frameRateLabel(rate)} fps: the clips are placed by time.
-							</p>
-						{/if}
-					{:else if !edlName}
-						<p class="text-xs text-base-content/60">
-							The timeline as a CMX3600 EDL or as FCPXML (also a .fcpxmld bundle), up to
-							{formatByteSize(CUT_LIST_FILE_MAX_BYTES)}, for its real tracks and cuts.
-						</p>
-					{/if}
-				</div>
-
-				<!-- with the editing software's timeline there is nothing to detect -->
-				{#if !hasCutList}
-					<fieldset class="flex flex-col gap-2 rounded-box border border-base-300 p-3">
-						<label class="flex items-center justify-between gap-2">
-							<span class="text-sm font-medium">Detect cuts</span>
+					<div class="collapse-content flex flex-col gap-4 text-sm">
+						<div class="join w-full" role="radiogroup" aria-label="Where the cuts come from">
 							<input
-								type="checkbox"
-								class="toggle toggle-sm"
-								bind:checked={detectCuts}
+								class="btn join-item flex-1 btn-sm"
+								type="radio"
+								name="cut-source"
+								aria-label="Detect cuts"
+								value={true}
+								bind:group={detectCuts}
 								disabled={starting}
 							/>
-						</label>
-						{#if detectCuts}
-							<div class="join w-full" role="radiogroup" aria-label="Sensitivity">
-								{#each LEVELS as level (level)}
-									<input
-										class="btn join-item flex-1 btn-sm"
-										type="radio"
-										name="cut-level"
-										aria-label={CUT_LEVEL_LABELS[level]}
-										value={level}
-										bind:group={cutLevel}
-										disabled={starting}
-									/>
-								{/each}
+							<input
+								class="btn join-item flex-1 btn-sm"
+								type="radio"
+								name="cut-source"
+								aria-label="Import EDL"
+								value={false}
+								bind:group={detectCuts}
+								disabled={starting}
+							/>
+						</div>
+						<!-- Both in one grid cell: the taller one sets the height, toggling doesn't resize the modal -->
+						<div class="grid">
+							<div
+								class="col-start-1 row-start-1 flex flex-col gap-1.5"
+								class:invisible={!detectCuts}
+								inert={!detectCuts}
+							>
+								<span class="text-xs text-base-content/60">Sensitivity</span>
+								<div class="join w-full" role="radiogroup" aria-label="Sensitivity">
+									{#each LEVELS as level (level)}
+										<input
+											class="btn join-item flex-1 btn-sm"
+											type="radio"
+											name="cut-level"
+											aria-label={CUT_LEVEL_LABELS[level]}
+											value={level}
+											bind:group={cutLevel}
+											disabled={starting}
+										/>
+									{/each}
+								</div>
+								<p class="text-xs text-base-content/60">
+									The timeline is split into shots where the picture changes. You can change this
+									later in the review.
+								</p>
 							</div>
-							<p class="text-xs text-base-content/60">
-								The timeline is split into shots where the picture changes. You can change this
-								later in the review.
-							</p>
-						{/if}
-					</fieldset>
-				{/if}
+							<div
+								class="col-start-1 row-start-1 flex flex-col gap-2"
+								class:invisible={detectCuts}
+								inert={detectCuts}
+							>
+								<!-- Like the video above: dashed and faded while empty, solid with a list or while dragging -->
+								<div class="relative">
+									<button
+										type="button"
+										class="flex w-full flex-col items-center justify-center gap-2 rounded-box border-2 px-4 py-6 text-center transition-colors hover:border-base-content/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary
+									{edlName || edlDragging
+											? 'border-base-content/50 bg-base-200/50'
+											: 'border-dashed border-base-content/30 text-base-content/50'}"
+										disabled={starting}
+										onclick={() => edlInput?.click()}
+										ondragenter={(e) => {
+											e.preventDefault();
+											edlDragging = true;
+										}}
+										ondragover={(e) => e.preventDefault()}
+										ondragleave={() => (edlDragging = false)}
+										ondrop={(e) => void dropEdl(e)}
+									>
+										{#if edlName}
+											<FileText size={28} />
+											<span class="max-w-full truncate font-medium" title={edlName}>{edlName}</span>
+											<span class="text-xs text-base-content/60">
+												{#if cutList && edl?.ok}
+													{FORMATS[cutList.format]} · {summaryText(edl)}
+												{:else if cutList && !rate}
+													{FORMATS[cutList.format]} · the clips are read once the frame rate is known
+												{:else if !edlProblem}
+													Reading…
+												{/if}
+											</span>
+											<span class="text-xs text-base-content/50">Click to choose another file</span>
+										{:else}
+											<ListVideo size={28} />
+											<span class="font-medium">
+												<span class="max-sm:hidden"
+													>Drop an EDL or FCPXML here or click to choose one</span
+												>
+												<span class="sm:hidden">Choose an EDL or FCPXML</span>
+											</span>
+										{/if}
+									</button>
+									{#if edlName}
+										<button
+											type="button"
+											class="btn absolute top-1 right-1 btn-square btn-ghost btn-xs"
+											title="Remove the cut list"
+											aria-label="Remove the cut list"
+											disabled={starting}
+											onclick={removeEdl}
+										>
+											<X size={14} />
+										</button>
+									{/if}
+								</div>
+								<input
+									bind:this={edlInput}
+									type="file"
+									class="hidden"
+									accept={CUT_LIST_ACCEPT}
+									onchange={(e) => void chooseEdl(e.currentTarget.files?.[0])}
+								/>
+								{#if edlProblem}
+									<div role="alert" class="mt-1 alert text-sm alert-error">{edlProblem}</div>
+								{:else if edl?.ok}
+									<p class="text-xs text-base-content/60">
+										{#if edl.videoClips > 0}Its clips are the cuts of the timeline.{/if}
+										{#if edl.markers > 0}The markers are added to the export, in a category per
+											color.{/if}
+									</p>
+									{#if cutList?.frameRate && rate && frameRateLabel(rate) !== frameRateLabel(cutList.frameRate)}
+										<p class="text-xs text-warning">
+											The timeline runs at {frameRateLabel(cutList.frameRate)} fps, the video at
+											{frameRateLabel(rate)} fps: the clips are placed by time.
+										</p>
+									{/if}
+								{:else if !edlName}
+									<p class="text-xs text-base-content/60">
+										The timeline as a CMX3600 EDL or as FCPXML (also a .fcpxmld bundle), up to
+										{formatByteSize(CUT_LIST_FILE_MAX_BYTES)}, for its real tracks and cuts.
+									</p>
+								{/if}
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		{/if}
 

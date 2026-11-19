@@ -377,6 +377,38 @@ describe("applyCuts", () => {
 	it("without scores the video stays one clip", () => {
 		expect(applyCuts(snapshot(), null, "medium").tracks[0]!.clips).toHaveLength(1);
 	});
+
+	it("replaces the timeline of a cut list: one video track again, no list remembered", () => {
+		const event = (from: string, to: string) => ({
+			name: "x",
+			in: from,
+			out: to,
+			sourceIn: "00:10:00:00",
+		});
+		const fromList = applyCutList(
+			snapshot({ frameRate: FPS_25, startFrameIndex: 90000, durationFrameCount: 200 }),
+			{
+				format: "edl",
+				title: "x",
+				frameRate: null,
+				markers: [],
+				tracks: [
+					{ type: "audio", name: "Audio", events: [event("01:00:00:00", "01:00:04:00")] },
+					{ type: "video", name: "Video", events: [event("01:00:00:00", "01:00:04:00")] },
+				],
+			},
+		).snapshot;
+		expect(fromList.metadata.cutsFrom).toBe("edl");
+		expect(fromList.tracks.length).toBeGreaterThan(1);
+
+		const back = applyCuts(fromList, null, "none");
+		expect(back.metadata.cutsFrom).toBeUndefined();
+		expect(back.tracks.map((t) => [t.type, t.clips.length])).toEqual([["video", 1]]);
+		expect(back.tracks[0]!.clips[0]).toMatchObject({
+			startFrameIndex: 90000,
+			durationFrameCount: 200,
+		});
+	});
 });
 
 describe("applyCutList", () => {

@@ -47,6 +47,12 @@ export type DeviceCode = Prisma.DeviceCodeModel;
  */
 export type Marker = Prisma.MarkerModel;
 /**
+ * Model MarkerPointer
+ * A visual hint on the video picture that belongs to a marker.
+ * Coordinates are fractions (0..1) of the picture, so they don't depend on player size or rendition.
+ */
+export type MarkerPointer = Prisma.MarkerPointerModel;
+/**
  * Model Category
  *
  */

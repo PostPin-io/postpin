@@ -822,14 +822,6 @@ export type MediaFileUncheckedUpdateManyWithoutProxyOfNestedInput = {
 	deleteMany?: Prisma.MediaFileScalarWhereInput | Prisma.MediaFileScalarWhereInput[];
 };
 
-export type NullableFloatFieldUpdateOperationsInput = {
-	set?: number | null;
-	increment?: number;
-	decrement?: number;
-	multiply?: number;
-	divide?: number;
-};
-
 export type MediaFileCreateWithoutOriginalOfInput = {
 	id?: string;
 	createdAt?: Date | string;

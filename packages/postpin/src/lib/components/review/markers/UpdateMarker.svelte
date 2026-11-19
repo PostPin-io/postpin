@@ -19,6 +19,8 @@
 	import MoveHorizontal from "@lucide/svelte/icons/move-horizontal";
 	import Diamond from "@lucide/svelte/icons/diamond";
 	import { useShare } from "../share-context.ts";
+	import PointerSelector from "./PointerSelector.svelte";
+	import { usePointerSession } from "./pointer-session.svelte.ts";
 
 	let {
 		marker,
@@ -45,6 +47,69 @@
 	}
 	const getShare = useShare();
 	const share = $derived(getShare());
+
+	// ─── Pointers: arrows and boxes on the picture ───
+	const pointerSession = usePointerSession();
+	const pointerScope = $derived({ exportId: marker.exportId, shareToken: share?.token });
+
+	// ─── Header: the category shows its name while there's room ───
+	// The controls wrap below the title as one group by CSS (see markup). Measured here: whether the
+	// category has to shrink to its dot first. Every input is a natural width that doesn't depend on
+	// the outcome, so it settles at once instead of jumping back and forth.
+	let header = $state<HTMLElement>();
+	let headerTitle = $state<HTMLElement>();
+	let headerControls = $state<HTMLElement>();
+	let headerActions = $state<HTMLElement>();
+	let categorySlot = $state<HTMLElement>();
+	let categoryWidths = $state({ expanded: 0, collapsed: 0 });
+	let categoryCollapsed = $state(false);
+
+	function layoutHeader() {
+		if (!header || !headerControls || !headerActions || !categorySlot) return;
+		const style = (el: HTMLElement, prop: "columnGap") =>
+			parseFloat(getComputedStyle(el)[prop]) || 0;
+		const gap = style(headerControls, "columnGap");
+		const headerGap = style(header, "columnGap");
+		// Popovers sit in the top layer and take no room
+		const others = [...headerControls.children].filter(
+			(el): el is HTMLElement =>
+				el instanceof HTMLElement &&
+				el !== categorySlot &&
+				!el.hasAttribute("popover") &&
+				el.offsetWidth > 0,
+		);
+		const othersWidth = others.reduce((sum, el) => sum + el.offsetWidth + gap, 0);
+		// The title and controls share what the actions leave; the controls' own line has all of it
+		const ownLine = header.clientWidth - headerActions.offsetWidth - headerGap;
+		const firstLine = ownLine - (headerTitle ? headerTitle.offsetWidth + headerGap : 0);
+		const fits = (width: number, category: number) => othersWidth + category <= width - 1; // subpixel rounding
+		const { expanded, collapsed } = categoryWidths;
+		categoryCollapsed = fits(firstLine, expanded)
+			? false
+			: fits(firstLine, collapsed) || !fits(ownLine, expanded);
+	}
+
+	$effect(() => {
+		void categoryWidths;
+		if (!header || !headerControls) return;
+		const resize = new ResizeObserver(layoutHeader);
+		const observeAll = () => {
+			resize.disconnect();
+			for (const el of [header, headerTitle, headerActions, ...headerControls!.children]) {
+				if (el instanceof HTMLElement && el !== categorySlot && !el.hasAttribute("popover")) {
+					resize.observe(el);
+				}
+			}
+		};
+		// Controls come and go (pointer count, permissions): watch the new ones too
+		const children = new MutationObserver(observeAll);
+		children.observe(headerControls, { childList: true });
+		observeAll();
+		return () => {
+			resize.disconnect();
+			children.disconnect();
+		};
+	});
 
 	// Team only: the modal loads the project's categories as soon as it renders
 	let editCategoriesModal = $state<EditCategoriesModal>();
@@ -217,15 +282,19 @@
 	class="@container {mobile ? '' : 'card mx-1 h-full border border-base-300 bg-base-200 shadow-sm'}"
 >
 	<div class="card-body h-full min-h-0 w-full gap-3 p-4">
-		<div class="flex items-center justify-between gap-3 {mobile ? 'flex-wrap' : ''}">
-			<div class="flex-screen flex min-w-0 items-center gap-2">
+		<!-- Title and controls wrap, the actions keep the top right corner. The controls break as one
+		group: a flex item wraps at its full (max-content) width, so they move below the title together
+		once they don't fit beside it, and only wrap among themselves when even their own line is too
+		narrow. Before that, the category shrinks to its dot (see layoutHeader). -->
+		<div bind:this={header} class="flex items-start gap-3">
+			<div class="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
 				{#if mobile}
 					<!-- The card header already says "Edit Marker"; the selector shows the category unless it's a guest -->
 					{#if share && marker.category}
 						<CategoryBadge category={marker.category} class="badge-md" />
 					{/if}
 				{:else}
-					<h2 class="card-title text-base whitespace-nowrap">
+					<h2 bind:this={headerTitle} class="card-title text-base whitespace-nowrap">
 						{#if marker.canUpdate}
 							Edit Marker
 						{:else}
@@ -233,43 +302,55 @@
 						{/if}
 					</h2>
 				{/if}
-				{#if !share}
-					<CategorySelector
-						value={categoryId}
-						onselect={(id) => {
-							selectedCategoryId = id;
-							defaultCategory.set(id);
-							void persist();
-						}}
-						readonly={!marker.canUpdate}
-					/>
+				<div
+					bind:this={headerControls}
+					class="flex min-w-0 flex-wrap items-center gap-2 *:shrink-0"
+				>
+					{#if !share}
+						<div bind:this={categorySlot} class="flex min-w-0">
+							<CategorySelector
+								value={categoryId}
+								onselect={(id) => {
+									selectedCategoryId = id;
+									defaultCategory.set(id);
+									void persist();
+								}}
+								readonly={!marker.canUpdate}
+								collapsed={categoryCollapsed}
+								bind:widths={categoryWidths}
+							/>
+						</div>
 
+						{#if marker.canUpdate}
+							<button
+								type="button"
+								class="btn btn-square"
+								title="New category"
+								aria-label="New category"
+								onclick={openEditCategoriesModal}
+							>
+								<ClipboardList size={20} />
+							</button>
+						{/if}
+					{/if}
 					{#if marker.canUpdate}
 						<button
 							type="button"
-							class="btn btn-square"
-							title="New category"
-							aria-label="New category"
-							onclick={openEditCategoriesModal}
+							class="btn btn-square btn-ghost"
+							title={marker.duration > 0 ? "Make it a point marker" : "Make it a range"}
+							aria-label={marker.duration > 0 ? "Make it a point marker" : "Make it a range"}
+							disabled={saving}
+							onclick={toggleRange}
 						>
-							<ClipboardList size={20} />
+							{#if marker.duration > 0}<Diamond size={20} />{:else}<MoveHorizontal size={20} />{/if}
 						</button>
 					{/if}
-				{/if}
-				{#if marker.canUpdate}
-					<button
-						type="button"
-						class="btn btn-square btn-ghost"
-						title={marker.duration > 0 ? "Make it a point marker" : "Make it a range"}
-						aria-label={marker.duration > 0 ? "Make it a point marker" : "Make it a range"}
-						disabled={saving}
-						onclick={toggleRange}
-					>
-						{#if marker.duration > 0}<Diamond size={20} />{:else}<MoveHorizontal size={20} />{/if}
-					</button>
-				{/if}
+					{#if pointerSession && (marker.canUpdate || marker.pointers.length > 0)}
+						<PointerSelector {marker} scope={pointerScope} />
+					{/if}
+				</div>
 			</div>
-			<div class="flex shrink-0 gap-2 {mobile ? 'ml-auto' : ''}">
+			<div bind:this={headerActions} class="ml-auto flex shrink-0 gap-2">
 				{#if mobile && mobileHeaderAction}
 					{@render mobileHeaderAction()}
 				{/if}

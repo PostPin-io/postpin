@@ -21,6 +21,12 @@
 	import Header from "#lib/components/layout/Header.svelte";
 	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
 	import MarkerPanel from "#lib/components/review/markers/MarkerPanel.svelte";
+	import PointerOverlay from "#lib/components/review/PointerOverlay.svelte";
+	import {
+		PointerSession,
+		setPointerSession,
+	} from "#lib/components/review/markers/pointer-session.svelte.ts";
+	import { pointersVisibleAt } from "@postpin-io/shared/logic/pointers";
 	import { markerFilter } from "#lib/components/review/markers/marker-filter.svelte.ts";
 	import VideoMenuBar from "#lib/components/review/VideoMenuBar.svelte";
 	import VideoPlayer, { HLS, type VideoSource } from "#lib/components/review/VideoPlayer.svelte";
@@ -59,9 +65,14 @@
 	import { setShareContext, type ShareContext } from "./share-context.ts";
 	import ScreeningButton from "#lib/components/screening/ScreeningButton.svelte";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
+	import UploadModal from "#lib/components/exports/UploadModal.svelte";
+	import UploadDropOverlay from "#lib/components/exports/UploadDropOverlay.svelte";
 	import ReviewTutorial from "#lib/components/tutorial/ReviewTutorial.svelte";
 	import ScreeningRemote from "#lib/components/screening/ScreeningRemote.svelte";
 	import EndScreeningDialog from "#lib/components/screening/EndScreeningDialog.svelte";
+	import ScreeningFollowView from "#lib/components/screening/ScreeningFollowView.svelte";
+	import { ScreeningFollower } from "#lib/components/screening/screening-follow.svelte.ts";
+	import { connectShareLink } from "#lib/components/share-view/share-live.ts";
 	import {
 		requestStopScreening,
 		restoreScreening,
@@ -81,8 +92,45 @@
 	}
 	let { exportId, projectId, timelineId, share }: Props = $props();
 	setShareContext(() => share);
+	// Before any await: context can only be set while the component initializes.
+	// Revealing a marker pauses on it, so its pointers are visible.
+	const pointerSession = new PointerSession((marker) => {
+		videoPaused = true;
+		if (!pointersVisibleAt(marker, currentFrame)) seekToFrame(marker.frame);
+	});
+	setPointerSession(pointerSession);
 
 	const shareToken = $derived(share?.token);
+
+	// ─── Screening guests ───────────────────────────────────────────────────
+	// While the screening of their link runs, guests have no video: the picture is on the big
+	// screen, and their playhead follows the presenter's, so everybody is at the same frame.
+	// Before and after it, the link is an ordinary share link.
+	const follower = new ScreeningFollower(untrack(() => share?.live ?? null));
+	// Every guest: deleting the link sends them away at once (see connectShareLink)
+	$effect(() => {
+		const token = shareToken;
+		const screeningLink = !!share?.screening;
+		const ongone = share?.ongone;
+		if (!token) return;
+		const link = connectShareLink(token, {
+			screening: (message) => follower.receive(message),
+			open: () => follower.heard(),
+			gone: () => ongone?.(),
+		});
+		// Not while reconnecting: a phone coming back from standby reconnects first, and the
+		// silence before isn't the presenter's. Until then the playhead moves on by the clock.
+		const stale = screeningLink
+			? setInterval(() => {
+					if (!link.reconnecting) follower.checkStale();
+				}, 1000)
+			: undefined;
+		return () => {
+			clearInterval(stale);
+			link.close();
+		};
+	});
+	const following = $derived(!!share?.screening && follower.live);
 	// The note greets the guest; the header button hides and shows it again
 	let noteVisible = $state(true);
 
@@ -116,7 +164,8 @@
 	}
 
 	const isMarkerVisible = $derived(share?.markerPanelVisible ?? true);
-	const isTimelineVisible = $derived(share?.timelinePanelVisible ?? true);
+	// Hidden while following: seeking there would only be undone by the presenter's playhead
+	const isTimelineVisible = $derived((share?.timelinePanelVisible ?? true) && !following);
 	// Phones and small tablets: video on top, marker panel below, no timeline
 	const isMobile = new MediaQuery("max-width: 1023px");
 	const showTimeline = $derived(isTimelineVisible && !isMobile.current);
@@ -177,7 +226,23 @@
 		(creatableCategories.find((c) => c.id === defaultCategory.id) ?? creatableCategories[0])?.color,
 	);
 	let markerPanel = $state<MarkerPanel>();
+
+	// ─── Pointers: shown on the picture for the selected markers the playhead is on ───
+	let selectedMarkerIds = $state<string[]>([]);
+	const selectedMarkers = $derived(allMarkers.filter((m) => selectedMarkerIds.includes(m.id)));
+	const pointerMarkers = $derived(
+		selectedMarkers.filter((m) => pointersVisibleAt(m, currentFrame)),
+	);
+	let videoSize = $state<{ width: number; height: number }>();
+	// Drawing ends when its marker can't be drawn on any more: deselected, playhead elsewhere, playing
+	$effect(() => {
+		const id = pointerSession.drawingMarkerId;
+		if (!id) return;
+		const marker = pointerMarkers.find((m) => m.id === id);
+		if (!marker?.canUpdate || !videoPaused || viewMode !== "timeline") pointerSession.stopDrawing();
+	});
 	let sharingDialog = $state<SharingSetupModal>();
+	let uploadDialog = $state<UploadModal>();
 	let originalUrl = $state<string | undefined>(undefined);
 	let thumbnailUrl = $state<string | undefined>(undefined);
 
@@ -435,6 +500,23 @@
 			videoPaused = true;
 		};
 	});
+	// The guest's playhead, every frame, from the presenter's last report and the clock
+	$effect(() => {
+		if (!following) return;
+		untrack(() => {
+			// When the screening ends, the video appears where it stopped, without starting
+			videoPaused = true;
+			videoPlaybackRate = 1;
+		});
+		let frame = requestAnimationFrame(function follow() {
+			const end = snapshot
+				? secondsAtFrame(snapshot.startFrameIndex + snapshot.durationFrameCount - 1, snapshot)
+				: undefined;
+			videoPosition = follower.position(end) ?? videoPosition;
+			frame = requestAnimationFrame(follow);
+		});
+		return () => cancelAnimationFrame(frame);
+	});
 	// After the effect above, so the first push already starts at the beginning
 	$effect(() => {
 		session?.push(
@@ -457,6 +539,8 @@
 	// Single global keyboard handler. Shortcuts work wherever focus is, except while typing or
 	// inside modals. Components with their own shortcuts (MarkerPanel) skip the same targets.
 	function onGlobalKeyDown(event: KeyboardEvent) {
+		// The presenter plays and seeks
+		if (following) return;
 		handleReviewShortcut(event, {
 			timeline,
 			player,
@@ -473,7 +557,7 @@
 	// Absolute timeline frame, like marker frames
 	const currentFrame = $derived(snapshot ? frameAtSeconds(videoPosition, snapshot) : 0);
 	const seekToFrame = (frame: number) => {
-		if (snapshot) videoPosition = secondsAtFrame(frame, snapshot);
+		if (snapshot && !following) videoPosition = secondsAtFrame(frame, snapshot);
 	};
 
 	// HLS as soon as one rendition is ready, the original until then
@@ -551,11 +635,7 @@
 	let player = $state<VideoPlayer>();
 	let videoFullscreen = $state(false);
 	let videoQualities = $state<number[]>([]);
-	// Guests of a screening sit in the room and hear the sound there; they can still unmute
-	let videoMuted = $state(startsMuted());
-	function startsMuted() {
-		return share?.screening ?? false;
-	}
+	let videoMuted = $state(false);
 </script>
 
 <!-- The share page sets its own title -->
@@ -582,6 +662,13 @@
 			{#snippet pending()}{/snippet}
 			{#snippet failed()}{/snippet}
 		</svelte:boundary>
+	{/if}
+	{#if projectId && timelineId && exp?.canUpload}
+		<!-- A new version of the cut, dropped right where it is reviewed: into the same timeline -->
+		<UploadModal bind:this={uploadDialog} {projectId} {timelineId} />
+		<UploadDropOverlay videoOnly ondropped={(file) => uploadDialog?.open(file)}>
+			It becomes a new export of this timeline. This export stays as it is.
+		</UploadDropOverlay>
 	{/if}
 {/if}
 
@@ -655,15 +742,36 @@
 					/>
 				{/if}
 			{/snippet}
-			{#snippet note()}
+			{#snippet overlay()}
+				<PointerOverlay markers={pointerMarkers} scope={{ exportId, shareToken }} {videoSize} />
 				{#if share?.note && noteVisible}
 					<NoteOverlay note={share.note} onclose={() => (noteVisible = false)} />
 				{/if}
 			{/snippet}
 			<div
-				class={compact ? "aspect-video w-full overflow-hidden" : "min-h-0 flex-1 overflow-hidden"}
+				class={compact
+					? // Following: no picture to keep at 16:9, the live panel takes the room it needs
+						following
+						? "w-full"
+						: "aspect-video w-full overflow-hidden"
+					: "min-h-0 flex-1 overflow-hidden"}
 			>
-				{#if viewMode === "shot-grid" && snapshot}
+				{#if following && snapshot}
+					<ScreeningFollowView
+						timing={snapshot}
+						durationFrames={snapshot.durationFrameCount}
+						currentTime={videoPosition}
+						paused={follower.paused}
+						rate={follower.rate}
+						{markers}
+						{compact}
+						onCreateMarker={isMarkerVisible
+							? () => void markerPanel?.createMarkerAtPlayhead()
+							: undefined}
+						onQuickMarker={isMarkerVisible ? () => markerPanel?.createQuickMarker() : undefined}
+						markerColor={newMarkerColor}
+					/>
+				{:else if viewMode === "shot-grid" && snapshot}
 					<ShotGrid {snapshot} thumbnailUrls={shotUrls} {currentFrame} onSeek={seekToFrame} />
 				{:else if session}
 					<ScreeningRemote {session} bind:qr={screeningQr} />
@@ -683,8 +791,9 @@
 							bind:muted={videoMuted}
 							bind:fullscreen={videoFullscreen}
 							{cssFullscreen}
+							bind:videoSize
 							fullscreenControls={menuBar}
-							overlay={note}
+							{overlay}
 						/>
 					{/key}
 				{:else if viewMode !== "shot-grid" && media.status !== "FAILED"}
@@ -697,7 +806,8 @@
 					{/if}
 				{/if}
 			</div>
-			{#if snapshot && !cssFullscreen}
+			<!-- Following: no controls, the presenter has them -->
+			{#if snapshot && !cssFullscreen && !following}
 				{@render menuBar()}
 			{/if}
 		{/if}
@@ -714,6 +824,7 @@
 			mode={timelineMode}
 			bind:inOut
 			onCollapsedHeight={(height) => (timelineCollapsedHeight = height)}
+			onmarkerclick={(id) => markerPanel?.setSelectedMarkerId(id)}
 			bind:videoPositionSeconds={videoPosition}
 			bind:paused={videoPaused}
 			bind:playbackRate={videoPlaybackRate}
@@ -731,6 +842,7 @@
 	{/if}
 	<MarkerPanel
 		bind:this={markerPanel}
+		bind:selectedMarkerIds
 		{exportId}
 		mobile={isMobile.current}
 		{currentFrame}

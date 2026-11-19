@@ -1,6 +1,7 @@
 <script lang="ts">
 	import AppWindow from "@lucide/svelte/icons/app-window";
 	import Link from "@lucide/svelte/icons/link";
+	import MonitorPlay from "@lucide/svelte/icons/monitor-play";
 	import Projector from "@lucide/svelte/icons/projector";
 	import Trash from "@lucide/svelte/icons/trash-2";
 	import {
@@ -67,6 +68,10 @@
 				The screening window closes.
 			</li>
 			{#if active && !deleteLink}
+				<li class="flex items-center gap-3">
+					<MonitorPlay size={18} class="shrink-0 text-base-content/60" />
+					Guests get the video and move their own playhead.
+				</li>
 				<li class="flex items-center gap-3">
 					<Link size={18} class="shrink-0 text-base-content/60" />
 					{#if link!.expiresAt}

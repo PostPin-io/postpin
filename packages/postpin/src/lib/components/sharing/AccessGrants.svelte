@@ -48,7 +48,9 @@
 </script>
 
 {#if !mayGrant || access?.error}
-	<p class="mt-4 text-sm text-base-content/70">You can't share this {target.type}.</p>
+	<p class="mt-4 text-sm text-base-content/70">
+		You can't manage who has access to this {target.type}.
+	</p>
 {:else if access?.current}
 	{@const a = access.current}
 	<h4 class="mt-4 font-semibold">Has access</h4>

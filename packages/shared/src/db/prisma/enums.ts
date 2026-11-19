@@ -8,6 +8,13 @@
  * 🟢 You can import this file directly.
  */
 
+export const PointerKind = {
+	ARROW: "ARROW",
+	RECT: "RECT",
+} as const;
+
+export type PointerKind = (typeof PointerKind)[keyof typeof PointerKind];
+
 export const MediaStatus = {
 	PENDING: "PENDING",
 	PROCESSING: "PROCESSING",

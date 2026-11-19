@@ -5,6 +5,8 @@ model Marker {
   description String?
 
   responses Response[]
+  /// Arrows and boxes on the picture, shown while the playhead is on the marker
+  pointers  MarkerPointer[]
 
   frame    Int
   /// length in frames, 0 = point marker
@@ -36,6 +38,36 @@ model Marker {
   @@index([exportId])
   @@index([categoryId])
   @@map("marker")
+}
+
+enum PointerKind {
+  ARROW
+  RECT
+}
+
+/// A visual hint on the video picture that belongs to a marker.
+/// Coordinates are fractions (0..1) of the picture, so they don't depend on player size or rendition.
+model MarkerPointer {
+  id String @id @default(cuid())
+
+  marker   Marker      @relation(fields: [markerId], references: [id], onDelete: Cascade)
+  markerId String
+  /// Fixed after creation: changing it means deleting the pointer and drawing a new one
+  kind     PointerKind
+  /// ARROW: the tip. RECT: the top-left corner.
+  x        Float
+  y        Float
+  /// RECT only (CHECK)
+  width    Float?
+  height   Float?
+  /// One of POINTER_COLORS (shared/logic/pointers.ts)
+  color    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([markerId])
+  @@map("marker_pointer")
 }
 
 model Category {

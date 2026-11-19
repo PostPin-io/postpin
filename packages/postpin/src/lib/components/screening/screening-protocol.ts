@@ -35,6 +35,7 @@ export type FromScreeningWindow =
 	| { type: "hello" }
 	/** The window's page is going away: closed, or reloaded (then a `hello` follows) */
 	| { type: "bye" }
+	/** On every change, and once a second (the guests' heartbeat, see ScreeningBroadcaster) */
 	| {
 			type: "status";
 			rev: number;

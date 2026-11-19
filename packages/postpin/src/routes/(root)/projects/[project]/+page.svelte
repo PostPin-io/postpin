@@ -76,6 +76,7 @@
 		const uploadHere = !!heldUpload.file && timeline.canUpload;
 		return {
 			latest,
+			// A timeline opens its export list; the latest export is only a shortcut next to it
 			exportHref: latest && !uploadHere ? `${base}/${latest.id}` : null,
 			exportListHref: base,
 			uploadHere,
@@ -91,7 +92,7 @@
 		renameTimelineDialog?.open(timeline);
 	}
 
-	function shareTimeline(timeline: (typeof data.timelines)[number]) {
+	function inviteToTimeline(timeline: (typeof data.timelines)[number]) {
 		closeMenu(timeline);
 		sharingDialog?.open({ projectId: page.params.project!, timelineId: timeline.id });
 	}
@@ -164,14 +165,14 @@
 		<li>
 			<a href={exportListHref}>
 				<List class="size-4" />
-				All exports
+				Open timeline
 			</a>
 		</li>
 		{#if exportHref}
 			<li>
 				<a href={exportHref}>
 					<FileDown class="size-4" />
-					View latest export
+					Open latest export
 				</a>
 			</li>
 		{:else}
@@ -180,9 +181,9 @@
 
 		{#if timeline.canShare}
 			<li class="mt-1 border-t border-base-300 pt-1">
-				<button type="button" onclick={() => shareTimeline(timeline)}>
+				<button type="button" onclick={() => inviteToTimeline(timeline)}>
 					<UserGroup class="size-4" />
-					Share timeline
+					Invite to timeline
 				</button>
 			</li>
 		{/if}
@@ -197,7 +198,7 @@
 		{/if}
 
 		{#if timeline.canRename}
-			<li>
+			<li class="mt-1 border-t border-base-300 pt-1">
 				<button type="button" onclick={() => renameTimeline(timeline)}>
 					<Pencil class="size-4" />
 					Rename timeline
@@ -206,7 +207,7 @@
 		{/if}
 
 		{#if timeline.canDelete}
-			<li>
+			<li class={timeline.canRename ? "" : "mt-1 border-t border-base-300 pt-1"}>
 				<button type="button" class="text-error" onclick={() => deleteTimeline(timeline)}>
 					<Trash class="size-4" />
 					Delete timeline
@@ -398,9 +399,9 @@
 									<div class="aspect-video w-36 overflow-hidden rounded-md bg-base-300">
 										{#if latest?.media}
 											<a
-												href={exportHref ?? exportListHref}
+												href={exportListHref}
 												class="group relative block size-full"
-												aria-label={uploadHere ? "Upload here" : "Open latest export"}
+												aria-label={uploadHere ? "Upload here" : `Exports of ${timeline.name}`}
 											>
 												<img
 													src={await getUrl({ mediaId: latest.media.id, type: "thumbnail" })}
@@ -411,7 +412,8 @@
 											</a>
 										{:else}
 											<a
-												href={exportHref ?? exportListHref}
+												href={exportListHref}
+												aria-label={uploadHere ? "Upload here" : `Exports of ${timeline.name}`}
 												class="flex size-full items-center justify-center text-base-content/30"
 											>
 												<Apeture />
@@ -420,7 +422,9 @@
 									</div>
 								</td>
 
-								<td class="font-medium">{timeline.name}</td>
+								<td class="font-medium">
+									<a href={exportListHref} class="link link-hover">{timeline.name}</a>
+								</td>
 								<td class="whitespace-nowrap text-base-content/70">
 									{new Date(timeline.createdAt).toLocaleDateString()}
 								</td>
@@ -437,6 +441,11 @@
 											>
 												<Upload size={16} /> Upload here
 											</a>
+										{:else}
+											{#if exportHref}
+												<a href={exportHref} class="btn btn-ghost btn-sm">Open latest</a>
+											{/if}
+											<a href={exportListHref} class="btn btn-primary btn-sm">Open</a>
 										{/if}
 										{@render actionsMenu(timeline, exportHref, exportListHref)}
 									</div>
@@ -462,9 +471,9 @@
 						<figure class="group relative aspect-video overflow-hidden bg-base-300">
 							{#if latest?.media}
 								<a
-									href={exportHref ?? exportListHref}
+									href={exportListHref}
 									class="block size-full"
-									aria-label={uploadHere ? "Upload here" : "Open latest export"}
+									aria-label={uploadHere ? "Upload here" : `Exports of ${timeline.name}`}
 								>
 									<img
 										src={await getUrl({ mediaId: latest.media.id, type: "thumbnail" })}
@@ -475,12 +484,8 @@
 								</a>
 							{:else}
 								<a
-									href={exportHref ?? exportListHref}
-									aria-label={uploadHere
-										? "Upload here"
-										: exportHref
-											? "Open latest export"
-											: "All exports"}
+									href={exportListHref}
+									aria-label={uploadHere ? "Upload here" : `Exports of ${timeline.name}`}
 									class="flex size-full items-center justify-center text-base-content/30"
 								>
 									<Apeture />
@@ -489,10 +494,14 @@
 						</figure>
 
 						<div class="card-body">
-							<h2 class="card-title flex items-center justify-between">
-								<span class="min-w-0 flex-1 truncate" title={timeline.name}>
+							<h2 class="card-title flex items-center justify-between gap-2">
+								<a
+									href={exportListHref}
+									class="min-w-0 flex-1 link truncate link-hover"
+									title={timeline.name}
+								>
 									{timeline.name}
-								</span>
+								</a>
 								{@render actionsMenu(timeline, exportHref, exportListHref)}
 							</h2>
 
@@ -507,7 +516,7 @@
 								</div>
 							</dl>
 
-							<div class="mt-4 card-actions justify-end">
+							<div class="mt-4 card-actions items-center justify-end">
 								{#if uploadHere}
 									<a
 										href={exportListHref}
@@ -515,10 +524,13 @@
 									>
 										<Upload size={16} /> Upload here
 									</a>
-								{:else if exportHref}
-									<a href={exportHref} class="btn btn-primary btn-sm">Open latest</a>
 								{:else}
-									<span class="text-sm text-base-content/70">No exports yet</span>
+									{#if exportHref}
+										<a href={exportHref} class="btn btn-ghost btn-sm">Open latest</a>
+									{:else}
+										<span class="me-auto text-sm text-base-content/70">No exports yet</span>
+									{/if}
+									<a href={exportListHref} class="btn btn-primary btn-sm">Open</a>
 								{/if}
 							</div>
 						</div>

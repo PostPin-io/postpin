@@ -273,6 +273,7 @@ export type MarkerWhereInput = {
 	guestId?: Prisma.StringNullableFilter<"Marker"> | string | null;
 	nleId?: Prisma.StringNullableFilter<"Marker"> | string | null;
 	responses?: Prisma.ResponseListRelationFilter;
+	pointers?: Prisma.MarkerPointerListRelationFilter;
 	export?: Prisma.XOR<Prisma.ExportScalarRelationFilter, Prisma.ExportWhereInput>;
 	category?: Prisma.XOR<Prisma.CategoryScalarRelationFilter, Prisma.CategoryWhereInput>;
 	author?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null;
@@ -296,6 +297,7 @@ export type MarkerOrderByWithRelationInput = {
 	guestId?: Prisma.SortOrderInput | Prisma.SortOrder;
 	nleId?: Prisma.SortOrderInput | Prisma.SortOrder;
 	responses?: Prisma.ResponseOrderByRelationAggregateInput;
+	pointers?: Prisma.MarkerPointerOrderByRelationAggregateInput;
 	export?: Prisma.ExportOrderByWithRelationInput;
 	category?: Prisma.CategoryOrderByWithRelationInput;
 	author?: Prisma.UserOrderByWithRelationInput;
@@ -321,6 +323,7 @@ export type MarkerWhereUniqueInput = Prisma.AtLeast<
 		guestId?: Prisma.StringNullableFilter<"Marker"> | string | null;
 		nleId?: Prisma.StringNullableFilter<"Marker"> | string | null;
 		responses?: Prisma.ResponseListRelationFilter;
+		pointers?: Prisma.MarkerPointerListRelationFilter;
 		export?: Prisma.XOR<Prisma.ExportScalarRelationFilter, Prisma.ExportWhereInput>;
 		category?: Prisma.XOR<Prisma.CategoryScalarRelationFilter, Prisma.CategoryWhereInput>;
 		author?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null;
@@ -380,6 +383,7 @@ export type MarkerCreateInput = {
 	updatedAt?: Date | string;
 	nleId?: string | null;
 	responses?: Prisma.ResponseCreateNestedManyWithoutMarkerInput;
+	pointers?: Prisma.MarkerPointerCreateNestedManyWithoutMarkerInput;
 	export: Prisma.ExportCreateNestedOneWithoutMarkersInput;
 	category: Prisma.CategoryCreateNestedOneWithoutMarkersInput;
 	author?: Prisma.UserCreateNestedOneWithoutMarkersInput;
@@ -400,6 +404,7 @@ export type MarkerUncheckedCreateInput = {
 	guestId?: string | null;
 	nleId?: string | null;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutMarkerInput;
+	pointers?: Prisma.MarkerPointerUncheckedCreateNestedManyWithoutMarkerInput;
 };
 
 export type MarkerUpdateInput = {
@@ -412,6 +417,7 @@ export type MarkerUpdateInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	responses?: Prisma.ResponseUpdateManyWithoutMarkerNestedInput;
+	pointers?: Prisma.MarkerPointerUpdateManyWithoutMarkerNestedInput;
 	export?: Prisma.ExportUpdateOneRequiredWithoutMarkersNestedInput;
 	category?: Prisma.CategoryUpdateOneRequiredWithoutMarkersNestedInput;
 	author?: Prisma.UserUpdateOneWithoutMarkersNestedInput;
@@ -432,6 +438,7 @@ export type MarkerUncheckedUpdateInput = {
 	guestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutMarkerNestedInput;
+	pointers?: Prisma.MarkerPointerUncheckedUpdateManyWithoutMarkerNestedInput;
 };
 
 export type MarkerCreateManyInput = {
@@ -642,6 +649,32 @@ export type IntFieldUpdateOperationsInput = {
 	decrement?: number;
 	multiply?: number;
 	divide?: number;
+};
+
+export type MarkerCreateNestedOneWithoutPointersInput = {
+	create?: Prisma.XOR<
+		Prisma.MarkerCreateWithoutPointersInput,
+		Prisma.MarkerUncheckedCreateWithoutPointersInput
+	>;
+	connectOrCreate?: Prisma.MarkerCreateOrConnectWithoutPointersInput;
+	connect?: Prisma.MarkerWhereUniqueInput;
+};
+
+export type MarkerUpdateOneRequiredWithoutPointersNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.MarkerCreateWithoutPointersInput,
+		Prisma.MarkerUncheckedCreateWithoutPointersInput
+	>;
+	connectOrCreate?: Prisma.MarkerCreateOrConnectWithoutPointersInput;
+	upsert?: Prisma.MarkerUpsertWithoutPointersInput;
+	connect?: Prisma.MarkerWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.MarkerUpdateToOneWithWhereWithoutPointersInput,
+			Prisma.MarkerUpdateWithoutPointersInput
+		>,
+		Prisma.MarkerUncheckedUpdateWithoutPointersInput
+	>;
 };
 
 export type MarkerCreateNestedManyWithoutCategoryInput = {
@@ -934,6 +967,7 @@ export type MarkerCreateWithoutAuthorInput = {
 	updatedAt?: Date | string;
 	nleId?: string | null;
 	responses?: Prisma.ResponseCreateNestedManyWithoutMarkerInput;
+	pointers?: Prisma.MarkerPointerCreateNestedManyWithoutMarkerInput;
 	export: Prisma.ExportCreateNestedOneWithoutMarkersInput;
 	category: Prisma.CategoryCreateNestedOneWithoutMarkersInput;
 	guest?: Prisma.ShareGuestCreateNestedOneWithoutMarkersInput;
@@ -952,6 +986,7 @@ export type MarkerUncheckedCreateWithoutAuthorInput = {
 	guestId?: string | null;
 	nleId?: string | null;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutMarkerInput;
+	pointers?: Prisma.MarkerPointerUncheckedCreateNestedManyWithoutMarkerInput;
 };
 
 export type MarkerCreateOrConnectWithoutAuthorInput = {
@@ -1013,6 +1048,98 @@ export type MarkerScalarWhereInput = {
 	nleId?: Prisma.StringNullableFilter<"Marker"> | string | null;
 };
 
+export type MarkerCreateWithoutPointersInput = {
+	id?: string;
+	name: string;
+	description?: string | null;
+	frame: number;
+	duration?: number;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	nleId?: string | null;
+	responses?: Prisma.ResponseCreateNestedManyWithoutMarkerInput;
+	export: Prisma.ExportCreateNestedOneWithoutMarkersInput;
+	category: Prisma.CategoryCreateNestedOneWithoutMarkersInput;
+	author?: Prisma.UserCreateNestedOneWithoutMarkersInput;
+	guest?: Prisma.ShareGuestCreateNestedOneWithoutMarkersInput;
+};
+
+export type MarkerUncheckedCreateWithoutPointersInput = {
+	id?: string;
+	name: string;
+	description?: string | null;
+	frame: number;
+	duration?: number;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	exportId: string;
+	categoryId: string;
+	authorId?: string | null;
+	guestId?: string | null;
+	nleId?: string | null;
+	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutMarkerInput;
+};
+
+export type MarkerCreateOrConnectWithoutPointersInput = {
+	where: Prisma.MarkerWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.MarkerCreateWithoutPointersInput,
+		Prisma.MarkerUncheckedCreateWithoutPointersInput
+	>;
+};
+
+export type MarkerUpsertWithoutPointersInput = {
+	update: Prisma.XOR<
+		Prisma.MarkerUpdateWithoutPointersInput,
+		Prisma.MarkerUncheckedUpdateWithoutPointersInput
+	>;
+	create: Prisma.XOR<
+		Prisma.MarkerCreateWithoutPointersInput,
+		Prisma.MarkerUncheckedCreateWithoutPointersInput
+	>;
+	where?: Prisma.MarkerWhereInput;
+};
+
+export type MarkerUpdateToOneWithWhereWithoutPointersInput = {
+	where?: Prisma.MarkerWhereInput;
+	data: Prisma.XOR<
+		Prisma.MarkerUpdateWithoutPointersInput,
+		Prisma.MarkerUncheckedUpdateWithoutPointersInput
+	>;
+};
+
+export type MarkerUpdateWithoutPointersInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	responses?: Prisma.ResponseUpdateManyWithoutMarkerNestedInput;
+	export?: Prisma.ExportUpdateOneRequiredWithoutMarkersNestedInput;
+	category?: Prisma.CategoryUpdateOneRequiredWithoutMarkersNestedInput;
+	author?: Prisma.UserUpdateOneWithoutMarkersNestedInput;
+	guest?: Prisma.ShareGuestUpdateOneWithoutMarkersNestedInput;
+};
+
+export type MarkerUncheckedUpdateWithoutPointersInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	frame?: Prisma.IntFieldUpdateOperationsInput | number;
+	duration?: Prisma.IntFieldUpdateOperationsInput | number;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	exportId?: Prisma.StringFieldUpdateOperationsInput | string;
+	categoryId?: Prisma.StringFieldUpdateOperationsInput | string;
+	authorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	guestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	responses?: Prisma.ResponseUncheckedUpdateManyWithoutMarkerNestedInput;
+};
+
 export type MarkerCreateWithoutCategoryInput = {
 	id?: string;
 	name: string;
@@ -1023,6 +1150,7 @@ export type MarkerCreateWithoutCategoryInput = {
 	updatedAt?: Date | string;
 	nleId?: string | null;
 	responses?: Prisma.ResponseCreateNestedManyWithoutMarkerInput;
+	pointers?: Prisma.MarkerPointerCreateNestedManyWithoutMarkerInput;
 	export: Prisma.ExportCreateNestedOneWithoutMarkersInput;
 	author?: Prisma.UserCreateNestedOneWithoutMarkersInput;
 	guest?: Prisma.ShareGuestCreateNestedOneWithoutMarkersInput;
@@ -1041,6 +1169,7 @@ export type MarkerUncheckedCreateWithoutCategoryInput = {
 	guestId?: string | null;
 	nleId?: string | null;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutMarkerInput;
+	pointers?: Prisma.MarkerPointerUncheckedCreateNestedManyWithoutMarkerInput;
 };
 
 export type MarkerCreateOrConnectWithoutCategoryInput = {
@@ -1093,6 +1222,7 @@ export type MarkerCreateWithoutResponsesInput = {
 	createdAt?: Date | string;
 	updatedAt?: Date | string;
 	nleId?: string | null;
+	pointers?: Prisma.MarkerPointerCreateNestedManyWithoutMarkerInput;
 	export: Prisma.ExportCreateNestedOneWithoutMarkersInput;
 	category: Prisma.CategoryCreateNestedOneWithoutMarkersInput;
 	author?: Prisma.UserCreateNestedOneWithoutMarkersInput;
@@ -1112,6 +1242,7 @@ export type MarkerUncheckedCreateWithoutResponsesInput = {
 	authorId?: string | null;
 	guestId?: string | null;
 	nleId?: string | null;
+	pointers?: Prisma.MarkerPointerUncheckedCreateNestedManyWithoutMarkerInput;
 };
 
 export type MarkerCreateOrConnectWithoutResponsesInput = {
@@ -1151,6 +1282,7 @@ export type MarkerUpdateWithoutResponsesInput = {
 	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	pointers?: Prisma.MarkerPointerUpdateManyWithoutMarkerNestedInput;
 	export?: Prisma.ExportUpdateOneRequiredWithoutMarkersNestedInput;
 	category?: Prisma.CategoryUpdateOneRequiredWithoutMarkersNestedInput;
 	author?: Prisma.UserUpdateOneWithoutMarkersNestedInput;
@@ -1170,6 +1302,7 @@ export type MarkerUncheckedUpdateWithoutResponsesInput = {
 	authorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	guestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	pointers?: Prisma.MarkerPointerUncheckedUpdateManyWithoutMarkerNestedInput;
 };
 
 export type MarkerCreateWithoutExportInput = {
@@ -1182,6 +1315,7 @@ export type MarkerCreateWithoutExportInput = {
 	updatedAt?: Date | string;
 	nleId?: string | null;
 	responses?: Prisma.ResponseCreateNestedManyWithoutMarkerInput;
+	pointers?: Prisma.MarkerPointerCreateNestedManyWithoutMarkerInput;
 	category: Prisma.CategoryCreateNestedOneWithoutMarkersInput;
 	author?: Prisma.UserCreateNestedOneWithoutMarkersInput;
 	guest?: Prisma.ShareGuestCreateNestedOneWithoutMarkersInput;
@@ -1200,6 +1334,7 @@ export type MarkerUncheckedCreateWithoutExportInput = {
 	guestId?: string | null;
 	nleId?: string | null;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutMarkerInput;
+	pointers?: Prisma.MarkerPointerUncheckedCreateNestedManyWithoutMarkerInput;
 };
 
 export type MarkerCreateOrConnectWithoutExportInput = {
@@ -1253,6 +1388,7 @@ export type MarkerCreateWithoutGuestInput = {
 	updatedAt?: Date | string;
 	nleId?: string | null;
 	responses?: Prisma.ResponseCreateNestedManyWithoutMarkerInput;
+	pointers?: Prisma.MarkerPointerCreateNestedManyWithoutMarkerInput;
 	export: Prisma.ExportCreateNestedOneWithoutMarkersInput;
 	category: Prisma.CategoryCreateNestedOneWithoutMarkersInput;
 	author?: Prisma.UserCreateNestedOneWithoutMarkersInput;
@@ -1271,6 +1407,7 @@ export type MarkerUncheckedCreateWithoutGuestInput = {
 	authorId?: string | null;
 	nleId?: string | null;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutMarkerInput;
+	pointers?: Prisma.MarkerPointerUncheckedCreateNestedManyWithoutMarkerInput;
 };
 
 export type MarkerCreateOrConnectWithoutGuestInput = {
@@ -1338,6 +1475,7 @@ export type MarkerUpdateWithoutAuthorInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	responses?: Prisma.ResponseUpdateManyWithoutMarkerNestedInput;
+	pointers?: Prisma.MarkerPointerUpdateManyWithoutMarkerNestedInput;
 	export?: Prisma.ExportUpdateOneRequiredWithoutMarkersNestedInput;
 	category?: Prisma.CategoryUpdateOneRequiredWithoutMarkersNestedInput;
 	guest?: Prisma.ShareGuestUpdateOneWithoutMarkersNestedInput;
@@ -1356,6 +1494,7 @@ export type MarkerUncheckedUpdateWithoutAuthorInput = {
 	guestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutMarkerNestedInput;
+	pointers?: Prisma.MarkerPointerUncheckedUpdateManyWithoutMarkerNestedInput;
 };
 
 export type MarkerUncheckedUpdateManyWithoutAuthorInput = {
@@ -1396,6 +1535,7 @@ export type MarkerUpdateWithoutCategoryInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	responses?: Prisma.ResponseUpdateManyWithoutMarkerNestedInput;
+	pointers?: Prisma.MarkerPointerUpdateManyWithoutMarkerNestedInput;
 	export?: Prisma.ExportUpdateOneRequiredWithoutMarkersNestedInput;
 	author?: Prisma.UserUpdateOneWithoutMarkersNestedInput;
 	guest?: Prisma.ShareGuestUpdateOneWithoutMarkersNestedInput;
@@ -1414,6 +1554,7 @@ export type MarkerUncheckedUpdateWithoutCategoryInput = {
 	guestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutMarkerNestedInput;
+	pointers?: Prisma.MarkerPointerUncheckedUpdateManyWithoutMarkerNestedInput;
 };
 
 export type MarkerUncheckedUpdateManyWithoutCategoryInput = {
@@ -1454,6 +1595,7 @@ export type MarkerUpdateWithoutExportInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	responses?: Prisma.ResponseUpdateManyWithoutMarkerNestedInput;
+	pointers?: Prisma.MarkerPointerUpdateManyWithoutMarkerNestedInput;
 	category?: Prisma.CategoryUpdateOneRequiredWithoutMarkersNestedInput;
 	author?: Prisma.UserUpdateOneWithoutMarkersNestedInput;
 	guest?: Prisma.ShareGuestUpdateOneWithoutMarkersNestedInput;
@@ -1472,6 +1614,7 @@ export type MarkerUncheckedUpdateWithoutExportInput = {
 	guestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutMarkerNestedInput;
+	pointers?: Prisma.MarkerPointerUncheckedUpdateManyWithoutMarkerNestedInput;
 };
 
 export type MarkerUncheckedUpdateManyWithoutExportInput = {
@@ -1512,6 +1655,7 @@ export type MarkerUpdateWithoutGuestInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	responses?: Prisma.ResponseUpdateManyWithoutMarkerNestedInput;
+	pointers?: Prisma.MarkerPointerUpdateManyWithoutMarkerNestedInput;
 	export?: Prisma.ExportUpdateOneRequiredWithoutMarkersNestedInput;
 	category?: Prisma.CategoryUpdateOneRequiredWithoutMarkersNestedInput;
 	author?: Prisma.UserUpdateOneWithoutMarkersNestedInput;
@@ -1530,6 +1674,7 @@ export type MarkerUncheckedUpdateWithoutGuestInput = {
 	authorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	nleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutMarkerNestedInput;
+	pointers?: Prisma.MarkerPointerUncheckedUpdateManyWithoutMarkerNestedInput;
 };
 
 export type MarkerUncheckedUpdateManyWithoutGuestInput = {
@@ -1552,12 +1697,14 @@ export type MarkerUncheckedUpdateManyWithoutGuestInput = {
 
 export type MarkerCountOutputType = {
 	responses: number;
+	pointers: number;
 };
 
 export type MarkerCountOutputTypeSelect<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
 	responses?: boolean | MarkerCountOutputTypeCountResponsesArgs;
+	pointers?: boolean | MarkerCountOutputTypeCountPointersArgs;
 };
 
 /**
@@ -1581,6 +1728,15 @@ export type MarkerCountOutputTypeCountResponsesArgs<
 	where?: Prisma.ResponseWhereInput;
 };
 
+/**
+ * MarkerCountOutputType without action
+ */
+export type MarkerCountOutputTypeCountPointersArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	where?: Prisma.MarkerPointerWhereInput;
+};
+
 export type MarkerSelect<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = runtime.Types.Extensions.GetSelect<
@@ -1598,6 +1754,7 @@ export type MarkerSelect<
 		guestId?: boolean;
 		nleId?: boolean;
 		responses?: boolean | Prisma.Marker$responsesArgs<ExtArgs>;
+		pointers?: boolean | Prisma.Marker$pointersArgs<ExtArgs>;
 		export?: boolean | Prisma.ExportDefaultArgs<ExtArgs>;
 		category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>;
 		author?: boolean | Prisma.Marker$authorArgs<ExtArgs>;
@@ -1691,6 +1848,7 @@ export type MarkerInclude<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
 	responses?: boolean | Prisma.Marker$responsesArgs<ExtArgs>;
+	pointers?: boolean | Prisma.Marker$pointersArgs<ExtArgs>;
 	export?: boolean | Prisma.ExportDefaultArgs<ExtArgs>;
 	category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>;
 	author?: boolean | Prisma.Marker$authorArgs<ExtArgs>;
@@ -1720,6 +1878,10 @@ export type $MarkerPayload<
 	name: "Marker";
 	objects: {
 		responses: Prisma.$ResponsePayload<ExtArgs>[];
+		/**
+		 * Arrows and boxes on the picture, shown while the playhead is on the marker
+		 */
+		pointers: Prisma.$MarkerPointerPayload<ExtArgs>[];
 		export: Prisma.$ExportPayload<ExtArgs>;
 		/**
 		 * NoAction: a category with markers can't be deleted (use merge first).
@@ -2265,6 +2427,17 @@ export interface Prisma__MarkerClient<
 	): Prisma.PrismaPromise<
 		| runtime.Types.Result.GetResult<
 				Prisma.$ResponsePayload<ExtArgs>,
+				T,
+				"findMany",
+				GlobalOmitOptions
+		  >
+		| Null
+	>;
+	pointers<T extends Prisma.Marker$pointersArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.Marker$pointersArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		| runtime.Types.Result.GetResult<
+				Prisma.$MarkerPointerPayload<ExtArgs>,
 				T,
 				"findMany",
 				GlobalOmitOptions
@@ -2819,6 +2992,33 @@ export type Marker$responsesArgs<
 	take?: number;
 	skip?: number;
 	distinct?: Prisma.ResponseScalarFieldEnum | Prisma.ResponseScalarFieldEnum[];
+};
+
+/**
+ * Marker.pointers
+ */
+export type Marker$pointersArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the MarkerPointer
+	 */
+	select?: Prisma.MarkerPointerSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the MarkerPointer
+	 */
+	omit?: Prisma.MarkerPointerOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.MarkerPointerInclude<ExtArgs> | null;
+	where?: Prisma.MarkerPointerWhereInput;
+	orderBy?:
+		Prisma.MarkerPointerOrderByWithRelationInput | Prisma.MarkerPointerOrderByWithRelationInput[];
+	cursor?: Prisma.MarkerPointerWhereUniqueInput;
+	take?: number;
+	skip?: number;
+	distinct?: Prisma.MarkerPointerScalarFieldEnum | Prisma.MarkerPointerScalarFieldEnum[];
 };
 
 /**

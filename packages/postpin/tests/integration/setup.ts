@@ -43,8 +43,12 @@ vi.mock("$app/env", () => ({ building: false, dev: true, browser: false, version
 
 vi.mock("$app/server", async () => await import("../helpers/app-server.ts"));
 
-// Only Postgres is real. E-mail, S3 and the queue are recorded in `fakes`.
+// Only Postgres is real. E-mail, S3, the queue and the running screenings are kept in `fakes`.
 vi.mock("#lib/server/email.ts", async () => (await import("../helpers/fakes.ts")).fakeEmailModule);
+vi.mock(
+	"#lib/server/screening-store.ts",
+	async () => (await import("../helpers/fakes.ts")).fakeScreeningStoreModule,
+);
 vi.mock("#lib/server/storage.ts", async () => {
 	// one fake for both, so tests see S3 calls and presigned URLs in the same place
 	const s3Client = (await import("../helpers/fakes.ts")).fakeS3Client();
