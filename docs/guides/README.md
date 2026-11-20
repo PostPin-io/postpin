@@ -106,6 +106,9 @@ feature you can discover later, it's a **tour**.
     <kbd>Space</kbd>, <kbd>Enter</kbd>, <kbd>⌥</kbd>. Never a key as plain text. Every key a step
     lets through (`keys`) is named in its text this way, so the user sees that it works (a test
     checks both).
+    Never "NLE" on screen: users don't know the word. It is **the plugin**, and where the program
+    matters its name (DaVinci Resolve, Premiere Pro, Pro Tools; there the plugin is PostPin
+    Desktop). "NLE" stays in ids and code (`NleBridge`, `open-in-nle`).
 15. **As short as possible, as long as necessary.** Every tour text has to earn its place:
     - one idea per step; the title names it, the text says what to do or why it matters,
     - usually one or two short sentences (aim for 25 words at most),
@@ -293,7 +296,7 @@ button next to the element of its first step.
 | [install-premiere](tutorials/install-premiere.md) | Installing the Premiere Pro plugin | Reviewer     |
 | [install-desktop](tutorials/install-desktop.md)   | Installing PostPin Desktop         | Reviewer     |
 | [first-review](tutorials/first-review.md)         | Your first review                  | Reviewer     |
-| [sync-to-nle](tutorials/sync-to-nle.md)           | Feedback back in the NLE           | Reviewer     |
+| [sync-to-nle](tutorials/sync-to-nle.md)           | Using the plugin                   | Member       |
 
 ### Tours
 
