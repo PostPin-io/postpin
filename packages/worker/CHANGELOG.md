@@ -1,5 +1,11 @@
 # @postpin-io/worker
 
+## 0.6.0
+
+### Minor Changes
+
+- feat: live markers – marker, response and category changes from other reviewers and tabs appear without reloading
+
 ## 0.3.0
 
 ### Minor Changes
