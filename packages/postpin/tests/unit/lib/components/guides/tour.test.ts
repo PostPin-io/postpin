@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
 	GUIDE_BUTTON_TOKEN,
 	fallbackStep,
@@ -10,8 +10,10 @@ import {
 	keyLabel,
 	splitStepText,
 	stepKind,
+	visibleRect,
 	type TourStep,
 } from "#lib/components/guides/tour.ts";
+import { signalGuide } from "#lib/components/guides/guide-signals.svelte.ts";
 import { shareLinkTour } from "#lib/components/guides/tours/share-link.ts";
 import { GUIDES, GUIDE_IDS, lowestRoleWith, roleCanDo } from "#lib/guides.ts";
 import { Role } from "@postpin-io/shared/db/enums";
@@ -301,6 +303,16 @@ describe("navigation tour", () => {
 describe("marker-ranges tour", () => {
 	const byId = (id: string) => markerRangesTour.steps.find((s) => s.id === id)!;
 
+	/** A page on which only these steps' elements are there (`data-guide="marker-ranges/<id>"`) */
+	function pageWith(...present: string[]) {
+		const element = { getBoundingClientRect: () => ({ width: 10, height: 10 }) };
+		vi.stubGlobal("document", {
+			querySelectorAll: (selector: string) =>
+				present.some((id) => selector.includes(`"marker-ranges/${id}"`)) ? [element] : [],
+		});
+	}
+	afterEach(() => vi.unstubAllGlobals());
+
 	it("needs the timeline, so only runs on wide screens", () => {
 		expect(markerRangesTour.desktopOnly).toBe(true);
 	});
@@ -310,15 +322,82 @@ describe("marker-ranges tour", () => {
 		expect(GUIDES.find((g) => g.id === "marker-ranges")?.minRole).toBe(Role.REVIEWER);
 	});
 
+	it("goes through the steps of its guide file, in order", () => {
+		expect(markerRangesTour.steps.map((s) => s.id)).toEqual([
+			"add-marker",
+			"show-timeline",
+			"move",
+			"make-range",
+			"end",
+			"expand",
+			"timecode",
+			"range-end",
+			"keys",
+			"done",
+		]);
+	});
+
 	it("waits for the real drag, typing and click on the steps that do something", () => {
 		for (const id of ["add-marker", "move", "end", "timecode"]) {
 			expect(byId(id).advance, id).toBe("signal");
 		}
 		expect(byId("make-range").advance).toBe("click");
+		expect(byId("expand").advance).toBe("click");
 	});
 
-	it("never goes back to adding a marker while the timeline opens", () => {
-		expect(byId("move").waitForElement).toBe(true);
+	it("leaves steps out by the marker's state, never because an element is missing a moment", () => {
+		// optional + a missing element skipped the step, the next one went back: a loop
+		for (const step of markerRangesTour.steps) expect(step.optional, step.id).toBeFalsy();
+		for (const id of ["show-timeline", "make-range", "end", "expand", "range-end"]) {
+			expect(byId(id).skipIf, id).toBeTypeOf("function");
+		}
+	});
+
+	it("waits for elements on their way instead of going back to the timeline", () => {
+		for (const id of ["add-marker", "move", "make-range", "expand", "timecode"]) {
+			expect(byId(id).waitForElement, id).toBe(true);
+		}
+	});
+
+	it("asks to make a range only of a point marker", () => {
+		pageWith("move");
+		expect(byId("make-range").skipIf!()).toBe(false);
+		// its end triangle is on the timeline: a range already
+		pageWith("move", "end");
+		expect(byId("make-range").skipIf!()).toBe(true);
+	});
+
+	it("asks to open the marker only while it is closed", () => {
+		pageWith("expand");
+		expect(byId("expand").skipIf!()).toBe(false);
+		pageWith("timecode");
+		expect(byId("expand").skipIf!()).toBe(true);
+		// filtered out of the list: not left out, the step waits for it
+		pageWith();
+		expect(byId("expand").skipIf!()).toBe(false);
+	});
+
+	it("shows the start/end switch only for a range", () => {
+		pageWith("range-end");
+		expect(byId("range-end").skipIf!()).toBe(false);
+		pageWith("timecode");
+		expect(byId("range-end").skipIf!()).toBe(true);
+	});
+
+	it("doesn't ask for the end again after an ⌥-drag that set it", () => {
+		signalGuide("marker-ranges", "end");
+		signalGuide("marker-ranges", "add-marker");
+		// a new marker: its end wasn't dragged yet
+		expect(byId("end").skipIf!()).toBe(false);
+		signalGuide("marker-ranges", "end");
+		expect(byId("end").skipIf!()).toBe(true);
+	});
+
+	it("only offers on a step what can be done on it", () => {
+		// the timeline is blocked while the editor's button is highlighted: no ⌥-drag there
+		expect(
+			splitStepText(byId("make-range").text).some((p) => typeof p !== "string" && "key" in p),
+		).toBe(false);
 	});
 
 	it("lets the in and out keys through only where it explains them", () => {
@@ -328,6 +407,46 @@ describe("marker-ranges tour", () => {
 			expect(step.keys ?? [], step.id).not.toContain("Escape");
 		}
 	});
+});
+
+describe("visibleRect", () => {
+	const rect = (left: number, top: number, width: number, height: number) => ({
+		left,
+		top,
+		width,
+		height,
+	});
+
+	it("is the element itself when nothing clips it", () => {
+		expect(visibleRect(rect(10, 10, 20, 20), [])).toEqual(rect(10, 10, 20, 20));
+	});
+
+	it("cuts a range bar wider than the timeline to the timeline", () => {
+		expect(visibleRect(rect(-500, 100, 3000, 8), [rect(200, 0, 800, 600)])).toEqual(
+			rect(200, 100, 800, 8),
+		);
+	});
+
+	it("cuts to every scroll container it is in", () => {
+		expect(visibleRect(rect(0, 0, 100, 100), [rect(10, 0, 200, 50), rect(0, 20, 50, 200)])).toEqual(
+			rect(10, 20, 40, 30),
+		);
+	});
+
+	it("is none when the element is scrolled out of view", () => {
+		expect(visibleRect(rect(900, 10, 10, 10), [rect(0, 0, 800, 600)])).toBeNull();
+	});
+});
+
+describe("guide texts on screen (rule 14)", () => {
+	it.each([...TOURS, firstReviewTour].map((t) => [t.guideId, t] as const))(
+		"%s never says NLE",
+		(_, tour) => {
+			for (const step of tour.steps) {
+				expect(`${step.title} ${step.text}`, step.id).not.toMatch(/\bNLEs?\b/);
+			}
+		},
+	);
 });
 
 describe("keys in guide texts (rule 14)", () => {

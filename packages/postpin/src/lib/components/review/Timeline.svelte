@@ -13,6 +13,7 @@
 		collapsedLaneCount,
 		stepPlaybackRate,
 		dragRange,
+		dragSignals,
 		orderMarks,
 		tickStep,
 		timelineCuts,
@@ -266,8 +267,9 @@
 					shareToken: share?.token,
 				});
 				await getMarkers(markersKey(marker.exportId, share?.token)).refresh();
-				signalGuide("marker-ranges", "move");
-				if (frame === marker.frame) signalGuide("marker-ranges", "end");
+				for (const signal of dragSignals(marker, { frame, duration })) {
+					signalGuide("marker-ranges", signal);
+				}
 			}
 		} finally {
 			markerDrag = null;
@@ -578,7 +580,6 @@
 								)}px; background-color: color-mix(in srgb, {marker.category
 									.color} 50%, transparent)"
 								title={marker.name}
-								data-guide={guided ? "marker-ranges/move" : undefined}
 								onpointerdown={(event) => startMarkerDrag(event, marker, "move")}
 							>
 								{#if marker.canUpdate && width >= HANDLE_MIN_WIDTH}
@@ -597,7 +598,9 @@
 							</div>
 						{/if}
 						{#if range.duration > 0}
-							<!-- A range has two equal edges: triangles whose flat side sits on the edge -->
+							<!-- A range has two equal edges: triangles whose flat side sits on the edge. The start
+							triangle is the range's head in the marker-ranges tour (the bar can be 2px or wider
+							than the timeline) -->
 							{#each ["start", "end"] as const as edge (edge)}
 								<div
 									class="absolute bottom-0 z-10 touch-none {edge === 'end'
@@ -609,7 +612,9 @@
 											? 'cursor-grabbing'
 											: 'cursor-grab'}"
 									style="left: {toX(range.frame) + (edge === 'end' ? width : 0)}px"
-									data-guide={guided && edge === "end" ? "marker-ranges/end" : undefined}
+									data-guide={guided
+										? `marker-ranges/${edge === "start" ? "move" : "end"}`
+										: undefined}
 									title={marker.canUpdate
 										? `${marker.name ?? ""} · Alt-drag to change the ${edge}`
 										: marker.name}

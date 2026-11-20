@@ -6,6 +6,7 @@ import {
 	clipStyle,
 	collapsedLaneCount,
 	dragRange,
+	dragSignals,
 	orderMarks,
 	rangeFromMarks,
 	stepPlaybackRate,
@@ -340,5 +341,36 @@ describe("rangeFromMarks", () => {
 	it("no in: a point marker at the playhead", () => {
 		expect(rangeFromMarks({ in: null, out: null }, 50)).toEqual({ frame: 50, duration: 0 });
 		expect(rangeFromMarks({ in: null, out: 60 }, 50)).toEqual({ frame: 50, duration: 0 });
+	});
+});
+
+describe("dragSignals", () => {
+	it("is nothing when the marker stayed where it was", () => {
+		expect(dragSignals({ frame: 120, duration: 10 }, { frame: 120, duration: 10 })).toEqual([]);
+	});
+
+	it("is a move for a marker dragged elsewhere", () => {
+		expect(dragSignals({ frame: 120, duration: 0 }, { frame: 130, duration: 0 })).toEqual(["move"]);
+		expect(dragSignals({ frame: 120, duration: 10 }, { frame: 110, duration: 20 })).toEqual([
+			"move",
+		]);
+	});
+
+	it("is a move and an end when only the end of a range moved", () => {
+		expect(dragSignals({ frame: 120, duration: 10 }, { frame: 120, duration: 30 })).toEqual([
+			"move",
+			"end",
+		]);
+		// ⌥-dragging a point marker to the right pulls out a range from it
+		expect(dragSignals({ frame: 120, duration: 0 }, { frame: 120, duration: 5 })).toEqual([
+			"move",
+			"end",
+		]);
+	});
+
+	it("is no end when the end was dragged onto the start: that's no range any more", () => {
+		expect(dragSignals({ frame: 120, duration: 10 }, { frame: 120, duration: 0 })).toEqual([
+			"move",
+		]);
 	});
 });

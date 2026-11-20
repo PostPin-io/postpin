@@ -38,7 +38,8 @@ Next. Icons in brackets are shown inline (rule 14).
    **Title:** "Find the spot". **Text:** "Start the video with [play] and stop it with [pause]
    where something should change. <kbd>Space</kbd> works too." Waits until there is a player
    (processing).
-2. `add-marker` (signal: a new marker was created): **Highlights:** the add-marker button.
+2. `add-marker` (signal: a new marker was created, or the user's own marker at the playhead was
+   selected): **Highlights:** the add-marker button.
    **Title:** "Your first marker". **Text:** "Add a marker on this frame with [diamond-plus] or
    <kbd>M</kbd>."
 3. `title` (signal: Enter in the title field, or leaving it, with a title): **Highlights:** the
@@ -83,7 +84,8 @@ Next. Icons in brackets are shown inline (rule 14).
 | `reply`          | the reply form                                   | `review/markers/ResponseMarker.svelte` |
 
 Signals: `play` in `ExportReview` (paused after playing, by button or key), `add-marker` in
-`MarkerPanel` (only for a new marker, not when M selects one that is there), `title` and
+`MarkerPanel` (a new marker, or the user's own one that is there: M selects it instead of adding
+a second; someone else's marker on the frame doesn't stop the user from adding theirs), `title` and
 `category` in `UpdateMarker`, `jump` in `MarkerPanel` (the list's jump), `reply` in
 `ResponseMarker`.
 

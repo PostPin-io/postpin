@@ -49,7 +49,9 @@ feature you can discover later, it's a **tour**.
    started, or started but not finished; it disappears once the tour is completed or skipped (from
    then on it starts again only from the PostPin Guides page). Its tooltip names the tour
    ("Tour: Share links"). It is only there for users who may use the feature (no button for a
-   reviewer at a feature only members have).
+   reviewer at a feature only members have). Where users look for help elsewhere than at the
+   first step's element, the button may sit there instead (marker-ranges: next to the shortcut
+   hint of the timeline); the tour file says so.
    **Exception:** the [postpin-guides](tours/postpin-guides.md) tour explains the guide system
    itself (guide buttons, the PostPin Guides page, switching guides off), so it starts
    automatically, once per user, but always after the first tutorial: only once first-upload is
@@ -68,7 +70,8 @@ feature you can discover later, it's a **tour**.
    guide would wait for an action that never comes.
    A tour blocks clicks, keyboard focus and shortcuts everywhere except on the highlighted element
    and the tour card; Escape does nothing (it neither closes a dialog nor the tour). Scrolling stays
-   possible.
+   possible. The tour card is no dialog for the page's shortcuts: keys a step lets through work
+   also while the card has the focus.
 7. **Skipping is explicit:** a guide ends only by finishing it or by its "Skip" button, which asks
    once for confirmation ("Skip this tour? You can start it again under PostPin Guides in the
    account menu."). Clicking outside, Escape or closing a dialog never skips. Leaving the page
@@ -245,10 +248,16 @@ button next to the element of its first step.
 - **Step options** (`TourStep` in `tour.ts`): `centered` (no element, a card in the middle with
   Next, e.g. a welcome), `nextLabel`, `skipIf` (left out as the tour gets to it, e.g. the way to a
   page the tour already is on), `optional` (left out when its element isn't there),
-  `waitForElement` (after a navigation: waits instead of going back), `inert` (the element is only
+  `waitForElement` (waits instead of going back: after a navigation, or while a save or a list
+  re-renders the element), `inert` (the element is only
   explained, clicks on it are blocked too), `keys` (keys that work anywhere on this step, the page's
   own shortcuts for what it asks, only those: space on the play step, M on the add-marker step;
-  each one named in the text with `key()`). `{guide-button}` in a step's text shows the guide
+  each one named in the text with `key()`).
+  `optional` is for an element that belongs to a role or a setting (it is there or not for good);
+  a step that is left out because of what the user did (the marker is a range already, the marker
+  is open already) uses `skipIf` with that state. Otherwise an element that is missing for a
+  moment leaves the step out, and the next one, lacking its element, goes back to an earlier step:
+  a loop. `{guide-button}` in a step's text shows the guide
   button icon, `icon(name)` a lucide icon, `key(label)` a key cap (rule 14). One element can serve several steps: `data-guide="tour/one tour/two"`.
 - **Tour options** (`TourDefinition`): `spansPages` for a tour whose steps navigate (otherwise a
   tour started from a guide button pauses when the user leaves the page), `desktopOnly` for a
@@ -264,6 +273,9 @@ button next to the element of its first step.
 - **Dialogs:** overlays move into an open modal dialog when their element is in one, so they stay
   visible and clickable (`top-layer.ts`). Since Escape and clicks outside are blocked, the user
   can't close a dialog the tour is in by accident.
+- **Highlight:** the cut-out is what is visible of the element: cut to its scroll containers (a
+  range bar wider than the timeline is highlighted only where it can be seen). An element scrolled
+  out of view completely is scrolled back in.
 - **Missing element:** a step waits for its element. If it disappears anyway (e.g. the page
   re-rendered), the tour goes back to the latest earlier step whose element is there.
 - **Last step:** the completion card (`advance: "done"`), centered on the screen, nothing

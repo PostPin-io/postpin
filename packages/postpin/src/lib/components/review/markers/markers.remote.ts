@@ -138,10 +138,16 @@ export const getMarkers = query(
 				include,
 			});
 			// Guests never see responses, and may change all of their own markers
-			return markers.map((m) => ({ ...m, responses: [], canUpdate: true, canDelete: true }));
+			return markers.map((m) => ({
+				...m,
+				responses: [],
+				canUpdate: true,
+				canDelete: true,
+				isOwn: true,
+			}));
 		}
 
-		const { member, target } = reader;
+		const { member, target, user } = reader;
 		const allowed = await accessChecker(member);
 		const markers = await prisma.marker.findMany({
 			where: { exportId },
@@ -161,6 +167,8 @@ export const getMarkers = query(
 				...m,
 				canUpdate: allowed("marker", "update", t),
 				canDelete: allowed("marker", "delete", t),
+				// pressing M on it selects it instead of adding a second one (`ownMarkerAt`)
+				isOwn: m.authorId !== null && m.authorId === user.id,
 			};
 		});
 	},
