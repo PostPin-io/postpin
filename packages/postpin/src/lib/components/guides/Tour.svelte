@@ -13,12 +13,14 @@
 	import { STEP_ICON_COMPONENTS } from "./step-icons.ts";
 	import { untrack } from "svelte";
 	import {
+		clipRects,
 		fallbackStep,
 		findAnchor,
 		nextShownStep,
 		placeCard,
 		splitStepText,
 		stepKind,
+		visibleRect,
 		type TourDefinition,
 	} from "./tour.ts";
 	import { layerOf, moveInto } from "./top-layer.ts";
@@ -51,10 +53,18 @@
 	 * The steps the user goes through (no completion card), as far as known at the start: the
 	 * counter shouldn't jump over steps left out (e.g. the way to a page the tour starts on)
 	 */
-	const counted = untrack(() =>
-		tour.steps.filter((s) => s.advance !== "done" && !s.skipIf?.()).map((s) => s.id),
+	let countedIds = $state(
+		untrack(() => tour.steps.filter((s) => s.advance !== "done" && !s.skipIf?.()).map((s) => s.id)),
 	);
-	const stepNumber = $derived(counted.indexOf(step.id) + 1);
+	// a step left out at the start may come after all (it depends on what the user does): it
+	// counts from then on
+	$effect(() => {
+		if (!isDone && !untrack(() => countedIds).includes(step.id)) {
+			const known = new Set([...untrack(() => countedIds), step.id]);
+			countedIds = tour.steps.filter((s) => known.has(s.id)).map((s) => s.id);
+		}
+	});
+	const stepNumber = $derived(countedIds.indexOf(step.id) + 1);
 
 	let root = $state<HTMLElement>();
 	let card = $state<HTMLElement>();
@@ -130,7 +140,15 @@
 					el.scrollIntoView({ block: "nearest", inline: "nearest" });
 					scrolled = true;
 				}
-				const r = el.getBoundingClientRect();
+				// only what can be seen: a range bar wider than the timeline, a diamond under the
+				// track names would put the highlight next to it
+				const r = visibleRect(el.getBoundingClientRect(), clipRects(el));
+				if (!r) {
+					// scrolled out of view (zoomed, the playhead jumped): back into it
+					el.scrollIntoView({ block: "nearest", inline: "nearest" });
+					rect = null;
+					return;
+				}
 				rect = { top: r.top, left: r.left, width: r.width, height: r.height };
 				if (root) moveInto(root, layerOf(el));
 				return;
@@ -323,6 +341,7 @@ icon of the button a step talks about -->
 		bind:offsetHeight={cardHeight}
 		role="dialog"
 		aria-label="{style.label}: {title}"
+		data-tour-card
 		tabindex="-1"
 		onmousedown={(e) => {
 			// its buttons work without taking the focus: an open menu stays open behind it
@@ -333,7 +352,8 @@ icon of the button a step talks about -->
 			<GraduationCap class="size-4" />
 			{style.label} · {title}
 			{#if !isDone}
-				<span class="ml-auto font-normal text-base-content/50">{stepNumber} / {counted.length}</span
+				<span class="ml-auto font-normal text-base-content/50"
+					>{stepNumber} / {countedIds.length}</span
 				>
 			{/if}
 		</div>

@@ -23,7 +23,11 @@ export interface TourStep {
 	nextLabel?: string;
 	/** Left out when this is true as the tour gets to it (e.g. already on the page it leads to) */
 	skipIf?: () => boolean;
-	/** Its element may not be there (e.g. a list that's filtered empty): then it's left out */
+	/**
+	 * Its element may not be there for good (a role or setting doesn't have it): then it's left
+	 * out. For a step left out because of what the user did, use `skipIf` with that state: an
+	 * element missing for a moment would leave the step out too.
+	 */
 	optional?: boolean;
 	/**
 	 * Its element comes after a navigation: it waits for it instead of going back to an earlier
@@ -72,14 +76,14 @@ export const STEP_ICONS = [
 	"message-square-reply",
 	"send",
 	"plus",
-	"link",
+	"share-arrow",
 	"copy",
 	"move-horizontal",
 	"chevrons-up-down",
 ] as const;
 export type StepIcon = (typeof STEP_ICONS)[number];
 
-/** The lucide icon `name` in a step's text, e.g. `Add a marker with ${icon("diamond-plus")}` */
+/** The icon `name` (lucide, or `share-arrow`) in a step's text, e.g. `Add a marker with ${icon("diamond-plus")}` */
 export const icon = (name: StepIcon) => `{icon:${name}}`;
 
 /**
@@ -152,6 +156,54 @@ export function findAnchor(guideId: GuideId, stepId: string): HTMLElement | null
 		return el;
 	}
 	return null;
+}
+
+export interface Rect {
+	left: number;
+	top: number;
+	width: number;
+	height: number;
+}
+
+/**
+ * What can be seen of an element: its rect cut to every container that clips it (`clips`, e.g.
+ * the scrolling timeline lanes), or null when it is scrolled out of view
+ */
+export function visibleRect(rect: Rect, clips: Rect[]): Rect | null {
+	let left = rect.left;
+	let top = rect.top;
+	let right = rect.left + rect.width;
+	let bottom = rect.top + rect.height;
+	for (const clip of clips) {
+		left = Math.max(left, clip.left);
+		top = Math.max(top, clip.top);
+		right = Math.min(right, clip.left + clip.width);
+		bottom = Math.min(bottom, clip.top + clip.height);
+	}
+	if (right <= left || bottom <= top) return null;
+	return { left, top, width: right - left, height: bottom - top };
+}
+
+/** In the top layer (a modal dialog, an open popover): nothing below it in the page clips it */
+const TOP_LAYER = "dialog:modal, :popover-open";
+
+/** The rects of the element's ancestors that clip it (overflow other than visible) */
+export function clipRects(el: Element): Rect[] {
+	const clips: Rect[] = [];
+	if (el.matches(TOP_LAYER)) return clips;
+	let position = getComputedStyle(el).position;
+	for (let parent = el.parentElement; parent; parent = parent.parentElement) {
+		// fixed escapes every ancestor's overflow, absolute those below its containing block
+		if (position === "fixed") break;
+		const style = getComputedStyle(parent);
+		if (position === "absolute" && style.position === "static") continue;
+		if (style.overflowX !== "visible" || style.overflowY !== "visible") {
+			clips.push(parent.getBoundingClientRect());
+		}
+		if (parent.matches(TOP_LAYER)) break;
+		position = style.position;
+	}
+	return clips;
 }
 
 /** Below the element if it fits, else above; never off screen */

@@ -7,7 +7,7 @@ export const shareLinkTour: TourDefinition = {
 		{
 			id: "open",
 			title: "Share this export",
-			text: `Send it to people without a PostPin account. Open the share links with ${icon("link")}.`,
+			text: `Send it to people without a PostPin account. Open the share links with ${icon("share-arrow")}.`,
 			advance: "click",
 		},
 		{

@@ -29,13 +29,14 @@ let nle: ReturnType<typeof fakeNle>;
 let host: ReturnType<typeof fakeHost>;
 let onStep: ReturnType<typeof vi.fn>;
 
-const run = () =>
+const run = (exportName?: string) =>
 	renderAndUpload({
 		nle,
 		host: host as unknown as HostBridge,
 		client,
 		projectId: "p1",
 		timelineId: "t1",
+		exportName,
 		onStep,
 	});
 
@@ -64,6 +65,15 @@ beforeEach(() => {
 });
 
 describe("renderAndUpload", () => {
+	it("names the export as the user wants", async () => {
+		await run("  Cut 3 for the client ");
+		expect(api.createExport.mock.calls[0]![0].body).toEqual({
+			nleProjectId: "nle-project",
+			nleTimelineId: "nle-timeline",
+			name: "Cut 3 for the client",
+		});
+	});
+
 	it("renders, creates the export, uploads the file and completes it with the snapshot", async () => {
 		await expect(run()).resolves.toEqual({ exportId: "exp-1" });
 

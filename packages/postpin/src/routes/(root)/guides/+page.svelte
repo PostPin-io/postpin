@@ -1,6 +1,7 @@
 <script lang="ts">
 	// PostPin Guides: every tutorial and tour with its status, each can be started (again).
 	// One filter for both columns: people look for a topic, not for a kind of guide.
+	import ArrowLeftRight from "@lucide/svelte/icons/arrow-left-right";
 	import { goto } from "$app/navigation";
 	import { resolve } from "$app/paths";
 	import CircleCheck from "@lucide/svelte/icons/circle-check";
@@ -59,6 +60,7 @@
 		"install-resolve": Unplug,
 		"install-premiere": Unplug,
 		"install-desktop": Unplug,
+		"sync-to-nle": ArrowLeftRight,
 		"postpin-guides": GraduationCap,
 		navigation: Compass,
 		"share-link": Link,

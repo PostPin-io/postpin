@@ -13,6 +13,7 @@
 	import { defaultCategory } from "./default-category.svelte.ts";
 	import {
 		filterMarkers,
+		ownMarkerAt,
 		selectRange as selectRangeOf,
 		sortMarkers as sortMarkersBy,
 		type SortField,
@@ -87,10 +88,8 @@
 
 	// Where M puts the next marker: the in/out range, or the playhead
 	let nextRange = $derived(rangeFromMarks(inOut, currentFrame));
-	// Pressing M again selects the marker instead of adding the same one twice
-	let existingAtNext = $derived(
-		markers.find((m) => m.frame === nextRange.frame && m.duration === nextRange.duration),
-	);
+	// Pressing M again selects the user's marker instead of adding the same one twice
+	let existingAtNext = $derived(ownMarkerAt(markers, nextRange));
 	// Markers under the playhead (ranges it is in, points it sits on), highlighted in the list
 	let playingIds = $derived(
 		new Set(
@@ -374,13 +373,12 @@
 	}
 
 	async function addAndSelectMarker() {
-		const isNew = !existingAtNext;
 		const marker = await addMarkerAtPlayhead();
 		if (!marker) return;
-		if (isNew) {
-			signalGuide("first-review", "add-marker");
-			signalGuide("marker-ranges", "add-marker");
-		}
+		// a new one, or the user's own that is there already: the guides go on with it either way
+		// (before, a marker left at the playhead by an earlier run kept them waiting)
+		signalGuide("first-review", "add-marker");
+		signalGuide("marker-ranges", "add-marker");
 		selectedMarkerIds = [marker.id];
 		// Phones: a new marker opens straight in the modal, ready for its title
 		if (mobile) {

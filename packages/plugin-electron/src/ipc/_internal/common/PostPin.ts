@@ -24,8 +24,13 @@ export interface NleMarker {
 	title: string;
 	description: string;
 	frame: number;
+	duration?: number;
 	color: string;
 	customData?: string;
+}
+export interface SetMarkerResult {
+	nleId?: string;
+	error?: string;
 }
 export interface RenderProgress {
 	percent: number;
@@ -48,6 +53,7 @@ export interface Settings {
 	outputPath: string;
 	filename: string;
 	renderPreset: string;
+	targets?: string;
 }
 export interface DiskRenderOptions {
 	preset: string;
@@ -147,13 +153,15 @@ export interface TimelineInfo {
 	projectId: string;
 	projectName: string;
 	thumbnailDataUrl?: string;
+	startFrame?: number;
 }
 export interface INleAPIImpl {
 	getCapabilities(): Promise<Capabilities> | Capabilities;
 	getProjectId(): Promise<string> | string;
 	getTimelineInfo(): Promise<TimelineInfo | null> | TimelineInfo | null;
 	getMarkers(): Promise<NleMarker[]> | NleMarker[];
-	setMarkers(markers: NleMarker[]): Promise<string[]> | string[];
+	setMarkers(markers: NleMarker[]): Promise<SetMarkerResult[]> | SetMarkerResult[];
+	removeMarkers(nleIds: string[]): Promise<boolean> | boolean;
 	clearMarkers(): Promise<boolean> | boolean;
 	getRenderPresets(): Promise<string[]> | string[];
 	renderPreview(): Promise<string> | string;
@@ -165,7 +173,8 @@ export interface INleAPIRenderer {
 	getProjectId(): Promise<string>;
 	getTimelineInfo(): Promise<TimelineInfo | null>;
 	getMarkers(): Promise<NleMarker[]>;
-	setMarkers(markers: NleMarker[]): Promise<string[]>;
+	setMarkers(markers: NleMarker[]): Promise<SetMarkerResult[]>;
+	removeMarkers(nleIds: string[]): Promise<boolean>;
 	clearMarkers(): Promise<boolean>;
 	getRenderPresets(): Promise<string[]>;
 	renderPreview(): Promise<string>;

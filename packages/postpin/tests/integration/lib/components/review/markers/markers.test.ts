@@ -123,6 +123,17 @@ describe("getMarkers", () => {
 		const markers = await getMarkers(w.exp1.id);
 		expect(markers.every((m) => m.canUpdate && m.canDelete)).toBe(true);
 	});
+
+	it("marks the user's own markers, also for a member who may change all", async () => {
+		// M on a frame selects the user's own marker there instead of adding another (ownMarkerAt)
+		const me = await signInAs(w.org, MEMBER, [tl1Grant()]);
+		const mine = await f.createMarker(w.exp1, w.catA, { author: me.user, frame: 2 });
+		const theirs = await f.createMarker(w.exp1, w.catA, { author: w.owner.user, frame: 1 });
+		const orphan = await f.createMarker(w.exp1, w.catA, { frame: 0 });
+
+		const own = Object.fromEntries((await getMarkers(w.exp1.id)).map((m) => [m.id, m.isOwn]));
+		expect(own).toEqual({ [mine.id]: true, [theirs.id]: false, [orphan.id]: false });
+	});
 });
 
 // ─── getMarkersbyCategory ───────────────────────────────────────────────────

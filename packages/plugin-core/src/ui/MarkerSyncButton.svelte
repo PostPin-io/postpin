@@ -17,9 +17,11 @@
 		busy?: boolean;
 		disabled?: boolean;
 		onclick: () => void;
+		/** data-guide anchor for the web app's plugin tutorial */
+		guide?: string;
 	}
 
-	let { from, hostName, busy = false, disabled = false, onclick }: Props = $props();
+	let { from, hostName, busy = false, disabled = false, onclick, guide }: Props = $props();
 
 	const hostLabel = $derived(hostName ? hostInfo(hostName).displayName : "your editing app");
 	// The logos alone don't say what happens, so the label spells it out for tooltips and screen readers
@@ -50,6 +52,7 @@
 	aria-label={label}
 	aria-busy={busy}
 	title={label}
+	data-guide={guide}
 	{disabled}
 	onclick={() => {
 		if (!busy) onclick();

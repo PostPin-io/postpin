@@ -2,6 +2,7 @@
 	// Decides which guide runs where, see docs/guides/README.md (rules 3–5): tutorials start on
 	// their own, tours from their guide button, except the tour about the guides themselves.
 	// One guide at a time, tutorials first. Switched off, only what was started by hand runs.
+	import { untrack } from "svelte";
 	import { afterNavigate } from "$app/navigation";
 	import { page } from "$app/state";
 	import { MediaQuery } from "svelte/reactivity";
@@ -16,6 +17,7 @@
 		getGuideAvailability,
 		getGuideProgress,
 		getGuidesEnabled,
+		getPluginTutorial,
 		saveGuideProgress,
 	} from "./guides.remote.ts";
 	import type { TourDefinition } from "./tour.ts";
@@ -27,6 +29,7 @@
 	import InstallDesktopTutorial from "./tutorials/InstallDesktopTutorial.svelte";
 	import InstallPremiereTutorial from "./tutorials/InstallPremiereTutorial.svelte";
 	import InstallResolveTutorial from "./tutorials/InstallResolveTutorial.svelte";
+	import SyncToNleTutorial from "./tutorials/SyncToNleTutorial.svelte";
 	import { firstReviewTour } from "./tutorials/first-review.ts";
 
 	const TOURS: Partial<Record<GuideId, TourDefinition>> = {
@@ -106,6 +109,41 @@
 		return INSTALL_IDS.find((id) => statusOf(progress, id) === GuideStatus.STARTED) ?? null;
 	});
 
+	// The plugin tutorial: right after a plugin is connected, once an export with markers exists.
+	// An install tutorial finished here hands over to it at once, wherever that was; otherwise it
+	// starts (and goes on) on the dashboard, never in the middle of a review. Desktop only: the
+	// plugins run on a computer.
+	const wide = new MediaQuery("min-width: 1024px");
+	let handedOver = $state(false);
+	$effect(() => {
+		if (INSTALL_IDS.some((id) => guideState.ended[id] === GuideStatus.COMPLETED)) {
+			handedOver = true;
+		}
+	});
+	const pluginTutorialCandidate = $derived(
+		enabled &&
+			!guideState.requested &&
+			wide.current &&
+			isOpen(progress, "sync-to-nle") &&
+			!!role &&
+			roleAllowsGuide("sync-to-nle") &&
+			(handedOver || page.route.id === "/(root)/dashboard"),
+	);
+	const pluginTutorialInfo = $derived(
+		pluginTutorialCandidate ? getPluginTutorial().current : undefined,
+	);
+	// The plugin was just signed in (install tutorial) or meanwhile in another tab: look again
+	$effect(() => {
+		if (pluginTutorialCandidate) untrack(() => void getPluginTutorial().refresh());
+	});
+	const syncToNle = $derived.by(() => {
+		if (firstUpload || install || page.route.id?.startsWith("/auth")) return false;
+		if (requested === "sync-to-nle") return true;
+		return (
+			pluginTutorialCandidate && !!pluginTutorialInfo?.connected && !!pluginTutorialInfo.export
+		);
+	});
+
 	// The tour about guides comes after the tutorial: only once first-upload is completed or
 	// skipped, or for someone who can't do it (in an organization without the right to create
 	// projects). Not while memberships load: that would look like "nothing due".
@@ -130,9 +168,8 @@
 	const reviewPage = $derived(
 		page.route.id === "/(root)/projects/[project]/timelines/[timeline]/exports/[export]",
 	);
-	const wide = new MediaQuery("min-width: 1024px");
 	const firstReview = $derived.by(() => {
-		if (firstUpload || install || !reviewPage || !wide.current) return false;
+		if (firstUpload || install || syncToNle || !reviewPage || !wide.current) return false;
 		if (requested === "first-review") return true;
 		return (
 			enabled &&
@@ -144,7 +181,7 @@
 	});
 
 	const tour = $derived.by((): GuideId | null => {
-		if (firstUpload || install || firstReview) return null;
+		if (firstUpload || install || syncToNle || firstReview) return null;
 		if (requested && TOURS[requested]) {
 			return TOURS[requested].desktopOnly && !wide.current ? null : requested;
 		}
@@ -154,7 +191,7 @@
 	$effect(() => {
 		guideState.running = firstUpload
 			? "first-upload"
-			: (install ?? (firstReview ? "first-review" : tour));
+			: (install ?? (syncToNle ? "sync-to-nle" : firstReview ? "first-review" : tour));
 	});
 
 	afterNavigate(({ from, to }) => {
@@ -185,6 +222,10 @@
 	{#key install}
 		<InstallGuide progress={progress[install]} save={save(install)} />
 	{/key}
+{/if}
+
+{#if syncToNle}
+	<SyncToNleTutorial progress={progress["sync-to-nle"]} save={save("sync-to-nle")} />
 {/if}
 
 {#if firstReview}

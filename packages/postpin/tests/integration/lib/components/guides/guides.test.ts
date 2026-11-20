@@ -7,6 +7,7 @@ import {
 	getGuideProgress,
 	getGuidesEnabled,
 	getPluginSignIn,
+	getPluginTutorial,
 	restartGuide,
 	saveGuideProgress,
 	setGuidesEnabled,
@@ -276,5 +277,140 @@ describe("plugin sign-in", () => {
 		await session(me.id, { clientId: CLIENT, createdAt: older });
 		await session(me.id, { clientId: CLIENT, createdAt: newer });
 		expect(await getPluginSignIn(CLIENT)).toBe(newer.toISOString());
+	});
+});
+
+describe("plugin tutorial", () => {
+	const markerSet = (
+		data: { userId: string; timelineId: string; exportId: string } & {
+			action: "PUSH" | "PULL";
+			hostName?: string;
+			summary: object;
+		},
+	) =>
+		prisma.markerSet.create({
+			data: {
+				action: data.action,
+				timelineId: data.timelineId,
+				exportId: data.exportId,
+				nleTimelineId: "nle-1",
+				hostName: data.hostName ?? "Resolve",
+				createdById: data.userId,
+				summary: data.summary,
+				nleMarkers: [],
+			},
+		});
+
+	async function setup(role: Role = Role.MEMBER) {
+		const org = await f.createOrg();
+		const owner = await f.createMember(org, Role.OWNER);
+		const project = await f.createProject(org, { creator: owner.user });
+		const timeline = await f.createTimeline(project);
+		const me = role === Role.OWNER ? owner : await f.createMember(org, role);
+		if (role !== Role.OWNER) {
+			await prisma.memberGrant.create({
+				data: { memberId: me.id, projectId: project.id, createdById: owner.user.id },
+			});
+		}
+		signIn(me.user, org.id);
+		return { org, project, timeline, me };
+	}
+
+	it("401 without a session", async () => {
+		signOut();
+		await expectStatus(getPluginTutorial(), 401);
+		await expectStatus(getGuideStart("sync-to-nle"), 401);
+	});
+
+	it("needs an export with markers: then it starts on the dashboard", async () => {
+		const { project, timeline } = await setup(Role.OWNER);
+		const empty = await f.createExport(timeline);
+		expect(await getGuideStart("sync-to-nle")).toBeNull();
+		expect((await getGuideAvailability())["sync-to-nle"]).toBe(false);
+		expect((await getPluginTutorial()).export).toBeNull();
+
+		const withMarkers = await f.createExport(timeline, { name: "Cut 3" });
+		await f.createMarker(withMarkers, await f.createCategory(project));
+		await f.createExport(timeline); // newer, but without markers
+		expect(await getGuideStart("sync-to-nle")).toBe("/dashboard");
+		expect((await getGuideAvailability())["sync-to-nle"]).toBe(true);
+		expect((await getPluginTutorial()).export).toEqual({
+			project: project.name,
+			timeline: timeline.name,
+			name: "Cut 3",
+			href: `/projects/${project.id}/timelines/${timeline.id}/exports/${withMarkers.id}`,
+		});
+		expect(empty.id).not.toBe(withMarkers.id);
+	});
+
+	it("has no export for a reviewer: the plugins are for members", async () => {
+		const { project, timeline } = await setup(Role.REVIEWER);
+		await f.createMarker(await f.createExport(timeline), await f.createCategory(project));
+		expect(await getGuideStart("sync-to-nle")).toBeNull();
+		expect((await getPluginTutorial()).export).toBeNull();
+	});
+
+	it("knows the program from the latest sync, before that from the plugin signed in", async () => {
+		const { timeline, me } = await setup(Role.OWNER);
+		const exp = await f.createExport(timeline);
+		expect(await getPluginTutorial()).toMatchObject({ connected: false, program: null });
+
+		await prisma.session.create({
+			data: {
+				id: randomUUID(),
+				token: randomUUID(),
+				userId: me.user.id,
+				clientId: "io.postpin.desktop",
+				expiresAt: new Date(Date.now() + 60_000),
+			},
+		});
+		expect(await getPluginTutorial()).toMatchObject({ connected: true, program: "Pro Tools" });
+
+		await markerSet({
+			userId: me.user.id,
+			timelineId: timeline.id,
+			exportId: exp.id,
+			action: "PULL",
+			hostName: "Premiere Pro",
+			summary: { nle: { added: 1, updated: 0, removed: 0 } },
+		});
+		expect((await getPluginTutorial()).program).toBe("Premiere Pro");
+	});
+
+	it("reports the latest pull, and the latest push that brought a marker", async () => {
+		const { timeline, me } = await setup(Role.OWNER);
+		const exp = await f.createExport(timeline);
+		const other = await f.createUser();
+		const base = { timelineId: timeline.id, exportId: exp.id };
+
+		await markerSet({ ...base, userId: other.id, action: "PULL", summary: {} });
+		expect(await getPluginTutorial()).toMatchObject({ pullId: null, push: null });
+
+		const pull = await markerSet({
+			...base,
+			userId: me.user.id,
+			action: "PULL",
+			summary: { nle: { added: 2, updated: 0, removed: 0 } },
+		});
+		const push = await markerSet({
+			...base,
+			userId: me.user.id,
+			action: "PUSH",
+			summary: { postpin: { added: 1, updated: 0, removed: 0 } },
+		});
+		// only linked or deleted: not the marker the tutorial waits for
+		await markerSet({
+			...base,
+			userId: me.user.id,
+			action: "PUSH",
+			summary: { postpin: { added: 0, updated: 0, removed: 1 } },
+		});
+		expect(await getPluginTutorial()).toMatchObject({
+			pullId: pull.id,
+			push: {
+				id: push.id,
+				href: `/projects/${timeline.projectId}/timelines/${timeline.id}/exports/${exp.id}`,
+			},
+		});
 	});
 });

@@ -25,8 +25,14 @@ structure NleMarker {
   title: string
   description: string
   frame: number
+  duration?: number
   color: string
   customData?: string
+}
+
+structure SetMarkerResult {
+  nleId?: string
+  error?: string
 }
 
 structure RenderProgress {
@@ -54,6 +60,7 @@ structure Settings {
   outputPath: string
   filename: string
   renderPreset: string
+  targets?: string
 }
 
 structure DiskRenderOptions {
@@ -147,6 +154,7 @@ structure TimelineInfo {
   projectId: string
   projectName: string
   thumbnailDataUrl?: string
+  startFrame?: number
 }
 
 [RendererAPI]
@@ -157,7 +165,8 @@ interface NleAPI {
   getProjectId() -> string
   getTimelineInfo() -> TimelineInfo?
   getMarkers() -> NleMarker[]
-  setMarkers(markers: NleMarker[]) -> string[]
+  setMarkers(markers: NleMarker[]) -> SetMarkerResult[]
+  removeMarkers(nleIds: string[]) -> boolean
   clearMarkers() -> boolean
   getRenderPresets() -> string[]
   renderPreview() -> string

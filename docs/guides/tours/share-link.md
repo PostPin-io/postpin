@@ -27,7 +27,7 @@ does the real thing (opens the dialog, saves the link); the tour follows.
 
 1. `open` (click): **Highlights:** the share button of the export in the breadcrumbs. **Title:**
    "Share this export". **Text:** "Send it to people without a PostPin account. Open the share
-   links with [link]."
+   links with [share-arrow]."
 2. `new` (appears: goes on once the form is open): **Highlights:** the + button of the share links.
    **Title:** "Share links". **Text:** "Anyone with a link can watch and leave markers. Create one
    with [plus]." Skipped by itself when the form opens right away (no links yet).
@@ -50,6 +50,8 @@ does the real thing (opens the dialog, saves the link); the tour follows.
 
 ## Notes
 
+- The share button shows our own `ShareArrow` icon (`icons/ShareArrow.svelte`, lucide has none
+  like it); the step text shows the same one (`icon("share-arrow")`).
 - Guide button: a `graduation-cap` button in the tour style right next to the share button of the
   export, tooltip "Tour: Share links". Only where the share button is: share links need
   `shareLink.create` (Member and up, on the export's project or timeline), so a reviewer gets

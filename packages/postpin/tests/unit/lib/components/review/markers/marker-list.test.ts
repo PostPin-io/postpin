@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	filterMarkers,
 	markerDateFormat,
+	ownMarkerAt,
 	searchMarkers,
 	selectRange,
 	sortMarkers,
@@ -170,5 +171,28 @@ describe("selectRange", () => {
 
 	it("an anchor that is no longer visible (e.g. filtered out) resets", () => {
 		expect(selectRange(order, "gone", "c")).toEqual({ selected: ["c"], anchor: "c" });
+	});
+});
+
+describe("ownMarkerAt", () => {
+	const marker = (id: string, frame: number, duration: number, isOwn: boolean) => ({
+		id,
+		frame,
+		duration,
+		isOwn,
+	});
+
+	it("is the user's own marker with exactly that range", () => {
+		const markers = [marker("a", 10, 0, true), marker("b", 10, 5, true)];
+		expect(ownMarkerAt(markers, { frame: 10, duration: 5 })?.id).toBe("b");
+		expect(ownMarkerAt(markers, { frame: 10, duration: 0 })?.id).toBe("a");
+	});
+
+	it("ignores someone else's marker there: the user adds their own", () => {
+		expect(ownMarkerAt([marker("a", 10, 0, false)], { frame: 10, duration: 0 })).toBeUndefined();
+	});
+
+	it("is none on a frame without a marker", () => {
+		expect(ownMarkerAt([marker("a", 10, 0, true)], { frame: 11, duration: 0 })).toBeUndefined();
 	});
 });

@@ -225,6 +225,8 @@ export type ExportWhereInput = {
 	timeline?: Prisma.XOR<Prisma.TimelineScalarRelationFilter, Prisma.TimelineWhereInput>;
 	media?: Prisma.XOR<Prisma.MediaNullableScalarRelationFilter, Prisma.MediaWhereInput> | null;
 	markers?: Prisma.MarkerListRelationFilter;
+	deletedMarkers?: Prisma.DeletedMarkerListRelationFilter;
+	markerSets?: Prisma.MarkerSetListRelationFilter;
 	shareLinks?: Prisma.ShareLinkListRelationFilter;
 	uploadedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null;
 };
@@ -244,6 +246,8 @@ export type ExportOrderByWithRelationInput = {
 	timeline?: Prisma.TimelineOrderByWithRelationInput;
 	media?: Prisma.MediaOrderByWithRelationInput;
 	markers?: Prisma.MarkerOrderByRelationAggregateInput;
+	deletedMarkers?: Prisma.DeletedMarkerOrderByRelationAggregateInput;
+	markerSets?: Prisma.MarkerSetOrderByRelationAggregateInput;
 	shareLinks?: Prisma.ShareLinkOrderByRelationAggregateInput;
 	uploadedBy?: Prisma.UserOrderByWithRelationInput;
 };
@@ -267,6 +271,8 @@ export type ExportWhereUniqueInput = Prisma.AtLeast<
 		timeline?: Prisma.XOR<Prisma.TimelineScalarRelationFilter, Prisma.TimelineWhereInput>;
 		media?: Prisma.XOR<Prisma.MediaNullableScalarRelationFilter, Prisma.MediaWhereInput> | null;
 		markers?: Prisma.MarkerListRelationFilter;
+		deletedMarkers?: Prisma.DeletedMarkerListRelationFilter;
+		markerSets?: Prisma.MarkerSetListRelationFilter;
 		shareLinks?: Prisma.ShareLinkListRelationFilter;
 		uploadedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null;
 	},
@@ -319,6 +325,8 @@ export type ExportCreateInput = {
 	timeline: Prisma.TimelineCreateNestedOneWithoutExportsInput;
 	media?: Prisma.MediaCreateNestedOneWithoutExportInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutExportInput;
+	deletedMarkers?: Prisma.DeletedMarkerCreateNestedManyWithoutExportInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkCreateNestedManyWithoutExportInput;
 	uploadedBy?: Prisma.UserCreateNestedOneWithoutUploadedExportsInput;
 };
@@ -336,6 +344,8 @@ export type ExportUncheckedCreateInput = {
 	cutListError?: string | null;
 	uploadedById?: string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutExportInput;
+	deletedMarkers?: Prisma.DeletedMarkerUncheckedCreateNestedManyWithoutExportInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutExportInput;
 };
 
@@ -351,6 +361,8 @@ export type ExportUpdateInput = {
 	timeline?: Prisma.TimelineUpdateOneRequiredWithoutExportsNestedInput;
 	media?: Prisma.MediaUpdateOneWithoutExportNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutExportNestedInput;
+	deletedMarkers?: Prisma.DeletedMarkerUpdateManyWithoutExportNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUpdateManyWithoutExportNestedInput;
 	uploadedBy?: Prisma.UserUpdateOneWithoutUploadedExportsNestedInput;
 };
@@ -368,6 +380,8 @@ export type ExportUncheckedUpdateInput = {
 	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutExportNestedInput;
+	deletedMarkers?: Prisma.DeletedMarkerUncheckedUpdateManyWithoutExportNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutExportNestedInput;
 };
 
@@ -582,6 +596,60 @@ export type ExportUpdateOneRequiredWithoutMarkersNestedInput = {
 	>;
 };
 
+export type ExportCreateNestedOneWithoutDeletedMarkersInput = {
+	create?: Prisma.XOR<
+		Prisma.ExportCreateWithoutDeletedMarkersInput,
+		Prisma.ExportUncheckedCreateWithoutDeletedMarkersInput
+	>;
+	connectOrCreate?: Prisma.ExportCreateOrConnectWithoutDeletedMarkersInput;
+	connect?: Prisma.ExportWhereUniqueInput;
+};
+
+export type ExportUpdateOneRequiredWithoutDeletedMarkersNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.ExportCreateWithoutDeletedMarkersInput,
+		Prisma.ExportUncheckedCreateWithoutDeletedMarkersInput
+	>;
+	connectOrCreate?: Prisma.ExportCreateOrConnectWithoutDeletedMarkersInput;
+	upsert?: Prisma.ExportUpsertWithoutDeletedMarkersInput;
+	connect?: Prisma.ExportWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.ExportUpdateToOneWithWhereWithoutDeletedMarkersInput,
+			Prisma.ExportUpdateWithoutDeletedMarkersInput
+		>,
+		Prisma.ExportUncheckedUpdateWithoutDeletedMarkersInput
+	>;
+};
+
+export type ExportCreateNestedOneWithoutMarkerSetsInput = {
+	create?: Prisma.XOR<
+		Prisma.ExportCreateWithoutMarkerSetsInput,
+		Prisma.ExportUncheckedCreateWithoutMarkerSetsInput
+	>;
+	connectOrCreate?: Prisma.ExportCreateOrConnectWithoutMarkerSetsInput;
+	connect?: Prisma.ExportWhereUniqueInput;
+};
+
+export type ExportUpdateOneWithoutMarkerSetsNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.ExportCreateWithoutMarkerSetsInput,
+		Prisma.ExportUncheckedCreateWithoutMarkerSetsInput
+	>;
+	connectOrCreate?: Prisma.ExportCreateOrConnectWithoutMarkerSetsInput;
+	upsert?: Prisma.ExportUpsertWithoutMarkerSetsInput;
+	disconnect?: Prisma.ExportWhereInput | boolean;
+	delete?: Prisma.ExportWhereInput | boolean;
+	connect?: Prisma.ExportWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.ExportUpdateToOneWithWhereWithoutMarkerSetsInput,
+			Prisma.ExportUpdateWithoutMarkerSetsInput
+		>,
+		Prisma.ExportUncheckedUpdateWithoutMarkerSetsInput
+	>;
+};
+
 export type ExportCreateNestedOneWithoutMediaInput = {
 	create?: Prisma.XOR<
 		Prisma.ExportCreateWithoutMediaInput,
@@ -762,6 +830,8 @@ export type ExportCreateWithoutUploadedByInput = {
 	timeline: Prisma.TimelineCreateNestedOneWithoutExportsInput;
 	media?: Prisma.MediaCreateNestedOneWithoutExportInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutExportInput;
+	deletedMarkers?: Prisma.DeletedMarkerCreateNestedManyWithoutExportInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkCreateNestedManyWithoutExportInput;
 };
 
@@ -777,6 +847,8 @@ export type ExportUncheckedCreateWithoutUploadedByInput = {
 	cutListKey?: string | null;
 	cutListError?: string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutExportInput;
+	deletedMarkers?: Prisma.DeletedMarkerUncheckedCreateNestedManyWithoutExportInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutExportInput;
 };
 
@@ -849,6 +921,8 @@ export type ExportCreateWithoutMarkersInput = {
 	cutListError?: string | null;
 	timeline: Prisma.TimelineCreateNestedOneWithoutExportsInput;
 	media?: Prisma.MediaCreateNestedOneWithoutExportInput;
+	deletedMarkers?: Prisma.DeletedMarkerCreateNestedManyWithoutExportInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkCreateNestedManyWithoutExportInput;
 	uploadedBy?: Prisma.UserCreateNestedOneWithoutUploadedExportsInput;
 };
@@ -865,6 +939,8 @@ export type ExportUncheckedCreateWithoutMarkersInput = {
 	cutListKey?: string | null;
 	cutListError?: string | null;
 	uploadedById?: string | null;
+	deletedMarkers?: Prisma.DeletedMarkerUncheckedCreateNestedManyWithoutExportInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutExportInput;
 };
 
@@ -907,6 +983,8 @@ export type ExportUpdateWithoutMarkersInput = {
 	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timeline?: Prisma.TimelineUpdateOneRequiredWithoutExportsNestedInput;
 	media?: Prisma.MediaUpdateOneWithoutExportNestedInput;
+	deletedMarkers?: Prisma.DeletedMarkerUpdateManyWithoutExportNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUpdateManyWithoutExportNestedInput;
 	uploadedBy?: Prisma.UserUpdateOneWithoutUploadedExportsNestedInput;
 };
@@ -923,6 +1001,200 @@ export type ExportUncheckedUpdateWithoutMarkersInput = {
 	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	deletedMarkers?: Prisma.DeletedMarkerUncheckedUpdateManyWithoutExportNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutExportNestedInput;
+	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutExportNestedInput;
+};
+
+export type ExportCreateWithoutDeletedMarkersInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
+	timeline: Prisma.TimelineCreateNestedOneWithoutExportsInput;
+	media?: Prisma.MediaCreateNestedOneWithoutExportInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutExportInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutExportInput;
+	shareLinks?: Prisma.ShareLinkCreateNestedManyWithoutExportInput;
+	uploadedBy?: Prisma.UserCreateNestedOneWithoutUploadedExportsInput;
+};
+
+export type ExportUncheckedCreateWithoutDeletedMarkersInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	timelineId: string;
+	mediaId?: string | null;
+	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
+	uploadedById?: string | null;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutExportInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutExportInput;
+	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutExportInput;
+};
+
+export type ExportCreateOrConnectWithoutDeletedMarkersInput = {
+	where: Prisma.ExportWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.ExportCreateWithoutDeletedMarkersInput,
+		Prisma.ExportUncheckedCreateWithoutDeletedMarkersInput
+	>;
+};
+
+export type ExportUpsertWithoutDeletedMarkersInput = {
+	update: Prisma.XOR<
+		Prisma.ExportUpdateWithoutDeletedMarkersInput,
+		Prisma.ExportUncheckedUpdateWithoutDeletedMarkersInput
+	>;
+	create: Prisma.XOR<
+		Prisma.ExportCreateWithoutDeletedMarkersInput,
+		Prisma.ExportUncheckedCreateWithoutDeletedMarkersInput
+	>;
+	where?: Prisma.ExportWhereInput;
+};
+
+export type ExportUpdateToOneWithWhereWithoutDeletedMarkersInput = {
+	where?: Prisma.ExportWhereInput;
+	data: Prisma.XOR<
+		Prisma.ExportUpdateWithoutDeletedMarkersInput,
+		Prisma.ExportUncheckedUpdateWithoutDeletedMarkersInput
+	>;
+};
+
+export type ExportUpdateWithoutDeletedMarkersInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	timeline?: Prisma.TimelineUpdateOneRequiredWithoutExportsNestedInput;
+	media?: Prisma.MediaUpdateOneWithoutExportNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutExportNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutExportNestedInput;
+	shareLinks?: Prisma.ShareLinkUpdateManyWithoutExportNestedInput;
+	uploadedBy?: Prisma.UserUpdateOneWithoutUploadedExportsNestedInput;
+};
+
+export type ExportUncheckedUpdateWithoutDeletedMarkersInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	timelineId?: Prisma.StringFieldUpdateOperationsInput | string;
+	mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutExportNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutExportNestedInput;
+	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutExportNestedInput;
+};
+
+export type ExportCreateWithoutMarkerSetsInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
+	timeline: Prisma.TimelineCreateNestedOneWithoutExportsInput;
+	media?: Prisma.MediaCreateNestedOneWithoutExportInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutExportInput;
+	deletedMarkers?: Prisma.DeletedMarkerCreateNestedManyWithoutExportInput;
+	shareLinks?: Prisma.ShareLinkCreateNestedManyWithoutExportInput;
+	uploadedBy?: Prisma.UserCreateNestedOneWithoutUploadedExportsInput;
+};
+
+export type ExportUncheckedCreateWithoutMarkerSetsInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	timelineId: string;
+	mediaId?: string | null;
+	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	timelineSnapshotHash?: string | null;
+	cutListKey?: string | null;
+	cutListError?: string | null;
+	uploadedById?: string | null;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutExportInput;
+	deletedMarkers?: Prisma.DeletedMarkerUncheckedCreateNestedManyWithoutExportInput;
+	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutExportInput;
+};
+
+export type ExportCreateOrConnectWithoutMarkerSetsInput = {
+	where: Prisma.ExportWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.ExportCreateWithoutMarkerSetsInput,
+		Prisma.ExportUncheckedCreateWithoutMarkerSetsInput
+	>;
+};
+
+export type ExportUpsertWithoutMarkerSetsInput = {
+	update: Prisma.XOR<
+		Prisma.ExportUpdateWithoutMarkerSetsInput,
+		Prisma.ExportUncheckedUpdateWithoutMarkerSetsInput
+	>;
+	create: Prisma.XOR<
+		Prisma.ExportCreateWithoutMarkerSetsInput,
+		Prisma.ExportUncheckedCreateWithoutMarkerSetsInput
+	>;
+	where?: Prisma.ExportWhereInput;
+};
+
+export type ExportUpdateToOneWithWhereWithoutMarkerSetsInput = {
+	where?: Prisma.ExportWhereInput;
+	data: Prisma.XOR<
+		Prisma.ExportUpdateWithoutMarkerSetsInput,
+		Prisma.ExportUncheckedUpdateWithoutMarkerSetsInput
+	>;
+};
+
+export type ExportUpdateWithoutMarkerSetsInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	timeline?: Prisma.TimelineUpdateOneRequiredWithoutExportsNestedInput;
+	media?: Prisma.MediaUpdateOneWithoutExportNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutExportNestedInput;
+	deletedMarkers?: Prisma.DeletedMarkerUpdateManyWithoutExportNestedInput;
+	shareLinks?: Prisma.ShareLinkUpdateManyWithoutExportNestedInput;
+	uploadedBy?: Prisma.UserUpdateOneWithoutUploadedExportsNestedInput;
+};
+
+export type ExportUncheckedUpdateWithoutMarkerSetsInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	timelineId?: Prisma.StringFieldUpdateOperationsInput | string;
+	mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	timelineSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+	timelineSnapshotHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutExportNestedInput;
+	deletedMarkers?: Prisma.DeletedMarkerUncheckedUpdateManyWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutExportNestedInput;
 };
 
@@ -937,6 +1209,8 @@ export type ExportCreateWithoutMediaInput = {
 	cutListError?: string | null;
 	timeline: Prisma.TimelineCreateNestedOneWithoutExportsInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutExportInput;
+	deletedMarkers?: Prisma.DeletedMarkerCreateNestedManyWithoutExportInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkCreateNestedManyWithoutExportInput;
 	uploadedBy?: Prisma.UserCreateNestedOneWithoutUploadedExportsInput;
 };
@@ -953,6 +1227,8 @@ export type ExportUncheckedCreateWithoutMediaInput = {
 	cutListError?: string | null;
 	uploadedById?: string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutExportInput;
+	deletedMarkers?: Prisma.DeletedMarkerUncheckedCreateNestedManyWithoutExportInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutExportInput;
 };
 
@@ -995,6 +1271,8 @@ export type ExportUpdateWithoutMediaInput = {
 	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	timeline?: Prisma.TimelineUpdateOneRequiredWithoutExportsNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutExportNestedInput;
+	deletedMarkers?: Prisma.DeletedMarkerUpdateManyWithoutExportNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUpdateManyWithoutExportNestedInput;
 	uploadedBy?: Prisma.UserUpdateOneWithoutUploadedExportsNestedInput;
 };
@@ -1011,6 +1289,8 @@ export type ExportUncheckedUpdateWithoutMediaInput = {
 	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutExportNestedInput;
+	deletedMarkers?: Prisma.DeletedMarkerUncheckedUpdateManyWithoutExportNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutExportNestedInput;
 };
 
@@ -1025,6 +1305,8 @@ export type ExportCreateWithoutTimelineInput = {
 	cutListError?: string | null;
 	media?: Prisma.MediaCreateNestedOneWithoutExportInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutExportInput;
+	deletedMarkers?: Prisma.DeletedMarkerCreateNestedManyWithoutExportInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkCreateNestedManyWithoutExportInput;
 	uploadedBy?: Prisma.UserCreateNestedOneWithoutUploadedExportsInput;
 };
@@ -1041,6 +1323,8 @@ export type ExportUncheckedCreateWithoutTimelineInput = {
 	cutListError?: string | null;
 	uploadedById?: string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutExportInput;
+	deletedMarkers?: Prisma.DeletedMarkerUncheckedCreateNestedManyWithoutExportInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutExportInput;
 	shareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutExportInput;
 };
 
@@ -1097,6 +1381,8 @@ export type ExportCreateWithoutShareLinksInput = {
 	timeline: Prisma.TimelineCreateNestedOneWithoutExportsInput;
 	media?: Prisma.MediaCreateNestedOneWithoutExportInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutExportInput;
+	deletedMarkers?: Prisma.DeletedMarkerCreateNestedManyWithoutExportInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutExportInput;
 	uploadedBy?: Prisma.UserCreateNestedOneWithoutUploadedExportsInput;
 };
 
@@ -1113,6 +1399,8 @@ export type ExportUncheckedCreateWithoutShareLinksInput = {
 	cutListError?: string | null;
 	uploadedById?: string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutExportInput;
+	deletedMarkers?: Prisma.DeletedMarkerUncheckedCreateNestedManyWithoutExportInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutExportInput;
 };
 
 export type ExportCreateOrConnectWithoutShareLinksInput = {
@@ -1155,6 +1443,8 @@ export type ExportUpdateWithoutShareLinksInput = {
 	timeline?: Prisma.TimelineUpdateOneRequiredWithoutExportsNestedInput;
 	media?: Prisma.MediaUpdateOneWithoutExportNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutExportNestedInput;
+	deletedMarkers?: Prisma.DeletedMarkerUpdateManyWithoutExportNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutExportNestedInput;
 	uploadedBy?: Prisma.UserUpdateOneWithoutUploadedExportsNestedInput;
 };
 
@@ -1171,6 +1461,8 @@ export type ExportUncheckedUpdateWithoutShareLinksInput = {
 	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutExportNestedInput;
+	deletedMarkers?: Prisma.DeletedMarkerUncheckedUpdateManyWithoutExportNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutExportNestedInput;
 };
 
 export type ExportCreateManyUploadedByInput = {
@@ -1198,6 +1490,8 @@ export type ExportUpdateWithoutUploadedByInput = {
 	timeline?: Prisma.TimelineUpdateOneRequiredWithoutExportsNestedInput;
 	media?: Prisma.MediaUpdateOneWithoutExportNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutExportNestedInput;
+	deletedMarkers?: Prisma.DeletedMarkerUpdateManyWithoutExportNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUpdateManyWithoutExportNestedInput;
 };
 
@@ -1213,6 +1507,8 @@ export type ExportUncheckedUpdateWithoutUploadedByInput = {
 	cutListKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutExportNestedInput;
+	deletedMarkers?: Prisma.DeletedMarkerUncheckedUpdateManyWithoutExportNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutExportNestedInput;
 };
 
@@ -1253,6 +1549,8 @@ export type ExportUpdateWithoutTimelineInput = {
 	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	media?: Prisma.MediaUpdateOneWithoutExportNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutExportNestedInput;
+	deletedMarkers?: Prisma.DeletedMarkerUpdateManyWithoutExportNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUpdateManyWithoutExportNestedInput;
 	uploadedBy?: Prisma.UserUpdateOneWithoutUploadedExportsNestedInput;
 };
@@ -1269,6 +1567,8 @@ export type ExportUncheckedUpdateWithoutTimelineInput = {
 	cutListError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutExportNestedInput;
+	deletedMarkers?: Prisma.DeletedMarkerUncheckedUpdateManyWithoutExportNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutExportNestedInput;
 	shareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutExportNestedInput;
 };
 
@@ -1291,6 +1591,8 @@ export type ExportUncheckedUpdateManyWithoutTimelineInput = {
 
 export type ExportCountOutputType = {
 	markers: number;
+	deletedMarkers: number;
+	markerSets: number;
 	shareLinks: number;
 };
 
@@ -1298,6 +1600,8 @@ export type ExportCountOutputTypeSelect<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
 	markers?: boolean | ExportCountOutputTypeCountMarkersArgs;
+	deletedMarkers?: boolean | ExportCountOutputTypeCountDeletedMarkersArgs;
+	markerSets?: boolean | ExportCountOutputTypeCountMarkerSetsArgs;
 	shareLinks?: boolean | ExportCountOutputTypeCountShareLinksArgs;
 };
 
@@ -1320,6 +1624,24 @@ export type ExportCountOutputTypeCountMarkersArgs<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
 	where?: Prisma.MarkerWhereInput;
+};
+
+/**
+ * ExportCountOutputType without action
+ */
+export type ExportCountOutputTypeCountDeletedMarkersArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	where?: Prisma.DeletedMarkerWhereInput;
+};
+
+/**
+ * ExportCountOutputType without action
+ */
+export type ExportCountOutputTypeCountMarkerSetsArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	where?: Prisma.MarkerSetWhereInput;
 };
 
 /**
@@ -1349,6 +1671,8 @@ export type ExportSelect<
 		timeline?: boolean | Prisma.TimelineDefaultArgs<ExtArgs>;
 		media?: boolean | Prisma.Export$mediaArgs<ExtArgs>;
 		markers?: boolean | Prisma.Export$markersArgs<ExtArgs>;
+		deletedMarkers?: boolean | Prisma.Export$deletedMarkersArgs<ExtArgs>;
+		markerSets?: boolean | Prisma.Export$markerSetsArgs<ExtArgs>;
 		shareLinks?: boolean | Prisma.Export$shareLinksArgs<ExtArgs>;
 		uploadedBy?: boolean | Prisma.Export$uploadedByArgs<ExtArgs>;
 		_count?: boolean | Prisma.ExportCountOutputTypeDefaultArgs<ExtArgs>;
@@ -1436,6 +1760,8 @@ export type ExportInclude<
 	timeline?: boolean | Prisma.TimelineDefaultArgs<ExtArgs>;
 	media?: boolean | Prisma.Export$mediaArgs<ExtArgs>;
 	markers?: boolean | Prisma.Export$markersArgs<ExtArgs>;
+	deletedMarkers?: boolean | Prisma.Export$deletedMarkersArgs<ExtArgs>;
+	markerSets?: boolean | Prisma.Export$markerSetsArgs<ExtArgs>;
 	shareLinks?: boolean | Prisma.Export$shareLinksArgs<ExtArgs>;
 	uploadedBy?: boolean | Prisma.Export$uploadedByArgs<ExtArgs>;
 	_count?: boolean | Prisma.ExportCountOutputTypeDefaultArgs<ExtArgs>;
@@ -1463,6 +1789,8 @@ export type $ExportPayload<
 		timeline: Prisma.$TimelinePayload<ExtArgs>;
 		media: Prisma.$MediaPayload<ExtArgs> | null;
 		markers: Prisma.$MarkerPayload<ExtArgs>[];
+		deletedMarkers: Prisma.$DeletedMarkerPayload<ExtArgs>[];
+		markerSets: Prisma.$MarkerSetPayload<ExtArgs>[];
 		shareLinks: Prisma.$ShareLinkPayload<ExtArgs>[];
 		uploadedBy: Prisma.$UserPayload<ExtArgs> | null;
 	};
@@ -2035,6 +2363,28 @@ export interface Prisma__ExportClient<
 		  >
 		| Null
 	>;
+	deletedMarkers<T extends Prisma.Export$deletedMarkersArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.Export$deletedMarkersArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		| runtime.Types.Result.GetResult<
+				Prisma.$DeletedMarkerPayload<ExtArgs>,
+				T,
+				"findMany",
+				GlobalOmitOptions
+		  >
+		| Null
+	>;
+	markerSets<T extends Prisma.Export$markerSetsArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.Export$markerSetsArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		| runtime.Types.Result.GetResult<
+				Prisma.$MarkerSetPayload<ExtArgs>,
+				T,
+				"findMany",
+				GlobalOmitOptions
+		  >
+		| Null
+	>;
 	shareLinks<T extends Prisma.Export$shareLinksArgs<ExtArgs> = {}>(
 		args?: Prisma.Subset<T, Prisma.Export$shareLinksArgs<ExtArgs>>,
 	): Prisma.PrismaPromise<
@@ -2573,6 +2923,59 @@ export type Export$markersArgs<
 	take?: number;
 	skip?: number;
 	distinct?: Prisma.MarkerScalarFieldEnum | Prisma.MarkerScalarFieldEnum[];
+};
+
+/**
+ * Export.deletedMarkers
+ */
+export type Export$deletedMarkersArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the DeletedMarker
+	 */
+	select?: Prisma.DeletedMarkerSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the DeletedMarker
+	 */
+	omit?: Prisma.DeletedMarkerOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.DeletedMarkerInclude<ExtArgs> | null;
+	where?: Prisma.DeletedMarkerWhereInput;
+	orderBy?:
+		Prisma.DeletedMarkerOrderByWithRelationInput | Prisma.DeletedMarkerOrderByWithRelationInput[];
+	cursor?: Prisma.DeletedMarkerWhereUniqueInput;
+	take?: number;
+	skip?: number;
+	distinct?: Prisma.DeletedMarkerScalarFieldEnum | Prisma.DeletedMarkerScalarFieldEnum[];
+};
+
+/**
+ * Export.markerSets
+ */
+export type Export$markerSetsArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the MarkerSet
+	 */
+	select?: Prisma.MarkerSetSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the MarkerSet
+	 */
+	omit?: Prisma.MarkerSetOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.MarkerSetInclude<ExtArgs> | null;
+	where?: Prisma.MarkerSetWhereInput;
+	orderBy?: Prisma.MarkerSetOrderByWithRelationInput | Prisma.MarkerSetOrderByWithRelationInput[];
+	cursor?: Prisma.MarkerSetWhereUniqueInput;
+	take?: number;
+	skip?: number;
+	distinct?: Prisma.MarkerSetScalarFieldEnum | Prisma.MarkerSetScalarFieldEnum[];
 };
 
 /**

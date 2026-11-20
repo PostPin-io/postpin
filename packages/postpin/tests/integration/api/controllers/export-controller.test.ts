@@ -84,6 +84,29 @@ describe("createExport", () => {
 		expect(exp.name).toMatch(/^Export \d{4}-\d\d-\d\dT/);
 	});
 
+	it("takes the name the plugin gives, trimmed; an empty one gets the default", async () => {
+		await signInAs(w, OWNER);
+		const named = await controller.createExport(w.projectA.id, w.tl1.id, {
+			...noNle,
+			name: "  Cut 3 for the client ",
+		});
+		const empty = await controller.createExport(w.projectA.id, w.tl1.id, { ...noNle, name: " " });
+		expect((await prisma.export.findUniqueOrThrow({ where: { id: named.id } })).name).toBe(
+			"Cut 3 for the client",
+		);
+		expect((await prisma.export.findUniqueOrThrow({ where: { id: empty.id } })).name).toMatch(
+			/^Export /,
+		);
+	});
+
+	it("400 for a name longer than 100 characters", async () => {
+		await signInAs(w, OWNER);
+		await expectHttpError(
+			controller.createExport(w.projectA.id, w.tl1.id, { ...noNle, name: "x".repeat(101) }),
+			400,
+		);
+	});
+
 	it("remembers who created the export, for the user's storage quota", async () => {
 		const member = await signInAs(w, MEMBER, { timelineId: w.tl1.id });
 		const { id } = await controller.createExport(w.projectA.id, w.tl1.id, noNle);

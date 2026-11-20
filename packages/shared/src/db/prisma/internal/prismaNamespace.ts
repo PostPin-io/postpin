@@ -403,6 +403,8 @@ export const ModelName = {
 	Category: "Category",
 	CategoryPreset: "CategoryPreset",
 	Response: "Response",
+	DeletedMarker: "DeletedMarker",
+	MarkerSet: "MarkerSet",
 	Media: "Media",
 	MediaFile: "MediaFile",
 	Thumbnail: "Thumbnail",
@@ -450,6 +452,8 @@ export type TypeMap<
 			| "category"
 			| "categoryPreset"
 			| "response"
+			| "deletedMarker"
+			| "markerSet"
 			| "media"
 			| "mediaFile"
 			| "thumbnail"
@@ -1430,6 +1434,155 @@ export type TypeMap<
 				count: {
 					args: Prisma.ResponseCountArgs<ExtArgs>;
 					result: runtime.Types.Utils.Optional<Prisma.ResponseCountAggregateOutputType> | number;
+				};
+			};
+		};
+		DeletedMarker: {
+			payload: Prisma.$DeletedMarkerPayload<ExtArgs>;
+			fields: Prisma.DeletedMarkerFieldRefs;
+			operations: {
+				findUnique: {
+					args: Prisma.DeletedMarkerFindUniqueArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeletedMarkerPayload> | null;
+				};
+				findUniqueOrThrow: {
+					args: Prisma.DeletedMarkerFindUniqueOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeletedMarkerPayload>;
+				};
+				findFirst: {
+					args: Prisma.DeletedMarkerFindFirstArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeletedMarkerPayload> | null;
+				};
+				findFirstOrThrow: {
+					args: Prisma.DeletedMarkerFindFirstOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeletedMarkerPayload>;
+				};
+				findMany: {
+					args: Prisma.DeletedMarkerFindManyArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeletedMarkerPayload>[];
+				};
+				create: {
+					args: Prisma.DeletedMarkerCreateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeletedMarkerPayload>;
+				};
+				createMany: {
+					args: Prisma.DeletedMarkerCreateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				createManyAndReturn: {
+					args: Prisma.DeletedMarkerCreateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeletedMarkerPayload>[];
+				};
+				delete: {
+					args: Prisma.DeletedMarkerDeleteArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeletedMarkerPayload>;
+				};
+				update: {
+					args: Prisma.DeletedMarkerUpdateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeletedMarkerPayload>;
+				};
+				deleteMany: {
+					args: Prisma.DeletedMarkerDeleteManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateMany: {
+					args: Prisma.DeletedMarkerUpdateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateManyAndReturn: {
+					args: Prisma.DeletedMarkerUpdateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeletedMarkerPayload>[];
+				};
+				upsert: {
+					args: Prisma.DeletedMarkerUpsertArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$DeletedMarkerPayload>;
+				};
+				aggregate: {
+					args: Prisma.DeletedMarkerAggregateArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.AggregateDeletedMarker>;
+				};
+				groupBy: {
+					args: Prisma.DeletedMarkerGroupByArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.DeletedMarkerGroupByOutputType>[];
+				};
+				count: {
+					args: Prisma.DeletedMarkerCountArgs<ExtArgs>;
+					result:
+						runtime.Types.Utils.Optional<Prisma.DeletedMarkerCountAggregateOutputType> | number;
+				};
+			};
+		};
+		MarkerSet: {
+			payload: Prisma.$MarkerSetPayload<ExtArgs>;
+			fields: Prisma.MarkerSetFieldRefs;
+			operations: {
+				findUnique: {
+					args: Prisma.MarkerSetFindUniqueArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerSetPayload> | null;
+				};
+				findUniqueOrThrow: {
+					args: Prisma.MarkerSetFindUniqueOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerSetPayload>;
+				};
+				findFirst: {
+					args: Prisma.MarkerSetFindFirstArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerSetPayload> | null;
+				};
+				findFirstOrThrow: {
+					args: Prisma.MarkerSetFindFirstOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerSetPayload>;
+				};
+				findMany: {
+					args: Prisma.MarkerSetFindManyArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerSetPayload>[];
+				};
+				create: {
+					args: Prisma.MarkerSetCreateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerSetPayload>;
+				};
+				createMany: {
+					args: Prisma.MarkerSetCreateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				createManyAndReturn: {
+					args: Prisma.MarkerSetCreateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerSetPayload>[];
+				};
+				delete: {
+					args: Prisma.MarkerSetDeleteArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerSetPayload>;
+				};
+				update: {
+					args: Prisma.MarkerSetUpdateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerSetPayload>;
+				};
+				deleteMany: {
+					args: Prisma.MarkerSetDeleteManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateMany: {
+					args: Prisma.MarkerSetUpdateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateManyAndReturn: {
+					args: Prisma.MarkerSetUpdateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerSetPayload>[];
+				};
+				upsert: {
+					args: Prisma.MarkerSetUpsertArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerSetPayload>;
+				};
+				aggregate: {
+					args: Prisma.MarkerSetAggregateArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.AggregateMarkerSet>;
+				};
+				groupBy: {
+					args: Prisma.MarkerSetGroupByArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.MarkerSetGroupByOutputType>[];
+				};
+				count: {
+					args: Prisma.MarkerSetCountArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.MarkerSetCountAggregateOutputType> | number;
 				};
 			};
 		};
@@ -2652,6 +2805,8 @@ export const MarkerScalarFieldEnum = {
 	authorId: "authorId",
 	guestId: "guestId",
 	nleId: "nleId",
+	nleTimelineId: "nleTimelineId",
+	syncHash: "syncHash",
 } as const;
 
 export type MarkerScalarFieldEnum =
@@ -2709,6 +2864,36 @@ export const ResponseScalarFieldEnum = {
 
 export type ResponseScalarFieldEnum =
 	(typeof ResponseScalarFieldEnum)[keyof typeof ResponseScalarFieldEnum];
+
+export const DeletedMarkerScalarFieldEnum = {
+	markerId: "markerId",
+	exportId: "exportId",
+	nleId: "nleId",
+	nleTimelineId: "nleTimelineId",
+	syncHash: "syncHash",
+	deletedAt: "deletedAt",
+} as const;
+
+export type DeletedMarkerScalarFieldEnum =
+	(typeof DeletedMarkerScalarFieldEnum)[keyof typeof DeletedMarkerScalarFieldEnum];
+
+export const MarkerSetScalarFieldEnum = {
+	id: "id",
+	action: "action",
+	timelineId: "timelineId",
+	exportId: "exportId",
+	nleTimelineId: "nleTimelineId",
+	nleTimelineName: "nleTimelineName",
+	hostName: "hostName",
+	createdById: "createdById",
+	createdAt: "createdAt",
+	summary: "summary",
+	nleMarkers: "nleMarkers",
+	postpinMarkers: "postpinMarkers",
+} as const;
+
+export type MarkerSetScalarFieldEnum =
+	(typeof MarkerSetScalarFieldEnum)[keyof typeof MarkerSetScalarFieldEnum];
 
 export const MediaScalarFieldEnum = {
 	id: "id",
@@ -3066,6 +3251,22 @@ export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "
 export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "Float[]">;
 
 /**
+ * Reference to a field of type 'MarkerSetAction'
+ */
+export type EnumMarkerSetActionFieldRefInput<$PrismaModel> = FieldRefInputType<
+	$PrismaModel,
+	"MarkerSetAction"
+>;
+
+/**
+ * Reference to a field of type 'MarkerSetAction[]'
+ */
+export type ListEnumMarkerSetActionFieldRefInput<$PrismaModel> = FieldRefInputType<
+	$PrismaModel,
+	"MarkerSetAction[]"
+>;
+
+/**
  * Reference to a field of type 'MediaStatus'
  */
 export type EnumMediaStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
@@ -3277,6 +3478,8 @@ export type GlobalOmitConfig = {
 	category?: Prisma.CategoryOmit;
 	categoryPreset?: Prisma.CategoryPresetOmit;
 	response?: Prisma.ResponseOmit;
+	deletedMarker?: Prisma.DeletedMarkerOmit;
+	markerSet?: Prisma.MarkerSetOmit;
 	media?: Prisma.MediaOmit;
 	mediaFile?: Prisma.MediaFileOmit;
 	thumbnail?: Prisma.ThumbnailOmit;

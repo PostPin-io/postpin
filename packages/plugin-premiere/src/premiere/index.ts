@@ -26,6 +26,7 @@ export function createPremiereBridge(): NleBridge {
 					name: sequence.name,
 					projectId: project.guid.toString(),
 					projectName: project.name.replace(/\.prproj$/i, ""),
+					startFrame: (await getTiming(sequence)).startFrame,
 				};
 			} catch {
 				return null;
@@ -38,6 +39,10 @@ export function createPremiereBridge(): NleBridge {
 		setMarkers: async (list) => {
 			const { project, sequence } = await getActive();
 			return markers.setMarkers(project, sequence, await getTiming(sequence), list);
+		},
+		removeMarkers: async (nleIds) => {
+			const { project, sequence } = await getActive();
+			await markers.removeMarkers(project, sequence, nleIds);
 		},
 		clearMarkers: async () => {
 			const { project, sequence } = await getActive();

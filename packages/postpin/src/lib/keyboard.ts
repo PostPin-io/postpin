@@ -10,7 +10,12 @@ export function isTypingTarget(event: KeyboardEvent): boolean {
 /** True inside modals/menus, which own their keyboard interaction. */
 export function isInsideOverlay(event: KeyboardEvent): boolean {
 	const target = event.target;
-	return target instanceof Element && target.closest(OVERLAY_SELECTOR) !== null;
+	return (
+		target instanceof Element &&
+		target.closest(OVERLAY_SELECTOR) !== null &&
+		// a tour card is a dialog, but the keys its step lets through belong to the page
+		target.closest("[data-tour-card]") === null
+	);
 }
 
 /** Key press without Ctrl/Alt/Meta (Shift is allowed; Meta only with `allowMeta`). */
