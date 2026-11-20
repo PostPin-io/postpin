@@ -332,6 +332,22 @@ async function requireMember(organizationId: string, userId: string) {
 	return member;
 }
 
+/**
+ * The signed-in user's role in the organization the target belongs to, or null when the target
+ * doesn't exist or the user isn't in its organization. For checks that depend on the role alone
+ * (the plugin right); prefer authorize().
+ */
+export async function roleAt(target: Target) {
+	const user = requireUser();
+	const resolved = await resolveTarget(target);
+	if (!resolved) return null;
+	const member = await prisma.member.findFirst({
+		where: { organizationId: resolved.organizationId, userId: user.id },
+		select: { role: true },
+	});
+	return member?.role ?? null;
+}
+
 /** For checks about who someone is, e.g. "admins and above". Prefer authorize(). */
 export async function requireOrgRole(organizationId: string, minRole: Role) {
 	const user = requireUser();

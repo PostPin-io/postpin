@@ -97,9 +97,9 @@ describe("createExport", () => {
 		expect(await prisma.export.count({ where: { id, timelineId: w.tl1.id } })).toBe(1);
 	});
 
-	it("reviewer with a grant gets 403", async () => {
+	it("reviewer with a grant gets the plugin role error, not a bare 403", async () => {
 		await signInAs(w, REVIEWER, { projectId: w.projectA.id });
-		await expectHttpError(controller.createExport(w.projectA.id, w.tl1.id, noNle), 403);
+		await expectPluginRoleError(controller.createExport(w.projectA.id, w.tl1.id, noNle));
 		expect(await prisma.export.count()).toBe(4);
 	});
 
@@ -258,11 +258,10 @@ describe("initUpload", () => {
 		expect(fakes.s3).toEqual([]);
 	});
 
-	it("reviewer gets 403", async () => {
+	it("reviewer gets the plugin role error", async () => {
 		await signInAs(w, REVIEWER, { projectId: w.projectA.id });
-		await expectHttpError(
+		await expectPluginRoleError(
 			controller.initUpload(w.projectA.id, w.tl1.id, w.exp1.id, { fileSize: 1 }),
-			403,
 		);
 		expect(await prisma.media.count()).toBe(0);
 	});
@@ -433,16 +432,15 @@ describe("completeUpload", () => {
 		);
 	});
 
-	it("reviewer gets 403", async () => {
+	it("reviewer gets the plugin role error", async () => {
 		const exp = await exportWithMedia("PENDING");
 		await signInAs(w, REVIEWER, { timelineId: w.tl1.id });
-		await expectHttpError(
+		await expectPluginRoleError(
 			controller.completeUpload(w.projectA.id, w.tl1.id, exp.id, {
 				uploadId: "u",
 				parts,
 				timelineSnapshot: snapshot,
 			}),
-			403,
 		);
 		expect(fakes.s3).toEqual([]);
 		expect(fakes.queue).toEqual([]);
@@ -573,12 +571,11 @@ describe("abortUpload", () => {
 		);
 	});
 
-	it("reviewer gets 403", async () => {
+	it("reviewer gets the plugin role error", async () => {
 		const exp = await exportWithMedia("PENDING");
 		await signInAs(w, REVIEWER, { projectId: w.projectA.id });
-		await expectHttpError(
+		await expectPluginRoleError(
 			controller.abortUpload(w.projectA.id, w.tl1.id, exp.id, { uploadId: "u" }),
-			403,
 		);
 		expect(s3Commands()).toEqual([]);
 	});

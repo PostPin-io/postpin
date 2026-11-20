@@ -130,3 +130,21 @@ describe("getProject", () => {
 		await expectHttpError(controller.getProject(w.projectA.id), 401);
 	});
 });
+
+describe("createProject", () => {
+	it("a reviewer learns that the role is the reason, not a bare 403", async () => {
+		await signInAs(w, REVIEWER);
+		await expectPluginRoleError(
+			controller.createProject(hapiRequest(), { name: "New", organizationId: w.org.id }),
+		);
+		expect(await prisma.project.count({ where: { organizationId: w.org.id } })).toBe(2);
+	});
+
+	it("404 for an organization the user isn't in, also for a reviewer elsewhere", async () => {
+		await signInAs(w, REVIEWER);
+		await expectHttpError(
+			controller.createProject(hapiRequest(), { name: "New", organizationId: w.other.id }),
+			404,
+		);
+	});
+});
