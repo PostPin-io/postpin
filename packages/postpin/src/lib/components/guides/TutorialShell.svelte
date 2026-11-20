@@ -11,9 +11,11 @@
 		steps: readonly string[];
 		current: number;
 		onskip: () => void;
+		/** More room, e.g. for a screenshot that has to stay readable */
+		wide?: boolean;
 		children: Snippet;
 	}
-	let { guideId, steps, current, onskip, children }: Props = $props();
+	let { guideId, steps, current, onskip, wide = false, children }: Props = $props();
 
 	const style = GUIDE_STYLE.tutorial;
 	const title = $derived(GUIDES.find((g) => g.id === guideId)?.title ?? "");
@@ -27,7 +29,9 @@
 	aria-modal="true"
 	aria-label="{style.label}: {title}"
 >
-	<div class="mx-auto flex min-h-full max-w-2xl flex-col px-4 py-6 sm:py-10">
+	<div
+		class="mx-auto flex min-h-full flex-col px-4 py-6 sm:py-10 {wide ? 'max-w-5xl' : 'max-w-2xl'}"
+	>
 		<header class="flex items-center gap-3">
 			<span
 				class="flex size-9 items-center justify-center rounded-full {style.dot} text-primary-content"

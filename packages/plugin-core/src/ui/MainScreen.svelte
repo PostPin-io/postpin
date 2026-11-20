@@ -744,7 +744,8 @@
 				<section
 					class="grid min-w-0 rounded-box border-2 border-base-content/50 @md:col-span-2 @md:grid-cols-subgrid @md:gap-x-0 @3xl:col-span-1 @3xl:col-start-3 @3xl:row-span-2 @3xl:row-start-1 @3xl:grid-cols-1 @3xl:grid-rows-subgrid @3xl:gap-y-0"
 				>
-					<div class="min-w-0 p-4">
+					<!-- data-guide: the areas the web app's plugin tutorial points at, on its screenshots -->
+					<div class="min-w-0 p-4" data-guide="sync-to-nle/upload-to">
 						<Destination
 							framed={false}
 							title="Upload to"
@@ -780,6 +781,7 @@
 
 					<div
 						class="min-w-0 border-t border-base-content/30 p-4 @md:border-t-0 @md:border-l @3xl:border-t @3xl:border-l-0"
+						data-guide="sync-to-nle/exchange-with"
 					>
 						<Destination
 							framed={false}
@@ -834,7 +836,7 @@
 					>
 						<FlowArrow direction="right" disabled={!canRender}>
 							<div class="flex max-w-full flex-col items-center gap-2">
-								<div class="join max-w-full">
+								<div class="join max-w-full" data-guide="sync-to-nle/render-upload">
 									<button
 										type="button"
 										class="btn join-item h-auto min-w-0 flex-col gap-0 py-2 whitespace-normal btn-primary"
@@ -856,6 +858,7 @@
 												settings.renderToDisk && "btn-active",
 											]}
 											aria-label="Render to disk settings"
+											data-guide="sync-to-nle/render-to-disk"
 											disabled={!canEditRenderSettings}
 											title={settings.renderToDisk
 												? "Render to disk is on"
@@ -879,6 +882,7 @@
 						<FlowArrow direction="both" disabled={!canSync && !isSyncing}>
 							<div
 								class="flex w-48 max-w-full flex-col gap-2 rounded-box border-2 border-base-content/50 p-3"
+								data-guide="sync-to-nle/markers"
 							>
 								<!-- the export's name is in the PostPin box already -->
 								<h3
@@ -887,6 +891,7 @@
 									<MarkerHeads class="text-sm" /> Markers
 								</h3>
 								<MarkerSyncButton
+									guide="sync-to-nle/to-postpin"
 									from="nle"
 									hostName={capabilities?.hostName ?? null}
 									busy={isBusy === "syncingMarkersUp"}
@@ -894,6 +899,7 @@
 									onclick={syncUp}
 								/>
 								<MarkerSyncButton
+									guide="sync-to-nle/to-program"
 									from="postpin"
 									hostName={capabilities?.hostName ?? null}
 									busy={isBusy === "syncingMarkersDown"}
@@ -907,6 +913,7 @@
 									type="button"
 									class="btn btn-ghost btn-xs"
 									title="Backups taken before every marker action, to undo one"
+									data-guide="sync-to-nle/history"
 									disabled={!canOpenHistory}
 									onclick={() => historyModal?.open()}
 								>
@@ -919,6 +926,7 @@
 
 				<div
 					class="@md:col-span-2 @md:row-start-3 @3xl:col-span-1 @3xl:col-start-1 @3xl:row-span-2 @3xl:row-start-1 @3xl:grid"
+					data-guide="sync-to-nle/program"
 				>
 					<HostNode
 						hostName={capabilities?.hostName ?? null}

@@ -461,7 +461,7 @@ function pushReport(
 		deleted && `${deleted} deleted`,
 	].filter(Boolean);
 	const warnings: string[] = [];
-	const message = changes.length ? `Pushed to PostPin: ${changes.join(", ")}.` : "Nothing to push.";
+	const message = changes.length ? `Synced to PostPin: ${changes.join(", ")}.` : "Nothing to sync.";
 	if (previewed) return { message, warnings };
 	const conflicts = plan.update.filter((u) => u.conflict).length;
 	if (conflicts) {
@@ -479,7 +479,7 @@ function pushReport(
 	if (plan.deletedInPostPin.length) {
 		warnings.push(
 			`${count(plan.deletedInPostPin.length, "marker")} deleted in PostPin ` +
-				`${plan.deletedInPostPin.length === 1 ? "wasn't" : "weren't"} pushed back. ` +
+				`${plan.deletedInPostPin.length === 1 ? "wasn't" : "weren't"} synced back. ` +
 				`Sync from PostPin to remove ${plan.deletedInPostPin.length === 1 ? "it" : "them"} from ${host}.`,
 		);
 	}

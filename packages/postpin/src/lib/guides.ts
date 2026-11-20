@@ -102,6 +102,18 @@ export const GUIDES = [
 		minRole: Role.REVIEWER,
 	},
 	{
+		id: "sync-to-nle",
+		type: "tutorial",
+		trigger: "automatic",
+		title: "Using the plugin",
+		description:
+			"The plugin's panel: where exports go, and markers from PostPin into your program and back.",
+		restartHint: "Needs an export with markers: it starts on the dashboard.",
+		startFrom: "found",
+		minRole: Role.MEMBER,
+		permission: ["plugin", "use"],
+	},
+	{
 		id: "postpin-guides",
 		type: "tour",
 		trigger: "automatic",

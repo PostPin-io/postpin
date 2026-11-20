@@ -7,6 +7,8 @@ import { prisma } from "#lib/server/database.ts";
 import { accessChecker, accessibleExports, getActiveMember } from "#lib/server/org-access.ts";
 import { DEVICE_CLIENTS } from "#lib/device-clients.ts";
 import { GUIDE_IDS, type GuideId } from "#lib/guides.ts";
+import { programByClient, programByHost } from "#lib/plugin-programs.ts";
+import type { MarkerSetSummary } from "@postpin-io/shared/logic/marker-sets";
 
 // All of these are about the signed-in user's own progress: no target to authorize, but a session
 // is a must (/_app/remote/ is a public path).
@@ -106,6 +108,11 @@ const START_RIGHTS = {
  */
 export const getGuideStart = query(v.picklist(GUIDE_IDS), async (guideId) => {
 	requireUser();
+	// full screen, from the dashboard: it only needs an export with markers to bring over
+	if (guideId === "sync-to-nle") {
+		const member = await getActiveMember();
+		return member && (await exportWithMarkers(member)) ? "/dashboard" : null;
+	}
 	if (!(guideId in START_RIGHTS)) return null;
 	const [area, action] = START_RIGHTS[guideId as keyof typeof START_RIGHTS];
 	const member = await getActiveMember();
@@ -143,6 +150,103 @@ export const getPluginSignIn = query(
 	},
 );
 
+type ActiveMember = NonNullable<Awaited<ReturnType<typeof getActiveMember>>>;
+
+/**
+ * The export the plugin tutorial (sync-to-nle) brings markers from: the latest one with markers
+ * where the member may use the plugins. Deleted markers are gone for real, so they don't count.
+ */
+async function exportWithMarkers(member: ActiveMember) {
+	const allowed = await accessChecker(member);
+	const exports = await prisma.export.findMany({
+		where: { ...accessibleExports(member), markers: { some: {} } },
+		select: {
+			id: true,
+			name: true,
+			timeline: { select: { id: true, name: true, project: { select: { id: true, name: true } } } },
+		},
+		orderBy: { createdAt: "desc" },
+		take: 50,
+	});
+	return (
+		exports.find((e) =>
+			allowed("plugin", "use", { projectId: e.timeline.project.id, timelineId: e.timeline.id }),
+		) ?? null
+	);
+}
+
+const exportHref = (projectId: string, timelineId: string, exportId: string) =>
+	`/projects/${projectId}/timelines/${timelineId}/exports/${exportId}`;
+
+/**
+ * What the plugin tutorial (sync-to-nle) needs, polled while it waits for a sync: the program of
+ * the connected plugin, the export to bring markers from, and the user's latest marker sets. The
+ * marker sets are the trace a sync leaves: a PULL set for "to the program", a PUSH set with an
+ * added or changed marker for "to PostPin". The tutorial compares their ids with the ones from
+ * when its step began, so only what happens after that counts.
+ */
+export const getPluginTutorial = query(async () => {
+	const { id } = requireUser();
+	const member = await getActiveMember();
+	const [exp, sets, session] = await Promise.all([
+		member ? exportWithMarkers(member) : null,
+		prisma.markerSet.findMany({
+			where: { createdById: id, action: { in: ["PUSH", "PULL"] } },
+			select: {
+				id: true,
+				action: true,
+				hostName: true,
+				summary: true,
+				exportId: true,
+				timeline: { select: { id: true, projectId: true } },
+			},
+			orderBy: { createdAt: "desc" },
+			take: 20,
+		}),
+		prisma.session.findFirst({
+			where: {
+				userId: id,
+				clientId: { in: Object.keys(DEVICE_CLIENTS) },
+				expiresAt: { gt: new Date() },
+			},
+			select: { clientId: true },
+			orderBy: { createdAt: "desc" },
+		}),
+	]);
+	const pull = sets.find((s) => s.action === "PULL");
+	// a push that only deleted or linked markers doesn't carry the marker the user just added
+	const push = sets.find((s) => {
+		const side = (s.summary as MarkerSetSummary).postpin;
+		return s.action === "PUSH" && !!side && side.added + side.updated > 0;
+	});
+	// The latest sync says which program the user works in; before the first one, the latest sign-in
+	const program =
+		programByHost(sets[0]?.hostName)?.hostName ?? programByClient(session?.clientId)?.hostName;
+	return {
+		/** a plugin is signed in (a valid session of a plugin client) */
+		connected: !!session,
+		/** hostName of plugin-programs.ts, null when nothing says which program */
+		program: program ?? null,
+		export: exp
+			? {
+					project: exp.timeline.project.name,
+					timeline: exp.timeline.name,
+					name: exp.name,
+					href: exportHref(exp.timeline.project.id, exp.timeline.id, exp.id),
+				}
+			: null,
+		pullId: pull?.id ?? null,
+		push: push
+			? {
+					id: push.id,
+					href: push.exportId
+						? exportHref(push.timeline.projectId, push.timeline.id, push.exportId)
+						: null,
+				}
+			: null,
+	};
+});
+
 /**
  * Whether a guide can run for the user right now; guides not listed always can. Their guide
  * buttons only show when it can: navigation walks into a real export, so it needs one.
@@ -150,8 +254,13 @@ export const getPluginSignIn = query(
 export const getGuideAvailability = query(async () => {
 	requireUser();
 	const member = await getActiveMember();
-	const anExport = member
-		? await prisma.export.findFirst({ where: accessibleExports(member), select: { id: true } })
-		: null;
-	return { navigation: !!anExport } as Partial<Record<GuideId, boolean>>;
+	const [anExport, withMarkers] = member
+		? await Promise.all([
+				prisma.export.findFirst({ where: accessibleExports(member), select: { id: true } }),
+				exportWithMarkers(member),
+			])
+		: [null, null];
+	return { navigation: !!anExport, "sync-to-nle": !!withMarkers } as Partial<
+		Record<GuideId, boolean>
+	>;
 });

@@ -206,7 +206,7 @@ describe("push", () => {
 		const nle = fakeNle(RESOLVE_CAPABILITIES, [nleMarker({})]);
 		const { report } = await push(nle);
 		expect(api.syncMarkers).not.toHaveBeenCalled();
-		expect(report.message).toBe("Nothing to push.");
+		expect(report.message).toBe("Nothing to sync.");
 	});
 
 	it("updates markers changed in the NLE", async () => {
@@ -303,7 +303,7 @@ describe("push", () => {
 		]);
 		const { report } = await push(nle);
 		expect(pushBody().upserts).toEqual([expect.objectContaining({ id: "m1", nleId: "n1" })]);
-		expect(report.message).toBe("Nothing to push.");
+		expect(report.message).toBe("Nothing to sync.");
 	});
 });
 
@@ -449,7 +449,7 @@ describe("frame offset", () => {
 		// the NLE's copy is unchanged in PostPin's frames, a moved one goes back without the offset
 		serverMarkers = [{ ...serverMarkers[0]!, nleId: "nle-1", nleTimelineId: NLE_TIMELINE }];
 		serverMarkers[0]!.syncHash = hashOf(serverMarkers[0]!);
-		expect((await push(nle)).report.message).toBe("Nothing to push.");
+		expect((await push(nle)).report.message).toBe("Nothing to sync.");
 		nle.state.markers[0]!.frame = 90200;
 		await push(nle);
 		expect(pushBody().upserts[0]).toMatchObject({ id: "m1", frame: 200 });

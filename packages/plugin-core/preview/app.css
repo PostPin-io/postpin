@@ -1,0 +1,4 @@
+@import "tailwindcss";
+@plugin "daisyui";
+/* the same setup as the plugins: the UI components live in src/ui */
+@source "../src/ui";
