@@ -53,6 +53,15 @@ vi.mock("$app/env/private", () => ({
 	},
 }));
 
+// Without this mock SvelteKit validates the real environment, which CI doesn't have
+vi.mock("$app/env/public", () => ({
+	DISABLE_PASSWORD_LOGIN: false,
+	IMPRINT_URL: undefined,
+	PRIVACY_URL: undefined,
+	TERMS_URL: undefined,
+	DPA_URL: undefined,
+}));
+
 vi.mock("$app/env", () => ({ building: false, dev: true, browser: false, version: "test" }));
 
 vi.mock("$app/server", async () => await import("../helpers/app-server.ts"));
