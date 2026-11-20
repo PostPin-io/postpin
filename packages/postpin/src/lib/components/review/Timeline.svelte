@@ -164,6 +164,10 @@
 		current: FrameRange;
 	} | null>(null);
 
+	// Alt turns a marker's head into a handle: a point marker pulls out a range, a range edge resizes
+	let altHeld = $state(false);
+	const trackAlt = (event: KeyboardEvent | PointerEvent) => (altHeld = event.altKey);
+
 	const rangeOf = (m: ReviewMarker): FrameRange =>
 		markerDrag?.id === m.id ? markerDrag.current : { frame: m.frame, duration: m.duration };
 
@@ -186,6 +190,8 @@
 		event: PointerEvent & { currentTarget: HTMLElement },
 		marker: ReviewMarker,
 		mode: RangeDragMode = "move",
+		/** The range edge whose head was grabbed: with Alt it resizes instead of moving the range */
+		edge?: "start" | "end",
 	) {
 		if (event.button !== 0) return;
 		// Keep the ruler from starting a scrub, and the bar from moving when a handle is grabbed
@@ -198,8 +204,9 @@
 		}
 		event.currentTarget.setPointerCapture(event.pointerId);
 		const origin = { frame: marker.frame, duration: marker.duration };
-		// Alt-dragging a point marker pulls a range out of it
-		const dragMode = event.altKey && origin.duration === 0 && mode === "move" ? "span" : mode;
+		// Alt-dragging a point marker pulls a range out of it, a range's edge changes its length
+		const dragMode =
+			event.altKey && mode === "move" ? (origin.duration === 0 ? "span" : (edge ?? mode)) : mode;
 		markerDrag = {
 			id: marker.id,
 			mode: dragMode,
@@ -421,6 +428,13 @@
 </script>
 
 <!-- <pre>{JSON.stringify({ markers }, null, 2)}</pre> -->
+<!-- Pointer events too: Alt may go down while another window has focus -->
+<svelte:window
+	onkeydown={trackAlt}
+	onkeyup={trackAlt}
+	onpointermove={trackAlt}
+	onblur={() => (altHeld = false)}
+/>
 <div class="flex h-full flex-col">
 	<div
 		bind:offsetHeight={toolbarHeight}
@@ -428,7 +442,7 @@
 	>
 		<span class="text-xs text-gray-500">
 			Space play/pause · ←/→ frame · ↑/↓ previous/next cut · +/- speed · I/O in/out · ⇧X clear · ⌥
-			drag a marker for a range
+			drag a marker for a range or its edge to resize
 		</span>
 		<div>
 			Zoom:
@@ -576,10 +590,17 @@
 								<div
 									class="absolute bottom-0 z-10 touch-none {edge === 'end'
 										? '-translate-x-full'
-										: ''} {markerDrag?.id === marker.id ? 'cursor-grabbing' : 'cursor-grab'}"
+										: ''} {marker.canUpdate &&
+									(markerDrag?.id === marker.id ? markerDrag.mode === edge : altHeld && !markerDrag)
+										? 'cursor-ew-resize'
+										: markerDrag?.id === marker.id
+											? 'cursor-grabbing'
+											: 'cursor-grab'}"
 									style="left: {toX(range.frame) + (edge === 'end' ? width : 0)}px"
-									title={marker.name}
-									onpointerdown={(event) => startMarkerDrag(event, marker)}
+									title={marker.canUpdate
+										? `${marker.name ?? ""} · Alt-drag to change the ${edge}`
+										: marker.name}
+									onpointerdown={(event) => startMarkerDrag(event, marker, "move", edge)}
 								>
 									<RangeEdgeIcon {edge} fill={marker.category.color} strokeWidth={0} />
 								</div>

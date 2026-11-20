@@ -19,7 +19,7 @@ code:
 
 ## Steps
 
-1. `range`: **Highlights:** the range edges of a marker on the timeline. **Text:** "Drag the edges to cover a whole passage."
+1. `range`: **Highlights:** the range edges of a marker on the timeline. **Text:** "Hold ⌥ (Alt) and drag an edge to cover a whole passage."
 
 ## Success feedback
 
