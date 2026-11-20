@@ -3,7 +3,6 @@ import { Body, Controller, Get, Path, Put, Response, Route, Security } from "@ts
 import { HttpError } from "../HttpError.ts";
 import type { Marker, Response as MarkerResponse } from "@postpin-io/shared/db";
 import { apiAuthorize } from "../access.ts";
-import { can } from "#lib/roles.ts";
 import { notifyMarkers } from "#lib/server/live.ts";
 
 /** Every marker costs up to three queries in the upload transaction */
@@ -64,7 +63,7 @@ export class MarkerController extends Controller {
 			throw new HttpError(400, "Marker duration must be a whole number of frames, 0 or more");
 		}
 
-		const { user, member, target } = await apiAuthorize("marker", "create", {
+		const { user, target } = await apiAuthorize("marker", "create", {
 			type: "export",
 			id: exportId,
 		});
@@ -93,23 +92,8 @@ export class MarkerController extends Controller {
 		});
 		if (n !== ids.length) throw new HttpError(400, "Unknown category");
 
-		// Matching markers get updated (and may lose their nleId), so roles that may only update their
-		// own markers must not match anyone else's. Markers without author count as foreign.
-		if (!can(member.role, "marker", "update", { hasGrant: true })) {
-			const markerIds = markers.flatMap((m) => (m.id ? [m.id] : []));
-			const nleIds = markers.flatMap((m) => (m.nleId ? [m.nleId] : []));
-			const foreign = await prisma.marker.count({
-				where: {
-					exportId,
-					AND: [
-						{ OR: [{ id: { in: markerIds } }, { nleId: { in: nleIds } }] },
-						{ OR: [{ authorId: null }, { authorId: { not: user.id } }] },
-					],
-				},
-			});
-			if (foreign > 0) throw new HttpError(403, "You can only update your own markers");
-		}
-
+		// Matching markers get updated, also other people's: fine, as only roles that may update every
+		// marker get here (the plugin right starts at Member, see apiAuthorize)
 		// Updates the markers the export already has instead of adding them again. A marker matches by
 		// id when it came from PostPin (pulled into the NLE before), otherwise by its NLE id.
 		await prisma.$transaction(async (tx) => {

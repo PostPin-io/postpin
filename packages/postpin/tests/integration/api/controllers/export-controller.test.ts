@@ -6,7 +6,7 @@ import { prisma } from "../../../helpers/db.ts";
 import * as f from "../../../helpers/factories.ts";
 import { fakeMultipart } from "../../../helpers/fake-bucket.ts";
 import { fakes } from "../../../helpers/fakes.ts";
-import { expectHttpError, signInApi } from "../../../helpers/api.ts";
+import { expectHttpError, expectPluginRoleError, signInApi } from "../../../helpers/api.ts";
 import { apiWorld, signInAs, type ApiWorld } from "../../../helpers/api-world.ts";
 import { signOut } from "../../../helpers/request-event.ts";
 import { storedExport } from "../../../helpers/storage.ts";
@@ -45,10 +45,9 @@ describe("getExports", () => {
 		expect(Object.keys(exports[0]!).sort()).toEqual(["createdAt", "id", "name"]);
 	});
 
-	it("reviewer with a timeline grant may list", async () => {
+	it("reviewer gets the plugin role error, even with a timeline grant", async () => {
 		await signInAs(w, REVIEWER, { timelineId: w.tl1.id });
-		const { exports } = await controller.getExports(w.projectA.id, w.tl1.id);
-		expect(exports.map((e) => e.id)).toEqual([w.exp1.id]);
+		await expectPluginRoleError(controller.getExports(w.projectA.id, w.tl1.id));
 	});
 
 	it("404 for a timeline outside the member's grants", async () => {

@@ -966,6 +966,9 @@
 								}
 							}
 						}
+					},
+					"403": {
+						"description": "Reviewer in every organization: the plugins need the Member role"
 					}
 				},
 				"security": [

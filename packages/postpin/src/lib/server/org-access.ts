@@ -9,7 +9,8 @@ import type { Role } from "@postpin-io/shared/db/enums";
  * The object an action is performed on. For `create`, this is the parent:
  * new timeline → project, new marker → export, new project → organization.
  */
-export type Target = { type: Area; id: string };
+// The plugin right has no target: it is checked on the role (roleAllows), not on a resource
+export type Target = { type: Exclude<Area, "plugin">; id: string };
 
 /** What `can()` needs to know about a target, loaded from the DB */
 export type ResolvedTarget = {

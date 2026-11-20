@@ -11,3 +11,17 @@ export class HttpError extends Error {
 		this.name = "HttpError";
 	}
 }
+
+/**
+ * The user's role in the organization doesn't include the plugins (Reviewer). Its own name, so the
+ * plugins can tell it apart in the response body ({ name, message }) and show it as such.
+ */
+export class PluginRoleError extends HttpError {
+	constructor() {
+		super(403, PLUGIN_ROLE_MESSAGE);
+		this.name = "PluginRoleError";
+	}
+}
+
+export const PLUGIN_ROLE_MESSAGE =
+	"PostPin plugins need the Member role. You're a Reviewer here: ask an admin of your organization to change your role, or review in the browser.";

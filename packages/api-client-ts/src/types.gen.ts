@@ -394,6 +394,13 @@ export type GetProjectsData = {
 	url: "/v1/projects";
 };
 
+export type GetProjectsErrors = {
+	/**
+	 * Reviewer in every organization: the plugins need the Member role
+	 */
+	403: unknown;
+};
+
 export type GetProjectsResponses = {
 	/**
 	 * Ok

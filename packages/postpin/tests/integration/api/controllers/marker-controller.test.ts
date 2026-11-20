@@ -3,7 +3,7 @@ import { Role } from "@postpin-io/shared/db/enums";
 import { MarkerController } from "../../../../src/api/controllers/MarkerController.ts";
 import { prisma } from "../../../helpers/db.ts";
 import * as f from "../../../helpers/factories.ts";
-import { expectHttpError, signInApi } from "../../../helpers/api.ts";
+import { expectHttpError, expectPluginRoleError, signInApi } from "../../../helpers/api.ts";
 import { apiWorld, signInAs, type ApiWorld } from "../../../helpers/api-world.ts";
 import { signOut } from "../../../helpers/request-event.ts";
 
@@ -53,10 +53,15 @@ describe("getMarkers", () => {
 		expect(markers[1]!.responses.map((r) => r.id)).toEqual([r2.id, r1.id]);
 	});
 
-	it.each([MEMBER, REVIEWER])("%s with a timeline grant may read", async (role) => {
-		await signInAs(w, role, { timelineId: w.tl1.id });
+	it("member with a timeline grant may read", async () => {
+		await signInAs(w, MEMBER, { timelineId: w.tl1.id });
 		const markers = await controller.getMarkers(w.projectA.id, w.tl1.id, w.exp1.id);
 		expect(markers.map((m) => m.id)).toEqual([w.marker1.id]);
+	});
+
+	it("reviewer gets the plugin role error, even with a grant", async () => {
+		await signInAs(w, REVIEWER, { timelineId: w.tl1.id });
+		await expectPluginRoleError(controller.getMarkers(w.projectA.id, w.tl1.id, w.exp1.id));
 	});
 
 	it("404 without a grant on the export's timeline", async () => {
@@ -107,8 +112,8 @@ describe("uploadMarkers: creating", () => {
 		]);
 	});
 
-	it.each([MEMBER, REVIEWER])("%s with a grant adds markers", async (role) => {
-		const me = await signInAs(w, role, { timelineId: w.tl1.id });
+	it("member with a grant adds markers", async () => {
+		const me = await signInAs(w, MEMBER, { timelineId: w.tl1.id });
 		await upload([marker({ frame: 5 })]);
 		expect(await prisma.marker.count({ where: { exportId: w.exp1.id, authorId: me.userId } })).toBe(
 			1,
@@ -284,47 +289,11 @@ describe("uploadMarkers: updating", () => {
 		expect(m).toMatchObject({ name: "edited", authorId: w.owner.userId });
 	});
 
-	it("reviewer may update their own markers", async () => {
+	it("reviewer gets the plugin role error and nothing is written", async () => {
 		const me = await signInAs(w, REVIEWER, { timelineId: w.tl1.id });
 		const own = await f.createMarker(w.exp1, w.category, { author: me.user });
-		await upload([{ ...marker({ name: "edited" }), id: own.id }]);
-		expect((await prisma.marker.findUniqueOrThrow({ where: { id: own.id } })).name).toBe("edited");
-	});
-
-	it("reviewer gets 403 when an id matches someone else's marker", async () => {
-		await signInAs(w, REVIEWER, { timelineId: w.tl1.id });
-		await expectHttpError(
-			upload([marker({ name: "new" }), { ...marker({ name: "edited" }), id: w.marker1.id }]),
-			403,
-		);
-		expect((await prisma.marker.findUniqueOrThrow({ where: { id: w.marker1.id } })).name).toBe(
-			w.marker1.name,
-		);
-		expect(await prisma.marker.count()).toBe(1);
-	});
-
-	it("reviewer gets 403 when an nleId matches someone else's marker", async () => {
-		await prisma.marker.update({ where: { id: w.marker1.id }, data: { nleId: "nle-1" } });
-		await signInAs(w, REVIEWER, { timelineId: w.tl1.id });
-		await expectHttpError(upload([marker({ name: "edited", nleId: "nle-1" })]), 403);
-		expect((await prisma.marker.findUniqueOrThrow({ where: { id: w.marker1.id } })).name).toBe(
-			w.marker1.name,
-		);
-	});
-
-	it("for reviewers, markers without author count as someone else's", async () => {
-		const orphan = await f.createMarker(w.exp1, w.category);
-		await signInAs(w, REVIEWER, { timelineId: w.tl1.id });
-		await expectHttpError(upload([{ ...marker(), id: orphan.id }]), 403);
-	});
-
-	it("reviewer can't steal the nleId of someone else's marker with their own pulled marker", async () => {
-		await prisma.marker.update({ where: { id: w.marker1.id }, data: { nleId: "nle-1" } });
-		const me = await signInAs(w, REVIEWER, { timelineId: w.tl1.id });
-		const own = await f.createMarker(w.exp1, w.category, { author: me.user });
-		await expectHttpError(upload([{ ...marker(), id: own.id, nleId: "nle-1" }]), 403);
-		expect((await prisma.marker.findUniqueOrThrow({ where: { id: w.marker1.id } })).nleId).toBe(
-			"nle-1",
-		);
+		await expectPluginRoleError(upload([marker({ name: "new" }), { ...marker(), id: own.id }]));
+		expect(await prisma.marker.count()).toBe(2);
+		expect((await prisma.marker.findUniqueOrThrow({ where: { id: own.id } })).name).toBe(own.name);
 	});
 });
