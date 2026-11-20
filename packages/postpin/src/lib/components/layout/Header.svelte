@@ -16,6 +16,7 @@
 	import Logo from "#lib/components/layout/Logo.svelte";
 
 	import Breadcrumbs from "#lib/components/layout/Breadcrumbs.svelte";
+	import ExportShareButton from "#lib/components/layout/ExportShareButton.svelte";
 
 	const session = authClient.useSession();
 	const organizations = authClient.useListOrganizations();
@@ -121,7 +122,7 @@
 	<label for="navbar-1-toggle" class="fixed inset-0 hidden max-lg:peer-checked:block"></label>
 
 	<nav class="collapse-title navbar max-lg:px-2">
-		<div class="navbar-start min-w-0 max-lg:w-full">
+		<div class="navbar-start min-w-0 max-lg:w-auto max-lg:flex-1">
 			<label for="navbar-1-toggle" class="btn btn-square btn-ghost lg:hidden" aria-label="Menu">
 				<Menu class="size-5" />
 			</label>
@@ -161,9 +162,11 @@
 		{#if children}
 			<div class="navbar-center hidden lg:flex">{@render children()}</div>
 		{/if}
-		<div class="navbar-end gap-1 max-lg:hidden">
-			{#if actions}{@render actions()}{/if}
-			<div class="dropdown dropdown-end">
+		<!-- Phones: only the share button, the account menu lives in the collapsed menu there -->
+		<div class="navbar-end gap-1 max-lg:w-auto max-lg:flex-none">
+			{#if actions}<div class="contents max-lg:hidden">{@render actions()}</div>{/if}
+			<ExportShareButton />
+			<div class="dropdown dropdown-end max-lg:hidden">
 				<div tabindex="0" role="button" class="btn btn-ghost">
 					{$session.data?.user.name ?? "Account"}
 				</div>

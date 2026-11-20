@@ -9,6 +9,7 @@
 	import NewOrgModal from "../../../lib/components/organizations/NewOrgModal.svelte";
 	import DeleteProjectModal from "#lib/components/projects/DeleteProjectModal.svelte";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
+	import ManageAccessModal from "#lib/components/sharing/ManageAccessModal.svelte";
 	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
 	import ContinueTutorialCard from "#lib/components/tutorial/ContinueTutorialCard.svelte";
 	import UploadDropOverlay from "#lib/components/exports/UploadDropOverlay.svelte";
@@ -18,6 +19,7 @@
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
 	import Apeture from "@lucide/svelte/icons/aperture";
 	import UserGroup from "@lucide/svelte/icons/user-group";
+	import ShieldUser from "@lucide/svelte/icons/shield-user";
 	import Ellipsis from "@lucide/svelte/icons/ellipsis";
 	import FolderOpen from "@lucide/svelte/icons/folder-open";
 	import Pencil from "@lucide/svelte/icons/pencil";
@@ -46,6 +48,7 @@
 	let renameProjectDialog: RenameProjectModal | null = null;
 	let delProjectDialog: DeleteProjectModal | null = null;
 	let inviteDialog: SharingSetupModal | null = null;
+	let accessDialog: ManageAccessModal | null = null;
 
 	let data = $derived(await getProjects());
 
@@ -83,6 +86,11 @@
 	function inviteToProject(project: (typeof data.projects)[number]) {
 		closeMenu(project);
 		inviteDialog?.open({ projectId: project.id });
+	}
+
+	function manageProjectAccess(project: (typeof data.projects)[number]) {
+		closeMenu(project);
+		accessDialog?.open({ projectId: project.id });
 	}
 
 	function deleteProject(project: (typeof data.projects)[number]) {
@@ -153,6 +161,12 @@
 				<button type="button" onclick={() => inviteToProject(project)}>
 					<UserGroup class="size-4" />
 					Invite to project
+				</button>
+			</li>
+			<li>
+				<button type="button" onclick={() => manageProjectAccess(project)}>
+					<ShieldUser class="size-4" />
+					Manage access
 				</button>
 			</li>
 		{/if}
@@ -503,6 +517,7 @@
 <RenameProjectModal bind:this={renameProjectDialog} />
 <DeleteProjectModal bind:this={delProjectDialog} />
 <SharingSetupModal bind:this={inviteDialog} />
+<ManageAccessModal bind:this={accessDialog} oninvite={(t) => inviteDialog?.open(t)} />
 {#if canDropHere}
 	<UploadDropOverlay ondropped={(file) => heldUpload.hold(file)}>
 		Then choose the project and the timeline it goes to.

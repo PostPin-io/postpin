@@ -3,6 +3,7 @@
 	// and invite links are best understood next to each other.
 	import ChevronRight from "@lucide/svelte/icons/chevron-right";
 	import Link from "@lucide/svelte/icons/link";
+	import ShareArrow from "#lib/components/icons/ShareArrow.svelte";
 	import UserGroup from "@lucide/svelte/icons/user-group";
 	import X from "@lucide/svelte/icons/x";
 	import { reviewTour } from "./review-tour.svelte.ts";
@@ -87,7 +88,7 @@
 			</div>
 		{:else}
 			<p class="mt-4 text-sm text-base-content/80">
-				Both are created with the buttons next to the names at the top of the page.
+				Both are created with the buttons at the top of the page.
 			</p>
 
 			<!-- The breadcrumbs as they look in the header, not clickable -->
@@ -107,15 +108,18 @@
 				</span>
 				<ChevronRight class="size-3.5 text-base-content/50" />
 				<span class="max-w-32 truncate">{names.export}</span>
-				<span class="rounded-field bg-primary p-1 text-primary-content">
-					<Link class="size-3.5" />
+				<span
+					class="ml-auto flex items-center gap-1 rounded-field bg-primary px-2 py-1 text-primary-content"
+				>
+					<ShareArrow class="size-3.5" />
+					Share
 				</span>
 			</div>
 
 			<ul class="mt-4 space-y-2 text-sm text-base-content/80">
 				<li class="flex gap-2">
-					<Link class="mt-0.5 size-4 shrink-0 text-base-content" />
-					<span>next to the export: its share links.</span>
+					<ShareArrow class="mt-0.5 size-4 shrink-0 text-base-content" />
+					<span>Share, at the right end: the export's share links.</span>
 				</li>
 				<li class="flex gap-2">
 					<UserGroup class="mt-0.5 size-4 shrink-0 text-base-content" />
