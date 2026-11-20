@@ -79,7 +79,7 @@
 	onsubmit={submit}
 >
 	<!-- Panels on the left, the note right next to them at the same height -->
-	<div class="flex flex-wrap items-stretch gap-3">
+	<div class="flex flex-wrap items-stretch gap-3" data-guide="share-link/panels">
 		<PanelLayout
 			timeline={values.timelinePanelVisible}
 			markers={values.markerPanelVisible}
@@ -99,7 +99,7 @@
 	<!-- Slim bar: expiry, note length, cancel and save -->
 	<div class="flex flex-wrap items-center justify-between gap-2 border-t border-base-300 pt-2.5">
 		<div class="flex min-w-0 flex-wrap items-center gap-2">
-			<div class="join">
+			<div class="join" data-guide="share-link/expiry">
 				{#each presets as preset (preset ?? "keep")}
 					<button
 						type="button"
@@ -135,6 +135,7 @@
 				class="btn btn-square btn-primary btn-sm"
 				title={submitLabel}
 				aria-label={submitLabel}
+				data-guide="share-link/save"
 				disabled={busy}
 			>
 				{#if busy}<span class="loading loading-xs loading-spinner"></span>{:else}<Check

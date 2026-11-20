@@ -8,6 +8,14 @@
  * 🟢 You can import this file directly.
  */
 
+export const GuideStatus = {
+	STARTED: "STARTED",
+	COMPLETED: "COMPLETED",
+	SKIPPED: "SKIPPED",
+} as const;
+
+export type GuideStatus = (typeof GuideStatus)[keyof typeof GuideStatus];
+
 export const PointerKind = {
 	ARROW: "ARROW",
 	RECT: "RECT",

@@ -21,7 +21,7 @@ export const createProject = command(
 			id: session.activeOrganizationId,
 		});
 
-		await prisma.project.create({
+		return await prisma.project.create({
 			data: {
 				name: data.name,
 				creatorId: user.id,
@@ -33,6 +33,7 @@ export const createProject = command(
 					create: DEFAULT_CATEGORIES.map((c) => ({ ...c, createdById: user.id })),
 				},
 			},
+			select: { id: true },
 		});
 	},
 );

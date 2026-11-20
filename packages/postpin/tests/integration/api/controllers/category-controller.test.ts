@@ -3,7 +3,7 @@ import { Role } from "@postpin-io/shared/db/enums";
 import { CategoryController } from "../../../../src/api/controllers/CategoryController.ts";
 import { prisma } from "../../../helpers/db.ts";
 import * as f from "../../../helpers/factories.ts";
-import { expectHttpError, signInApi } from "../../../helpers/api.ts";
+import { expectHttpError, expectPluginRoleError, signInApi } from "../../../helpers/api.ts";
 import { apiWorld, signInAs, type ApiWorld } from "../../../helpers/api-world.ts";
 import { signOut } from "../../../helpers/request-event.ts";
 
@@ -25,15 +25,17 @@ describe("getCategories", () => {
 		expect(categories.map((c) => c.id).sort()).toEqual([w.category.id, second.id].sort());
 	});
 
-	it.each([MEMBER, REVIEWER])(
-		"%s with only a timeline grant in the project may read",
-		async (role) => {
-			await signInAs(w, role, { timelineId: w.tl2.id });
-			expect((await controller.getCategories(w.projectA.id)).map((c) => c.id)).toEqual([
-				w.category.id,
-			]);
-		},
-	);
+	it("member with only a timeline grant in the project may read", async () => {
+		await signInAs(w, MEMBER, { timelineId: w.tl2.id });
+		expect((await controller.getCategories(w.projectA.id)).map((c) => c.id)).toEqual([
+			w.category.id,
+		]);
+	});
+
+	it("reviewer gets the plugin role error, even with a grant", async () => {
+		await signInAs(w, REVIEWER, { timelineId: w.tl2.id });
+		await expectPluginRoleError(controller.getCategories(w.projectA.id));
+	});
 
 	it("404 without any grant in the project", async () => {
 		await signInAs(w, MEMBER, { projectId: w.projectB.id });
@@ -67,8 +69,8 @@ describe("createCategory", () => {
 		expect(await prisma.category.count({ where: { id: category.id } })).toBe(1);
 	});
 
-	it.each([MEMBER, REVIEWER])("%s with a timeline grant may create", async (role) => {
-		const me = await signInAs(w, role, { timelineId: w.tl1.id });
+	it("member with a timeline grant may create", async () => {
+		const me = await signInAs(w, MEMBER, { timelineId: w.tl1.id });
 		const category = await controller.createCategory(w.projectA.id, {
 			name: "VFX",
 			color: "#000000",

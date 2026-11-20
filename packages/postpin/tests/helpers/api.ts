@@ -59,6 +59,12 @@ export function fakeRequestEvent(path: string, init?: RequestInit) {
 }
 
 /** Awaits `promise` and asserts it threw the API's HttpError with `status`. */
+/** The 403 a reviewer gets from the plugins' API: the plugins need the Member role */
+export async function expectPluginRoleError(promise: Promise<unknown>) {
+	const e = await expectHttpError(promise, 403);
+	expect(e?.name).toBe("PluginRoleError");
+}
+
 export async function expectHttpError(promise: Promise<unknown>, status: number) {
 	try {
 		await promise;

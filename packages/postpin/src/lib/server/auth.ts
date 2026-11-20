@@ -12,6 +12,9 @@ import { APIError, createAuthMiddleware, getIP } from "better-auth/api";
 import { prepareAccountDeletion } from "#lib/server/account-deletion.ts";
 import { Role } from "@postpin-io/shared/db";
 import { ac, betterAuthRoles } from "#lib/better-auth-roles.ts";
+import { getSessionFromCtx } from "better-auth/api";
+import { PLUGIN_SIGN_IN_DENIED } from "#lib/roles.ts";
+import { userMayUsePlugins } from "#lib/server/plugin-access.ts";
 import { twoFactor, genericOAuth } from "better-auth/plugins";
 import { passkey } from "@better-auth/passkey";
 import { oidcProvider, socialProviders } from "#lib/server/auth-providers.ts";
@@ -68,6 +71,14 @@ export const auth = betterAuth({
 	},
 	hooks: {
 		before: createAuthMiddleware(async (ctx) => {
+			// Every device client is a plugin: a reviewer-only account may not sign one in (roles.ts)
+			if (ctx.path === "/device/approve") {
+				const session = await getSessionFromCtx(ctx);
+				if (session && !(await userMayUsePlugins(session.user.id))) {
+					throw new APIError("FORBIDDEN", { message: PLUGIN_SIGN_IN_DENIED });
+				}
+				return;
+			}
 			if (ctx.path !== "/delete-user" || ctx.body?.password) return;
 
 			// Not getSessionFromCtx: user hooks run before bearer()'s, so a desktop/plugin token

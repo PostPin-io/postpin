@@ -1,4 +1,4 @@
-const TYPING_SELECTOR = "input, textarea, select, [contenteditable]";
+export const TYPING_SELECTOR = "input, textarea, select, [contenteditable]";
 const OVERLAY_SELECTOR = "dialog[open], [role='dialog'], [role='menu'], [role='listbox']";
 
 /** True while the user is entering text, where shortcuts must not fire. */

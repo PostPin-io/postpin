@@ -5,8 +5,7 @@
 	import { goto } from "$app/navigation";
 	import { onMount } from "svelte";
 	import { DEVICE_CLIENTS } from "#lib/device-clients.ts";
-	import { getTutorialState } from "#lib/components/tutorial/tutorial.remote.ts";
-	import { isWelcomeStep } from "#lib/tutorial.ts";
+	import { PLUGIN_SIGN_IN_DENIED } from "#lib/roles.ts";
 
 	let { data } = $props();
 
@@ -57,7 +56,8 @@
 	}
 
 	onMount(() => {
-		if (codeInput) verify();
+		// a reviewer-only account can't sign a plugin in: don't claim the code for nothing
+		if (codeInput && data.pluginsAllowed) verify();
 	});
 
 	async function accept() {
@@ -97,25 +97,20 @@
 			The sign-in request was denied.
 		{:else if userCode}
 			Make sure the code below matches the one shown in the app.
-		{:else}
+		{:else if data.pluginsAllowed}
 			Enter the code shown on your device.
 		{/if}
 	</p>
 </header>
 
 <div class="space-y-4">
-	{#if success === "accepted"}
+	{#if !data.pluginsAllowed}
+		<div class="alert alert-warning" role="alert">{PLUGIN_SIGN_IN_DENIED}</div>
+		<a class="btn w-full" href="/dashboard">Go to your projects</a>
+	{:else if success === "accepted"}
 		<div class="alert alert-success" role="alert">
 			You can close this tab and return to the app.
 		</div>
-		<!-- on its own boundary: the sign-in is done either way -->
-		<svelte:boundary>
-			{#if isWelcomeStep((await getTutorialState()).step)}
-				<a class="btn w-full btn-primary" href="/welcome?show=export">Back to the tutorial</a>
-			{/if}
-			{#snippet pending()}{/snippet}
-			{#snippet failed()}{/snippet}
-		</svelte:boundary>
 	{:else if success === "denied"}
 		<div class="alert alert-warning" role="alert">
 			The app was not given access. You can close this tab.

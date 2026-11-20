@@ -20,3 +20,6 @@ packages/worker/tests/fixtures/three-cuts.mp4
 # ffmpeg build (tools/ffmpeg/build.sh)
 tools/ffmpeg/.work/
 tools/ffmpeg/out/
+
+# Obsidian vault settings (docs/guides opened as a vault)
+.obsidian/

@@ -149,6 +149,7 @@
 				class="btn btn-square btn-ghost btn-sm"
 				title={copied ? "Copied" : "Copy link"}
 				aria-label="Copy link"
+				data-guide="share-link/copy"
 				disabled={!active}
 				onclick={copy}
 			>

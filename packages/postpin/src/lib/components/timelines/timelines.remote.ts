@@ -12,11 +12,12 @@ export const createTimeline = command(
 	}),
 	async (data) => {
 		await authorize("timeline", "create", { type: "project", id: data.projectId });
-		await prisma.timeline.create({
+		return await prisma.timeline.create({
 			data: {
 				name: data.name,
 				project: { connect: { id: data.projectId } },
 			},
+			select: { id: true },
 		});
 	},
 );

@@ -10,7 +10,6 @@
 	import UserGroup from "@lucide/svelte/icons/user-group";
 	import Mail from "@lucide/svelte/icons/mail";
 	import Link from "@lucide/svelte/icons/link";
-	import { reviewTour } from "#lib/components/tutorial/review-tour.svelte.ts";
 
 	type Target = { projectId: string; timelineId?: string; exportId?: string };
 
@@ -45,8 +44,7 @@
 
 	export function open(next: Target) {
 		target = next;
-		// the tutorial sets its hint before opening: start where that hint is shown
-		tab = reviewTour.hint === "invite-link" ? "link" : "members";
+		tab = "members";
 		isOpen = true;
 		dialog?.showModal();
 	}
@@ -59,11 +57,7 @@
 <dialog
 	class="modal modal-bottom sm:modal-middle"
 	bind:this={dialog}
-	onclose={() => {
-		isOpen = false;
-		// the tutorial's hints are for the dialog it opened, not for the next one
-		reviewTour.hint = null;
-	}}
+	onclose={() => (isOpen = false)}
 >
 	<div
 		class="modal-box max-h-[90dvh] pt-0 sm:min-h-[32rem] {isExport

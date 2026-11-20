@@ -3,6 +3,7 @@
 // biome-ignore-all lint: generated file
 // @ts-nocheck
 export interface $DbEnums {
+	GuideStatus: "STARTED" | "COMPLETED" | "SKIPPED";
 	PointerKind: "ARROW" | "RECT";
 	MediaStatus: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
 	Role: "OWNER" | "ADMIN" | "MEMBER" | "REVIEWER";

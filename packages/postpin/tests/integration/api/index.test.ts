@@ -190,14 +190,15 @@ describe("errors", () => {
 		expect(body).toMatchObject({ name: "HttpError", message: "Not found" });
 	});
 
-	it("403 from authorize() keeps its status", async () => {
+	it("a reviewer's 403 says that the role is the reason, by name, so plugins can tell", async () => {
 		await signInAs(w, Role.REVIEWER, { projectId: w.projectA.id });
 		const { status, body } = await call(exportsPath(), {
 			method: "POST",
 			json: { nleTimelineId: null, nleProjectId: null },
 		});
 		expect(status).toBe(403);
-		expect(body).toMatchObject({ message: "Not allowed" });
+		expect(body).toMatchObject({ name: "PluginRoleError" });
+		expect((body as { message: string }).message).toContain("reviewers can't upload exports");
 		expect(await prisma.export.count()).toBe(4);
 	});
 

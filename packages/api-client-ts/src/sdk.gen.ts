@@ -37,6 +37,7 @@ import type {
 	GetProjectErrors,
 	GetProjectResponses,
 	GetProjectsData,
+	GetProjectsErrors,
 	GetProjectsResponses,
 	InitProxyUploadsData,
 	InitProxyUploadsErrors,
@@ -98,8 +99,8 @@ export const getDocsHtml = <ThrowOnError extends boolean = false>(
 
 export const getProjects = <ThrowOnError extends boolean = false>(
 	options?: Options<GetProjectsData, ThrowOnError>,
-): RequestResult<GetProjectsResponses, unknown, ThrowOnError> =>
-	(options?.client ?? client).get<GetProjectsResponses, unknown, ThrowOnError>({
+): RequestResult<GetProjectsResponses, GetProjectsErrors, ThrowOnError> =>
+	(options?.client ?? client).get<GetProjectsResponses, GetProjectsErrors, ThrowOnError>({
 		security: [{ scheme: "bearer", type: "http" }],
 		url: "/v1/projects",
 		...options,

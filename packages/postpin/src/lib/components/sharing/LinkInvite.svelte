@@ -10,8 +10,6 @@
 		toRole,
 		type InviteRole,
 	} from "#lib/roles.ts";
-	import { reviewTour } from "#lib/components/tutorial/review-tour.svelte.ts";
-	import TutorialHint from "#lib/components/tutorial/TutorialHint.svelte";
 	import { Role } from "@postpin-io/shared/db/enums";
 	import RoleInfoTip from "./RoleInfoTip.svelte";
 	import {
@@ -60,13 +58,6 @@
 		setTimeout(() => (copied = false), 2000);
 	}
 </script>
-
-{#if reviewTour.hint === "invite-link"}
-	<TutorialHint>
-		Pick a role: reviewers watch and comment, members can also upload. Copy the link and send it to
-		your team.
-	</TutorialHint>
-{/if}
 
 {#if !mayInvite}
 	<p class="text-sm text-base-content/60">You can't invite people to this {target.type}.</p>

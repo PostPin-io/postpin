@@ -184,8 +184,8 @@ describe("signed in without an organization", () => {
 
 	it.each([
 		["the dashboard", "/dashboard"],
-		["the tutorial", "/welcome"],
 		["the profile", "/profile"],
+		["the PostPin Guides", "/guides"],
 		["pages below them", "/profile/security"],
 		["the admin area", "/admin"],
 		["the start page", "/"],

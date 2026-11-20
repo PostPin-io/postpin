@@ -21,6 +21,7 @@
 	import { useShare } from "../share-context.ts";
 	import PointerSelector from "./PointerSelector.svelte";
 	import { usePointerSession } from "./pointer-session.svelte.ts";
+	import { signalGuide } from "../../guides/guide-signals.svelte.ts";
 
 	let {
 		marker,
@@ -268,6 +269,13 @@
 		onclose?.();
 	}
 
+	/** Enter or leaving the title: saved now, and first-review knows the marker has one */
+	function titleDone() {
+		if (!name.trim()) return;
+		void persist();
+		signalGuide("first-review", "title");
+	}
+
 	export function focusTitleInputField() {
 		titleInputField?.focus();
 	}
@@ -307,13 +315,18 @@
 					class="flex min-w-0 flex-wrap items-center gap-2 *:shrink-0"
 				>
 					{#if !share}
-						<div bind:this={categorySlot} class="flex min-w-0">
+						<div
+							bind:this={categorySlot}
+							class="flex min-w-0"
+							data-guide={marker.canUpdate && !mobile ? "first-review/category" : undefined}
+						>
 							<CategorySelector
 								value={categoryId}
 								onselect={(id) => {
 									selectedCategoryId = id;
 									defaultCategory.set(id);
 									void persist();
+									signalGuide("first-review", "category");
 								}}
 								readonly={!marker.canUpdate}
 								collapsed={categoryCollapsed}
@@ -339,6 +352,7 @@
 							class="btn btn-square btn-ghost"
 							title={marker.duration > 0 ? "Make it a point marker" : "Make it a range"}
 							aria-label={marker.duration > 0 ? "Make it a point marker" : "Make it a range"}
+							data-guide={marker.duration === 0 && !mobile ? "marker-ranges/make-range" : undefined}
 							disabled={saving}
 							onclick={toggleRange}
 						>
@@ -405,9 +419,18 @@
 					class="input w-full"
 					placeholder="Title"
 					aria-label="Marker title"
+					data-guide={marker.canUpdate && !mobile ? "first-review/title" : undefined}
 					bind:value={name}
 					onfocus={() => (fieldFocused = true)}
-					onblur={() => (fieldFocused = false)}
+					onblur={() => {
+						fieldFocused = false;
+						titleDone();
+					}}
+					onkeydown={(e) => {
+						if (e.key !== "Enter" || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+						e.preventDefault();
+						titleDone();
+					}}
 					oninput={() => schedule()}
 					readonly={!marker.canUpdate}
 				/>
