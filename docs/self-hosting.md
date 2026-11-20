@@ -156,6 +156,28 @@ the app still starts, but users can't verify their address or reset their passwo
 | `SMTP_PASSWORD`  |             | SMTP password.                                          |
 | `SMTP_MAIL_FROM` | `SMTP_USER` | Sender address, e.g. `"PostPin <noreply@example.com>"`. |
 
+### Sign-in
+
+Each provider shows up as a button on the login and sign-up page once both its client ID and
+secret are set. See [Sign-in Methods](#sign-in-methods) for the redirect URIs to register.
+
+| Variable                  | Default          | Description                                                                                       |
+| ------------------------- | ---------------- | ------------------------------------------------------------------------------------------------- |
+| `DISABLE_PASSWORD_LOGIN`  | `false`          | `true` hides email and password on login and sign-up; users sign in with SSO or a passkey only.   |
+| `GOOGLE_CLIENT_ID`        | (empty)          | Google OAuth client.                                                                              |
+| `GOOGLE_CLIENT_SECRET`    | (empty)          |                                                                                                   |
+| `MICROSOFT_CLIENT_ID`     | (empty)          | Microsoft Entra ID app registration.                                                              |
+| `MICROSOFT_CLIENT_SECRET` | (empty)          |                                                                                                   |
+| `MICROSOFT_TENANT_ID`     | `common`         | Your tenant ID to allow only your organization's accounts.                                        |
+| `GITHUB_CLIENT_ID`        | (empty)          | GitHub OAuth app.                                                                                 |
+| `GITHUB_CLIENT_SECRET`    | (empty)          |                                                                                                   |
+| `APPLE_CLIENT_ID`         | (empty)          | Services ID of "Sign in with Apple".                                                              |
+| `APPLE_CLIENT_SECRET`     | (empty)          | A signed JWT, valid for 6 months at most. See [Apple](#apple).                                    |
+| `OIDC_DISCOVERY_URL`      | (empty)          | Your identity provider's `…/.well-known/openid-configuration` (Keycloak, Authentik, Entra ID, …). |
+| `OIDC_CLIENT_ID`          | (empty)          |                                                                                                   |
+| `OIDC_CLIENT_SECRET`      | (empty)          |                                                                                                   |
+| `OIDC_NAME`               | `Single sign-on` | Label of the button, e.g. `Acme SSO`.                                                             |
+
 ## Reverse Proxy & TLS
 
 PostPin doesn't terminate TLS itself. `compose.yml` publishes two ports on localhost only, and your
@@ -312,6 +334,51 @@ docker compose exec -T rustfs curl -s --aws-sigv4 "aws:amz:${S3_REGION}:s3" \
 
 `"quota":0` removes the limit. rustfs checks multipart uploads only when they complete, so a large
 upload can briefly take up more than the quota before it is rejected.
+
+## Sign-in Methods
+
+Besides email and password, users can sign in with passkeys, which need no configuration, and with
+the SSO and social providers you configure under [Sign-in](#sign-in). Everyone can turn on
+two-factor authentication (authenticator app plus backup codes) for their password in their
+profile.
+
+Register these redirect URIs with the provider, with your `BETTER_AUTH_URL` in front:
+
+| Provider      | Redirect URI                   |
+| ------------- | ------------------------------ |
+| Google        | `/api/auth/callback/google`    |
+| Microsoft     | `/api/auth/callback/microsoft` |
+| GitHub        | `/api/auth/callback/github`    |
+| Apple         | `/api/auth/callback/apple`     |
+| Your OIDC IdP | `/api/auth/callback/oidc`      |
+
+For OIDC, request the scopes `openid email profile`; PostPin uses PKCE.
+
+**Existing accounts:** a first SSO sign-in with the email of an existing account connects the two,
+but only if the provider reports the email as verified and the PostPin account's email is verified
+too. Otherwise the user logs in with their password and connects the provider under _Profile →
+Sign-in & security_. A first SSO sign-in with a new email creates an account.
+
+**Passkeys** need HTTPS (or `localhost`) and are bound to the host name of `BETTER_AUTH_URL`.
+Changing that host name invalidates every passkey.
+
+**SSO-only instances:** with `DISABLE_PASSWORD_LOGIN=true`, existing users with a password sign in
+through a provider with the same verified email, or with a passkey they added before.
+
+### Apple
+
+"Sign in with Apple" needs a paid Apple developer account. Create an App ID with _Sign in with
+Apple_, a Services ID (your `APPLE_CLIENT_ID`) with your domain and the redirect URI above, and a
+key for _Sign in with Apple_. Apple's client secret is a JWT signed with that key, valid for at
+most 6 months; create it with
+
+```sh
+node packages/postpin/scripts/apple-client-secret.mjs AuthKey_XXXX.p8 <team id> <key id> <services id>
+```
+
+and set a reminder to create a new one before it expires. Users who hide their email get a
+`@privaterelay.appleid.com` address. Apple only forwards mail to it from senders you register
+under _Sign in with Apple for Email Communication_, so register your `SMTP_MAIL_FROM` address there.
 
 ## Updates & Versions
 

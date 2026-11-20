@@ -643,14 +643,6 @@ export type MarkerUncheckedUpdateManyWithoutAuthorNestedInput = {
 	deleteMany?: Prisma.MarkerScalarWhereInput | Prisma.MarkerScalarWhereInput[];
 };
 
-export type IntFieldUpdateOperationsInput = {
-	set?: number;
-	increment?: number;
-	decrement?: number;
-	multiply?: number;
-	divide?: number;
-};
-
 export type MarkerCreateNestedOneWithoutPointersInput = {
 	create?: Prisma.XOR<
 		Prisma.MarkerCreateWithoutPointersInput,

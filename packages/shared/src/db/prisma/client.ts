@@ -70,6 +70,16 @@ export type Verification = Prisma.VerificationModel;
  */
 export type DeviceCode = Prisma.DeviceCodeModel;
 /**
+ * Model TwoFactor
+ *
+ */
+export type TwoFactor = Prisma.TwoFactorModel;
+/**
+ * Model Passkey
+ *
+ */
+export type Passkey = Prisma.PasskeyModel;
+/**
  * Model Marker
  *
  */

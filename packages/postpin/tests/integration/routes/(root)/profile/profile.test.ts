@@ -6,6 +6,7 @@ import {
 	getMyStorage,
 	getProfile,
 	getSessions,
+	getSignInMethods,
 	leaveOrganization,
 	revokeSession,
 } from "../../../../../src/routes/(root)/profile/profile.remote.ts";
@@ -58,6 +59,74 @@ describe("getProfile", () => {
 	it("401 when signed out", async () => {
 		signOut();
 		await expectStatus(getProfile(), 401);
+	});
+});
+
+describe("getSignInMethods", () => {
+	async function account(providerId: string) {
+		return prisma.account.create({
+			data: { id: randomUUID(), accountId: randomUUID(), providerId, userId: me.id },
+		});
+	}
+
+	it("401 when signed out", async () => {
+		signOut();
+		await expectStatus(getSignInMethods(), 401);
+	});
+
+	it("reports the password, 2FA and passkeys of this user only", async () => {
+		await account("credential");
+		await prisma.user.update({ where: { id: me.id }, data: { twoFactorEnabled: true } });
+		const passkey = await prisma.passkey.create({
+			data: {
+				id: randomUUID(),
+				name: "MacBook",
+				publicKey: "pk",
+				userId: me.id,
+				credentialID: "cred",
+				counter: 0,
+				deviceType: "multiDevice",
+				backedUp: true,
+			},
+		});
+		const other = await f.createUser();
+		await prisma.passkey.create({
+			data: {
+				id: randomUUID(),
+				publicKey: "pk",
+				userId: other.id,
+				credentialID: "cred2",
+				counter: 0,
+				deviceType: "singleDevice",
+				backedUp: false,
+			},
+		});
+		await session(me, { id: `session-${me.id}` });
+		signIn(me);
+
+		const methods = await getSignInMethods();
+		expect(methods).toMatchObject({
+			hasPassword: true,
+			twoFactorEnabled: true,
+			passkeys: [{ id: passkey.id, name: "MacBook", backedUp: true }],
+			// no provider is configured in the tests
+			providers: [],
+			recentSignIn: true,
+		});
+	});
+
+	it("an SSO-only account has no password; an old or device session isn't a recent sign-in", async () => {
+		await account("google");
+		await session(me, { id: `session-${me.id}`, createdAt: new Date(Date.now() - 3_600_000) });
+		signIn(me);
+		expect(await getSignInMethods()).toMatchObject({ hasPassword: false, recentSignIn: false });
+
+		await prisma.session.update({
+			where: { id: `session-${me.id}` },
+			data: { createdAt: new Date(), clientId: "postpin-desktop" },
+		});
+		await getSignInMethods().refresh();
+		expect(await getSignInMethods()).toMatchObject({ recentSignIn: false });
 	});
 });
 
