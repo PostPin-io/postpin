@@ -23,6 +23,7 @@ model User {
   lastActiveOrganizationId String?
   lastActiveOrganization   Organization?    @relation("LastActiveOrganization", fields: [lastActiveOrganizationId], references: [id], onDelete: SetNull)
   markers                  Marker[]
+  markerSets               MarkerSet[]
   responses                Response[]
   createdGrants            MemberGrant[]
   createdShareLinks        ShareLink[]

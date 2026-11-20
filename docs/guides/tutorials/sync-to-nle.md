@@ -13,8 +13,12 @@ code:
   - packages/plugin-core/src/ui/HostNode.svelte
   - packages/plugin-core/src/ui/Destination.svelte
   - packages/plugin-core/src/ui/RenderToDisk.svelte
+  - packages/plugin-core/src/ui/RenderToDiskModal.svelte
   - packages/plugin-core/src/ui/MarkerSyncButton.svelte
+  - packages/plugin-core/src/ui/SyncPreviewModal.svelte
+  - packages/plugin-core/src/ui/MarkerHistoryModal.svelte
   - packages/plugin-core/src/sync.ts
+  - packages/plugin-core/src/history.ts
   - packages/postpin/src/api/controllers/MarkerController.ts
 ---
 
@@ -31,9 +35,9 @@ does the tutorial: the marker buttons are symbols (the program's logo, an arrow,
 so the texts name the direction of the arrow ("from <program> to PostPin").
 
 **Builds on the new marker sync** (`feat/improve-plugin-marker-sync`): a sync first compares both
-sides and shows a summary, then writes only what changed, and saves a marker set (the state of both
-sides before it) that the plugin's history can restore. This tutorial is built after that; its
-texts and Detection assume it.
+sides and shows a preview of what changes on the target ("Apply" runs it), then writes only what
+changed, and saves a marker set (the state of both sides before it) that the plugin's History can
+undo. This tutorial is built after that; its texts and Detection assume it.
 
 ## The plugin's panel
 
@@ -43,11 +47,11 @@ Labels as in the plugin:
 | Area               | In the plugin                                                                                                                                                                                |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | The program (left) | Logo and name, "Current timeline" (with thumbnail), "Current project". Found by itself: the plugin follows the timeline open in the program. "⋯" menu: "Clear all markers in this timeline". |
-| Upload             | "Upload to" with "Choose timeline": the PostPin project and timeline new exports go to (a project or timeline can be created right there).                                                   |
+| Upload             | "Upload to" with "Choose timeline": the PostPin project and timeline new exports go to (a project or timeline can be created right there), and "Name of the new export".                     |
 | Render & Upload    | "Render & Upload", "new export in <timeline>": renders the open timeline and uploads it as a new export.                                                                                     |
-| Additional render  | The settings button next to it: "Additionally render to disk" (preset, folder, file name). Only for programs that can (`capabilities.renderToDisk`).                                         |
+| Additional render  | The settings button next to it opens the "Render to disk" dialog: "Additionally render to disk" (preset, folder, file name). Only for programs that can (`capabilities.renderToDisk`).       |
 | Exchange markers   | "Exchange markers with" with "Choose export": the export whose markers travel.                                                                                                               |
-| Markers            | The "Markers" box with two buttons: <program> → PostPin and PostPin → <program>.                                                                                                             |
+| Markers            | The "Markers" box with two buttons, <program> → PostPin and PostPin → <program>, and "History" below them.                                                                                   |
 
 On a narrow panel it is stacked: PostPin on top, the actions in between, the program at the bottom.
 So the texts never say "left" or "right" but name the area ("the <program> box", "Upload to").
@@ -83,7 +87,7 @@ program it is about. <program> is the program of the connected plugin (see Notes
    where the markers go. Before anything changes, the plugin shows what will change." **Done
    when:** "Next".
 8. `to-program`: **Title:** "Bring the markers over". **Text:** "Click the button with the arrow
-   from PostPin to <program>, and confirm." **Done when:** the server saw the sync (Detection), or
+   from PostPin to <program>, and apply the preview." **Done when:** the server saw the sync (Detection), or
    "I did it".
 9. `see-markers`: **Title:** "Your markers are on the timeline". **Text:** "Each marker comes with
    its category: a color, and the name as a #tag in its description. Keep the tag, it keeps the
@@ -92,11 +96,11 @@ program it is about. <program> is the program of the connected plugin (see Notes
     or change one. Markers without a #tag get a category named after their color." **Done when:**
     "Next".
 11. `to-postpin`: **Title:** "Send it back". **Text:** "Click the button with the arrow from
-    <program> to PostPin, and confirm." **Done when:** the server saw the sync with at least one
+    <program> to PostPin, and apply the preview." **Done when:** the server saw the sync with at least one
     new or changed marker (Detection), or "I did it".
-12. `history`: **Title:** "Every sync can be undone". **Text:** "The plugin keeps a history of your
-    syncs. Restore one to get the markers back as they were before it." Names where the history
-    sits once the plugin has it. **Done when:** "Next".
+12. `history`: **Title:** "Every sync can be undone". **Text:** "History under the marker buttons
+    lists your syncs. Undo one to get the markers back as they were before it." **Done when:**
+    "Next".
 13. `done`: **Completion screen:** "✓ You're set up in <program>". **Text:** "Bring the markers over
     before you start and send them back when you're done; only what changed travels. More under
     PostPin Guides in the account menu." **Done when:** "Open your export" (the review page of the
@@ -122,10 +126,10 @@ stay words of the code.)
   `exportId` of `to-postpin` is the export "Open your export" opens.
 - No table and no API of its own for the tutorial, and no guessing from `nleId` / `updatedAt`.
 
-**To agree with the marker sync:** a sync to the program that changes nothing must still create
-its set (or another trace), otherwise the tutorial can't see it. That is common for users who tried
-the plugin before. Either the plugin always creates the set, or sets with an empty summary aren't
-listed in the history but are still recorded. "I did it" stays as a quiet button in both sync steps
+**To agree with the marker sync (open):** the plugin creates no set for a sync that changes nothing
+(it says "Nothing to sync." and skips the preview), so the tutorial can't see it. That is common
+for users who tried the plugin before. Either the plugin records such syncs too (and the History
+leaves sets with an empty summary out), or `to-program` counts "I did it" as enough. "I did it" stays as a quiet button in both sync steps
 for a sync that failed in the plugin or an older plugin without marker sets.
 
 ## Success feedback
@@ -160,8 +164,8 @@ for a sync that failed in the plugin or an older plugin without marker sets.
   `DEVICE_CLIENTS` (to check per plugin which ones can).
 - **Export it uses:** the latest export with markers in an organization where the user may use the
   plugins (`plugin.use`; a member in one organization can be a reviewer in another), found like
-  `getGuideStart`. Markers marked as deleted (`deletedAt`, if the marker sync introduces it) don't
-  count. Without one, the row on the PostPin Guides page says what's missing (`restartHint`), and
+  `getGuideStart`. Deleted markers don't count: they are deleted for real, the marker sync only
+  remembers them in `DeletedMarker`. Without one, the row on the PostPin Guides page says what's missing (`restartHint`), and
   the tutorial doesn't start.
 - **Role:** the plugins are for members and up (`plugin.use`, `apiAuthorize`), so `minRole` is
   Member.
@@ -171,14 +175,18 @@ for a sync that failed in the plugin or an older plugin without marker sets.
   if it feels long when built, `render-to-disk` can go into `render-upload`, and `markers` into
   `to-program`.
 - **What the texts may promise,** with the new marker sync: only changes travel, a change made only
-  in PostPin survives a sync from the program, and deletions travel (with a question in the
-  plugin). The tutorial doesn't teach deleting or conflicts: the plugin's summary explains them
-  where they happen. If the marker sync decides otherwise, `markers` and the two sync steps follow.
+  in the target survives a sync, and deletions only travel when the user picks "Match" in the
+  preview (or a single marker there). The tutorial doesn't teach deleting or conflicts: the preview
+  explains them where they happen.
+- **The preview** (`SyncPreviewModal`): the target's logo on top, two columns sorted by timecode,
+  what comes in left (+ new, ✎ changed), what goes away right (−), each line leaving a gap in the
+  other column. With something deleted on one side, "Add & update" (default, nothing is deleted)
+  and "Match" (the target becomes like the source: also deletes, and brings back markers deleted
+  on the target, tagged "was deleted"). Clicking a line leaves that marker out or takes it in.
 - **Clear all markers** is only named (`program`), never done: it deletes the user's markers in the
-  program.
+  program (backed up first, the History can undo it).
 - **Open:** the sketch of the panel (`TutorialShell`): one per layout or only the wide one. The wide
   one is what most see in Resolve and Premiere; screenshots would do too, but go out of date.
-- **Open:** where the history sits in the plugin (`history`), once the marker sync has its UI.
 - Continues from the install tutorials ([install-resolve](install-resolve.md),
   [install-premiere](install-premiere.md), [install-desktop](install-desktop.md)) and
   [plugin-workflow](plugin-workflow.md).

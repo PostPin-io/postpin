@@ -61,12 +61,31 @@ export function $eipc_validator$_NleMarker(value: any): boolean {
 	// NleMarker.frame
 	if (!(typeof value.frame === "number")) return false;
 
+	// NleMarker.duration
+	if (typeof value.duration !== "undefined") {
+		if (!(typeof value.duration === "number")) return false;
+	}
+
 	// NleMarker.color
 	if (!(typeof value.color === "string")) return false;
 
 	// NleMarker.customData
 	if (typeof value.customData !== "undefined") {
 		if (!(typeof value.customData === "string")) return false;
+	}
+	return true;
+}
+export function $eipc_validator$_SetMarkerResult(value: any): boolean {
+	if (!value || typeof value !== "object") return false;
+
+	// SetMarkerResult.nleId
+	if (typeof value.nleId !== "undefined") {
+		if (!(typeof value.nleId === "string")) return false;
+	}
+
+	// SetMarkerResult.error
+	if (typeof value.error !== "undefined") {
+		if (!(typeof value.error === "string")) return false;
 	}
 	return true;
 }
@@ -124,6 +143,11 @@ export function $eipc_validator$_Settings(value: any): boolean {
 
 	// Settings.renderPreset
 	if (!(typeof value.renderPreset === "string")) return false;
+
+	// Settings.targets
+	if (typeof value.targets !== "undefined") {
+		if (!(typeof value.targets === "string")) return false;
+	}
 	return true;
 }
 export function $eipc_validator$_DiskRenderOptions(value: any): boolean {
@@ -260,6 +284,11 @@ export function $eipc_validator$_TimelineInfo(value: any): boolean {
 	// TimelineInfo.thumbnailDataUrl
 	if (typeof value.thumbnailDataUrl !== "undefined") {
 		if (!(typeof value.thumbnailDataUrl === "string")) return false;
+	}
+
+	// TimelineInfo.startFrame
+	if (typeof value.startFrame !== "undefined") {
+		if (!(typeof value.startFrame === "number")) return false;
 	}
 	return true;
 }

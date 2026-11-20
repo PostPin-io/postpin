@@ -23,6 +23,15 @@ export const PointerKind = {
 
 export type PointerKind = (typeof PointerKind)[keyof typeof PointerKind];
 
+export const MarkerSetAction = {
+	PUSH: "PUSH",
+	PULL: "PULL",
+	CLEAR: "CLEAR",
+	RESTORE: "RESTORE",
+} as const;
+
+export type MarkerSetAction = (typeof MarkerSetAction)[keyof typeof MarkerSetAction];
+
 export const MediaStatus = {
 	PENDING: "PENDING",
 	PROCESSING: "PROCESSING",

@@ -57,6 +57,7 @@ export function createSwitchBridge(): NleBridge {
 		getTimelineInfo: async () => current().getTimelineInfo(),
 		getMarkers: async () => current().getMarkers(),
 		setMarkers: (markers) => busy(() => current().setMarkers(markers)),
+		removeMarkers: (nleIds) => busy(() => current().removeMarkers(nleIds)),
 		clearMarkers: () => busy(() => current().clearMarkers()),
 		getRenderPresets: async () => current().getRenderPresets(),
 		renderPreview: (onProgress) => busy(() => current().renderPreview(onProgress)),

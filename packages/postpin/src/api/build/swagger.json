@@ -100,6 +100,481 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"MarkerSetAction": {
+				"type": "string",
+				"enum": ["PUSH", "PULL", "CLEAR", "RESTORE"]
+			},
+			"MarkerSetSideSummary": {
+				"description": "How many markers an action added, changed and removed on one side",
+				"properties": {
+					"added": {
+						"type": "number",
+						"format": "double"
+					},
+					"updated": {
+						"type": "number",
+						"format": "double"
+					},
+					"removed": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": ["added", "updated", "removed"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"MarkerSetSummary": {
+				"description": "What an action changed: the NLE's markers, PostPin's, or both",
+				"properties": {
+					"nle": {
+						"$ref": "#/components/schemas/MarkerSetSideSummary"
+					},
+					"postpin": {
+						"$ref": "#/components/schemas/MarkerSetSideSummary"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"MarkerSetListItem": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"action": {
+						"$ref": "#/components/schemas/MarkerSetAction"
+					},
+					"timelineId": {
+						"type": "string"
+					},
+					"exportId": {
+						"type": "string",
+						"nullable": true
+					},
+					"exportName": {
+						"type": "string",
+						"nullable": true
+					},
+					"nleTimelineId": {
+						"type": "string"
+					},
+					"nleTimelineName": {
+						"type": "string",
+						"nullable": true
+					},
+					"hostName": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdBy": {
+						"properties": {
+							"name": {
+								"type": "string"
+							},
+							"id": {
+								"type": "string"
+							}
+						},
+						"required": ["name", "id"],
+						"type": "object",
+						"nullable": true
+					},
+					"summary": {
+						"$ref": "#/components/schemas/MarkerSetSummary"
+					}
+				},
+				"required": [
+					"id",
+					"action",
+					"timelineId",
+					"exportId",
+					"exportName",
+					"nleTimelineId",
+					"nleTimelineName",
+					"hostName",
+					"createdAt",
+					"createdBy",
+					"summary"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"NleMarkerSnapshotEntry": {
+				"description": "A marker as the NLE reported it, see plugin-core's NleMarker",
+				"properties": {
+					"nleId": {
+						"type": "string",
+						"nullable": true
+					},
+					"title": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"frame": {
+						"type": "number",
+						"format": "double",
+						"description": "absolute timeline frame"
+					},
+					"duration": {
+						"type": "number",
+						"format": "double"
+					},
+					"color": {
+						"type": "string"
+					},
+					"customData": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": ["nleId", "title", "description", "frame", "color", "customData"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"NleMarkerSnapshot": {
+				"properties": {
+					"format": {
+						"type": "number",
+						"format": "double"
+					},
+					"markers": {
+						"items": {
+							"$ref": "#/components/schemas/NleMarkerSnapshotEntry"
+						},
+						"type": "array"
+					}
+				},
+				"required": ["format", "markers"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PostPinResponseSnapshot": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"content": {
+						"type": "string"
+					},
+					"authorId": {
+						"type": "string",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string"
+					}
+				},
+				"required": ["id", "content", "authorId", "createdAt", "updatedAt"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PostPinPointerSnapshot": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"kind": {
+						"type": "string",
+						"enum": ["ARROW", "RECT"]
+					},
+					"x": {
+						"type": "number",
+						"format": "double"
+					},
+					"y": {
+						"type": "number",
+						"format": "double"
+					},
+					"width": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"height": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"color": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string"
+					}
+				},
+				"required": ["id", "kind", "x", "y", "width", "height", "color", "createdAt"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PostPinMarkerSnapshotEntry": {
+				"description": "A marker of the export with everything needed to bring it back when it was deleted since",
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"frame": {
+						"type": "number",
+						"format": "double"
+					},
+					"duration": {
+						"type": "number",
+						"format": "double"
+					},
+					"categoryId": {
+						"type": "string"
+					},
+					"categoryName": {
+						"type": "string",
+						"description": "to find or recreate the category when it is gone by the time of a restore"
+					},
+					"categoryColor": {
+						"type": "string"
+					},
+					"nleId": {
+						"type": "string",
+						"nullable": true
+					},
+					"nleTimelineId": {
+						"type": "string",
+						"nullable": true
+					},
+					"syncHash": {
+						"type": "string",
+						"nullable": true
+					},
+					"authorId": {
+						"type": "string",
+						"nullable": true
+					},
+					"guestId": {
+						"type": "string",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string"
+					},
+					"responses": {
+						"items": {
+							"$ref": "#/components/schemas/PostPinResponseSnapshot"
+						},
+						"type": "array"
+					},
+					"pointers": {
+						"items": {
+							"$ref": "#/components/schemas/PostPinPointerSnapshot"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"description",
+					"frame",
+					"duration",
+					"categoryId",
+					"categoryName",
+					"categoryColor",
+					"nleId",
+					"nleTimelineId",
+					"syncHash",
+					"authorId",
+					"guestId",
+					"createdAt",
+					"responses",
+					"pointers"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PostPinMarkerSnapshot": {
+				"properties": {
+					"format": {
+						"type": "number",
+						"format": "double"
+					},
+					"markers": {
+						"items": {
+							"$ref": "#/components/schemas/PostPinMarkerSnapshotEntry"
+						},
+						"type": "array"
+					}
+				},
+				"required": ["format", "markers"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"MarkerSetDetail": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"action": {
+						"$ref": "#/components/schemas/MarkerSetAction"
+					},
+					"timelineId": {
+						"type": "string"
+					},
+					"exportId": {
+						"type": "string",
+						"nullable": true
+					},
+					"exportName": {
+						"type": "string",
+						"nullable": true
+					},
+					"nleTimelineId": {
+						"type": "string"
+					},
+					"nleTimelineName": {
+						"type": "string",
+						"nullable": true
+					},
+					"hostName": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdBy": {
+						"properties": {
+							"name": {
+								"type": "string"
+							},
+							"id": {
+								"type": "string"
+							}
+						},
+						"required": ["name", "id"],
+						"type": "object",
+						"nullable": true
+					},
+					"summary": {
+						"$ref": "#/components/schemas/MarkerSetSummary"
+					},
+					"nleMarkers": {
+						"$ref": "#/components/schemas/NleMarkerSnapshot"
+					},
+					"postpinMarkers": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/PostPinMarkerSnapshot"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"id",
+					"action",
+					"timelineId",
+					"exportId",
+					"exportName",
+					"nleTimelineId",
+					"nleTimelineName",
+					"hostName",
+					"createdAt",
+					"createdBy",
+					"summary",
+					"nleMarkers",
+					"postpinMarkers"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"MarkerSetCreate": {
+				"properties": {
+					"summary": {
+						"$ref": "#/components/schemas/MarkerSetSummary"
+					},
+					"nleMarkers": {
+						"items": {
+							"$ref": "#/components/schemas/NleMarkerSnapshotEntry"
+						},
+						"type": "array",
+						"description": "the NLE's markers before the action"
+					},
+					"hostName": {
+						"type": "string"
+					},
+					"nleTimelineName": {
+						"type": "string",
+						"nullable": true
+					},
+					"nleTimelineId": {
+						"type": "string"
+					},
+					"exportId": {
+						"type": "string",
+						"nullable": true,
+						"description": "the export the action works on, if any; its markers are backed up too"
+					},
+					"action": {
+						"type": "string",
+						"enum": ["PULL", "CLEAR", "RESTORE"],
+						"description": "PUSH sets are made by the push itself"
+					}
+				},
+				"required": ["summary", "nleMarkers", "hostName", "nleTimelineId", "action"],
+				"type": "object"
+			},
+			"MarkerSetRestoreResult": {
+				"properties": {
+					"summary": {
+						"$ref": "#/components/schemas/MarkerSetSummary"
+					},
+					"markerSetId": {
+						"type": "string",
+						"description": "the backup of the state before the restore"
+					}
+				},
+				"required": ["summary", "markerSetId"],
+				"type": "object"
+			},
+			"MarkerSetRestore": {
+				"properties": {
+					"nleSummary": {
+						"$ref": "#/components/schemas/MarkerSetSideSummary",
+						"description": "what the plugin changes in the NLE when it restores that side too"
+					},
+					"nleMarkers": {
+						"items": {
+							"$ref": "#/components/schemas/NleMarkerSnapshotEntry"
+						},
+						"type": "array",
+						"description": "the NLE's markers now, for the backup of the restore"
+					},
+					"hostName": {
+						"type": "string"
+					},
+					"nleTimelineName": {
+						"type": "string",
+						"nullable": true
+					},
+					"nleTimelineId": {
+						"type": "string"
+					}
+				},
+				"required": ["nleMarkers", "hostName", "nleTimelineId"],
+				"type": "object"
+			},
 			"DefaultSelection__36_ResponsePayload_": {
 				"properties": {
 					"content": {
@@ -137,6 +612,14 @@
 			},
 			"DefaultSelection__36_MarkerPayload_": {
 				"properties": {
+					"syncHash": {
+						"type": "string",
+						"nullable": true
+					},
+					"nleTimelineId": {
+						"type": "string",
+						"nullable": true
+					},
 					"nleId": {
 						"type": "string",
 						"nullable": true
@@ -183,6 +666,8 @@
 					}
 				},
 				"required": [
+					"syncHash",
+					"nleTimelineId",
 					"nleId",
 					"guestId",
 					"authorId",
@@ -204,6 +689,14 @@
 			},
 			"MarkerWithResponses": {
 				"properties": {
+					"syncHash": {
+						"type": "string",
+						"nullable": true
+					},
+					"nleTimelineId": {
+						"type": "string",
+						"nullable": true
+					},
 					"nleId": {
 						"type": "string",
 						"nullable": true
@@ -256,6 +749,8 @@
 					}
 				},
 				"required": [
+					"syncHash",
+					"nleTimelineId",
 					"nleId",
 					"guestId",
 					"authorId",
@@ -307,6 +802,200 @@
 					}
 				},
 				"required": ["categoryId", "frame", "description", "name"],
+				"type": "object"
+			},
+			"MarkerOrigin": {
+				"properties": {
+					"webUpload": {
+						"type": "boolean",
+						"description": "uploaded in the browser, not rendered by a plugin from the NLE timeline"
+					},
+					"frameRate": {
+						"properties": {
+							"dropFrame": {
+								"type": "boolean"
+							},
+							"fpsDenominator": {
+								"type": "number",
+								"format": "double"
+							},
+							"fpsNumerator": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": ["dropFrame", "fpsDenominator", "fpsNumerator"],
+						"type": "object",
+						"nullable": true,
+						"description": "to show the markers' timecodes, null when unknown"
+					},
+					"startFrameIndex": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "first frame of the export's timeline, null when unknown"
+					}
+				},
+				"required": ["webUpload", "frameRate", "startFrameIndex"],
+				"type": "object"
+			},
+			"DefaultSelection__36_DeletedMarkerPayload_": {
+				"properties": {
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"markerId": {
+						"type": "string"
+					},
+					"syncHash": {
+						"type": "string",
+						"nullable": true
+					},
+					"nleTimelineId": {
+						"type": "string",
+						"nullable": true
+					},
+					"nleId": {
+						"type": "string",
+						"nullable": true
+					},
+					"exportId": {
+						"type": "string"
+					}
+				},
+				"required": ["deletedAt", "markerId", "syncHash", "nleTimelineId", "nleId", "exportId"],
+				"type": "object"
+			},
+			"DeletedMarkerModel": {
+				"$ref": "#/components/schemas/DefaultSelection__36_DeletedMarkerPayload_",
+				"description": "Model DeletedMarker\nWhat's left of a marker deleted in PostPin, so the plugins neither push it back nor keep it in\nthe NLE (they offer to remove it there)"
+			},
+			"DeletedMarker": {
+				"$ref": "#/components/schemas/DeletedMarkerModel",
+				"description": "Model DeletedMarker\nWhat's left of a marker deleted in PostPin, so the plugins neither push it back nor keep it in\nthe NLE (they offer to remove it there)"
+			},
+			"MarkerPushResult": {
+				"properties": {
+					"markers": {
+						"items": {
+							"properties": {
+								"nleId": {
+									"type": "string",
+									"nullable": true
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": ["nleId", "id"],
+							"type": "object"
+						},
+						"type": "array",
+						"description": "in the order of upserts"
+					},
+					"markerSetId": {
+						"type": "string",
+						"description": "the backup taken before the push"
+					}
+				},
+				"required": ["markers", "markerSetId"],
+				"type": "object"
+			},
+			"SyncMarker": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/UploadMarker"
+					},
+					{
+						"properties": {
+							"syncHash": {
+								"type": "string",
+								"nullable": true,
+								"description": "the plugins' hash of the marker as both sides now have it, see MarkerController.linkMarkers"
+							}
+						},
+						"type": "object"
+					}
+				]
+			},
+			"MarkerPush": {
+				"properties": {
+					"summary": {
+						"$ref": "#/components/schemas/MarkerSetSummary",
+						"description": "what the push changes, for the history"
+					},
+					"deleteIds": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "markers deleted in the NLE that are to be deleted here too"
+					},
+					"upserts": {
+						"items": {
+							"$ref": "#/components/schemas/SyncMarker"
+						},
+						"type": "array",
+						"description": "markers to add or update"
+					},
+					"nleMarkers": {
+						"items": {
+							"$ref": "#/components/schemas/NleMarkerSnapshotEntry"
+						},
+						"type": "array",
+						"description": "all of the NLE's markers as they are, for the backup"
+					},
+					"hostName": {
+						"type": "string",
+						"description": "Capabilities.hostName, e.g. \"Resolve\""
+					},
+					"nleTimelineName": {
+						"type": "string",
+						"nullable": true
+					},
+					"nleTimelineId": {
+						"type": "string",
+						"description": "the NLE timeline the markers come from, see Marker.nleTimelineId"
+					}
+				},
+				"required": ["summary", "deleteIds", "upserts", "nleMarkers", "hostName", "nleTimelineId"],
+				"type": "object"
+			},
+			"MarkerLinks": {
+				"properties": {
+					"forgetDeleted": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "ids of deleted markers that are no longer in the NLE either"
+					},
+					"links": {
+						"items": {
+							"properties": {
+								"syncHash": {
+									"type": "string",
+									"nullable": true
+								},
+								"nleId": {
+									"type": "string",
+									"nullable": true
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": ["syncHash", "nleId", "id"],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"nleTimelineId": {
+						"type": "string"
+					}
+				},
+				"required": ["forgetDeleted", "links", "nleTimelineId"],
 				"type": "object"
 			},
 			"MultipartUploadPartUrl": {
@@ -1058,6 +1747,232 @@
 				]
 			}
 		},
+		"/v1/projects/{projectId}/timelines/{timelineId}/marker-sets": {
+			"get": {
+				"operationId": "GetMarkerSets",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/MarkerSetListItem"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Newest first, without the markers. nleTimelineId narrows it to one NLE timeline.",
+				"security": [
+					{
+						"session": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "timelineId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "nleTimelineId",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "CreateMarkerSet",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"id": {
+											"type": "string"
+										}
+									},
+									"required": ["id"],
+									"type": "object"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Timeline or export not found"
+					}
+				},
+				"description": "Backs up the markers before an action that changes the NLE (pull, delete all, restoring the\nNLE). The export's markers are read here; pushes back up on their own (MarkerController.sync).\nFor delete all, the timeline's markers in PostPin are unlinked from the NLE timeline.",
+				"security": [
+					{
+						"session": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "timelineId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/MarkerSetCreate"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/v1/projects/{projectId}/timelines/{timelineId}/marker-sets/{markerSetId}": {
+			"get": {
+				"operationId": "GetMarkerSet",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/MarkerSetDetail"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Marker set not found"
+					}
+				},
+				"security": [
+					{
+						"session": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "timelineId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "markerSetId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/v1/projects/{projectId}/timelines/{timelineId}/marker-sets/{markerSetId}/restore": {
+			"post": {
+				"operationId": "RestoreMarkerSet",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/MarkerSetRestoreResult"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Marker set not found"
+					},
+					"409": {
+						"description": "The marker set has no export to restore"
+					}
+				},
+				"description": "Brings the export's markers back to how they were in the set, after backing up the current\nstate as a RESTORE set (which can be restored in turn). The NLE side is restored by the plugin.",
+				"security": [
+					{
+						"session": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "timelineId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "markerSetId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/MarkerSetRestore"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers": {
 			"get": {
 				"operationId": "GetMarkers",
@@ -1158,6 +2073,224 @@
 									"$ref": "#/components/schemas/UploadMarker"
 								},
 								"type": "array"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers/origin": {
+			"get": {
+				"operationId": "GetMarkerOrigin",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/MarkerOrigin"
+								}
+							}
+						}
+					}
+				},
+				"description": "Where the export's frames start, and whether it was uploaded in the browser: such an export\nmay start at another timecode than the NLE timeline, the plugins then shift the frames",
+				"security": [
+					{
+						"session": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "timelineId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "exportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers/deleted": {
+			"get": {
+				"operationId": "GetDeletedMarkers",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/DeletedMarker"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Markers deleted in PostPin, so a pull can offer to remove them from the NLE too",
+				"security": [
+					{
+						"session": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "timelineId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "exportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers/sync": {
+			"post": {
+				"operationId": "SyncMarkers",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/MarkerPushResult"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Export not found"
+					}
+				},
+				"description": "Push: writes the NLE's changes into the export in one transaction, after a backup of both\nsides (a marker set). Markers match by id, else by nleId; deleteIds are markers deleted in the\nNLE that the user agreed to delete here too. Returns the backup and every marker's id, in the\norder of upserts.",
+				"security": [
+					{
+						"session": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "timelineId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "exportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/MarkerPush"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers/links": {
+			"post": {
+				"operationId": "LinkMarkers",
+				"responses": {
+					"204": {
+						"description": "No content"
+					},
+					"404": {
+						"description": "Export not found"
+					}
+				},
+				"description": "After a pull: which NLE marker each PostPin marker is now, with the state both sides agree on\n(syncHash). forgetDeleted are deleted markers the pull removed from the NLE.",
+				"security": [
+					{
+						"session": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "projectId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "timelineId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "exportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/MarkerLinks"
 							}
 						}
 					}
@@ -1272,11 +2405,16 @@
 					}
 				],
 				"requestBody": {
+					"description": "`name`: the export's name, at most 100 characters; left out or empty, the server names it",
 					"required": true,
 					"content": {
 						"application/json": {
 							"schema": {
 								"properties": {
+									"name": {
+										"type": "string",
+										"nullable": true
+									},
 									"nleProjectId": {
 										"type": "string",
 										"nullable": true
@@ -1287,7 +2425,8 @@
 									}
 								},
 								"required": ["nleProjectId", "nleTimelineId"],
-								"type": "object"
+								"type": "object",
+								"description": "`name`: the export's name, at most 100 characters; left out or empty, the server names it"
 							}
 						}
 					}

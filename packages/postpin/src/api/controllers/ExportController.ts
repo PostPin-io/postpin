@@ -17,6 +17,9 @@ import { Body, Controller, Get, Path, Post, Response, Route, Security } from "@t
 import { HttpError } from "../HttpError.ts";
 import { apiAuthorize, apiCall, apiPluginCall } from "../access.ts";
 
+/** Like the web app's export names (upload.remote.ts) */
+const MAX_EXPORT_NAME = 100;
+
 @Security("session")
 @Route("v1/projects/{projectId}/timelines/{timelineId}/exports")
 export class ExportController extends Controller {
@@ -47,11 +50,22 @@ export class ExportController extends Controller {
 	public async createExport(
 		@Path() projectId: string,
 		@Path() timelineId: string,
-		@Body() body: { nleTimelineId: string | null; nleProjectId: string | null },
+		/** `name`: the export's name, at most 100 characters; left out or empty, the server names it */
+		@Body()
+		body: { nleTimelineId: string | null; nleProjectId: string | null; name?: string | null },
 	): Promise<{ id: string }> {
+		const name = body.name?.trim();
+		if (name && name.length > MAX_EXPORT_NAME) {
+			throw new HttpError(400, `The export name may have at most ${MAX_EXPORT_NAME} characters`);
+		}
 		return apiPluginCall(
 			{ type: "timeline", id: timelineId },
-			createExport({ projectId, timelineId, nle: body }),
+			createExport({
+				projectId,
+				timelineId,
+				...(name && { name }),
+				nle: { nleTimelineId: body.nleTimelineId, nleProjectId: body.nleProjectId },
+			}),
 		);
 	}
 

@@ -61,6 +61,14 @@ export interface NleMarker {
 	customData: string | null;
 }
 
+/** What setMarkers did with one marker */
+export interface SetMarkerResult {
+	/** the marker's id in the NLE, null when it couldn't be written */
+	nleId: string | null;
+	/** why it couldn't be written */
+	error?: string;
+}
+
 export interface RenderProgress {
 	percent: number;
 	estimatedTimeRemainingMs: number;
@@ -87,6 +95,8 @@ export interface Settings {
 	filename: string;
 	/** render preset for the disk render, empty when none is chosen yet */
 	renderPreset: string;
+	/** the destinations chosen per NLE timeline, as JSON (see ui/targets.ts) */
+	targets?: string;
 }
 
 /** An extra render into a folder of the user's choice, next to the upload */
@@ -109,6 +119,11 @@ export interface TimelineInfo {
 	projectId: string;
 	projectName: string;
 	thumbnailDataUrl?: string;
+	/**
+	 * absolute frame the timeline starts at (01:00:00:00 at 25 fps is 90000), for exports that
+	 * start elsewhere, see sync.ts
+	 */
+	startFrame?: number;
 }
 
 // Communication to the editor plugin
@@ -118,11 +133,16 @@ export interface NleBridge {
 	getTimelineInfo(): Promise<TimelineInfo | null>;
 	getMarkers(): Promise<NleMarker[]>;
 	/**
-	 * writes the markers and returns their ids, in the same order. A marker whose nleId still exists
-	 * in the timeline is updated (and moved to its frame), the others are added.
-	 * Throws when some markers couldn't be written, after writing the rest.
+	 * writes the markers and returns what became of each, in the same order. A marker whose nleId
+	 * still exists in the timeline is updated (and moved to its frame), the others are added.
+	 * A marker that can't be written doesn't stop the others: its result has the error.
 	 */
-	setMarkers(markers: NleMarker[]): Promise<string[]>;
+	setMarkers(markers: NleMarker[]): Promise<SetMarkerResult[]>;
+	/**
+	 * deletes the markers with these ids; ids no longer in the timeline are skipped.
+	 * Throws when some couldn't be deleted, after deleting the rest.
+	 */
+	removeMarkers(nleIds: string[]): Promise<void>;
 	clearMarkers(): Promise<void>;
 	getRenderPresets(): Promise<string[]>;
 	renderPreview(onProgress: (progress: RenderProgress) => void): Promise<string>;

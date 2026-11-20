@@ -6,6 +6,7 @@ import { shareLinkCategory } from "#lib/server/share-links.ts";
 import { readExport, requireMarkers } from "#lib/server/review-access.ts";
 import { markersKey, scopeOf } from "./marker-scope.ts";
 import { notifyCategories, notifyMarkers, notifyResponses } from "#lib/server/live.ts";
+import { deleteMarkersRecorded } from "#lib/server/marker-sets.ts";
 
 import {
 	accessChecker,
@@ -260,8 +261,9 @@ export const pasteMarkers = command(
 				});
 			}
 			if (data.mode === "cut") {
-				await tx.marker.deleteMany({
-					where: { id: { in: source.map((m) => m.id) }, exportId: data.sourceExportId },
+				await deleteMarkersRecorded(tx, {
+					id: { in: source.map((m) => m.id) },
+					exportId: data.sourceExportId,
 				});
 			}
 		});
@@ -409,13 +411,24 @@ export const updateMarker = command(
 	},
 );
 
+// Deleted markers are remembered, so the NLE plugins don't push them back (see marker-sets.ts)
+async function deleteOne(id: string) {
+	const [marker] = await prisma.$transaction((tx) => deleteMarkersRecorded(tx, { id }));
+	if (!marker) error(404, "Marker not found");
+	return marker;
+}
+async function deleteMany(where: Prisma.MarkerWhereInput) {
+	const markers = await prisma.$transaction((tx) => deleteMarkersRecorded(tx, where));
+	return { count: markers.length };
+}
+
 export const deleteMarker = command(
 	v.union([v.string(), v.object({ id: v.string(), shareToken: v.string() })]),
 	async (arg) => {
 		// ─── Guest ───
 		if (typeof arg !== "string") {
 			const { exportId } = await guestMarker(arg.id, arg.shareToken);
-			const marker = await prisma.marker.delete({ where: { id: arg.id } });
+			const marker = await deleteOne(arg.id);
 			void notifyMarkers(exportId, [marker.guestId]);
 			await getMarkers(markersKey(exportId, arg.shareToken)).refresh();
 			return marker;
@@ -425,7 +438,7 @@ export const deleteMarker = command(
 		const id = arg;
 		await authorize("marker", "delete", { type: "marker", id });
 
-		const marker = await prisma.marker.delete({ where: { id } });
+		const marker = await deleteOne(id);
 		void notifyMarkers(marker.exportId, [marker.guestId]);
 
 		await Promise.all([
@@ -449,8 +462,10 @@ export const deleteMarkers = command(
 			const reader = await readExport(data.exportId, data.shareToken);
 			if (reader.kind !== "guest") error(404, "Not found");
 			requireMarkers(reader);
-			const result = await prisma.marker.deleteMany({
-				where: { id: { in: data.ids }, exportId: data.exportId, guestId: reader.guest.id },
+			const result = await deleteMany({
+				id: { in: data.ids },
+				exportId: data.exportId,
+				guestId: reader.guest.id,
 			});
 			void notifyMarkers(data.exportId, [reader.guest.id]);
 			await getMarkers(markersKey(data.exportId, data.shareToken)).refresh();
@@ -460,8 +475,9 @@ export const deleteMarkers = command(
 		// ─── Member: as before ───
 		const { markers } = await authorizeMarkers("delete", data.exportId, data.ids);
 
-		const result = await prisma.marker.deleteMany({
-			where: { id: { in: markers.map((m) => m.id) }, exportId: data.exportId },
+		const result = await deleteMany({
+			id: { in: markers.map((m) => m.id) },
+			exportId: data.exportId,
 		});
 		void notifyMarkers(
 			data.exportId,

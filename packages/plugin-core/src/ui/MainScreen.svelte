@@ -24,7 +24,24 @@
 	import { prepareCompatibleUpdate } from "../autoUpdate";
 	import type { AvailableUpdate } from "../bridge";
 	import RefreshCw from "@lucide/svelte/icons/refresh-cw";
-	import { syncMarkersDown, syncMarkersUp } from "../sync";
+	import {
+		applyPull,
+		applyPush,
+		clearMarkers,
+		planPull,
+		planPush,
+		previewHasChanges,
+		previewPull,
+		previewPush,
+		type SyncChoices,
+		type SyncPreview,
+		type SyncReport,
+	} from "../sync";
+	import { loadHistory, restoreFromHistory, type MarkerSetEntry } from "../history";
+	import SyncPreviewModal from "./SyncPreviewModal.svelte";
+	import { parseTargets, rememberTargets, targetsKey } from "./targets";
+	import MarkerHistoryModal from "./MarkerHistoryModal.svelte";
+	import HistoryIcon from "@lucide/svelte/icons/history";
 	import { getBridges } from "./context";
 	import Destination from "./Destination.svelte";
 	import DisabledHint from "./DisabledHint.svelte";
@@ -33,7 +50,7 @@
 	import MarkerHeads from "./MarkerHeads.svelte";
 	import MarkerSyncButton from "./MarkerSyncButton.svelte";
 	import ProgressBars from "./ProgressBars.svelte";
-	import RenderToDisk from "./RenderToDisk.svelte";
+	import RenderToDiskModal from "./RenderToDiskModal.svelte";
 	import SettingsIcon from "@lucide/svelte/icons/settings";
 	import Globe from "@lucide/svelte/icons/globe";
 	import LogOut from "@lucide/svelte/icons/log-out";
@@ -221,21 +238,72 @@
 	}
 
 	let settings = $state<Settings>(lastSettings);
-	let showDiskSettings = $state(false);
+	let diskSettingsModal = $state<RenderToDiskModal | null>(null);
 	// Renders go to a timeline, marker actions work on one export of a timeline.
-	// Both start at the linked timeline and its latest export, once the NLE is connected.
+	// Both start at what the user chose for this NLE timeline before (remembered in the settings),
+	// else at the linked timeline and its latest export, once the NLE is connected.
 	let uploadTarget = $state<Location | null>(null);
 	let markerTarget = $state<(Location & { export: TimelineExport | null }) | null>(null);
+	// The NLE timeline the targets belong to: another timeline gets its own
+	let targetsFor: string | null = null;
 
 	// Fills in the targets the user hasn't chosen yet, keeps the ones they have
 	async function applyLinked(timeline: TimelineInfo | null) {
-		const location = findLinked(timeline);
-		if (!location) return;
-		uploadTarget ??= location;
-		if (!markerTarget) {
-			const exports = await refreshExports(location);
-			markerTarget ??= { ...location, export: exports[0] ?? null };
+		if (!timeline) return;
+		if (targetsFor !== timeline.id) {
+			if (targetsFor !== null) {
+				uploadTarget = null;
+				markerTarget = null;
+			}
+			targetsFor = timeline.id;
 		}
+		const remembered = parseTargets(settings.targets)[targetsKey(serverUrl, timeline.id)];
+		const linked = findLinked(timeline);
+		const rememberedUpload = remembered?.upload;
+		uploadTarget ??=
+			(rememberedUpload && findLocation(rememberedUpload.projectId, rememberedUpload.timelineId)) ||
+			linked;
+		if (!markerTarget) {
+			const chosen = remembered?.marker;
+			const location = (chosen && findLocation(chosen.projectId, chosen.timelineId)) || linked;
+			if (!location) return;
+			const exports = await refreshExports(location);
+			// a remembered export that's gone falls back to the newest
+			const exp =
+				chosen?.timelineId === location.timeline.id && chosen.exportId
+					? exports.find((e) => e.id === chosen.exportId)
+					: undefined;
+			markerTarget ??= { ...location, export: exp ?? exports[0] ?? null };
+		}
+	}
+
+	// The render settings are kept as soon as the dialog closes, not only with the next render
+	function saveRenderSettings() {
+		host.saveSettings($state.snapshot(settings)).catch((err: unknown) => {
+			console.warn("[PostPin] couldn't save the render settings:", errorMessage(err));
+		});
+	}
+
+	// Remembers the chosen targets for the NLE timeline that's open
+	function saveTargets() {
+		const timeline = nleTimeline;
+		if (!timeline) return;
+		targetsFor = timeline.id;
+		settings.targets = rememberTargets(settings.targets, targetsKey(serverUrl, timeline.id), {
+			...(uploadTarget && {
+				upload: { projectId: uploadTarget.project.id, timelineId: uploadTarget.timeline.id },
+			}),
+			...(markerTarget && {
+				marker: {
+					projectId: markerTarget.project.id,
+					timelineId: markerTarget.timeline.id,
+					exportId: markerTarget.export?.id ?? null,
+				},
+			}),
+		});
+		host.saveSettings($state.snapshot(settings)).catch((err: unknown) => {
+			console.warn("[PostPin] couldn't save the chosen destinations:", errorMessage(err));
+		});
 	}
 
 	// Exports of every timeline for the export picker, newest first. Loads in the background so the
@@ -308,6 +376,7 @@
 
 	function selectUploadTarget(projectId: string, timelineId: string) {
 		uploadTarget = findLocation(projectId, timelineId) ?? uploadTarget;
+		saveTargets();
 	}
 
 	async function selectMarkerTarget(projectId: string, timelineId: string, exportId?: string) {
@@ -315,11 +384,17 @@
 		if (!location) return;
 		const exports = exportsByTimeline[timelineId] ?? (await refreshExports(location));
 		markerTarget = { ...location, export: exports.find((e) => e.id === exportId) ?? null };
+		saveTargets();
 	}
 
 	let log: string[] = $state([]);
-	let isBusy: "syncingMarkersUp" | "syncingMarkersDown" | "deletingMarkers" | "rendering" | null =
-		$state(null);
+	let isBusy:
+		| "syncingMarkersUp"
+		| "syncingMarkersDown"
+		| "deletingMarkers"
+		| "restoringMarkers"
+		| "rendering"
+		| null = $state(null);
 	let renderProgress = $state<RenderProgress | null>(null);
 	let uploadProgress = $state<UploadProgress | null>(null);
 	// encoding the review versions, 0 to 1
@@ -343,15 +418,20 @@
 			isBusy = null;
 		}
 	}
-	async function runShort(type: typeof isBusy, action: () => Promise<void>) {
+	// The marker actions report what they did, and what the user should know about (warnings)
+	async function runShort(
+		type: typeof isBusy,
+		action: () => Promise<{ message: string; warnings: string[] } | void>,
+	) {
 		isBusy = type;
 		error = null;
 		warning = null;
 		log = [];
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 		try {
-			await action();
-			log = ["Done"];
+			const report = await action();
+			log = [report?.message ?? "Done"];
+			if (report?.warnings.length) warning = report.warnings.join("\n");
 		} catch (err) {
 			error = errorMessage(err);
 			connectNle();
@@ -389,6 +469,7 @@
 				host,
 				client,
 				...ids,
+				exportName: exportName.trim() || defaultExportName(),
 				onStep: (message) => log.push(message),
 				onRenderProgress: (progress) => {
 					renderProgress = progress;
@@ -412,7 +493,10 @@
 			// Marker actions continue on the new export
 			const exports = await refreshExports(target);
 			markerTarget = { ...target, export: exports.find((e) => e.id === exportId) ?? null };
+			saveTargets();
 
+			// the next upload gets a name of its own
+			exportName = "";
 			log.push("Processing started, opening export in browser...");
 			await host.openInBrowser(
 				`/projects/${ids.projectId}/timelines/${ids.timelineId}/exports/${exportId}`,
@@ -433,6 +517,26 @@
 		});
 	}
 
+	// What the export is called when the name field is left empty: the NLE timeline and the time
+	let exportName = $state("");
+	function defaultExportName() {
+		const when = new Date().toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+		return nleTimeline ? `${nleTimeline.name} ${when}` : "";
+	}
+
+	// The outcome of an action (the last log line) shows as a toast for a few seconds; warnings and
+	// errors stay on screen as alerts
+	const TOAST_MS = 5000;
+	let toast = $state<string | null>(null);
+	let toastTimer: ReturnType<typeof setTimeout> | null = null;
+	$effect(() => {
+		const message = isBusy ? undefined : log.at(-1);
+		if (!message) return;
+		toast = message;
+		if (toastTimer) clearTimeout(toastTimer);
+		toastTimer = setTimeout(() => (toast = null), TOAST_MS);
+	});
+
 	function syncContext() {
 		if (!markerTarget?.export) return null;
 		return {
@@ -444,18 +548,80 @@
 		};
 	}
 
+	let syncPreview = $state<SyncPreviewModal | null>(null);
+	let historyModal = $state<MarkerHistoryModal | null>(null);
+	const CANCELLED: SyncReport = { message: "Cancelled.", warnings: [], markerSetId: null };
+
+	// Each sync shows what it changes first; the user picks there what's applied (see
+	// SyncPreviewModal: add & update, or match, plus single markers).
 	function syncUp() {
 		const context = syncContext();
-		if (context) return runShort("syncingMarkersUp", () => syncMarkersUp(context));
+		if (!context) return;
+		return runShort("syncingMarkersUp", async () => {
+			const plan = await planPush(context);
+			const choices = await choose(previewPush(plan));
+			return choices ? applyPush(context, plan, choices) : CANCELLED;
+		});
 	}
 
 	function syncDown() {
 		const context = syncContext();
-		if (context) return runShort("syncingMarkersDown", () => syncMarkersDown(context));
+		if (!context) return;
+		return runShort("syncingMarkersDown", async () => {
+			const plan = await planPull(context);
+			const choices = await choose(previewPull(plan));
+			return choices ? applyPull(context, plan, choices) : CANCELLED;
+		});
 	}
 
+	// The user's pick in the preview, null when cancelled. Without anything to show (only links to
+	// refresh) there's nothing to pick.
+	async function choose(preview: SyncPreview): Promise<SyncChoices | null> {
+		if (!previewHasChanges(preview)) return { selected: new Set() };
+		const answer = await syncPreview!.show(preview);
+		return answer.apply ? { selected: answer.selected, previewed: true } : null;
+	}
+
+	// Backups and the history live in a PostPin timeline: the marker one, else the upload one
+	const historyLocation = $derived(markerTarget ?? uploadTarget);
+
 	function deleteMarkers() {
-		return runShort("deletingMarkers", () => nle.clearMarkers());
+		const location = historyLocation;
+		if (!location) {
+			error =
+				"Choose a PostPin timeline first. The markers are backed up there before they're deleted.";
+			return;
+		}
+		return runShort("deletingMarkers", () =>
+			clearMarkers({
+				nle,
+				client,
+				projectId: location.project.id,
+				timelineId: location.timeline.id,
+				exportId:
+					markerTarget?.timeline.id === location.timeline.id
+						? (markerTarget.export?.id ?? null)
+						: null,
+			}),
+		);
+	}
+
+	function historyContext() {
+		const location = historyLocation;
+		return location
+			? { nle, client, projectId: location.project.id, timelineId: location.timeline.id }
+			: null;
+	}
+
+	async function loadMarkerHistory() {
+		const context = historyContext();
+		return context ? loadHistory(context) : [];
+	}
+
+	function restoreMarkers(set: MarkerSetEntry) {
+		const context = historyContext();
+		if (!context) return;
+		return runShort("restoringMarkers", () => restoreFromHistory(context, set.id));
 	}
 
 	// What the disk render needs, null when it's off or this NLE can't do it
@@ -483,6 +649,7 @@
 	);
 	const canRender = $derived(canEditRenderSettings && !diskRenderProblem);
 	const canSync = $derived(nleState.status === "connected" && !!markerTarget?.export && !isBusy);
+	const canOpenHistory = $derived(nleState.status === "connected" && !!historyLocation && !isBusy);
 	// The running sync stays bright, so its animation doesn't look disabled
 	const isSyncing = $derived(isBusy === "syncingMarkersUp" || isBusy === "syncingMarkersDown");
 	// Why Render & Upload and the marker buttons are disabled, shown below them. Nothing while
@@ -596,7 +763,19 @@
 							browserUrl={uploadTarget
 								? `/projects/${uploadTarget.project.id}/timelines/${uploadTarget.timeline.id}/exports`
 								: undefined}
-						></Destination>
+						>
+							<label class="mt-2 flex flex-col gap-1">
+								<span class="text-xs text-base-content/60">Name of the new export</span>
+								<input
+									type="text"
+									class="input input-sm w-full"
+									maxlength={100}
+									placeholder={nleTimeline ? `${nleTimeline.name}, date and time` : "Export name"}
+									disabled={!!isBusy}
+									bind:value={exportName}
+								/>
+							</label>
+						</Destination>
 					</div>
 
 					<div
@@ -674,11 +853,14 @@
 											type="button"
 											class={[
 												"btn join-item h-auto btn-primary border-left-2 border-base-content/20 border-0 flex-col gap-0 py-2",
-												showDiskSettings && "btn-active",
+												settings.renderToDisk && "btn-active",
 											]}
 											aria-label="Render to disk settings"
 											disabled={!canEditRenderSettings}
-											onclick={() => (showDiskSettings = !showDiskSettings)}
+											title={settings.renderToDisk
+												? "Render to disk is on"
+												: "Render to disk settings"}
+											onclick={() => diskSettingsModal?.open()}
 										>
 											<SettingsIcon />
 										</button>
@@ -721,6 +903,15 @@
 								{#if syncHint}
 									<DisabledHint text={syncHint} />
 								{/if}
+								<button
+									type="button"
+									class="btn btn-ghost btn-xs"
+									title="Backups taken before every marker action, to undo one"
+									disabled={!canOpenHistory}
+									onclick={() => historyModal?.open()}
+								>
+									<HistoryIcon size={12} /> History
+								</button>
 							</div>
 						</FlowArrow>
 					</div>
@@ -744,24 +935,9 @@
 				</div>
 			</div>
 
-			<!-- settings for a render that can't start yet would only confuse -->
-			{#if showDiskSettings && capabilities?.renderToDisk && canEditRenderSettings}
-				<div
-					class="mx-4 mb-4 flex flex-col gap-2 rounded-box border-2 border-dashed border-base-content/30 p-4"
-				>
-					<RenderToDisk {capabilities} bind:settings />
-				</div>
-			{/if}
-
-			{#if !isBusy && log.length}
-				<div class="mx-4 mb-4 rounded-box border-2 border-base-content/50 p-3 text-sm">
-					{log.at(-1)}
-				</div>
-			{/if}
-
 			{#if warning}
 				<div role="alert" class="mx-4 mb-4 alert alert-warning">
-					<span>{warning}</span>
+					<span class="whitespace-pre-line">{warning}</span>
 				</div>
 			{/if}
 
@@ -772,4 +948,31 @@
 			{/if}
 		</div>
 	</main>
+	<SyncPreviewModal bind:this={syncPreview} />
+	{#if toast}
+		<div class="toast toast-end toast-bottom z-50" role="status" aria-live="polite">
+			<button
+				type="button"
+				class="alert alert-info max-w-sm cursor-pointer text-left text-sm whitespace-normal"
+				title="Dismiss"
+				onclick={() => (toast = null)}
+			>
+				{toast}
+			</button>
+		</div>
+	{/if}
+	{#if capabilities?.renderToDisk}
+		<RenderToDiskModal
+			bind:this={diskSettingsModal}
+			{capabilities}
+			bind:settings
+			problem={diskRenderProblem}
+			onClose={saveRenderSettings}
+		/>
+	{/if}
+	<MarkerHistoryModal
+		bind:this={historyModal}
+		load={loadMarkerHistory}
+		onRestore={restoreMarkers}
+	/>
 {/if}

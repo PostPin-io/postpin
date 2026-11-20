@@ -189,6 +189,7 @@ export type TimelineWhereInput = {
 	nleTimelineId?: Prisma.StringNullableFilter<"Timeline"> | string | null;
 	project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>;
 	exports?: Prisma.ExportListRelationFilter;
+	markerSets?: Prisma.MarkerSetListRelationFilter;
 	memberGrants?: Prisma.MemberGrantListRelationFilter;
 	invitations?: Prisma.InvitationListRelationFilter;
 	inviteLinks?: Prisma.InviteLinkListRelationFilter;
@@ -203,6 +204,7 @@ export type TimelineOrderByWithRelationInput = {
 	nleTimelineId?: Prisma.SortOrderInput | Prisma.SortOrder;
 	project?: Prisma.ProjectOrderByWithRelationInput;
 	exports?: Prisma.ExportOrderByRelationAggregateInput;
+	markerSets?: Prisma.MarkerSetOrderByRelationAggregateInput;
 	memberGrants?: Prisma.MemberGrantOrderByRelationAggregateInput;
 	invitations?: Prisma.InvitationOrderByRelationAggregateInput;
 	inviteLinks?: Prisma.InviteLinkOrderByRelationAggregateInput;
@@ -221,6 +223,7 @@ export type TimelineWhereUniqueInput = Prisma.AtLeast<
 		nleTimelineId?: Prisma.StringNullableFilter<"Timeline"> | string | null;
 		project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>;
 		exports?: Prisma.ExportListRelationFilter;
+		markerSets?: Prisma.MarkerSetListRelationFilter;
 		memberGrants?: Prisma.MemberGrantListRelationFilter;
 		invitations?: Prisma.InvitationListRelationFilter;
 		inviteLinks?: Prisma.InviteLinkListRelationFilter;
@@ -262,6 +265,7 @@ export type TimelineCreateInput = {
 	nleTimelineId?: string | null;
 	project: Prisma.ProjectCreateNestedOneWithoutTimelinesInput;
 	exports?: Prisma.ExportCreateNestedManyWithoutTimelineInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutTimelineInput;
 	memberGrants?: Prisma.MemberGrantCreateNestedManyWithoutTimelineInput;
 	invitations?: Prisma.InvitationCreateNestedManyWithoutTimelineInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutTimelineInput;
@@ -275,6 +279,7 @@ export type TimelineUncheckedCreateInput = {
 	projectId: string;
 	nleTimelineId?: string | null;
 	exports?: Prisma.ExportUncheckedCreateNestedManyWithoutTimelineInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutTimelineInput;
 	memberGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutTimelineInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutTimelineInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutTimelineInput;
@@ -288,6 +293,7 @@ export type TimelineUpdateInput = {
 	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	project?: Prisma.ProjectUpdateOneRequiredWithoutTimelinesNestedInput;
 	exports?: Prisma.ExportUpdateManyWithoutTimelineNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutTimelineNestedInput;
 	memberGrants?: Prisma.MemberGrantUpdateManyWithoutTimelineNestedInput;
 	invitations?: Prisma.InvitationUpdateManyWithoutTimelineNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutTimelineNestedInput;
@@ -301,6 +307,7 @@ export type TimelineUncheckedUpdateInput = {
 	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
 	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	exports?: Prisma.ExportUncheckedUpdateManyWithoutTimelineNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutTimelineNestedInput;
 	memberGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutTimelineNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutTimelineNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutTimelineNestedInput;
@@ -330,6 +337,11 @@ export type TimelineUncheckedUpdateManyInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
 	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+};
+
+export type TimelineScalarRelationFilter = {
+	is?: Prisma.TimelineWhereInput;
+	isNot?: Prisma.TimelineWhereInput;
 };
 
 export type TimelineNullableScalarRelationFilter = {
@@ -374,9 +386,30 @@ export type TimelineMinOrderByAggregateInput = {
 	nleTimelineId?: Prisma.SortOrder;
 };
 
-export type TimelineScalarRelationFilter = {
-	is?: Prisma.TimelineWhereInput;
-	isNot?: Prisma.TimelineWhereInput;
+export type TimelineCreateNestedOneWithoutMarkerSetsInput = {
+	create?: Prisma.XOR<
+		Prisma.TimelineCreateWithoutMarkerSetsInput,
+		Prisma.TimelineUncheckedCreateWithoutMarkerSetsInput
+	>;
+	connectOrCreate?: Prisma.TimelineCreateOrConnectWithoutMarkerSetsInput;
+	connect?: Prisma.TimelineWhereUniqueInput;
+};
+
+export type TimelineUpdateOneRequiredWithoutMarkerSetsNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.TimelineCreateWithoutMarkerSetsInput,
+		Prisma.TimelineUncheckedCreateWithoutMarkerSetsInput
+	>;
+	connectOrCreate?: Prisma.TimelineCreateOrConnectWithoutMarkerSetsInput;
+	upsert?: Prisma.TimelineUpsertWithoutMarkerSetsInput;
+	connect?: Prisma.TimelineWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.TimelineUpdateToOneWithWhereWithoutMarkerSetsInput,
+			Prisma.TimelineUpdateWithoutMarkerSetsInput
+		>,
+		Prisma.TimelineUncheckedUpdateWithoutMarkerSetsInput
+	>;
 };
 
 export type TimelineCreateNestedOneWithoutInvitationsInput = {
@@ -575,6 +608,86 @@ export type TimelineUpdateOneRequiredWithoutExportsNestedInput = {
 	>;
 };
 
+export type TimelineCreateWithoutMarkerSetsInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	nleTimelineId?: string | null;
+	project: Prisma.ProjectCreateNestedOneWithoutTimelinesInput;
+	exports?: Prisma.ExportCreateNestedManyWithoutTimelineInput;
+	memberGrants?: Prisma.MemberGrantCreateNestedManyWithoutTimelineInput;
+	invitations?: Prisma.InvitationCreateNestedManyWithoutTimelineInput;
+	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutTimelineInput;
+};
+
+export type TimelineUncheckedCreateWithoutMarkerSetsInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	projectId: string;
+	nleTimelineId?: string | null;
+	exports?: Prisma.ExportUncheckedCreateNestedManyWithoutTimelineInput;
+	memberGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutTimelineInput;
+	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutTimelineInput;
+	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutTimelineInput;
+};
+
+export type TimelineCreateOrConnectWithoutMarkerSetsInput = {
+	where: Prisma.TimelineWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.TimelineCreateWithoutMarkerSetsInput,
+		Prisma.TimelineUncheckedCreateWithoutMarkerSetsInput
+	>;
+};
+
+export type TimelineUpsertWithoutMarkerSetsInput = {
+	update: Prisma.XOR<
+		Prisma.TimelineUpdateWithoutMarkerSetsInput,
+		Prisma.TimelineUncheckedUpdateWithoutMarkerSetsInput
+	>;
+	create: Prisma.XOR<
+		Prisma.TimelineCreateWithoutMarkerSetsInput,
+		Prisma.TimelineUncheckedCreateWithoutMarkerSetsInput
+	>;
+	where?: Prisma.TimelineWhereInput;
+};
+
+export type TimelineUpdateToOneWithWhereWithoutMarkerSetsInput = {
+	where?: Prisma.TimelineWhereInput;
+	data: Prisma.XOR<
+		Prisma.TimelineUpdateWithoutMarkerSetsInput,
+		Prisma.TimelineUncheckedUpdateWithoutMarkerSetsInput
+	>;
+};
+
+export type TimelineUpdateWithoutMarkerSetsInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	project?: Prisma.ProjectUpdateOneRequiredWithoutTimelinesNestedInput;
+	exports?: Prisma.ExportUpdateManyWithoutTimelineNestedInput;
+	memberGrants?: Prisma.MemberGrantUpdateManyWithoutTimelineNestedInput;
+	invitations?: Prisma.InvitationUpdateManyWithoutTimelineNestedInput;
+	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutTimelineNestedInput;
+};
+
+export type TimelineUncheckedUpdateWithoutMarkerSetsInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
+	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	exports?: Prisma.ExportUncheckedUpdateManyWithoutTimelineNestedInput;
+	memberGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutTimelineNestedInput;
+	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutTimelineNestedInput;
+	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutTimelineNestedInput;
+};
+
 export type TimelineCreateWithoutInvitationsInput = {
 	id?: string;
 	name: string;
@@ -583,6 +696,7 @@ export type TimelineCreateWithoutInvitationsInput = {
 	nleTimelineId?: string | null;
 	project: Prisma.ProjectCreateNestedOneWithoutTimelinesInput;
 	exports?: Prisma.ExportCreateNestedManyWithoutTimelineInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutTimelineInput;
 	memberGrants?: Prisma.MemberGrantCreateNestedManyWithoutTimelineInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutTimelineInput;
 };
@@ -595,6 +709,7 @@ export type TimelineUncheckedCreateWithoutInvitationsInput = {
 	projectId: string;
 	nleTimelineId?: string | null;
 	exports?: Prisma.ExportUncheckedCreateNestedManyWithoutTimelineInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutTimelineInput;
 	memberGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutTimelineInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutTimelineInput;
 };
@@ -635,6 +750,7 @@ export type TimelineUpdateWithoutInvitationsInput = {
 	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	project?: Prisma.ProjectUpdateOneRequiredWithoutTimelinesNestedInput;
 	exports?: Prisma.ExportUpdateManyWithoutTimelineNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutTimelineNestedInput;
 	memberGrants?: Prisma.MemberGrantUpdateManyWithoutTimelineNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutTimelineNestedInput;
 };
@@ -647,6 +763,7 @@ export type TimelineUncheckedUpdateWithoutInvitationsInput = {
 	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
 	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	exports?: Prisma.ExportUncheckedUpdateManyWithoutTimelineNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutTimelineNestedInput;
 	memberGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutTimelineNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutTimelineNestedInput;
 };
@@ -659,6 +776,7 @@ export type TimelineCreateWithoutInviteLinksInput = {
 	nleTimelineId?: string | null;
 	project: Prisma.ProjectCreateNestedOneWithoutTimelinesInput;
 	exports?: Prisma.ExportCreateNestedManyWithoutTimelineInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutTimelineInput;
 	memberGrants?: Prisma.MemberGrantCreateNestedManyWithoutTimelineInput;
 	invitations?: Prisma.InvitationCreateNestedManyWithoutTimelineInput;
 };
@@ -671,6 +789,7 @@ export type TimelineUncheckedCreateWithoutInviteLinksInput = {
 	projectId: string;
 	nleTimelineId?: string | null;
 	exports?: Prisma.ExportUncheckedCreateNestedManyWithoutTimelineInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutTimelineInput;
 	memberGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutTimelineInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutTimelineInput;
 };
@@ -711,6 +830,7 @@ export type TimelineUpdateWithoutInviteLinksInput = {
 	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	project?: Prisma.ProjectUpdateOneRequiredWithoutTimelinesNestedInput;
 	exports?: Prisma.ExportUpdateManyWithoutTimelineNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutTimelineNestedInput;
 	memberGrants?: Prisma.MemberGrantUpdateManyWithoutTimelineNestedInput;
 	invitations?: Prisma.InvitationUpdateManyWithoutTimelineNestedInput;
 };
@@ -723,6 +843,7 @@ export type TimelineUncheckedUpdateWithoutInviteLinksInput = {
 	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
 	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	exports?: Prisma.ExportUncheckedUpdateManyWithoutTimelineNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutTimelineNestedInput;
 	memberGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutTimelineNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutTimelineNestedInput;
 };
@@ -735,6 +856,7 @@ export type TimelineCreateWithoutMemberGrantsInput = {
 	nleTimelineId?: string | null;
 	project: Prisma.ProjectCreateNestedOneWithoutTimelinesInput;
 	exports?: Prisma.ExportCreateNestedManyWithoutTimelineInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutTimelineInput;
 	invitations?: Prisma.InvitationCreateNestedManyWithoutTimelineInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutTimelineInput;
 };
@@ -747,6 +869,7 @@ export type TimelineUncheckedCreateWithoutMemberGrantsInput = {
 	projectId: string;
 	nleTimelineId?: string | null;
 	exports?: Prisma.ExportUncheckedCreateNestedManyWithoutTimelineInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutTimelineInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutTimelineInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutTimelineInput;
 };
@@ -787,6 +910,7 @@ export type TimelineUpdateWithoutMemberGrantsInput = {
 	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	project?: Prisma.ProjectUpdateOneRequiredWithoutTimelinesNestedInput;
 	exports?: Prisma.ExportUpdateManyWithoutTimelineNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutTimelineNestedInput;
 	invitations?: Prisma.InvitationUpdateManyWithoutTimelineNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutTimelineNestedInput;
 };
@@ -799,6 +923,7 @@ export type TimelineUncheckedUpdateWithoutMemberGrantsInput = {
 	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
 	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	exports?: Prisma.ExportUncheckedUpdateManyWithoutTimelineNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutTimelineNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutTimelineNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutTimelineNestedInput;
 };
@@ -810,6 +935,7 @@ export type TimelineCreateWithoutProjectInput = {
 	updatedAt?: Date | string;
 	nleTimelineId?: string | null;
 	exports?: Prisma.ExportCreateNestedManyWithoutTimelineInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutTimelineInput;
 	memberGrants?: Prisma.MemberGrantCreateNestedManyWithoutTimelineInput;
 	invitations?: Prisma.InvitationCreateNestedManyWithoutTimelineInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutTimelineInput;
@@ -822,6 +948,7 @@ export type TimelineUncheckedCreateWithoutProjectInput = {
 	updatedAt?: Date | string;
 	nleTimelineId?: string | null;
 	exports?: Prisma.ExportUncheckedCreateNestedManyWithoutTimelineInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutTimelineInput;
 	memberGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutTimelineInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutTimelineInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutTimelineInput;
@@ -887,6 +1014,7 @@ export type TimelineCreateWithoutExportsInput = {
 	updatedAt?: Date | string;
 	nleTimelineId?: string | null;
 	project: Prisma.ProjectCreateNestedOneWithoutTimelinesInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutTimelineInput;
 	memberGrants?: Prisma.MemberGrantCreateNestedManyWithoutTimelineInput;
 	invitations?: Prisma.InvitationCreateNestedManyWithoutTimelineInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutTimelineInput;
@@ -899,6 +1027,7 @@ export type TimelineUncheckedCreateWithoutExportsInput = {
 	updatedAt?: Date | string;
 	projectId: string;
 	nleTimelineId?: string | null;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutTimelineInput;
 	memberGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutTimelineInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutTimelineInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutTimelineInput;
@@ -939,6 +1068,7 @@ export type TimelineUpdateWithoutExportsInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	project?: Prisma.ProjectUpdateOneRequiredWithoutTimelinesNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutTimelineNestedInput;
 	memberGrants?: Prisma.MemberGrantUpdateManyWithoutTimelineNestedInput;
 	invitations?: Prisma.InvitationUpdateManyWithoutTimelineNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutTimelineNestedInput;
@@ -951,6 +1081,7 @@ export type TimelineUncheckedUpdateWithoutExportsInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	projectId?: Prisma.StringFieldUpdateOperationsInput | string;
 	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutTimelineNestedInput;
 	memberGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutTimelineNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutTimelineNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutTimelineNestedInput;
@@ -971,6 +1102,7 @@ export type TimelineUpdateWithoutProjectInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	exports?: Prisma.ExportUpdateManyWithoutTimelineNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutTimelineNestedInput;
 	memberGrants?: Prisma.MemberGrantUpdateManyWithoutTimelineNestedInput;
 	invitations?: Prisma.InvitationUpdateManyWithoutTimelineNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutTimelineNestedInput;
@@ -983,6 +1115,7 @@ export type TimelineUncheckedUpdateWithoutProjectInput = {
 	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 	nleTimelineId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	exports?: Prisma.ExportUncheckedUpdateManyWithoutTimelineNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutTimelineNestedInput;
 	memberGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutTimelineNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutTimelineNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutTimelineNestedInput;
@@ -1002,6 +1135,7 @@ export type TimelineUncheckedUpdateManyWithoutProjectInput = {
 
 export type TimelineCountOutputType = {
 	exports: number;
+	markerSets: number;
 	memberGrants: number;
 	invitations: number;
 	inviteLinks: number;
@@ -1011,6 +1145,7 @@ export type TimelineCountOutputTypeSelect<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
 	exports?: boolean | TimelineCountOutputTypeCountExportsArgs;
+	markerSets?: boolean | TimelineCountOutputTypeCountMarkerSetsArgs;
 	memberGrants?: boolean | TimelineCountOutputTypeCountMemberGrantsArgs;
 	invitations?: boolean | TimelineCountOutputTypeCountInvitationsArgs;
 	inviteLinks?: boolean | TimelineCountOutputTypeCountInviteLinksArgs;
@@ -1035,6 +1170,15 @@ export type TimelineCountOutputTypeCountExportsArgs<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
 	where?: Prisma.ExportWhereInput;
+};
+
+/**
+ * TimelineCountOutputType without action
+ */
+export type TimelineCountOutputTypeCountMarkerSetsArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	where?: Prisma.MarkerSetWhereInput;
 };
 
 /**
@@ -1076,6 +1220,7 @@ export type TimelineSelect<
 		nleTimelineId?: boolean;
 		project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>;
 		exports?: boolean | Prisma.Timeline$exportsArgs<ExtArgs>;
+		markerSets?: boolean | Prisma.Timeline$markerSetsArgs<ExtArgs>;
 		memberGrants?: boolean | Prisma.Timeline$memberGrantsArgs<ExtArgs>;
 		invitations?: boolean | Prisma.Timeline$invitationsArgs<ExtArgs>;
 		inviteLinks?: boolean | Prisma.Timeline$inviteLinksArgs<ExtArgs>;
@@ -1134,6 +1279,7 @@ export type TimelineInclude<
 > = {
 	project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>;
 	exports?: boolean | Prisma.Timeline$exportsArgs<ExtArgs>;
+	markerSets?: boolean | Prisma.Timeline$markerSetsArgs<ExtArgs>;
 	memberGrants?: boolean | Prisma.Timeline$memberGrantsArgs<ExtArgs>;
 	invitations?: boolean | Prisma.Timeline$invitationsArgs<ExtArgs>;
 	inviteLinks?: boolean | Prisma.Timeline$inviteLinksArgs<ExtArgs>;
@@ -1157,6 +1303,7 @@ export type $TimelinePayload<
 	objects: {
 		project: Prisma.$ProjectPayload<ExtArgs>;
 		exports: Prisma.$ExportPayload<ExtArgs>[];
+		markerSets: Prisma.$MarkerSetPayload<ExtArgs>[];
 		memberGrants: Prisma.$MemberGrantPayload<ExtArgs>[];
 		invitations: Prisma.$InvitationPayload<ExtArgs>[];
 		inviteLinks: Prisma.$InviteLinkPayload<ExtArgs>[];
@@ -1729,6 +1876,17 @@ export interface Prisma__TimelineClient<
 		  >
 		| Null
 	>;
+	markerSets<T extends Prisma.Timeline$markerSetsArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.Timeline$markerSetsArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		| runtime.Types.Result.GetResult<
+				Prisma.$MarkerSetPayload<ExtArgs>,
+				T,
+				"findMany",
+				GlobalOmitOptions
+		  >
+		| Null
+	>;
 	memberGrants<T extends Prisma.Timeline$memberGrantsArgs<ExtArgs> = {}>(
 		args?: Prisma.Subset<T, Prisma.Timeline$memberGrantsArgs<ExtArgs>>,
 	): Prisma.PrismaPromise<
@@ -2250,6 +2408,32 @@ export type Timeline$exportsArgs<
 	take?: number;
 	skip?: number;
 	distinct?: Prisma.ExportScalarFieldEnum | Prisma.ExportScalarFieldEnum[];
+};
+
+/**
+ * Timeline.markerSets
+ */
+export type Timeline$markerSetsArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the MarkerSet
+	 */
+	select?: Prisma.MarkerSetSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the MarkerSet
+	 */
+	omit?: Prisma.MarkerSetOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.MarkerSetInclude<ExtArgs> | null;
+	where?: Prisma.MarkerSetWhereInput;
+	orderBy?: Prisma.MarkerSetOrderByWithRelationInput | Prisma.MarkerSetOrderByWithRelationInput[];
+	cursor?: Prisma.MarkerSetWhereUniqueInput;
+	take?: number;
+	skip?: number;
+	distinct?: Prisma.MarkerSetScalarFieldEnum | Prisma.MarkerSetScalarFieldEnum[];
 };
 
 /**
