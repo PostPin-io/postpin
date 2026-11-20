@@ -11,11 +11,11 @@ import {
 	Route,
 	Security,
 } from "@tsoa/runtime";
-import { HttpError } from "../HttpError.ts";
+import { HttpError, PluginRoleError } from "../HttpError.ts";
 import type { Request as HapiRequest } from "@hapi/hapi";
 import { apiAuthorize } from "../access.ts";
 import { accessibleProjects, accessibleTimelines } from "#lib/server/org-access.ts";
-import { isOrgWide } from "#lib/roles.ts";
+import { isOrgWide, roleAllows } from "#lib/roles.ts";
 
 interface Project {
 	id: string;
@@ -48,9 +48,13 @@ interface ProjectWithOrg extends Project {
 @Route("v1/projects")
 export class ProjectController extends Controller {
 	@Get("")
+	@Response(403, "Reviewer in every organization: the plugins need the Member role")
 	public async getProjects(@Request() request: HapiRequest): Promise<ProjectWithOrg[]> {
-		const { memberships } = request.app.locals.user!;
-		if (memberships.length === 0) return [];
+		const all = request.app.locals.user!.memberships;
+		if (all.length === 0) return [];
+		// Only organizations where the user may use the plugin; a reviewer everywhere learns why
+		const memberships = all.filter((m) => roleAllows(m.role, "plugin", "use"));
+		if (memberships.length === 0) throw new PluginRoleError();
 		return prisma.project.findMany({
 			where: { OR: memberships.map(accessibleProjects) },
 			select: {

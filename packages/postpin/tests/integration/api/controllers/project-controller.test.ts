@@ -3,7 +3,12 @@ import { Role } from "@postpin-io/shared/db/enums";
 import { ProjectController } from "../../../../src/api/controllers/ProjectController.ts";
 import { prisma } from "../../../helpers/db.ts";
 import * as f from "../../../helpers/factories.ts";
-import { expectHttpError, hapiRequest, signInApi } from "../../../helpers/api.ts";
+import {
+	expectHttpError,
+	expectPluginRoleError,
+	hapiRequest,
+	signInApi,
+} from "../../../helpers/api.ts";
 import { apiWorld, signInAs, type ApiWorld } from "../../../helpers/api-world.ts";
 import { signOut } from "../../../helpers/request-event.ts";
 
@@ -36,9 +41,22 @@ describe("getProjects", () => {
 		expect(projects.map((p) => p.id)).toEqual([w.projectA.id, w.projectB.id]);
 	});
 
-	it.each([MEMBER, REVIEWER])("%s without grants sees nothing", async (role) => {
-		await signInAs(w, role);
+	it("member without grants sees nothing", async () => {
+		await signInAs(w, MEMBER);
 		expect(await controller.getProjects(hapiRequest())).toEqual([]);
+	});
+
+	it("a reviewer in every org gets the plugin role error, also with grants", async () => {
+		await signInAs(w, REVIEWER, { projectId: w.projectA.id });
+		await expectPluginRoleError(controller.getProjects(hapiRequest()));
+	});
+
+	it("leaves out the orgs where the user is a reviewer", async () => {
+		const reviewer = await f.createMember(w.org, REVIEWER);
+		await f.grant(reviewer, { projectId: w.projectA.id });
+		await f.createMember(w.other, ADMIN, reviewer.user);
+		await signInApi(reviewer.user, w.org.id);
+		expect(ids(await controller.getProjects(hapiRequest()))).toEqual([w.otherProject.id]);
 	});
 
 	it("a project grant shows that project only", async () => {
@@ -47,7 +65,7 @@ describe("getProjects", () => {
 	});
 
 	it("a timeline grant shows the timeline's project", async () => {
-		await signInAs(w, REVIEWER, { timelineId: w.tl2.id });
+		await signInAs(w, MEMBER, { timelineId: w.tl2.id });
 		expect(ids(await controller.getProjects(hapiRequest()))).toEqual([w.projectA.id]);
 	});
 
@@ -86,7 +104,7 @@ describe("getProject", () => {
 	});
 
 	it("a project grant also covers timelines created later", async () => {
-		await signInAs(w, REVIEWER, { projectId: w.projectA.id });
+		await signInAs(w, MEMBER, { projectId: w.projectA.id });
 		const later = await f.createTimeline(w.projectA);
 		const project = await controller.getProject(w.projectA.id);
 		expect(ids(project.timelines)).toEqual(ids([w.tl1, w.tl2, later]));
@@ -110,5 +128,23 @@ describe("getProject", () => {
 	it("401 when not signed in", async () => {
 		signOut();
 		await expectHttpError(controller.getProject(w.projectA.id), 401);
+	});
+});
+
+describe("createProject", () => {
+	it("a reviewer learns that the role is the reason, not a bare 403", async () => {
+		await signInAs(w, REVIEWER);
+		await expectPluginRoleError(
+			controller.createProject(hapiRequest(), { name: "New", organizationId: w.org.id }),
+		);
+		expect(await prisma.project.count({ where: { organizationId: w.org.id } })).toBe(2);
+	});
+
+	it("404 for an organization the user isn't in, also for a reviewer elsewhere", async () => {
+		await signInAs(w, REVIEWER);
+		await expectHttpError(
+			controller.createProject(hapiRequest(), { name: "New", organizationId: w.other.id }),
+			404,
+		);
 	});
 });

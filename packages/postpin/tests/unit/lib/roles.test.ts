@@ -13,6 +13,7 @@ import {
 	canRemoveMember,
 	hasRoleOrHigher,
 	isOrgWide,
+	mayUsePlugins,
 	roleAllows,
 	roleLabel,
 	roles,
@@ -49,6 +50,7 @@ const EXPECTED: Record<Role, Matrix> = {
 		grant: { create: "-", delete: "-" },
 		member: { read: "all", updateRole: "-", remove: "-" },
 		organization: { rename: "-", delete: "-", updateSettings: "-" },
+		plugin: { use: "-" },
 	},
 	[MEMBER]: {
 		project: { read: "all", create: "free", rename: "all", delete: "all" },
@@ -63,6 +65,7 @@ const EXPECTED: Record<Role, Matrix> = {
 		grant: { create: "all", delete: "own" },
 		member: { read: "all", updateRole: "-", remove: "-" },
 		organization: { rename: "-", delete: "-", updateSettings: "-" },
+		plugin: { use: "all" },
 	},
 	[ADMIN]: {
 		project: { read: "all", create: "free", rename: "all", delete: "all" },
@@ -77,6 +80,7 @@ const EXPECTED: Record<Role, Matrix> = {
 		grant: { create: "all", delete: "all" },
 		member: { read: "all", updateRole: "all", remove: "all" },
 		organization: { rename: "-", delete: "-", updateSettings: "all" },
+		plugin: { use: "all" },
 	},
 	[OWNER]: {
 		project: { read: "all", create: "free", rename: "all", delete: "all" },
@@ -91,6 +95,7 @@ const EXPECTED: Record<Role, Matrix> = {
 		grant: { create: "all", delete: "all" },
 		member: { read: "all", updateRole: "all", remove: "all" },
 		organization: { rename: "all", delete: "all", updateSettings: "all" },
+		plugin: { use: "all" },
 	},
 };
 
@@ -368,5 +373,18 @@ describe("canLeave", () => {
 	it("an owner may leave only if another owner remains", () => {
 		expect(canLeave(OWNER, 1)).toBe(false);
 		expect(canLeave(OWNER, 2)).toBe(true);
+	});
+});
+
+describe("mayUsePlugins", () => {
+	it("needs the Member role in at least one organization", () => {
+		expect(mayUsePlugins([REVIEWER])).toBe(false);
+		expect(mayUsePlugins([REVIEWER, REVIEWER])).toBe(false);
+		expect(mayUsePlugins([REVIEWER, MEMBER])).toBe(true);
+		expect(mayUsePlugins([OWNER])).toBe(true);
+	});
+
+	it("lets someone without an organization in: the first one they create makes them its owner", () => {
+		expect(mayUsePlugins([])).toBe(true);
 	});
 });

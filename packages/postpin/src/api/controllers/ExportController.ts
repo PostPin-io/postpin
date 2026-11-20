@@ -15,7 +15,7 @@ import type { UploadedPart } from "@postpin-io/shared/storage";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 import { Body, Controller, Get, Path, Post, Response, Route, Security } from "@tsoa/runtime";
 import { HttpError } from "../HttpError.ts";
-import { apiAuthorize, apiCall } from "../access.ts";
+import { apiAuthorize, apiCall, apiPluginCall } from "../access.ts";
 
 @Security("session")
 @Route("v1/projects/{projectId}/timelines/{timelineId}/exports")
@@ -49,7 +49,10 @@ export class ExportController extends Controller {
 		@Path() timelineId: string,
 		@Body() body: { nleTimelineId: string | null; nleProjectId: string | null },
 	): Promise<{ id: string }> {
-		return apiCall(createExport({ projectId, timelineId, nle: body }));
+		return apiPluginCall(
+			{ type: "timeline", id: timelineId },
+			createExport({ projectId, timelineId, nle: body }),
+		);
 	}
 
 	/**
@@ -72,7 +75,8 @@ export class ExportController extends Controller {
 		 */
 		@Body() body: { fileSize: number; proxies?: ProxyUploadRequest[] },
 	): Promise<InitUploadResponse> {
-		return apiCall(
+		return apiPluginCall(
+			{ type: "export", id: exportId },
 			initUpload({
 				exportId,
 				path: { projectId, timelineId },
@@ -98,7 +102,8 @@ export class ExportController extends Controller {
 		@Path() exportId: string,
 		@Body() body: { proxies: ProxyUploadRequest[] },
 	): Promise<{ proxies: ProxyUpload[] }> {
-		return apiCall(
+		return apiPluginCall(
+			{ type: "export", id: exportId },
 			initProxyUploads({ exportId, path: { projectId, timelineId }, proxies: body.proxies }),
 		);
 	}
@@ -124,7 +129,10 @@ export class ExportController extends Controller {
 			proxies?: UploadedProxy[];
 		},
 	): Promise<CompleteUploadResponse> {
-		return apiCall(completeUpload({ exportId, path: { projectId, timelineId }, ...body }));
+		return apiPluginCall(
+			{ type: "export", id: exportId },
+			completeUpload({ exportId, path: { projectId, timelineId }, ...body }),
+		);
 	}
 
 	/** Discards an unfinished multipart upload, so its parts don't linger in storage. */
@@ -137,7 +145,8 @@ export class ExportController extends Controller {
 		@Path() exportId: string,
 		@Body() body: { uploadId: string; proxies?: { proxyId: string; uploadId: string }[] },
 	): Promise<void> {
-		await apiCall(
+		await apiPluginCall(
+			{ type: "export", id: exportId },
 			abortUpload({
 				exportId,
 				path: { projectId, timelineId },

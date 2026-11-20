@@ -5,7 +5,7 @@
 	import Login from "./Login.svelte";
 	import MainScreen from "./MainScreen.svelte";
 	import DragBar from "./DragBar.svelte";
-	import { errorMessage } from "../errors";
+	import { errorMessage, isPluginRoleError } from "../errors";
 
 	interface Props {
 		nle: NleBridge;
@@ -68,14 +68,26 @@
 	<svelte:boundary>
 		{#snippet failed(error: unknown, reset: () => void)}
 			<DragBar />
-			<div class="p-4 pt-10">
-				An error occurred:<br />
-				<pre class="whitespace-pre-wrap">{errorMessage(error)}</pre>
-				<div class="flex gap-2">
-					<button class="btn btn-sm" onclick={reset}>Restart</button>
-					<button class="btn btn-sm btn-ghost" onclick={() => host.logout()}>Logout</button>
+			{#if isPluginRoleError(error)}
+				<!-- A reviewer: not an error to report, but a role to ask for -->
+				<div class="flex flex-col gap-3 p-4 pt-10">
+					<h2 class="font-semibold">The plugin needs the Member role</h2>
+					<p class="text-sm">{errorMessage(error)}</p>
+					<div class="flex gap-2">
+						<button class="btn btn-sm" onclick={reset}>Check again</button>
+						<button class="btn btn-sm btn-ghost" onclick={() => host.logout()}>Logout</button>
+					</div>
 				</div>
-			</div>
+			{:else}
+				<div class="p-4 pt-10">
+					An error occurred:<br />
+					<pre class="whitespace-pre-wrap">{errorMessage(error)}</pre>
+					<div class="flex gap-2">
+						<button class="btn btn-sm" onclick={reset}>Restart</button>
+						<button class="btn btn-sm btn-ghost" onclick={() => host.logout()}>Logout</button>
+					</div>
+				</div>
+			{/if}
 		{/snippet}
 		<MainScreen {header} {titleBarInset} {fetch} />
 	</svelte:boundary>

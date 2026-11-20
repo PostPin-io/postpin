@@ -79,6 +79,7 @@ export type {
 	GetProjectResponse,
 	GetProjectResponses,
 	GetProjectsData,
+	GetProjectsErrors,
 	GetProjectsResponse,
 	GetProjectsResponses,
 	InitProxyUploadsData,

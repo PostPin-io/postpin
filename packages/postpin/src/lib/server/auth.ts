@@ -11,6 +11,9 @@ import { APIError, createAuthMiddleware, getIP } from "better-auth/api";
 import { prepareAccountDeletion } from "#lib/server/account-deletion.ts";
 import { Role } from "@postpin-io/shared/db";
 import { ac, betterAuthRoles } from "#lib/better-auth-roles.ts";
+import { getSessionFromCtx } from "better-auth/api";
+import { PLUGIN_SIGN_IN_DENIED } from "#lib/roles.ts";
+import { userMayUsePlugins } from "#lib/server/plugin-access.ts";
 
 export const auth = betterAuth({
 	// The build imports this module without env (see env.ts), and better-auth refuses to start
@@ -55,6 +58,13 @@ export const auth = betterAuth({
 				throw new APIError("BAD_REQUEST", {
 					message: "Enter your password to delete your account.",
 				});
+			}
+			// Every device client is a plugin: a reviewer-only account may not sign one in (roles.ts)
+			if (ctx.path === "/device/approve") {
+				const session = await getSessionFromCtx(ctx);
+				if (session && !(await userMayUsePlugins(session.user.id))) {
+					throw new APIError("FORBIDDEN", { message: PLUGIN_SIGN_IN_DENIED });
+				}
 			}
 		}),
 		after: createAuthMiddleware(async (ctx) => {
