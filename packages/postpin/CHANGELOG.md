@@ -1,5 +1,39 @@
 # @postpin-io/postpin
 
+## 0.6.0
+
+### Minor Changes
+
+- feat: tours start from a guide button next to their feature, a tour that explains PostPin Guides starts on its own, and guides can be switched off on the PostPin Guides page, whose rows are now compact with a "Not completed" filter
+- feat: live markers – marker, response and category changes from other reviewers and tabs appear without reloading
+- feat: timelines open their export list, with "Open latest" as a shortcut; export sizes moved into an "Info" menu item; projects, timelines and exports share one button and menu layout; "Share" is now reserved for share links, project and timeline access is "Invite to …"
+- feat: pointers – arrows and boxes on the picture that show what a marker is about
+- feat: smarter marker sync in the plugins. A sync now only transfers what changed since the last one, keeps changes made on the other side, and shows a preview first: new and changed markers on the left, deleted ones on the right, sorted by timecode. "Add & update" never deletes anything, "Match" makes the other side exactly the same, and single markers can be left out with a click. Markers deleted in PostPin no longer come back with the next sync.
+  Every sync and "Clear all markers" backs up the markers first; the new History in the plugin undoes any of them.
+  Exports uploaded in the browser that start at another timecode than the timeline (e.g. 00:00:00:00 instead of 01:00:00:00) now land on the right frames. In DaVinci Resolve, a marker whose frame is already taken goes on the next free frame instead of failing, and markers that couldn't be written are listed with the reason.
+  The plugins need the new server version (API version 2).
+- feat: a "Finding your way" tour from the dashboard through a project and a timeline to an export, with search, sort, views and the breadcrumbs; the PostPin Guides tour now also explains the PostPin Guides page
+- feat: theme switcher
+- feat: the plugins remember the chosen timeline and export for each timeline you work on, also after a restart. A new export can be named before Render & Upload (otherwise it's named after the timeline with date and time), the render to disk settings have their own dialog, and messages show as short toasts.
+- feat: new tutorial "Using the plugin". Right after a plugin is connected, and once an export with markers exists, it walks through the plugin's panel on screenshots of it, brings the markers into DaVinci Resolve, Premiere Pro or Pro Tools and sends a new one back, and notices both syncs by itself. Accounts that signed in a plugin before get it marked as completed. In the plugins, a sync to PostPin now says "Synced to PostPin" like the other direction.
+- feat: the plugins are for members and up – a reviewer can't sign a plugin in any more (the device page says why), the plugin API refuses reviewers, and the plugins show "The plugin needs the Member role" instead of an error
+- feat: PostPin Guides – the "Your first upload" tutorial for new accounts (from creating the organization to the first export), a share links tour on the review page, and a PostPin Guides page in the account menu to start them again
+- refactor: remove the getting started tutorial (welcome page, review and sharing tours) to make room for PostPin Guides; new accounts now start on the dashboard
+- feat: screening guests follow the presenter – while a screening runs, guests have no video and their playhead stays in sync with the screen; once it ends, the link works like a normal share link (all qualities, own playhead) until the screening is started again
+- feat: guests are sent away as soon as their share link is deleted or expires, instead of only with their next request
+- feat: sign in with Google, Microsoft, GitHub, Apple or your own OIDC provider, with passkeys, and protect your password with two-factor authentication. Enter submits the login and sign-up forms.
+- feat: the invite dialog only invites, in three tabs: people from your organization, by e-mail and by link, with Reviewer as default and no Admin role; who has access, pending invitations and active invite links moved to a new "Manage access" item in the project and timeline menus; the share links button of an export moved to the right end of the header; invalid e-mail addresses no longer show "undefined"
+- feat: drop a video on the review page to upload it as a new export of the same timeline; the upload dialog's cut settings are collapsed by default and switch between "Detect cuts" and "Import EDL"
+
+### Patch Changes
+
+- fix: a timeline imported from a wrong EDL or FCPXML can be replaced with detected cuts again; imported markers stay
+- fix: scrolling on landing page and links in settings for docs and landing page
+- fix: the PostPin Guides tour waits for the first tutorial, and guides start fresh after signing in as someone else in the same tab
+- fix: live sync on share and screening links – guests now see category changes (color, name, merge) on their markers without reloading
+- feat(plugins): "Additionally render to disk" in the Resolve plugin now renders the timeline with a chosen preset into a folder while the export uploads; the marker buttons show which way the markers go (editing app ⇄ PostPin) with a marker animation while syncing, and disabled actions explain why they can't run yet
+- fix: the screening button no longer stays on "End screening" after the screening link was revoked
+
 ## 0.5.2
 
 ### Patch Changes
