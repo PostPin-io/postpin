@@ -53,6 +53,8 @@ export const ModelName = {
 	Account: "Account",
 	Verification: "Verification",
 	DeviceCode: "DeviceCode",
+	TwoFactor: "TwoFactor",
+	Passkey: "Passkey",
 	Marker: "Marker",
 	MarkerPointer: "MarkerPointer",
 	Category: "Category",
@@ -101,6 +103,7 @@ export const UserScalarFieldEnum = {
 	storageQuota: "storageQuota",
 	tutorialCompletedAt: "tutorialCompletedAt",
 	tutorialSeenSteps: "tutorialSeenSteps",
+	twoFactorEnabled: "twoFactorEnabled",
 	lastActiveOrganizationId: "lastActiveOrganizationId",
 } as const;
 
@@ -170,6 +173,36 @@ export const DeviceCodeScalarFieldEnum = {
 
 export type DeviceCodeScalarFieldEnum =
 	(typeof DeviceCodeScalarFieldEnum)[keyof typeof DeviceCodeScalarFieldEnum];
+
+export const TwoFactorScalarFieldEnum = {
+	id: "id",
+	secret: "secret",
+	backupCodes: "backupCodes",
+	userId: "userId",
+	verified: "verified",
+	failedVerificationCount: "failedVerificationCount",
+	lockedUntil: "lockedUntil",
+} as const;
+
+export type TwoFactorScalarFieldEnum =
+	(typeof TwoFactorScalarFieldEnum)[keyof typeof TwoFactorScalarFieldEnum];
+
+export const PasskeyScalarFieldEnum = {
+	id: "id",
+	name: "name",
+	publicKey: "publicKey",
+	userId: "userId",
+	credentialID: "credentialID",
+	counter: "counter",
+	deviceType: "deviceType",
+	backedUp: "backedUp",
+	transports: "transports",
+	createdAt: "createdAt",
+	aaguid: "aaguid",
+} as const;
+
+export type PasskeyScalarFieldEnum =
+	(typeof PasskeyScalarFieldEnum)[keyof typeof PasskeyScalarFieldEnum];
 
 export const MarkerScalarFieldEnum = {
 	id: "id",

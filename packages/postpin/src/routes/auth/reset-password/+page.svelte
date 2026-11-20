@@ -6,7 +6,8 @@
 	let isLoading = $state(false);
 	let email = $state("");
 
-	async function handleResetPassword() {
+	async function handleResetPassword(event: SubmitEvent) {
+		event.preventDefault();
 		if (isLoading) return;
 		isLoading = true;
 
@@ -37,48 +38,53 @@
 
 <PageMeta title="Reset Password" description="Reset your PostPin password." />
 
-<header class="space-y-2 text-center">
+<header class="mb-6 space-y-2 text-center">
 	<h1 class="text-3xl font-bold">Reset Password</h1>
 	<p class="text-base-content/70">
 		Enter your email address and we'll send you a link to reset your password.
 	</p>
 </header>
 
-{#if formMessage}
-	<div class="alert" role={formMessage.type === "error" ? "alert" : "status"}>
-		<span>{formMessage.text}</span>
-		<button
-			class="btn btn-ghost btn-sm"
-			aria-label="Close message"
-			onclick={() => (formMessage = null)}
+<form class="space-y-4" onsubmit={handleResetPassword}>
+	{#if formMessage}
+		<div
+			class="alert"
+			class:alert-error={formMessage.type === "error"}
+			class:alert-success={formMessage.type === "success"}
+			role={formMessage.type === "error" ? "alert" : "status"}
 		>
-			×
-		</button>
-	</div>
-{/if}
+			<span>{formMessage.text}</span>
+			<button
+				type="button"
+				class="btn btn-ghost btn-sm"
+				aria-label="Close message"
+				onclick={() => (formMessage = null)}
+			>
+				×
+			</button>
+		</div>
+	{/if}
 
-<div class="space-y-4">
-	<label class="form-control w-full">
-		<div class="h-4"></div>
-		<span class="label-text mb-2">Email</span>
+	<label class="block w-full">
+		<span class="mb-2 block">Email</span>
 		<input
 			type="email"
 			placeholder="you@example.com"
 			class="input-bordered input w-full"
 			autocomplete="email"
+			required
 			bind:value={email}
 		/>
 	</label>
-	<div class="h-4"></div>
 
-	<button class="btn w-full btn-primary" onclick={handleResetPassword} disabled={isLoading}>
+	<button type="submit" class="btn w-full btn-primary" disabled={isLoading}>
 		{#if isLoading}
 			<span class="loading loading-md loading-spinner"></span>
 		{:else}
 			Send Reset Link
 		{/if}
 	</button>
-</div>
+</form>
 
 <p class="text-center text-sm text-base-content/70">
 	New to PostPin? <a class="link link-primary" href="/auth/signup">Create an account</a>

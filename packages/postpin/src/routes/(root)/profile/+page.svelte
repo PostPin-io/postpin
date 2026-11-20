@@ -10,9 +10,13 @@
 		getMyStorage,
 		getProfile,
 		getSessions,
+		getSignInMethods,
 		leaveOrganization,
 		revokeSession,
 	} from "./profile.remote.ts";
+	import TwoFactorSettings from "./TwoFactorSettings.svelte";
+	import PasskeySettings from "./PasskeySettings.svelte";
+	import ConnectedAccounts from "./ConnectedAccounts.svelte";
 	import NewOrgModal from "../../../lib/components/organizations/NewOrgModal.svelte";
 	import { roleLabel } from "#lib/roles.ts";
 	import UsageBar from "#lib/components/storage/UsageBar.svelte";
@@ -25,6 +29,7 @@
 	const sessions = $derived(await getSessions());
 	const storage = $derived(await getMyStorage());
 	const tutorial = $derived(await getTutorialState());
+	const signIn = $derived(await getSignInMethods());
 
 	async function restart() {
 		await restartTutorial();
@@ -178,13 +183,16 @@
 	let deleteMessage = $state<Message>(null);
 
 	async function deleteAccount() {
-		if (!deletePassword) {
+		if (signIn.hasPassword && !deletePassword) {
 			deleteMessage = { type: "error", text: "Enter your password." };
 			return;
 		}
 		deleting = true;
 		deleteMessage = null;
-		const { error } = await authClient.deleteUser({ password: deletePassword });
+		// without a password, a sign-in from the last few minutes confirms it (auth.ts)
+		const { error } = await authClient.deleteUser(
+			signIn.hasPassword ? { password: deletePassword } : {},
+		);
 		deleting = false;
 		if (error) {
 			deleteMessage = { type: "error", text: error.message ?? "Could not delete your account." };
@@ -192,6 +200,12 @@
 		}
 		// full reload: the session cookie is gone, every cached query is stale
 		window.location.href = "/auth/login";
+	}
+
+	/** Accounts without a password confirm a deletion by signing in again */
+	async function signInAgain() {
+		await authClient.signOut();
+		window.location.href = "/auth/login?redirect=" + encodeURIComponent("/profile#delete-account");
 	}
 </script>
 
@@ -289,49 +303,85 @@
 
 		<fieldset class="fieldset h-full rounded-box border border-base-300 bg-base-100 p-4">
 			<legend class="fieldset-legend">Password</legend>
-			{@render alert(passwordMessage, () => (passwordMessage = null))}
-			<label class="label" for="current-password">Current password</label>
-			<input
-				id="current-password"
-				type="password"
-				class="input w-full input-sm"
-				autocomplete="current-password"
-				bind:value={currentPassword}
-				onkeydown={(e) => e.key === "Enter" && changePassword()}
-				disabled={savingPassword}
-			/>
-			<label class="label" for="new-password">New password</label>
-			<input
-				id="new-password"
-				type="password"
-				class="input w-full input-sm"
-				autocomplete="new-password"
-				bind:value={newPassword}
-				onkeydown={(e) => e.key === "Enter" && changePassword()}
-				disabled={savingPassword}
-			/>
-			<label class="label" for="confirm-password">Confirm new password</label>
-			<input
-				id="confirm-password"
-				type="password"
-				class="input w-full input-sm"
-				autocomplete="new-password"
-				bind:value={confirmPassword}
-				onkeydown={(e) => e.key === "Enter" && changePassword()}
-				disabled={savingPassword}
-			/>
-			<div class="mt-2 flex flex-wrap items-center justify-between gap-2">
-				<label class="label">
-					<input type="checkbox" class="checkbox checkbox-xs" bind:checked={revokeOtherSessions} />
-					Sign out other devices
-				</label>
-				<button class="btn btn-primary btn-sm" onclick={changePassword} disabled={savingPassword}>
-					Change password
-					{#if savingPassword}<span class="loading loading-xs loading-spinner"></span>{/if}
-				</button>
-			</div>
+			{#if !signIn.hasPassword}
+				<p class="text-sm text-base-content/70">
+					Your account has no password. You log in with
+					{signIn.providers
+						.filter((p) => p.linked)
+						.map((p) => p.name)
+						.join(" or ") || "a connected account"}{signIn.passkeys.length > 0
+						? " or a passkey"
+						: ""}.
+				</p>
+			{:else}
+				{@render alert(passwordMessage, () => (passwordMessage = null))}
+				<label class="label" for="current-password">Current password</label>
+				<input
+					id="current-password"
+					type="password"
+					class="input w-full input-sm"
+					autocomplete="current-password"
+					bind:value={currentPassword}
+					onkeydown={(e) => e.key === "Enter" && changePassword()}
+					disabled={savingPassword}
+				/>
+				<label class="label" for="new-password">New password</label>
+				<input
+					id="new-password"
+					type="password"
+					class="input w-full input-sm"
+					autocomplete="new-password"
+					bind:value={newPassword}
+					onkeydown={(e) => e.key === "Enter" && changePassword()}
+					disabled={savingPassword}
+				/>
+				<label class="label" for="confirm-password">Confirm new password</label>
+				<input
+					id="confirm-password"
+					type="password"
+					class="input w-full input-sm"
+					autocomplete="new-password"
+					bind:value={confirmPassword}
+					onkeydown={(e) => e.key === "Enter" && changePassword()}
+					disabled={savingPassword}
+				/>
+				<div class="mt-2 flex flex-wrap items-center justify-between gap-2">
+					<label class="label">
+						<input
+							type="checkbox"
+							class="checkbox checkbox-xs"
+							bind:checked={revokeOtherSessions}
+						/>
+						Sign out other devices
+					</label>
+					<button class="btn btn-primary btn-sm" onclick={changePassword} disabled={savingPassword}>
+						Change password
+						{#if savingPassword}<span class="loading loading-xs loading-spinner"></span>{/if}
+					</button>
+				</div>
+			{/if}
 		</fieldset>
 	</div>
+
+	<fieldset class="fieldset rounded-box border border-base-300 bg-base-100 p-4">
+		<legend class="fieldset-legend">Sign-in & security</legend>
+		<div class="flex flex-col gap-4 divide-base-200">
+			<PasskeySettings passkeys={signIn.passkeys} />
+			{#if signIn.hasPassword}
+				<div class="border-t border-base-200 pt-4">
+					<TwoFactorSettings enabled={signIn.twoFactorEnabled} />
+				</div>
+			{/if}
+			{#if signIn.providers.length > 0}
+				<div class="border-t border-base-200 pt-4">
+					<ConnectedAccounts
+						providers={signIn.providers}
+						canUnlink={signIn.hasPassword || signIn.providers.filter((p) => p.linked).length > 1}
+					/>
+				</div>
+			{/if}
+		</div>
+	</fieldset>
 
 	<fieldset class="fieldset rounded-box border border-base-300 bg-base-100 p-4">
 		<legend class="fieldset-legend">Active Sessions</legend>
@@ -460,7 +510,7 @@
 		</fieldset>
 	{/if}
 
-	<fieldset class="fieldset rounded-box border border-error/40 bg-base-100 p-4">
+	<fieldset id="delete-account" class="fieldset rounded-box border border-error/40 bg-base-100 p-4">
 		<legend class="fieldset-legend text-error">Delete account</legend>
 		<p class="text-sm text-base-content/70">
 			Deletes your account, your sessions and your memberships right away. Markers, comments and
@@ -503,23 +553,40 @@
 			“Deleted User”.
 		</p>
 		{@render alert(deleteMessage, () => (deleteMessage = null))}
-		<label class="label" for="delete-password">Confirm with your password</label>
-		<input
-			id="delete-password"
-			type="password"
-			class="input w-full input-sm"
-			autocomplete="current-password"
-			bind:value={deletePassword}
-			disabled={deleting}
-		/>
+		{#if signIn.hasPassword}
+			<label class="label" for="delete-password">Confirm with your password</label>
+			<input
+				id="delete-password"
+				type="password"
+				class="input w-full input-sm"
+				autocomplete="current-password"
+				bind:value={deletePassword}
+				disabled={deleting}
+			/>
+		{:else if !signIn.recentSignIn}
+			<p class="text-sm text-base-content/70">
+				Your account has no password. To confirm it's you, log in again, then delete your account
+				within 10 minutes.
+			</p>
+		{/if}
 		<div class="modal-action">
 			<button type="button" class="btn btn-ghost btn-sm" onclick={() => deleteDialog?.close()}>
 				Cancel
 			</button>
-			<button type="submit" class="btn btn-error btn-sm" disabled={deleting || !deletePassword}>
-				Delete account
-				{#if deleting}<span class="loading loading-xs loading-spinner"></span>{/if}
-			</button>
+			{#if signIn.hasPassword || signIn.recentSignIn}
+				<button
+					type="submit"
+					class="btn btn-error btn-sm"
+					disabled={deleting || (signIn.hasPassword && !deletePassword)}
+				>
+					Delete account
+					{#if deleting}<span class="loading loading-xs loading-spinner"></span>{/if}
+				</button>
+			{:else}
+				<button type="button" class="btn btn-error btn-sm" onclick={signInAgain}>
+					Log in again
+				</button>
+			{/if}
 		</div>
 	</form>
 	<form method="dialog" class="modal-backdrop"><button>close</button></form>

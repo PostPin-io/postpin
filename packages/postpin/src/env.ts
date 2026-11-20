@@ -27,6 +27,11 @@ const envLinkUrl = v.pipe(
 	),
 );
 
+const envOptionalString = v.pipe(
+	v.optional(v.string()),
+	v.transform((s) => s?.trim() || undefined),
+);
+
 /**
  * Makes every variable optional while building, so the Docker build needs no runtime env. At
  * runtime the schemas apply unchanged, which is why the types stay those of the real schemas.
@@ -93,6 +98,23 @@ export const variables = defineEnvVars(
 		PRIVACY_URL: { schema: envLinkUrl, public: true },
 		TERMS_URL: { schema: envLinkUrl, public: true },
 		DPA_URL: { schema: envLinkUrl, public: true }, // data processing agreement (AVV)
+
+		// Hides email + password on login/signup and blocks those endpoints (SSO-only instances)
+		DISABLE_PASSWORD_LOGIN: { schema: envBoolean, public: true },
+		GOOGLE_CLIENT_ID: { schema: envOptionalString },
+		GOOGLE_CLIENT_SECRET: { schema: envOptionalString },
+		MICROSOFT_CLIENT_ID: { schema: envOptionalString },
+		MICROSOFT_CLIENT_SECRET: { schema: envOptionalString },
+		MICROSOFT_TENANT_ID: { schema: envOptionalString },
+		GITHUB_CLIENT_ID: { schema: envOptionalString },
+		GITHUB_CLIENT_SECRET: { schema: envOptionalString },
+		APPLE_CLIENT_ID: { schema: envOptionalString },
+		APPLE_CLIENT_SECRET: { schema: envOptionalString },
+		OIDC_DISCOVERY_URL: { schema: envOptionalString },
+		OIDC_CLIENT_ID: { schema: envOptionalString },
+		OIDC_CLIENT_SECRET: { schema: envOptionalString },
+		OIDC_NAME: { schema: envOptionalString },
+
 		...databaseEnvVars,
 		...s3EnvVars,
 		...redisEnvVars,
