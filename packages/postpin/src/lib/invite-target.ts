@@ -13,3 +13,7 @@ export const targetColumns = (target: InviteTarget) => ({
 	projectId: target.type === "project" ? target.id : null,
 	timelineId: target.type === "timeline" ? target.id : null,
 });
+
+/** How long an e-mail invitation stays valid */
+export const INVITATION_TTL_MS = 48 * 60 * 60 * 1000;
+export const INVITATION_TTL_HOURS = INVITATION_TTL_MS / (60 * 60 * 1000);

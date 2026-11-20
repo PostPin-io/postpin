@@ -4,7 +4,11 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { safeRedirect } from "#lib/redirect.ts";
-	import { DPA_URL, PRIVACY_URL, TERMS_URL } from "$app/env/public";
+	import { DISABLE_PASSWORD_LOGIN, DPA_URL, PRIVACY_URL, TERMS_URL } from "$app/env/public";
+	import SsoButtons, { oauthErrorMessage } from "#lib/components/auth/SsoButtons.svelte";
+	import type { PageProps } from "./$types";
+
+	let { data }: PageProps = $props();
 
 	// Someone who signs up to get somewhere (an invitation, a share link, a plugin login) goes
 	// there. Everyone else starts on the dashboard, which sets up the first organization.
@@ -19,10 +23,12 @@
 
 	let isLoading = $state(false);
 
-	let formMessage = $state<{ type: "success" | "error"; text: string } | null>(null);
+	let errorText = $state<string | null>(oauthErrorMessage(page.url.searchParams.get("error")));
 
-	async function handleSignup() {
+	async function handleSignup(event: SubmitEvent) {
+		event.preventDefault();
 		if (isLoading) return; // Prevent multiple submissions
+		errorText = null;
 
 		isLoading = true;
 
@@ -30,22 +36,16 @@
 			{
 				email, // user email address
 				password, // user password -> min 8 characters by default
-				name: `${firstName} ${lastName}`, // user display name
+				name: `${firstName} ${lastName}`.trim(), // user display name
 				callbackURL: redirectTo, // A URL to redirect to after the user verifies their email (optional)
 			},
 			{
-				onRequest: () => {
-					//show loading
-				},
 				onSuccess: () => {
 					goto(redirectTo);
 				},
 				onError: (ctx) => {
 					// display the error message
-					formMessage = {
-						type: "error",
-						text: ctx.error.message ?? "Something went wrong while signing up.",
-					};
+					errorText = ctx.error.message ?? "Something went wrong while signing up.";
 					isLoading = false;
 				},
 			},
@@ -55,73 +55,90 @@
 
 <PageMeta title="Sign Up" description="Create a new PostPin account." />
 
-<header class="space-y-2 text-center">
+<header class="mb-6 space-y-2 text-center">
 	<h1 class="text-3xl font-bold">Create an account</h1>
 	<p class="text-base-content/70">Sign up to start using PostPin.</p>
 </header>
 
 <div class="space-y-4">
-	<label class="form-control w-full">
-		<div class="h-4"></div>
-		<span class="label-text mb-2">First Name</span>
-		<input
-			type="text"
-			placeholder="First Name"
-			class="input-bordered input w-full"
-			bind:value={firstName}
-		/>
-	</label>
-
-	<label class="form-control w-full">
-		<span class="label-text mb-2">Last Name</span>
-		<input
-			type="text"
-			placeholder="Last Name"
-			class="input-bordered input w-full"
-			bind:value={lastName}
-		/>
-	</label>
-
-	<label class="form-control w-full">
-		<span class="label-text mb-2">Email</span>
-		<input
-			type="email"
-			placeholder="you@example.com"
-			class="input-bordered input w-full"
-			autocomplete="email"
-			bind:value={email}
-		/>
-	</label>
-
-	<label class="form-control w-full">
-		<span class="label-text mb-2">Password</span>
-		<input
-			type="password"
-			placeholder="Your password"
-			class="input-bordered input w-full"
-			autocomplete="current-password"
-			bind:value={password}
-		/>
-	</label>
-
-	<div class="text-right">
-		<a class="link text-sm link-hover" href="/auth/reset-password">Forgot password?</a>
-	</div>
-
-	{#if formMessage}
-		<!-- Display the form message if it exists -->
-		<div class="alert alert-error" role="alert">
-			{formMessage.text}
-		</div>
+	{#if errorText}
+		<div class="alert alert-error" role="alert">{errorText}</div>
 	{/if}
 
-	<button class="btn w-full btn-primary" onclick={handleSignup} disabled={isLoading}>
-		{#if isLoading}
-			<span class="loading loading-md loading-spinner"></span>
-		{:else}
-			Sign Up
+	<SsoButtons
+		providers={data.providers}
+		callbackURL={safeRedirect(page.url.searchParams.get("redirect"))}
+		newUserCallbackURL={redirectTo}
+		onerror={(message) => (errorText = message)}
+	/>
+
+	{#if !DISABLE_PASSWORD_LOGIN}
+		{#if data.providers.length > 0}
+			<div class="divider text-sm text-base-content/60">or</div>
 		{/if}
-	</button>
+
+		<form class="space-y-4" onsubmit={handleSignup}>
+			<label class="block w-full">
+				<span class="mb-2 block">First Name</span>
+				<input
+					type="text"
+					placeholder="First Name"
+					class="input-bordered input w-full"
+					autocomplete="given-name"
+					required
+					bind:value={firstName}
+				/>
+			</label>
+
+			<label class="block w-full">
+				<span class="mb-2 block">Last Name</span>
+				<input
+					type="text"
+					placeholder="Last Name"
+					class="input-bordered input w-full"
+					autocomplete="family-name"
+					bind:value={lastName}
+				/>
+			</label>
+
+			<label class="block w-full">
+				<span class="mb-2 block">Email</span>
+				<input
+					type="email"
+					placeholder="you@example.com"
+					class="input-bordered input w-full"
+					autocomplete="email"
+					required
+					bind:value={email}
+				/>
+			</label>
+
+			<label class="block w-full">
+				<span class="mb-2 block">Password</span>
+				<input
+					type="password"
+					placeholder="At least 8 characters"
+					class="input-bordered input w-full"
+					autocomplete="new-password"
+					minlength="8"
+					required
+					bind:value={password}
+				/>
+			</label>
+
+			<button type="submit" class="btn w-full btn-primary" disabled={isLoading}>
+				{#if isLoading}
+					<span class="loading loading-md loading-spinner"></span>
+				{:else}
+					Sign Up
+				{/if}
+			</button>
+		</form>
+	{:else if data.providers.length === 0}
+		<p class="text-center text-sm text-base-content/70">
+			Sign-up is turned off on this PostPin instance.
+		</p>
+	{/if}
 
 	{#if TERMS_URL || PRIVACY_URL}
 		<p class="text-center text-xs text-base-content/60">

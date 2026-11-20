@@ -33,10 +33,33 @@ vi.mock("$app/env/private", () => ({
 	STORAGE_CAPACITY: 1_000_000_000n,
 	STORAGE_DISK_PATH: undefined,
 	SCREENING_MAX_GUESTS: 100,
+	// no SSO / social providers configured
+	GOOGLE_CLIENT_ID: undefined,
+	GOOGLE_CLIENT_SECRET: undefined,
+	MICROSOFT_CLIENT_ID: undefined,
+	MICROSOFT_CLIENT_SECRET: undefined,
+	MICROSOFT_TENANT_ID: undefined,
+	GITHUB_CLIENT_ID: undefined,
+	GITHUB_CLIENT_SECRET: undefined,
+	APPLE_CLIENT_ID: undefined,
+	APPLE_CLIENT_SECRET: undefined,
+	OIDC_DISCOVERY_URL: undefined,
+	OIDC_CLIENT_ID: undefined,
+	OIDC_CLIENT_SECRET: undefined,
+	OIDC_NAME: undefined,
 	// tests set it with setUploadMaxFileSize()
 	get UPLOAD_MAX_FILE_SIZE() {
 		return uploadLimits.maxFileSize;
 	},
+}));
+
+// Without this mock SvelteKit validates the real environment, which CI doesn't have
+vi.mock("$app/env/public", () => ({
+	DISABLE_PASSWORD_LOGIN: false,
+	IMPRINT_URL: undefined,
+	PRIVACY_URL: undefined,
+	TERMS_URL: undefined,
+	DPA_URL: undefined,
 }));
 
 vi.mock("$app/env", () => ({ building: false, dev: true, browser: false, version: "test" }));

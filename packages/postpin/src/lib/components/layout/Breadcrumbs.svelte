@@ -5,10 +5,7 @@
 	import { afterNavigate } from "$app/navigation";
 	import ChevronRight from "@lucide/svelte/icons/chevron-right";
 	import UserGroup from "@lucide/svelte/icons/user-group";
-	import Link from "@lucide/svelte/icons/link";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
-	import GuideButton from "#lib/components/guides/GuideButton.svelte";
-	import { getShareLinks } from "#lib/components/sharing/share-links/share-links.remote.ts";
 	import {
 		getBreadcrumbNames,
 		getExportSiblings,
@@ -23,7 +20,7 @@
 		level: Level;
 		href: string;
 		siblingHref: (id: string) => string;
-		share?: { label: string; icon: Component; count?: number; open: () => void };
+		share?: { label: string; icon: Component; open: () => void };
 	};
 
 	let sharingModal: SharingSetupModal | null = null;
@@ -41,14 +38,6 @@
 	// Svelte fails to combine with the pending one, leaving the breadcrumbs on the previous page
 	// until a reload. Awaiting makes them part of the navigation, so both change together.
 	const names = $derived(await namesQuery?.catch(loadFailed));
-
-	const shareLinks = $derived(
-		names?.export?.canShare ? await getShareLinks(names.export.id).catch(loadFailed) : undefined,
-	);
-	/** Number of active share links next to the export's share button */
-	const shareLinkCount = $derived(
-		shareLinks?.filter((link) => link.status === "active").length ?? 0,
-	);
 
 	// A failed query must not take the page down with it: the breadcrumbs just stay hidden
 	function loadFailed(error: unknown) {
@@ -103,8 +92,6 @@
 		});
 
 	const crumbs = $derived.by((): Crumb[] => {
-		// Read on every page, not just on exports: Svelte reports an awaited value nobody reads
-		const linkCount = shareLinkCount;
 		if (!names) return [];
 		const { project, timeline, export: exp } = names;
 
@@ -148,19 +135,7 @@
 			name: exp.name,
 			href: exportHref(project.id, timeline.id, exp.id),
 			siblingHref: (id) => exportHref(project.id, timeline.id, id),
-			share: exp.canShare
-				? {
-						label: "Share links",
-						icon: Link,
-						count: linkCount,
-						open: () =>
-							sharingModal?.open({
-								projectId: project.id,
-								timelineId: timeline.id,
-								exportId: exp.id,
-							}),
-					}
-				: undefined,
+			// its share links sit at the right end of the header, see ExportShareButton
 		});
 		return result;
 	});
@@ -241,24 +216,16 @@
 						{crumb.name}
 					</a>
 					{#if crumb.share}
-						{@const { label, icon: Icon, count, open } = crumb.share}
+						{@const { label, icon: Icon, open } = crumb.share}
 						<button
 							type="button"
-							class="btn btn-ghost btn-sm max-lg:order-2 lg:btn-xs {count
-								? 'gap-1 px-1.5'
-								: 'btn-square'}"
+							class="btn btn-square btn-ghost btn-sm max-lg:order-2 lg:btn-xs"
 							title={label}
-							aria-label={count ? `${label} (${count} active links)` : label}
-							data-guide={crumb.level === "export" ? "share-link/open" : undefined}
+							aria-label={label}
 							onclick={open}
 						>
 							<Icon class="size-3.5" />
-							{#if count}<span>{count}</span>{/if}
 						</button>
-						{#if crumb.level === "export"}
-							<!-- the tour starts at the share button right before it -->
-							<GuideButton guide="share-link" class="max-lg:order-3" />
-						{/if}
 					{/if}
 				</li>
 			{/each}

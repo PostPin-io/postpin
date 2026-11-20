@@ -16,6 +16,8 @@ import {
 	userQuota,
 } from "#lib/server/storage-usage.ts";
 import { soleOwnerOrgs } from "#lib/server/account-deletion.ts";
+import { signInProviders } from "#lib/server/auth-providers.ts";
+import { DELETE_WITHOUT_PASSWORD_MAX_AGE_MS } from "#lib/server/auth.ts";
 
 export const getProfile = query(async () => {
 	const id = getRequestEvent().locals.user?.id;
@@ -26,6 +28,47 @@ export const getProfile = query(async () => {
 	});
 	if (!user) error(404, "User not found");
 	return user;
+});
+
+/** How this user can sign in: password, 2FA, passkeys, linked SSO/social accounts */
+export const getSignInMethods = query(async () => {
+	const { user, session } = getRequestEvent().locals;
+	if (!user || !session) error(401, "Not signed in");
+
+	const [me, accounts, passkeys, current] = await Promise.all([
+		prisma.user.findUniqueOrThrow({ where: { id: user.id }, select: { twoFactorEnabled: true } }),
+		prisma.account.findMany({
+			where: { userId: user.id },
+			select: { id: true, providerId: true, createdAt: true },
+			orderBy: { createdAt: "asc" },
+		}),
+		prisma.passkey.findMany({
+			where: { userId: user.id },
+			select: { id: true, name: true, createdAt: true, backedUp: true },
+			orderBy: { createdAt: "asc" },
+		}),
+		prisma.session.findUniqueOrThrow({
+			where: { id: session.id },
+			select: { createdAt: true, clientId: true },
+		}),
+	]);
+
+	const linked = accounts.filter((a) => a.providerId !== "credential");
+	return {
+		hasPassword: accounts.length > linked.length,
+		twoFactorEnabled: !!me.twoFactorEnabled,
+		passkeys,
+		// the configured providers, and whether this user has linked each
+		providers: signInProviders().map((p) => {
+			// better-auth unlinks by its own account id
+			const accountId = linked.find((a) => a.providerId === p.id)?.id ?? null;
+			return { ...p, accountId, linked: accountId !== null };
+		}),
+		// accounts without a password can delete themselves only right after signing in (auth.ts)
+		recentSignIn:
+			!current.clientId &&
+			Date.now() - current.createdAt.getTime() < DELETE_WITHOUT_PASSWORD_MAX_AGE_MS,
+	};
 });
 
 export const getMemberships = query(async () => {

@@ -9,6 +9,7 @@
 	import RenameTimelineModal from "#lib/components/timelines/RenameTimelineModal.svelte";
 	import DeleteTimelineModal from "#lib/components/timelines/DeleteTimelineModal.svelte";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
+	import ManageAccessModal from "#lib/components/sharing/ManageAccessModal.svelte";
 	import UploadDropOverlay from "#lib/components/exports/UploadDropOverlay.svelte";
 	import { heldUpload } from "#lib/upload/held-upload.svelte.ts";
 	import Upload from "@lucide/svelte/icons/upload";
@@ -19,6 +20,7 @@
 	import List from "@lucide/svelte/icons/list";
 	import Link from "@lucide/svelte/icons/link";
 	import UserGroup from "@lucide/svelte/icons/user-group";
+	import ShieldUser from "@lucide/svelte/icons/shield-user";
 	import Pencil from "@lucide/svelte/icons/pencil";
 	import Trash from "@lucide/svelte/icons/trash";
 	import Plus from "@lucide/svelte/icons/plus";
@@ -44,6 +46,7 @@
 	let renameTimelineDialog: RenameTimelineModal | null = null;
 	let timelineDialog: NewTimelineModal | null = null;
 	let sharingDialog: SharingSetupModal | null = null;
+	let accessDialog: ManageAccessModal | null = null;
 
 	let data = $derived(await getTimelines(page.params.project || ""));
 
@@ -95,6 +98,11 @@
 	function inviteToTimeline(timeline: (typeof data.timelines)[number]) {
 		closeMenu(timeline);
 		sharingDialog?.open({ projectId: page.params.project!, timelineId: timeline.id });
+	}
+
+	function manageTimelineAccess(timeline: (typeof data.timelines)[number]) {
+		closeMenu(timeline);
+		accessDialog?.open({ projectId: page.params.project!, timelineId: timeline.id });
 	}
 
 	function shareLatestExport(timeline: (typeof data.timelines)[number], exportId: string) {
@@ -184,6 +192,12 @@
 				<button type="button" onclick={() => inviteToTimeline(timeline)}>
 					<UserGroup class="size-4" />
 					Invite to timeline
+				</button>
+			</li>
+			<li>
+				<button type="button" onclick={() => manageTimelineAccess(timeline)}>
+					<ShieldUser class="size-4" />
+					Manage access
 				</button>
 			</li>
 		{/if}
@@ -564,6 +578,7 @@
 <RenameTimelineModal bind:this={renameTimelineDialog} projectId={page.params.project!} />
 <DeleteTimelineModal bind:this={delTimelineDialog} />
 <SharingSetupModal bind:this={sharingDialog} />
+<ManageAccessModal bind:this={accessDialog} oninvite={(t) => sharingDialog?.open(t)} />
 {#if canDropHere}
 	<UploadDropOverlay ondropped={(file) => heldUpload.hold(file)}>
 		Then choose the timeline it goes to.

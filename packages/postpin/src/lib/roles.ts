@@ -142,6 +142,11 @@ const ORG_WIDE_ROLES: Role[] = MANAGER_ROLES;
 /** Roles that can be handed out via invitation or invite link */
 export type InviteRole = Exclude<Role, typeof Role.OWNER>;
 export const INVITE_ROLES = ORG_ROLES.filter((r): r is InviteRole => r !== Role.OWNER);
+/**
+ * Roles offered when inviting to a project or timeline, default first. No Admin: admins see the
+ * whole organization, so tying them to one project would mislead.
+ */
+export const TARGET_INVITE_ROLES: InviteRole[] = [Role.REVIEWER, Role.MEMBER];
 
 /** Unknown roles never pass */
 export const hasRoleOrHigher = (test: Role, against: Role) =>

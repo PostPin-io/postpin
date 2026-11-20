@@ -1,24 +1,27 @@
 model User {
-  id              String   @id @default(cuid())
-  name            String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  email           String
-  emailVerified   Boolean  @default(false)
-  image           String?
-  storageQuota    BigInt? // null = STORAGE_DEFAULT_USER_QUOTA
+  id               String   @id @default(cuid())
+  name             String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  email            String
+  emailVerified    Boolean  @default(false)
+  image            String?
+  storageQuota     BigInt? // null = STORAGE_DEFAULT_USER_QUOTA
   /// PostPin Guides: off = nothing starts on its own and no guide buttons (the guides page still works)
-  guidesEnabled   Boolean  @default(true)
-  uploadedExports Export[] @relation("ExportUploader")
+  guidesEnabled    Boolean  @default(true)
+  uploadedExports  Export[] @relation("ExportUploader")
+  twoFactorEnabled Boolean? @default(false)
 
   sessions        Session[]
   accounts        Account[]
+  twoFactors      TwoFactor[]
+  passkeys        Passkey[]
   createdProjects Project[]
   memberships     Member[]
   invitations     Invitation[]
 
   lastActiveOrganizationId String?
-  lastActiveOrganization   Organization?   @relation("LastActiveOrganization", fields: [lastActiveOrganizationId], references: [id], onDelete: SetNull)
+  lastActiveOrganization   Organization?    @relation("LastActiveOrganization", fields: [lastActiveOrganizationId], references: [id], onDelete: SetNull)
   markers                  Marker[]
   responses                Response[]
   createdGrants            MemberGrant[]
@@ -103,4 +106,38 @@ model DeviceCode {
   @@unique([deviceCode], map: "deviceCode_deviceCode_uidx")
   @@unique([userCode], map: "deviceCode_userCode_uidx")
   @@map("deviceCode")
+}
+
+model TwoFactor {
+  id                      String    @id
+  secret                  String
+  backupCodes             String
+  userId                  String
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified                Boolean?  @default(true)
+  failedVerificationCount Int?      @default(0)
+  lockedUntil             DateTime?
+
+  @@index([secret])
+  @@index([userId])
+  @@map("twoFactor")
+}
+
+model Passkey {
+  id           String    @id
+  name         String?
+  publicKey    String
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialID String
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String?
+  createdAt    DateTime? @default(now())
+  aaguid       String?
+
+  @@index([userId])
+  @@index([credentialID])
+  @@map("passkey")
 }

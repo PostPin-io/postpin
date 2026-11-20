@@ -161,8 +161,8 @@
 				verify();
 			}}
 		>
-			<label class="form-control w-full">
-				<span class="label-text mb-2">Device code</span>
+			<label class="block w-full">
+				<span class="mb-2 block">Device code</span>
 				<input
 					type="text"
 					placeholder="ABCD-EFGH"
