@@ -1,8 +1,10 @@
 import ChevronDown from "@lucide/svelte/icons/chevron-down";
+import ChevronsUpDown from "@lucide/svelte/icons/chevrons-up-down";
 import Copy from "@lucide/svelte/icons/copy";
 import DiamondPlus from "@lucide/svelte/icons/diamond-plus";
 import Link from "@lucide/svelte/icons/link";
 import Locate from "@lucide/svelte/icons/locate";
+import MoveHorizontal from "@lucide/svelte/icons/move-horizontal";
 import MessageSquareReply from "@lucide/svelte/icons/message-square-reply";
 import Pause from "@lucide/svelte/icons/pause";
 import Play from "@lucide/svelte/icons/play";
@@ -23,4 +25,6 @@ export const STEP_ICON_COMPONENTS: Record<StepIcon, Component<{ class?: string }
 	plus: Plus,
 	link: Link,
 	copy: Copy,
+	"move-horizontal": MoveHorizontal,
+	"chevrons-up-down": ChevronsUpDown,
 };

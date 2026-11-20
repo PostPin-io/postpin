@@ -34,7 +34,8 @@ export interface TourStep {
 	inert?: boolean;
 	/**
 	 * Keys that work anywhere on this step, not only in the highlighted element: the page's own
-	 * shortcuts for what the step asks (e.g. M to add a marker, space to play)
+	 * shortcuts for what the step asks (e.g. M to add a marker, space to play), as `event.key`.
+	 * Each one is named in the text with `key()`, so the user sees it (rule 14).
 	 */
 	keys?: string[];
 }
@@ -73,19 +74,39 @@ export const STEP_ICONS = [
 	"plus",
 	"link",
 	"copy",
+	"move-horizontal",
+	"chevrons-up-down",
 ] as const;
 export type StepIcon = (typeof STEP_ICONS)[number];
 
 /** The lucide icon `name` in a step's text, e.g. `Add a marker with ${icon("diamond-plus")}` */
 export const icon = (name: StepIcon) => `{icon:${name}}`;
 
-export type StepTextPart = string | { icon: StepIcon | "guide-button" };
+/**
+ * A key in a step's text, shown as a key cap: `key("M")`, `key("Space")`, `key("⌥")`. Every key a
+ * step lets through (`keys`) is named this way, so keys look the same in every guide.
+ */
+export const key = (label: string) => `{key:${label}}`;
 
-/** The text split around the guide button and the icons, for rendering them in between */
+/** How a key of `keys` (an `event.key`) is labeled in a text: "m" → "M", " " → "Space" */
+export function keyLabel(eventKey: string): string {
+	if (eventKey === " ") return "Space";
+	if (eventKey === "Alt") return "⌥";
+	return eventKey.length === 1 ? eventKey.toUpperCase() : eventKey;
+}
+
+export type StepTextPart = string | { icon: StepIcon | "guide-button" } | { key: string };
+
+/** The text split around the guide button, the icons and the keys, for rendering them in between */
 export function splitStepText(text: string): StepTextPart[] {
 	const parts: StepTextPart[] = [];
 	let last = 0;
-	for (const match of text.matchAll(/\{(guide-button|icon:([a-z-]+))\}/g)) {
+	for (const match of text.matchAll(/\{(guide-button|icon:([a-z-]+)|key:([^{}]+))\}/g)) {
+		if (match[3] !== undefined) {
+			parts.push(text.slice(last, match.index), { key: match[3] });
+			last = match.index + match[0].length;
+			continue;
+		}
 		const name = match[2] ?? "guide-button";
 		// unknown names stay text: a typo shows up instead of vanishing
 		if (name !== "guide-button" && !(STEP_ICONS as readonly string[]).includes(name)) continue;
@@ -111,6 +132,8 @@ export interface TourDefinition {
 	 * started from a guide button pauses when the user leaves the page.
 	 */
 	spansPages?: boolean;
+	/** Only on wide screens (at least 1024px): what it explains isn't there on phones */
+	desktopOnly?: boolean;
 }
 
 /**

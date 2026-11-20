@@ -19,6 +19,7 @@
 		saveGuideProgress,
 	} from "./guides.remote.ts";
 	import type { TourDefinition } from "./tour.ts";
+	import { markerRangesTour } from "./tours/marker-ranges.ts";
 	import { navigationTour } from "./tours/navigation.ts";
 	import { postpinGuidesTour } from "./tours/postpin-guides.ts";
 	import { shareLinkTour } from "./tours/share-link.ts";
@@ -32,6 +33,7 @@
 		"postpin-guides": postpinGuidesTour,
 		navigation: navigationTour,
 		"share-link": shareLinkTour,
+		"marker-ranges": markerRangesTour,
 	};
 
 	const progress = $derived(await getGuideProgress());
@@ -143,7 +145,9 @@
 
 	const tour = $derived.by((): GuideId | null => {
 		if (firstUpload || install || firstReview) return null;
-		if (requested && TOURS[requested]) return requested;
+		if (requested && TOURS[requested]) {
+			return TOURS[requested].desktopOnly && !wide.current ? null : requested;
+		}
 		return postpinGuidesDue ? "postpin-guides" : null;
 	});
 

@@ -17,6 +17,8 @@
 		editable?: boolean;
 		mobile?: boolean;
 		mobileLandscape?: boolean;
+		/** `data-guide` of the field, for a tour step that has the user type into it */
+		guide?: string;
 	}
 
 	let {
@@ -27,6 +29,7 @@
 		editable = false,
 		mobile = false,
 		mobileLandscape = false,
+		guide,
 	}: Props = $props();
 
 	let editingField: "editing_TC" | "editingFrame" | null = $state(null);
@@ -181,6 +184,7 @@
 		<input
 			type="text"
 			bind:this={inputField_TC}
+			data-guide={guide}
 			readonly={editingField !== "editing_TC"}
 			value={formatTimecode(frame, frameRate)}
 			class="box-content w-[11ch] border-0 bg-transparent px-1 py-0 outline-none [font:inherit]
@@ -209,6 +213,7 @@
 		<input
 			type="text"
 			bind:this={inputField_Frame}
+			data-guide={guide}
 			readonly={editingField !== "editingFrame"}
 			value={frameDraft ?? String(frame - startFrame)}
 			maxlength={FRAME_MAX_LENGTH}

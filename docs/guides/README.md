@@ -100,6 +100,12 @@ feature you can discover later, it's a **tour**.
     about a button shows its lucide icon inline, the one on the button (`icon("diamond-plus")` in
     a step text, written as [diamond-plus] in the guide files): "Add a marker with [diamond-plus]".
     The icons a text may use are listed in `STEP_ICONS` (`tour.ts`).
+    A key is always shown as a key cap, the same way in every guide (`key("M")` in a step text,
+    written as <kbd>M</kbd> in the guide files): "Add a marker with [diamond-plus] or <kbd>M</kbd>",
+    "press <kbd>Enter</kbd>", "hold <kbd>⌥</kbd>". Labels as on the keyboard: letters in capitals,
+    <kbd>Space</kbd>, <kbd>Enter</kbd>, <kbd>⌥</kbd>. Never a key as plain text. Every key a step
+    lets through (`keys`) is named in its text this way, so the user sees that it works (a test
+    checks both).
 15. **As short as possible, as long as necessary.** Every tour text has to earn its place:
     - one idea per step; the title names it, the text says what to do or why it matters,
     - usually one or two short sentences (aim for 25 words at most),
@@ -238,11 +244,14 @@ button next to the element of its first step.
   page the tour already is on), `optional` (left out when its element isn't there),
   `waitForElement` (after a navigation: waits instead of going back), `inert` (the element is only
   explained, clicks on it are blocked too), `keys` (keys that work anywhere on this step, the page's
-  own shortcuts for what it asks, only those: space on the play step, M on the add-marker step).
-  `{guide-button}` in a step's text shows the guide
-  button icon, `icon(name)` a lucide icon (rule 14). One element can serve several steps: `data-guide="tour/one tour/two"`.
+  own shortcuts for what it asks, only those: space on the play step, M on the add-marker step;
+  each one named in the text with `key()`). `{guide-button}` in a step's text shows the guide
+  button icon, `icon(name)` a lucide icon, `key(label)` a key cap (rule 14). One element can serve several steps: `data-guide="tour/one tour/two"`.
 - **Tour options** (`TourDefinition`): `spansPages` for a tour whose steps navigate (otherwise a
-  tour started from a guide button pauses when the user leaves the page).
+  tour started from a guide button pauses when the user leaves the page), `desktopOnly` for a
+  tour of something phones don't have (the timeline in marker-ranges): below 1024px it doesn't run.
+- **Keys and text fields:** going to a step with `keys` blurs a focused text field, so the page's
+  shortcuts get them instead of the field (e.g. I and O right after typing a timecode).
 - **Availability:** a tour that needs something to exist (e.g. an export to walk to) reports it in
   `getGuideAvailability()`; its guide button only shows when it can run.
 - **Blocking:** a transparent layer over the whole screen takes every click, except in a cut-out over

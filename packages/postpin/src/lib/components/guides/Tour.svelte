@@ -22,6 +22,7 @@
 		type TourDefinition,
 	} from "./tour.ts";
 	import { layerOf, moveInto } from "./top-layer.ts";
+	import { TYPING_SELECTOR } from "#lib/keyboard.ts";
 
 	interface Props {
 		tour: TourDefinition;
@@ -74,6 +75,16 @@
 	let stepSince = performance.now();
 
 	function go(next: number) {
+		// Its keys are the page's shortcuts, which a focused text field (the timecode just typed
+		// into) would take as typing
+		const focused = document.activeElement;
+		if (
+			tour.steps[next]!.keys &&
+			focused instanceof HTMLElement &&
+			focused.matches(TYPING_SELECTOR)
+		) {
+			focused.blur();
+		}
 		index = next;
 		stepSince = performance.now();
 		scrolled = false;
@@ -236,7 +247,9 @@
 icon of the button a step talks about -->
 {#snippet stepText(text: string)}
 	{#each splitStepText(text) as part, i (i)}
-		{#if typeof part === "string"}{part}{:else if part.icon === "guide-button"}
+		{#if typeof part === "string"}{part}{:else if "key" in part}<kbd
+				class="mx-0.5 kbd align-middle kbd-sm">{part.key}</kbd
+			>{:else if part.icon === "guide-button"}
 			<span
 				class="mx-0.5 inline-flex size-5 items-center justify-center rounded-full align-middle {GUIDE_STYLE
 					.tour.dot} text-accent-content"

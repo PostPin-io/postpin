@@ -134,6 +134,19 @@ export const GUIDES = [
 		minRole: Role.MEMBER,
 		permission: ["shareLink", "create"],
 	},
+	{
+		id: "marker-ranges",
+		type: "tour",
+		trigger: "manual",
+		title: "Marker ranges",
+		description:
+			"Move a marker on the timeline, stretch it into a range and set start and end to the frame.",
+		restartHint:
+			"Needs an export you can leave markers on: its guide button is in the timeline toolbar.",
+		startFrom: "found",
+		minRole: Role.REVIEWER,
+		permission: ["marker", "create"],
+	},
 ] as const satisfies readonly Guide[];
 
 export type GuideId = (typeof GUIDES)[number]["id"];

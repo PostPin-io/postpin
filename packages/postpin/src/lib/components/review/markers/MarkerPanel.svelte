@@ -377,7 +377,10 @@
 		const isNew = !existingAtNext;
 		const marker = await addMarkerAtPlayhead();
 		if (!marker) return;
-		if (isNew) signalGuide("first-review", "add-marker");
+		if (isNew) {
+			signalGuide("first-review", "add-marker");
+			signalGuide("marker-ranges", "add-marker");
+		}
 		selectedMarkerIds = [marker.id];
 		// Phones: a new marker opens straight in the modal, ready for its title
 		if (mobile) {
@@ -419,7 +422,11 @@
 	async function repositionMarker(marker: (typeof markers)[number], frame: number) {
 		if (!Number.isInteger(frame) || frame < 0) return;
 		const lastStart = startFrame + Math.max(frameCount, 1) - Math.max(marker.duration, 1);
-		await saveRange(marker, { frame: Math.min(frame, lastStart), duration: marker.duration });
+		const saved = await saveRange(marker, {
+			frame: Math.min(frame, lastStart),
+			duration: marker.duration,
+		});
+		if (saved) signalGuide("marker-ranges", "timecode");
 	}
 
 	async function resizeMarker(marker: (typeof markers)[number], duration: number) {
@@ -427,9 +434,10 @@
 		await saveRange(marker, { frame: marker.frame, duration });
 	}
 
+	/** Whether there was a change to save */
 	async function saveRange(marker: (typeof markers)[number], range: FrameRange) {
-		if (range.frame === marker.frame && range.duration === marker.duration) return;
-		if (!isInTimeline(range, timeline)) return;
+		if (range.frame === marker.frame && range.duration === marker.duration) return false;
+		if (!isInTimeline(range, timeline)) return false;
 		await updateMarker({
 			id: marker.id,
 			name: marker.name ?? "",
@@ -438,6 +446,7 @@
 			...range,
 			shareToken,
 		});
+		return true;
 	}
 
 	function toggleMarkerSelection(id: string) {

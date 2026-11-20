@@ -13,6 +13,7 @@
 	import Upload from "@lucide/svelte/icons/upload";
 	import ListTodo from "@lucide/svelte/icons/list-todo";
 	import Lock from "@lucide/svelte/icons/lock";
+	import MoveHorizontal from "@lucide/svelte/icons/move-horizontal";
 	import Search from "@lucide/svelte/icons/search";
 	import { GuideStatus } from "@postpin-io/shared/db/enums";
 	import PageMeta from "#lib/components/layout/PageMeta.svelte";
@@ -61,6 +62,7 @@
 		"postpin-guides": GraduationCap,
 		navigation: Compass,
 		"share-link": Link,
+		"marker-ranges": MoveHorizontal,
 	};
 
 	const STATUS_LABELS: Record<GuideStatus | "NEW", string> = {

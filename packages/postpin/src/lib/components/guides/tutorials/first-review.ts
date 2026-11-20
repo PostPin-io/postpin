@@ -1,5 +1,5 @@
 // docs/guides/tutorials/first-review.md: keep both in step
-import { icon, type TourDefinition } from "../tour.ts";
+import { icon, key, type TourDefinition } from "../tour.ts";
 
 /**
  * A tutorial on the review page itself: it uses the tour engine (spotlight, card) in the tutorial
@@ -13,16 +13,16 @@ export const firstReviewTour: TourDefinition = {
 		{
 			id: "play",
 			title: "Find the spot",
-			text: `Start the video with ${icon("play")} and stop it with ${icon("pause")} where something should change.`,
+			text: `Start the video with ${icon("play")} and stop it with ${icon("pause")} where something should change. ${key("Space")} works too.`,
 			advance: "signal",
 			waitForElement: true,
 			// the player's own shortcut for it
-			keys: [" ", "k", "K"],
+			keys: [" "],
 		},
 		{
 			id: "add-marker",
 			title: "Your first marker",
-			text: `Add a marker on this frame with ${icon("diamond-plus")} or M.`,
+			text: `Add a marker on this frame with ${icon("diamond-plus")} or ${key("M")}.`,
 			advance: "signal",
 			keys: ["m", "M"],
 			feedback: "Your first marker",
@@ -30,7 +30,7 @@ export const firstReviewTour: TourDefinition = {
 		{
 			id: "title",
 			title: "Say what to change",
-			text: "Type what should change, then press Enter.",
+			text: `Type what should change, then press ${key("Enter")}.`,
 			advance: "signal",
 			waitForElement: true,
 		},

@@ -36,14 +36,14 @@ Next. Icons in brackets are shown inline (rule 14).
 
 1. `play` (signal: played, then paused again): **Highlights:** the play/pause button.
    **Title:** "Find the spot". **Text:** "Start the video with [play] and stop it with [pause]
-   where something should change." Space and K work too. Waits until there is a player
+   where something should change. <kbd>Space</kbd> works too." Waits until there is a player
    (processing).
 2. `add-marker` (signal: a new marker was created): **Highlights:** the add-marker button.
-   **Title:** "Your first marker". **Text:** "Add a marker on this frame with [diamond-plus] or M."
-   M works too.
+   **Title:** "Your first marker". **Text:** "Add a marker on this frame with [diamond-plus] or
+   <kbd>M</kbd>."
 3. `title` (signal: Enter in the title field, or leaving it, with a title): **Highlights:** the
    title field of the marker editor. **Title:** "Say what to change". **Text:** "Type what should
-   change, then press Enter."
+   change, then press <kbd>Enter</kbd>."
 4. `category` (signal: a category was picked): **Highlights:** the category selector (its list
    opens above the dimming and works). **Title:** "Pick a category". **Text:** "Categories sort
    the feedback, e.g. color, sound or edit. Choose one." The category settings next to it are

@@ -97,6 +97,7 @@ export const setGuidesEnabled = command(v.boolean(), async (enabled) => {
 const START_RIGHTS = {
 	"share-link": ["shareLink", "create"],
 	"first-review": ["marker", "create"],
+	"marker-ranges": ["marker", "create"],
 } as const;
 
 /**

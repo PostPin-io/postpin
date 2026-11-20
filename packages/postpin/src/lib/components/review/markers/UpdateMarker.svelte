@@ -352,6 +352,7 @@
 							class="btn btn-square btn-ghost"
 							title={marker.duration > 0 ? "Make it a point marker" : "Make it a range"}
 							aria-label={marker.duration > 0 ? "Make it a point marker" : "Make it a range"}
+							data-guide={marker.duration === 0 && !mobile ? "marker-ranges/make-range" : undefined}
 							disabled={saving}
 							onclick={toggleRange}
 						>

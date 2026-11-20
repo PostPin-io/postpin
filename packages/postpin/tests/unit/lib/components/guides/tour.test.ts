@@ -6,6 +6,8 @@ import {
 	placeCard,
 	STEP_ICONS,
 	icon,
+	key,
+	keyLabel,
 	splitStepText,
 	stepKind,
 	type TourStep,
@@ -16,6 +18,7 @@ import { Role } from "@postpin-io/shared/db/enums";
 import { postpinGuidesTour } from "#lib/components/guides/tours/postpin-guides.ts";
 import { navigationTour } from "#lib/components/guides/tours/navigation.ts";
 import { firstReviewTour } from "#lib/components/guides/tutorials/first-review.ts";
+import { markerRangesTour } from "#lib/components/guides/tours/marker-ranges.ts";
 
 const viewport = { width: 1000, height: 800 };
 const card = { width: 300, height: 200 };
@@ -60,7 +63,7 @@ describe("fallbackStep", () => {
 	});
 });
 
-const TOURS = [shareLinkTour, postpinGuidesTour, navigationTour];
+const TOURS = [shareLinkTour, postpinGuidesTour, navigationTour, markerRangesTour];
 
 describe.each(TOURS.map((t) => [t.guideId, t] as const))("%s tour", (_, tour) => {
 	it("is a known tour with unique step ids", () => {
@@ -125,6 +128,7 @@ describe("first-review tutorial", () => {
 		const keys = (id: string) => firstReviewTour.steps.find((s) => s.id === id)!.keys ?? [];
 		expect(keys("play")).toContain(" ");
 		expect(keys("play")).not.toContain("m");
+		expect(keys("play")).not.toContain("k");
 		expect(keys("add-marker")).toEqual(["m", "M"]);
 		for (const step of firstReviewTour.steps) expect(step.keys ?? []).not.toContain("Escape");
 	});
@@ -221,6 +225,15 @@ describe("splitStepText", () => {
 		]);
 	});
 
+	it("splits around keys, shown as key caps", () => {
+		expect(splitStepText(`Press ${key("M")} or ${key("⌥")}`)).toEqual([
+			"Press ",
+			{ key: "M" },
+			" or ",
+			{ key: "⌥" },
+		]);
+	});
+
 	it("keeps an unknown icon as text, so a typo shows", () => {
 		expect(splitStepText("press {icon:nope}")).toEqual(["press {icon:nope}"]);
 	});
@@ -282,5 +295,75 @@ describe("navigation tour", () => {
 			expect(desktop() !== phone()).toBe(true);
 		}
 		vi.unstubAllGlobals();
+	});
+});
+
+describe("marker-ranges tour", () => {
+	const byId = (id: string) => markerRangesTour.steps.find((s) => s.id === id)!;
+
+	it("needs the timeline, so only runs on wide screens", () => {
+		expect(markerRangesTour.desktopOnly).toBe(true);
+	});
+
+	it("adds a marker first and shapes only that one, which a reviewer may change (rule 17)", () => {
+		expect(markerRangesTour.steps[0]!.id).toBe("add-marker");
+		expect(GUIDES.find((g) => g.id === "marker-ranges")?.minRole).toBe(Role.REVIEWER);
+	});
+
+	it("waits for the real drag, typing and click on the steps that do something", () => {
+		for (const id of ["add-marker", "move", "end", "timecode"]) {
+			expect(byId(id).advance, id).toBe("signal");
+		}
+		expect(byId("make-range").advance).toBe("click");
+	});
+
+	it("never goes back to adding a marker while the timeline opens", () => {
+		expect(byId("move").waitForElement).toBe(true);
+	});
+
+	it("lets the in and out keys through only where it explains them", () => {
+		expect(byId("keys").keys).toEqual(expect.arrayContaining([" ", "i", "o", "m"]));
+		for (const step of markerRangesTour.steps) {
+			if (step.id !== "keys") expect(step.keys ?? [], step.id).not.toContain("i");
+			expect(step.keys ?? [], step.id).not.toContain("Escape");
+		}
+	});
+});
+
+describe("keys in guide texts (rule 14)", () => {
+	it("labels keys as on the keyboard", () => {
+		expect(["m", "M", " ", "Alt", "Enter"].map(keyLabel)).toEqual([
+			"M",
+			"M",
+			"Space",
+			"⌥",
+			"Enter",
+		]);
+	});
+
+	const ALL = [...TOURS, firstReviewTour];
+	it.each(
+		ALL.flatMap((t) =>
+			t.steps.filter((s) => s.keys).map((s) => [`${t.guideId}/${s.id}`, s] as const),
+		),
+	)("%s names every key it lets through, as a key", (_, step) => {
+		const named = splitStepText(step.text).flatMap((p) =>
+			typeof p !== "string" && "key" in p ? [p.key] : [],
+		);
+		for (const k of step.keys!) expect(named, k).toContain(keyLabel(k));
+	});
+
+	it("never writes a key as plain text where it is a key", () => {
+		// a bare "or M" or "press Enter" would look different from the key caps elsewhere
+		for (const tour of ALL) {
+			for (const step of tour.steps) {
+				const plain = splitStepText(step.text)
+					.filter((p) => typeof p === "string")
+					.join("");
+				expect(plain, `${tour.guideId}/${step.id}`).not.toMatch(
+					/\b(press|with|or) (Enter|Space|[A-Z])\b|⌥/,
+				);
+			}
+		}
 	});
 });

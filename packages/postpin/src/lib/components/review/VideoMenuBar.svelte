@@ -244,7 +244,9 @@
 					style:--marker-contrast={markerColor ? contrastColor(markerColor) : undefined}
 					title="Add marker at playhead (M)"
 					aria-label="Add marker at playhead"
-					data-guide={playerAvailable ? "first-review/add-marker" : undefined}
+					data-guide={playerAvailable
+						? "first-review/add-marker marker-ranges/add-marker marker-ranges/keys"
+						: undefined}
 					onclick={() => onCreateMarker()}
 				>
 					<DiamondPlus size={iconSize} />
@@ -290,6 +292,7 @@
 						: timelineMode === "compact"
 							? "Hide Timeline"
 							: "Show Timeline"}
+					data-guide={timelineMode === "hidden" ? "marker-ranges/show-timeline" : undefined}
 					onclick={() => (timelineMode = nextTimelineMode(timelineMode))}
 				>
 					{#if timelineMode === "full"}<ChevronsDownUp
