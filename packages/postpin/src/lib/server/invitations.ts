@@ -1,7 +1,8 @@
 import { BETTER_AUTH_URL } from "$app/env/private";
 import { sendEmail } from "./email";
 
-export const INVITATION_TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
+// Lives next to the invite targets, so the invite dialog can name it too
+export { INVITATION_TTL_MS } from "#lib/invite-target.ts";
 
 export async function sendInvitationEmail(
 	inv: { id: string; email: string },
