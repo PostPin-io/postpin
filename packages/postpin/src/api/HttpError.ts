@@ -24,4 +24,4 @@ export class PluginRoleError extends HttpError {
 }
 
 export const PLUGIN_ROLE_MESSAGE =
-	"PostPin plugins need the Member role. You're a Reviewer here: ask an admin of your organization to change your role, or review in the browser.";
+	"PostPin plugins need the Member role. You're a Reviewer here, and reviewers can't upload exports or change other people's markers, which is what the plugins do. Ask an admin of your organization to change your role, or review in the browser.";

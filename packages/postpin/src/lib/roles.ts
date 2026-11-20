@@ -173,7 +173,7 @@ export const mayUsePlugins = (roles: Role[]) =>
 
 /** Shown where a reviewer-only account tries to sign in a plugin */
 export const PLUGIN_SIGN_IN_DENIED =
-	"PostPin plugins need the Member role, and you're a Reviewer in all your organizations. Ask an admin to change your role, or review right here in the browser.";
+	"PostPin plugins need the Member role, and you're a Reviewer in all your organizations. The plugins upload exports and sync everyone's markers, and a reviewer can do neither. Ask an admin to change your role, or review right here in the browser.";
 
 /**
  * Full check. Fails closed: if a rule needs `isOwn` or `hasGrant` and the
