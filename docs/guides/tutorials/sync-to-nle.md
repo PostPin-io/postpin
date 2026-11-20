@@ -74,21 +74,23 @@ program it is about. <program> is the program of the connected plugin (see Notes
    timeline for your exports. You can create a project or timeline right there." **Done when:**
    "Next".
 4. `render-upload`: **Title:** "Render & Upload". **Text:** "Renders the open timeline and uploads
-   it as a new export to that timeline, ready for review." **Done when:** "Next". Explained, not
-   done: an upload isn't needed for the rest of the tutorial (see Notes, plugin-workflow).
+   it as a new export to that timeline, ready for review. Name it above, or leave the name to the
+   plugin." **Done when:** "Next". Explained, not done: an upload isn't needed for the rest of the
+   tutorial (see Notes, plugin-workflow).
 5. `render-to-disk`: **Title:** "Also a file for you". **Text:** "With the settings button next to
-   it, the same render also lands in a folder of your choice." **Done when:** "Next". Left out for
-   programs without render to disk (`capabilities.renderToDisk`; the tutorial knows it from the
-   program, see Notes).
+   it, the same render also lands in a folder of your choice." **Done when:** "Next". Only for
+   DaVinci Resolve, left out for the others (see Notes).
 6. `exchange-with`: **Title:** "Choose the export for markers". **Text:** "Under Exchange markers
-   with, choose the export whose markers you want, for now: <project> › <timeline> › <export>."
-   Names the export the tutorial chose (the latest one with markers). **Done when:** "Next".
+   with, choose the export whose markers you want, for now: <project> › <timeline> › <export>. The
+   plugin remembers it for this timeline." Names the export the tutorial chose (the latest one with
+   markers). **Done when:** "Next".
 7. `markers`: **Title:** "Markers go both ways". **Text:** "The arrow on each button in Markers shows
-   where the markers go. Before anything changes, the plugin shows what will change." **Done
-   when:** "Next".
+   where the markers go. Before anything changes, the plugin shows a preview of what will change."
+   **Done when:** "Next".
 8. `to-program`: **Title:** "Bring the markers over". **Text:** "Click the button with the arrow
-   from PostPin to <program>, and apply the preview." **Done when:** the server saw the sync (Detection), or
-   "I did it".
+   from PostPin to <program>. The preview lists what comes in; click Apply." **Done when:** the
+   server saw the sync (Detection), or the quiet button "The plugin says Nothing to sync" (the
+   markers are there already; see Detection).
 9. `see-markers`: **Title:** "Your markers are on the timeline". **Text:** "Each marker comes with
    its category: a color, and the name as a #tag in its description. Keep the tag, it keeps the
    category when the marker goes back." **Done when:** "Next".
@@ -96,11 +98,11 @@ program it is about. <program> is the program of the connected plugin (see Notes
     or change one. Markers without a #tag get a category named after their color." **Done when:**
     "Next".
 11. `to-postpin`: **Title:** "Send it back". **Text:** "Click the button with the arrow from
-    <program> to PostPin, and apply the preview." **Done when:** the server saw the sync with at least one
+    <program> to PostPin, and click Apply." **Done when:** the server saw the sync with at least one
     new or changed marker (Detection), or "I did it".
 12. `history`: **Title:** "Every sync can be undone". **Text:** "History under the marker buttons
-    lists your syncs. Undo one to get the markers back as they were before it." **Done when:**
-    "Next".
+    lists every sync, with a backup taken before it. Undo brings the markers back as they were."
+    **Done when:** "Next". Explained, not done.
 13. `done`: **Completion screen:** "✓ You're set up in <program>". **Text:** "Bring the markers over
     before you start and send them back when you're done; only what changed travels. More under
     PostPin Guides in the account menu." **Done when:** "Open your export" (the review page of the
@@ -119,22 +121,31 @@ needs: `action`, `createdById`, `exportId`, `hostName`, `createdAt` and `summary
 stay words of the code.)
 
 - **`to-program`:** a `MarkerSet` with `action: PULL` by the user, created after the step began.
+  The plugin creates it (`POST …/marker-sets`) before it writes into the program, and only when
+  something is written or removed (`summary.nle`), not for a sync that only links markers.
 - **`to-postpin`:** a `MarkerSet` with `action: PUSH` by the user, created after the step began,
-  whose `summary` has at least one added or changed marker (an empty one means the marker from
-  `add-marker` didn't make it, e.g. another export chosen: the step keeps waiting).
+  whose `summary.postpin` has at least one added or updated marker. The server creates it in the
+  same transaction as the push (`POST …/markers/sync`), also for a push that only links markers,
+  hence the check (an empty one means the marker from `add-marker` didn't make it, e.g. another
+  export chosen: the step keeps waiting).
 - On any export, not only the one named in `exchange-with`: the user may have chosen another. The
   `exportId` of `to-postpin` is the export "Open your export" opens.
 - No table and no API of its own for the tutorial, and no guessing from `nleId` / `updatedAt`.
+  `getMarkerSyncSignal` reads `MarkerSet` (`createdById`, `createdAt`, `action`), indexed by
+  `createdById`.
 
-**To agree with the marker sync (open):** the plugin creates no set for a sync that changes nothing
-(it says "Nothing to sync." and skips the preview), so the tutorial can't see it. That is common
-for users who tried the plugin before. Either the plugin records such syncs too (and the History
-leaves sets with an empty summary out), or `to-program` counts "I did it" as enough. "I did it" stays as a quiet button in both sync steps
-for a sync that failed in the plugin or an older plugin without marker sets.
+**Nothing to sync:** a sync without changes creates no set; the plugin shows the toast "Nothing to
+sync." and no preview. For `to-program` that happens when the markers are in the program already
+(the user synced before), so the step has a quiet button "The plugin says Nothing to sync" that
+goes on, with the success feedback left out. `to-postpin` can't end like that: the user just added
+a marker, so there is something to sync; "I did it" stays there as the quiet way out (a marker that
+couldn't be written, see Notes). An older plugin can't sync at all (API version 2: it shows the
+version mismatch screen), so there is no case of syncs without sets.
 
 ## Success feedback
 
-- After `to-program`: "✓ <n> markers in <program>" (from the set's `summary`)
+- After `to-program`: "✓ <n> markers in <program>" (`summary.nle.added` + `updated`; left out after
+  "Nothing to sync")
 - After `to-postpin`: "✓ Your marker is in PostPin"
 - `done` is the confirmation: "✓ You're set up in <program>".
 
@@ -159,9 +170,20 @@ for a sync that failed in the plugin or an older plugin without marker sets.
   surprised: the migration marks it completed for them.
 - **<program>:** the `hostName` of the user's latest marker set, before that the plugin signed in
   most recently (`DEVICE_CLIENTS` → DaVinci Resolve, Premiere Pro, Pro Tools). With several plugins
-  connected, the first sync corrects it. `render-to-disk` needs to know whether that program can
-  render to disk; the web app has no `capabilities`, so it is a fixed list per client in
-  `DEVICE_CLIENTS` (to check per plugin which ones can).
+  connected, the first sync corrects it.
+- **Render to disk** (`render-to-disk`): only DaVinci Resolve can (`capabilities.renderToDisk` is
+  `true` in the Resolve plugin, `false` in Premiere Pro and Pro Tools). The web app has no
+  `capabilities`, so it is a flag per client in `DEVICE_CLIENTS`; whoever enables render to disk in
+  another plugin sets it there too.
+- **The plugin answers in toasts:** the outcome of a sync shows for a few seconds at the bottom of
+  the plugin ("Synced to DaVinci Resolve: 3 new." / "Nothing to sync."), warnings stay as an alert.
+  The tutorial's own success feedback is the confirmation that counts; it doesn't quote the toasts.
+- **Markers that can't be written:** the plugin lists them with the reason in a warning, and links
+  the rest. In DaVinci Resolve a marker on a taken frame goes to the next free one instead of
+  failing, so `see-markers` needs no word on it.
+- **Remembered destinations:** the plugin remembers "Upload to" and "Exchange markers with" per
+  timeline of the program, also after a restart. `exchange-with` may find the export chosen
+  already; the text works either way.
 - **Export it uses:** the latest export with markers in an organization where the user may use the
   plugins (`plugin.use`; a member in one organization can be a reviewer in another), found like
   `getGuideStart`. Deleted markers don't count: they are deleted for real, the marker sync only
@@ -185,6 +207,10 @@ for a sync that failed in the plugin or an older plugin without marker sets.
   on the target, tagged "was deleted"). Clicking a line leaves that marker out or takes it in.
 - **Clear all markers** is only named (`program`), never done: it deletes the user's markers in the
   program (backed up first, the History can undo it).
+- **The History** (`MarkerHistoryModal`): one row per action (sync to either side, clear all,
+  restore) with what changed on each side; "Undo" asks "Really undo?" once and restores the side
+  the action changed. Undoing creates a backup itself, so an undo can be undone. `history` only
+  explains it: undoing the tutorial's own sync would take the user's new marker away again.
 - **Open:** the sketch of the panel (`TutorialShell`): one per layout or only the wide one. The wide
   one is what most see in Resolve and Premiere; screenshots would do too, but go out of date.
 - Continues from the install tutorials ([install-resolve](install-resolve.md),
