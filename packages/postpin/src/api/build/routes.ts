@@ -10,6 +10,8 @@ import { SpecController } from "./../controllers/SpecController";
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ProjectController } from "./../controllers/ProjectController";
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { MarkerSetController } from "./../controllers/MarkerSetController";
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { MarkerController } from "./../controllers/MarkerController";
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ExportController } from "./../controllers/ExportController";
@@ -86,6 +88,349 @@ const models: TsoaRoute.Models = {
 		additionalProperties: false,
 	},
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	MarkerSetAction: {
+		dataType: "refAlias",
+		type: {
+			dataType: "union",
+			subSchemas: [
+				{ dataType: "enum", enums: ["PUSH"] },
+				{ dataType: "enum", enums: ["PULL"] },
+				{ dataType: "enum", enums: ["CLEAR"] },
+				{ dataType: "enum", enums: ["RESTORE"] },
+			],
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	MarkerSetSideSummary: {
+		dataType: "refObject",
+		properties: {
+			added: { dataType: "double", required: true },
+			updated: { dataType: "double", required: true },
+			removed: { dataType: "double", required: true },
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	MarkerSetSummary: {
+		dataType: "refObject",
+		properties: {
+			nle: { ref: "MarkerSetSideSummary" },
+			postpin: { ref: "MarkerSetSideSummary" },
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	MarkerSetListItem: {
+		dataType: "refObject",
+		properties: {
+			id: { dataType: "string", required: true },
+			action: { ref: "MarkerSetAction", required: true },
+			timelineId: { dataType: "string", required: true },
+			exportId: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			exportName: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			nleTimelineId: { dataType: "string", required: true },
+			nleTimelineName: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			hostName: { dataType: "string", required: true },
+			createdAt: { dataType: "datetime", required: true },
+			createdBy: {
+				dataType: "union",
+				subSchemas: [
+					{
+						dataType: "nestedObjectLiteral",
+						nestedProperties: {
+							name: { dataType: "string", required: true },
+							id: { dataType: "string", required: true },
+						},
+					},
+					{ dataType: "enum", enums: [null] },
+				],
+				required: true,
+			},
+			summary: { ref: "MarkerSetSummary", required: true },
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	NleMarkerSnapshotEntry: {
+		dataType: "refObject",
+		properties: {
+			nleId: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			title: { dataType: "string", required: true },
+			description: { dataType: "string", required: true },
+			frame: { dataType: "double", required: true },
+			duration: { dataType: "double" },
+			color: { dataType: "string", required: true },
+			customData: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	NleMarkerSnapshot: {
+		dataType: "refObject",
+		properties: {
+			format: { dataType: "double", required: true },
+			markers: {
+				dataType: "array",
+				array: { dataType: "refObject", ref: "NleMarkerSnapshotEntry" },
+				required: true,
+			},
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	PostPinResponseSnapshot: {
+		dataType: "refObject",
+		properties: {
+			id: { dataType: "string", required: true },
+			content: { dataType: "string", required: true },
+			authorId: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			createdAt: { dataType: "string", required: true },
+			updatedAt: { dataType: "string", required: true },
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	PostPinPointerSnapshot: {
+		dataType: "refObject",
+		properties: {
+			id: { dataType: "string", required: true },
+			kind: {
+				dataType: "union",
+				subSchemas: [
+					{ dataType: "enum", enums: ["ARROW"] },
+					{ dataType: "enum", enums: ["RECT"] },
+				],
+				required: true,
+			},
+			x: { dataType: "double", required: true },
+			y: { dataType: "double", required: true },
+			width: {
+				dataType: "union",
+				subSchemas: [{ dataType: "double" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			height: {
+				dataType: "union",
+				subSchemas: [{ dataType: "double" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			color: { dataType: "string", required: true },
+			createdAt: { dataType: "string", required: true },
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	PostPinMarkerSnapshotEntry: {
+		dataType: "refObject",
+		properties: {
+			id: { dataType: "string", required: true },
+			name: { dataType: "string", required: true },
+			description: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			frame: { dataType: "double", required: true },
+			duration: { dataType: "double", required: true },
+			categoryId: { dataType: "string", required: true },
+			categoryName: { dataType: "string", required: true },
+			categoryColor: { dataType: "string", required: true },
+			nleId: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			nleTimelineId: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			syncHash: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			authorId: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			guestId: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			createdAt: { dataType: "string", required: true },
+			responses: {
+				dataType: "array",
+				array: { dataType: "refObject", ref: "PostPinResponseSnapshot" },
+				required: true,
+			},
+			pointers: {
+				dataType: "array",
+				array: { dataType: "refObject", ref: "PostPinPointerSnapshot" },
+				required: true,
+			},
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	PostPinMarkerSnapshot: {
+		dataType: "refObject",
+		properties: {
+			format: { dataType: "double", required: true },
+			markers: {
+				dataType: "array",
+				array: { dataType: "refObject", ref: "PostPinMarkerSnapshotEntry" },
+				required: true,
+			},
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	MarkerSetDetail: {
+		dataType: "refObject",
+		properties: {
+			id: { dataType: "string", required: true },
+			action: { ref: "MarkerSetAction", required: true },
+			timelineId: { dataType: "string", required: true },
+			exportId: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			exportName: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			nleTimelineId: { dataType: "string", required: true },
+			nleTimelineName: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			hostName: { dataType: "string", required: true },
+			createdAt: { dataType: "datetime", required: true },
+			createdBy: {
+				dataType: "union",
+				subSchemas: [
+					{
+						dataType: "nestedObjectLiteral",
+						nestedProperties: {
+							name: { dataType: "string", required: true },
+							id: { dataType: "string", required: true },
+						},
+					},
+					{ dataType: "enum", enums: [null] },
+				],
+				required: true,
+			},
+			summary: { ref: "MarkerSetSummary", required: true },
+			nleMarkers: { ref: "NleMarkerSnapshot", required: true },
+			postpinMarkers: {
+				dataType: "union",
+				subSchemas: [{ ref: "PostPinMarkerSnapshot" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+		},
+		additionalProperties: false,
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	MarkerSetCreate: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				summary: { ref: "MarkerSetSummary", required: true },
+				nleMarkers: {
+					dataType: "array",
+					array: { dataType: "refObject", ref: "NleMarkerSnapshotEntry" },
+					required: true,
+				},
+				hostName: { dataType: "string", required: true },
+				nleTimelineName: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				},
+				nleTimelineId: { dataType: "string", required: true },
+				exportId: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				},
+				action: {
+					dataType: "union",
+					subSchemas: [
+						{ dataType: "enum", enums: ["PULL"] },
+						{ dataType: "enum", enums: ["CLEAR"] },
+						{ dataType: "enum", enums: ["RESTORE"] },
+					],
+					required: true,
+				},
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	MarkerSetRestoreResult: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				summary: { ref: "MarkerSetSummary", required: true },
+				markerSetId: { dataType: "string", required: true },
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	MarkerSetRestore: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				nleSummary: { ref: "MarkerSetSideSummary" },
+				nleMarkers: {
+					dataType: "array",
+					array: { dataType: "refObject", ref: "NleMarkerSnapshotEntry" },
+					required: true,
+				},
+				hostName: { dataType: "string", required: true },
+				nleTimelineName: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				},
+				nleTimelineId: { dataType: "string", required: true },
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 	DefaultSelection__36_ResponsePayload_: {
 		dataType: "refAlias",
 		type: {
@@ -121,6 +466,16 @@ const models: TsoaRoute.Models = {
 		type: {
 			dataType: "nestedObjectLiteral",
 			nestedProperties: {
+				syncHash: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
+				nleTimelineId: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
 				nleId: {
 					dataType: "union",
 					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
@@ -162,6 +517,16 @@ const models: TsoaRoute.Models = {
 	MarkerWithResponses: {
 		dataType: "refObject",
 		properties: {
+			syncHash: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
+			nleTimelineId: {
+				dataType: "union",
+				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				required: true,
+			},
 			nleId: {
 				dataType: "union",
 				subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
@@ -221,6 +586,181 @@ const models: TsoaRoute.Models = {
 					required: true,
 				},
 				name: { dataType: "string", required: true },
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	MarkerOrigin: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				webUpload: { dataType: "boolean", required: true },
+				frameRate: {
+					dataType: "union",
+					subSchemas: [
+						{
+							dataType: "nestedObjectLiteral",
+							nestedProperties: {
+								dropFrame: { dataType: "boolean", required: true },
+								fpsDenominator: { dataType: "double", required: true },
+								fpsNumerator: { dataType: "double", required: true },
+							},
+						},
+						{ dataType: "enum", enums: [null] },
+					],
+					required: true,
+				},
+				startFrameIndex: {
+					dataType: "union",
+					subSchemas: [{ dataType: "double" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	DefaultSelection__36_DeletedMarkerPayload_: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				deletedAt: { dataType: "datetime", required: true },
+				markerId: { dataType: "string", required: true },
+				syncHash: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
+				nleTimelineId: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
+				nleId: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+					required: true,
+				},
+				exportId: { dataType: "string", required: true },
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	DeletedMarkerModel: {
+		dataType: "refAlias",
+		type: { ref: "DefaultSelection__36_DeletedMarkerPayload_", validators: {} },
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	DeletedMarker: {
+		dataType: "refAlias",
+		type: { ref: "DeletedMarkerModel", validators: {} },
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	MarkerPushResult: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				markers: {
+					dataType: "array",
+					array: {
+						dataType: "nestedObjectLiteral",
+						nestedProperties: {
+							nleId: {
+								dataType: "union",
+								subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+								required: true,
+							},
+							id: { dataType: "string", required: true },
+						},
+					},
+					required: true,
+				},
+				markerSetId: { dataType: "string", required: true },
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	SyncMarker: {
+		dataType: "refAlias",
+		type: {
+			dataType: "intersection",
+			subSchemas: [
+				{ ref: "UploadMarker" },
+				{
+					dataType: "nestedObjectLiteral",
+					nestedProperties: {
+						syncHash: {
+							dataType: "union",
+							subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+						},
+					},
+				},
+			],
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	MarkerPush: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				summary: { ref: "MarkerSetSummary", required: true },
+				deleteIds: { dataType: "array", array: { dataType: "string" }, required: true },
+				upserts: {
+					dataType: "array",
+					array: { dataType: "refAlias", ref: "SyncMarker" },
+					required: true,
+				},
+				nleMarkers: {
+					dataType: "array",
+					array: { dataType: "refObject", ref: "NleMarkerSnapshotEntry" },
+					required: true,
+				},
+				hostName: { dataType: "string", required: true },
+				nleTimelineName: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				},
+				nleTimelineId: { dataType: "string", required: true },
+			},
+			validators: {},
+		},
+	},
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	MarkerLinks: {
+		dataType: "refAlias",
+		type: {
+			dataType: "nestedObjectLiteral",
+			nestedProperties: {
+				forgetDeleted: { dataType: "array", array: { dataType: "string" }, required: true },
+				links: {
+					dataType: "array",
+					array: {
+						dataType: "nestedObjectLiteral",
+						nestedProperties: {
+							syncHash: {
+								dataType: "union",
+								subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+								required: true,
+							},
+							nleId: {
+								dataType: "union",
+								subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+								required: true,
+							},
+							id: { dataType: "string", required: true },
+						},
+					},
+					required: true,
+				},
+				nleTimelineId: { dataType: "string", required: true },
 			},
 			validators: {},
 		},
@@ -915,6 +1455,231 @@ export function RegisterRoutes(server: any) {
 		},
 	});
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsMarkerSetController_getMarkerSets: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+		nleTimelineId: { in: "query", name: "nleTimelineId", dataType: "string" },
+	};
+	server.route({
+		method: "get",
+		path: "/v1/projects/{projectId}/timelines/{timelineId}/marker-sets",
+		options: {
+			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerSetController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerSetController.prototype.getMarkerSets),
+			],
+			handler: function MarkerSetController_getMarkerSets(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsMarkerSetController_getMarkerSets,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new MarkerSetController();
+
+				return templateService.apiHandler({
+					methodName: "getMarkerSets",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsMarkerSetController_getMarkerSet: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+		markerSetId: { in: "path", name: "markerSetId", required: true, dataType: "string" },
+	};
+	server.route({
+		method: "get",
+		path: "/v1/projects/{projectId}/timelines/{timelineId}/marker-sets/{markerSetId}",
+		options: {
+			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerSetController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerSetController.prototype.getMarkerSet),
+			],
+			handler: function MarkerSetController_getMarkerSet(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsMarkerSetController_getMarkerSet,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new MarkerSetController();
+
+				return templateService.apiHandler({
+					methodName: "getMarkerSet",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsMarkerSetController_createMarkerSet: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+		body: { in: "body", name: "body", required: true, ref: "MarkerSetCreate" },
+	};
+	server.route({
+		method: "post",
+		path: "/v1/projects/{projectId}/timelines/{timelineId}/marker-sets",
+		options: {
+			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerSetController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(
+					MarkerSetController.prototype.createMarkerSet,
+				),
+			],
+			handler: function MarkerSetController_createMarkerSet(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsMarkerSetController_createMarkerSet,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new MarkerSetController();
+
+				return templateService.apiHandler({
+					methodName: "createMarkerSet",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsMarkerSetController_restoreMarkerSet: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+		markerSetId: { in: "path", name: "markerSetId", required: true, dataType: "string" },
+		body: { in: "body", name: "body", required: true, ref: "MarkerSetRestore" },
+	};
+	server.route({
+		method: "post",
+		path: "/v1/projects/{projectId}/timelines/{timelineId}/marker-sets/{markerSetId}/restore",
+		options: {
+			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerSetController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(
+					MarkerSetController.prototype.restoreMarkerSet,
+				),
+			],
+			handler: function MarkerSetController_restoreMarkerSet(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsMarkerSetController_restoreMarkerSet,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new MarkerSetController();
+
+				return templateService.apiHandler({
+					methodName: "restoreMarkerSet",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 	const argsMarkerController_getMarkers: Record<string, TsoaRoute.ParameterSchema> = {
 		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
 		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
@@ -1032,6 +1797,230 @@ export function RegisterRoutes(server: any) {
 		},
 	});
 	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsMarkerController_getMarkerOrigin: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+		exportId: { in: "path", name: "exportId", required: true, dataType: "string" },
+	};
+	server.route({
+		method: "get",
+		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers/origin",
+		options: {
+			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerController.prototype.getMarkerOrigin),
+			],
+			handler: function MarkerController_getMarkerOrigin(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsMarkerController_getMarkerOrigin,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new MarkerController();
+
+				return templateService.apiHandler({
+					methodName: "getMarkerOrigin",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsMarkerController_getDeletedMarkers: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+		exportId: { in: "path", name: "exportId", required: true, dataType: "string" },
+	};
+	server.route({
+		method: "get",
+		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers/deleted",
+		options: {
+			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(
+					MarkerController.prototype.getDeletedMarkers,
+				),
+			],
+			handler: function MarkerController_getDeletedMarkers(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsMarkerController_getDeletedMarkers,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new MarkerController();
+
+				return templateService.apiHandler({
+					methodName: "getDeletedMarkers",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsMarkerController_syncMarkers: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+		exportId: { in: "path", name: "exportId", required: true, dataType: "string" },
+		body: { in: "body", name: "body", required: true, ref: "MarkerPush" },
+	};
+	server.route({
+		method: "post",
+		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers/sync",
+		options: {
+			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerController.prototype.syncMarkers),
+			],
+			handler: function MarkerController_syncMarkers(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsMarkerController_syncMarkers,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new MarkerController();
+
+				return templateService.apiHandler({
+					methodName: "syncMarkers",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+	const argsMarkerController_linkMarkers: Record<string, TsoaRoute.ParameterSchema> = {
+		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
+		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
+		exportId: { in: "path", name: "exportId", required: true, dataType: "string" },
+		body: { in: "body", name: "body", required: true, ref: "MarkerLinks" },
+	};
+	server.route({
+		method: "post",
+		path: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers/links",
+		options: {
+			pre: [
+				{
+					method: authenticateMiddleware([{ session: [] }]),
+				},
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerController),
+				...fetchMiddlewares<RouteOptionsPreAllOptions>(MarkerController.prototype.linkMarkers),
+			],
+			handler: function MarkerController_linkMarkers(request: Request, h: ResponseToolkit) {
+				let validatedArgs: any[] = [];
+				try {
+					validatedArgs = templateService.getValidatedArgs({
+						args: argsMarkerController_linkMarkers,
+						request,
+						h,
+					});
+				} catch (err) {
+					const error = err as any;
+					if (isBoom(error)) {
+						throw error;
+					}
+
+					const boomErr = boomify(error instanceof Error ? error : new Error(error.message), {
+						statusCode: error.status || 500,
+					});
+					boomErr.output.statusCode = error.status || 500;
+					boomErr.output.payload = {
+						name: error.name,
+						fields: error.fields,
+						message: error.message,
+					} as unknown as Payload;
+					throw boomErr;
+				}
+
+				const controller = new MarkerController();
+
+				return templateService.apiHandler({
+					methodName: "linkMarkers",
+					controller,
+					h,
+					validatedArgs,
+					successStatus: undefined,
+				});
+			},
+		},
+	});
+	// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 	const argsExportController_getExports: Record<string, TsoaRoute.ParameterSchema> = {
 		projectId: { in: "path", name: "projectId", required: true, dataType: "string" },
 		timelineId: { in: "path", name: "timelineId", required: true, dataType: "string" },
@@ -1095,6 +2084,10 @@ export function RegisterRoutes(server: any) {
 			required: true,
 			dataType: "nestedObjectLiteral",
 			nestedProperties: {
+				name: {
+					dataType: "union",
+					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],
+				},
 				nleProjectId: {
 					dataType: "union",
 					subSchemas: [{ dataType: "string" }, { dataType: "enum", enums: [null] }],

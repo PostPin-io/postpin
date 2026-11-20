@@ -27,6 +27,8 @@ export interface RenderAndUploadOptions {
 	client: Client;
 	projectId: string;
 	timelineId: string;
+	/** the new export's name; left out, the server names it */
+	exportName?: string;
 	// human readable progress, one line per step
 	onStep?: (message: string) => void;
 	onRenderProgress?: (progress: RenderProgress) => void;
@@ -93,6 +95,7 @@ export async function renderAndUpload({
 	client,
 	projectId,
 	timelineId,
+	exportName,
 	onStep = () => {},
 	onRenderProgress = () => {},
 	onTranscodeProgress = () => {},
@@ -136,7 +139,11 @@ export async function renderAndUpload({
 		const { data: createdExport } = await createExport({
 			client,
 			path: { projectId, timelineId },
-			body: { nleProjectId, nleTimelineId: nleTimelineInfo.id },
+			body: {
+				nleProjectId,
+				nleTimelineId: nleTimelineInfo.id,
+				...(exportName?.trim() && { name: exportName.trim() }),
+			},
 			throwOnError: true,
 		});
 		const exportId = createdExport.id;

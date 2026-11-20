@@ -1,7 +1,12 @@
 import type { HostBridge, NleBridge } from "@postpin-io/plugin-core/bridge";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 import { CommonAPI, NleAPI, type Rendition } from "./ipc/renderer/PostPin";
-import { fromWireCapabilities, fromWireMarker, toWireMarker } from "./wire";
+import {
+	fromWireCapabilities,
+	fromWireMarker,
+	fromWireSetMarkerResult,
+	toWireMarker,
+} from "./wire";
 
 // The preload exposes every method, Partial only reflects that eipc can't prove it
 function exposed<T>(api: Partial<T> | undefined, name: string) {
@@ -112,7 +117,11 @@ export function connectNleBridge(): NleBridge {
 		getProjectId: () => api.getProjectId(),
 		getTimelineInfo: () => api.getTimelineInfo(),
 		getMarkers: async () => (await api.getMarkers()).map(fromWireMarker),
-		setMarkers: (markers) => api.setMarkers(markers.map(toWireMarker)),
+		setMarkers: async (markers) =>
+			(await api.setMarkers(markers.map(toWireMarker))).map(fromWireSetMarkerResult),
+		removeMarkers: async (nleIds) => {
+			await api.removeMarkers(nleIds);
+		},
 		clearMarkers: async () => {
 			await api.clearMarkers();
 		},

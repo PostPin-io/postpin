@@ -5,7 +5,7 @@ import type { NleBridge } from "@postpin-io/plugin-core/bridge";
 import { BrowserWindow, dialog, nativeTheme, shell } from "electron";
 import { stat } from "node:fs/promises";
 import { CommonAPI, NleAPI } from "../ipc/browser/PostPin";
-import { fromWireMarker, toWireCapabilities, toWireMarker } from "../wire";
+import { fromWireMarker, toWireCapabilities, toWireMarker, toWireSetMarkerResult } from "../wire";
 import { createAuth, type AuthOptions } from "./auth";
 import { createSettings } from "./settings";
 import { uploadFile } from "./upload";
@@ -194,7 +194,12 @@ export function exposeNleBridge(win: BrowserWindow, bridge: NleBridge) {
 		getProjectId: () => bridge.getProjectId(),
 		getTimelineInfo: () => bridge.getTimelineInfo(),
 		getMarkers: async () => (await bridge.getMarkers()).map(toWireMarker),
-		setMarkers: (markers) => bridge.setMarkers(markers.map(fromWireMarker)),
+		setMarkers: async (markers) =>
+			(await bridge.setMarkers(markers.map(fromWireMarker))).map(toWireSetMarkerResult),
+		removeMarkers: async (nleIds) => {
+			await bridge.removeMarkers(nleIds);
+			return true;
+		},
 		clearMarkers: async () => {
 			await bridge.clearMarkers();
 			return true;

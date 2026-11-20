@@ -5,6 +5,7 @@ export {
 	$eipc_validator$_PaletteColor,
 	$eipc_validator$_Capabilities,
 	$eipc_validator$_NleMarker,
+	$eipc_validator$_SetMarkerResult,
 	$eipc_validator$_RenderProgress,
 	$eipc_validator$_UploadPartUrl,
 	$eipc_validator$_UploadedPart,

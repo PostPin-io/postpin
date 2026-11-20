@@ -29,6 +29,7 @@ model Timeline {
   project       Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId     String
   exports       Export[]
+  markerSets    MarkerSet[]
   nleTimelineId String?
   memberGrants  MemberGrant[]
   invitations   Invitation[]
@@ -56,6 +57,8 @@ model Export {
   /// Why the worker couldn't use the cut list; the cuts are estimated then
   cutListError         String?
   markers              Marker[]
+  deletedMarkers       DeletedMarker[]
+  markerSets           MarkerSet[]
   shareLinks           ShareLink[]
   uploadedBy           User?       @relation("ExportUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
   uploadedById         String?

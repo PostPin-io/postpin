@@ -437,6 +437,23 @@ export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
 	_max?: Prisma.NestedJsonFilter<$PrismaModel>;
 };
 
+export type EnumMarkerSetActionFilter<$PrismaModel = never> = {
+	equals?: $Enums.MarkerSetAction | Prisma.EnumMarkerSetActionFieldRefInput<$PrismaModel>;
+	in?: $Enums.MarkerSetAction[] | Prisma.ListEnumMarkerSetActionFieldRefInput<$PrismaModel>;
+	notIn?: $Enums.MarkerSetAction[] | Prisma.ListEnumMarkerSetActionFieldRefInput<$PrismaModel>;
+	not?: Prisma.NestedEnumMarkerSetActionFilter<$PrismaModel> | $Enums.MarkerSetAction;
+};
+
+export type EnumMarkerSetActionWithAggregatesFilter<$PrismaModel = never> = {
+	equals?: $Enums.MarkerSetAction | Prisma.EnumMarkerSetActionFieldRefInput<$PrismaModel>;
+	in?: $Enums.MarkerSetAction[] | Prisma.ListEnumMarkerSetActionFieldRefInput<$PrismaModel>;
+	notIn?: $Enums.MarkerSetAction[] | Prisma.ListEnumMarkerSetActionFieldRefInput<$PrismaModel>;
+	not?: Prisma.NestedEnumMarkerSetActionWithAggregatesFilter<$PrismaModel> | $Enums.MarkerSetAction;
+	_count?: Prisma.NestedIntFilter<$PrismaModel>;
+	_min?: Prisma.NestedEnumMarkerSetActionFilter<$PrismaModel>;
+	_max?: Prisma.NestedEnumMarkerSetActionFilter<$PrismaModel>;
+};
+
 export type EnumMediaStatusFilter<$PrismaModel = never> = {
 	equals?: $Enums.MediaStatus | Prisma.EnumMediaStatusFieldRefInput<$PrismaModel>;
 	in?: $Enums.MediaStatus[] | Prisma.ListEnumMediaStatusFieldRefInput<$PrismaModel>;
@@ -838,6 +855,23 @@ export type NestedJsonFilterBase<$PrismaModel = never> = {
 	gte?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>;
 	not?:
 		runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | Prisma.JsonNullValueFilter;
+};
+
+export type NestedEnumMarkerSetActionFilter<$PrismaModel = never> = {
+	equals?: $Enums.MarkerSetAction | Prisma.EnumMarkerSetActionFieldRefInput<$PrismaModel>;
+	in?: $Enums.MarkerSetAction[] | Prisma.ListEnumMarkerSetActionFieldRefInput<$PrismaModel>;
+	notIn?: $Enums.MarkerSetAction[] | Prisma.ListEnumMarkerSetActionFieldRefInput<$PrismaModel>;
+	not?: Prisma.NestedEnumMarkerSetActionFilter<$PrismaModel> | $Enums.MarkerSetAction;
+};
+
+export type NestedEnumMarkerSetActionWithAggregatesFilter<$PrismaModel = never> = {
+	equals?: $Enums.MarkerSetAction | Prisma.EnumMarkerSetActionFieldRefInput<$PrismaModel>;
+	in?: $Enums.MarkerSetAction[] | Prisma.ListEnumMarkerSetActionFieldRefInput<$PrismaModel>;
+	notIn?: $Enums.MarkerSetAction[] | Prisma.ListEnumMarkerSetActionFieldRefInput<$PrismaModel>;
+	not?: Prisma.NestedEnumMarkerSetActionWithAggregatesFilter<$PrismaModel> | $Enums.MarkerSetAction;
+	_count?: Prisma.NestedIntFilter<$PrismaModel>;
+	_min?: Prisma.NestedEnumMarkerSetActionFilter<$PrismaModel>;
+	_max?: Prisma.NestedEnumMarkerSetActionFilter<$PrismaModel>;
 };
 
 export type NestedEnumMediaStatusFilter<$PrismaModel = never> = {

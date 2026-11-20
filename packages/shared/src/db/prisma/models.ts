@@ -18,6 +18,8 @@ export type * from "./models/MarkerPointer.ts";
 export type * from "./models/Category.ts";
 export type * from "./models/CategoryPreset.ts";
 export type * from "./models/Response.ts";
+export type * from "./models/DeletedMarker.ts";
+export type * from "./models/MarkerSet.ts";
 export type * from "./models/Media.ts";
 export type * from "./models/MediaFile.ts";
 export type * from "./models/Thumbnail.ts";

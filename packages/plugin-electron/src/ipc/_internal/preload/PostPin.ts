@@ -6,6 +6,7 @@ import {
 	PaletteColor,
 	Capabilities,
 	NleMarker,
+	SetMarkerResult,
 	RenderProgress,
 	UploadPartUrl,
 	UploadedPart,
@@ -30,6 +31,7 @@ import {
 	$eipc_validator$_PaletteColor,
 	$eipc_validator$_Capabilities,
 	$eipc_validator$_NleMarker,
+	$eipc_validator$_SetMarkerResult,
 	$eipc_validator$_RenderProgress,
 	$eipc_validator$_UploadPartUrl,
 	$eipc_validator$_UploadedPart,
@@ -46,7 +48,7 @@ import {
 	$eipc_validator$_EncodedProxy,
 	$eipc_validator$_TimelineInfo,
 } from "../common-runtime/PostPin.js";
-const $$ipcPrefix$$ = "$eipc_message$_7c18d40f7e3b38512816e4a3bf1eb423_$_PostPin_$_";
+const $$ipcPrefix$$ = "$eipc_message$_65ad2ce0b5225ff6cb83f766ab8e2404_$_PostPin_$_";
 import { webFrame } from "electron/renderer";
 function $eipc_event_validator$_App() {
 	if (
@@ -162,6 +164,9 @@ export const NleAPI: Partial<INleAPIRenderer> = {
 	},
 	setMarkers(markers: NleMarker[]) {
 		return ipcRenderer.invoke($$ipcPrefix$$ + "NleAPI_$_setMarkers", markers);
+	},
+	removeMarkers(nleIds: string[]) {
+		return ipcRenderer.invoke($$ipcPrefix$$ + "NleAPI_$_removeMarkers", nleIds);
 	},
 	clearMarkers() {
 		return ipcRenderer.invoke($$ipcPrefix$$ + "NleAPI_$_clearMarkers");

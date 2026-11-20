@@ -21,8 +21,13 @@ export function createStore<T extends object>(fileName: string, defaults: T) {
 	}
 
 	function update(patch: Partial<T>): Promise<T> {
+		return replace((current) => ({ ...current, ...patch }));
+	}
+
+	// Like update, for changes a patch can't express (removing keys)
+	function replace(change: (current: T) => T): Promise<T> {
 		const result = writes.then(async () => {
-			const next = { ...(await read()), ...patch };
+			const next = change(await read());
 			cache = next;
 			const folder = await uxp.storage.localFileSystem.getDataFolder();
 			const file = await folder.createFile(fileName, { overwrite: true });
@@ -36,7 +41,7 @@ export function createStore<T extends object>(fileName: string, defaults: T) {
 		return result;
 	}
 
-	return { read, update };
+	return { read, update, replace };
 }
 
 // Secrets in the OS keychain via UXP's secureStorage, which returns Uint8Array

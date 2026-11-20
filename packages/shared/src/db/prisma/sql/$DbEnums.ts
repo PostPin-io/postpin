@@ -5,6 +5,7 @@
 export interface $DbEnums {
 	GuideStatus: "STARTED" | "COMPLETED" | "SKIPPED";
 	PointerKind: "ARROW" | "RECT";
+	MarkerSetAction: "PUSH" | "PULL" | "CLEAR" | "RESTORE";
 	MediaStatus: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
 	Role: "OWNER" | "ADMIN" | "MEMBER" | "REVIEWER";
 	ShareLinkKind: "STANDARD" | "SCREENING";

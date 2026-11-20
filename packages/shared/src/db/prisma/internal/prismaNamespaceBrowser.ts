@@ -59,6 +59,8 @@ export const ModelName = {
 	Category: "Category",
 	CategoryPreset: "CategoryPreset",
 	Response: "Response",
+	DeletedMarker: "DeletedMarker",
+	MarkerSet: "MarkerSet",
 	Media: "Media",
 	MediaFile: "MediaFile",
 	Thumbnail: "Thumbnail",
@@ -198,6 +200,8 @@ export const MarkerScalarFieldEnum = {
 	authorId: "authorId",
 	guestId: "guestId",
 	nleId: "nleId",
+	nleTimelineId: "nleTimelineId",
+	syncHash: "syncHash",
 } as const;
 
 export type MarkerScalarFieldEnum =
@@ -255,6 +259,36 @@ export const ResponseScalarFieldEnum = {
 
 export type ResponseScalarFieldEnum =
 	(typeof ResponseScalarFieldEnum)[keyof typeof ResponseScalarFieldEnum];
+
+export const DeletedMarkerScalarFieldEnum = {
+	markerId: "markerId",
+	exportId: "exportId",
+	nleId: "nleId",
+	nleTimelineId: "nleTimelineId",
+	syncHash: "syncHash",
+	deletedAt: "deletedAt",
+} as const;
+
+export type DeletedMarkerScalarFieldEnum =
+	(typeof DeletedMarkerScalarFieldEnum)[keyof typeof DeletedMarkerScalarFieldEnum];
+
+export const MarkerSetScalarFieldEnum = {
+	id: "id",
+	action: "action",
+	timelineId: "timelineId",
+	exportId: "exportId",
+	nleTimelineId: "nleTimelineId",
+	nleTimelineName: "nleTimelineName",
+	hostName: "hostName",
+	createdById: "createdById",
+	createdAt: "createdAt",
+	summary: "summary",
+	nleMarkers: "nleMarkers",
+	postpinMarkers: "postpinMarkers",
+} as const;
+
+export type MarkerSetScalarFieldEnum =
+	(typeof MarkerSetScalarFieldEnum)[keyof typeof MarkerSetScalarFieldEnum];
 
 export const MediaScalarFieldEnum = {
 	id: "id",
