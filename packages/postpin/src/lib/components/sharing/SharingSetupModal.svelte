@@ -1,50 +1,38 @@
 <script lang="ts">
+	// Organizations, projects and timelines: invitations (add people, invite links, who has access),
+	// one tab each. Exports: their guest share links.
 	import { getSharingTarget } from "./sharing.remote";
-	import OrgMemberInvite from "./OrgMemberInvite.svelte";
-	import EmailInvite from "./EmailInvite.svelte";
-	import LinkInvite from "./LinkInvite.svelte";
+	import AddPeople from "./AddPeople.svelte";
+	import AccessGrants from "./AccessGrants.svelte";
+	import PendingInvitations from "./PendingInvitations.svelte";
+	import InviteLinks from "./InviteLinks.svelte";
 	import ShareLinks from "./share-links/ShareLinks.svelte";
-	import InfoTip from "./InfoTip.svelte";
-	import { INVITATION_TTL_HOURS } from "#lib/invite-target.ts";
 	import X from "@lucide/svelte/icons/x";
-	import UserGroup from "@lucide/svelte/icons/user-group";
-	import Mail from "@lucide/svelte/icons/mail";
+	import Settings from "@lucide/svelte/icons/settings";
+	import { resolve } from "$app/paths";
+	import FolderOpen from "@lucide/svelte/icons/folder-open";
+	import UserPlus from "@lucide/svelte/icons/user-plus";
 	import Link from "@lucide/svelte/icons/link";
+	import Users from "@lucide/svelte/icons/users";
 
-	type Target = { projectId: string; timelineId?: string; exportId?: string };
+	type Target =
+		{ organizationId: string } | { projectId: string; timelineId?: string; exportId?: string };
+	const TYPE_LABELS = { organization: "Organization", project: "Project", timeline: "Timeline" };
 
 	let dialog: HTMLDialogElement | null = null;
 	let isOpen = $state(false);
 	let target = $state<Target | undefined>();
 
 	const tabs = [
-		{
-			id: "members",
-			label: "Team Members",
-			icon: UserGroup,
-			description: (type: string) =>
-				`People already in your organization get access to this ${type}.`,
-		},
-		{
-			id: "email",
-			label: "Via E-Mail",
-			icon: Mail,
-			description: (type: string) =>
-				`They join your organization with the chosen role and only see this ${type}.`,
-		},
-		{
-			id: "link",
-			label: "Via Link",
-			icon: Link,
-			description: (type: string) =>
-				`Anyone with the link joins with that role and only sees this ${type}.`,
-		},
+		{ id: "add", label: "Add people", icon: UserPlus },
+		{ id: "links", label: "Invite links", icon: Link },
+		{ id: "access", label: "Access", icon: Users },
 	] as const;
-	let tab = $state<(typeof tabs)[number]["id"]>("members");
+	let tab = $state<(typeof tabs)[number]["id"]>("add");
 
 	export function open(next: Target) {
 		target = next;
-		tab = "members";
+		tab = "add";
 		isOpen = true;
 		dialog?.showModal();
 	}
@@ -71,12 +59,21 @@
 					<h3 class="text-lg font-bold break-words">Share link for {targetQuery.current.name}</h3>
 					<p class="text-sm text-base-content/60">For external feedback, no account needed.</p>
 				{:else if targetQuery?.current}
-					<h3 class="text-lg font-bold break-words">Invite to <i>{targetQuery.current.name}</i></h3>
-					<p class="text-sm text-base-content/60">
-						Permanent access to this {targetQuery.current.type} for your team.
-					</p>
+					<!-- Title and what the invitations are for, in one line -->
+					<div class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+						<h3 class="text-lg font-bold">Invitations</h3>
+						<span
+							class="badge max-w-full min-w-0 gap-1.5 badge-soft"
+							title="{TYPE_LABELS[targetQuery.current.type]}: {targetQuery.current.name}"
+						>
+							<FolderOpen class="size-3.5 shrink-0" />
+							<span class="truncate">{targetQuery.current.name}</span>
+						</span>
+					</div>
 				{:else}
-					<h3 class="text-lg font-bold">{target?.exportId ? "Share link" : "Invite"}</h3>
+					<h3 class="text-lg font-bold">
+						{target && "exportId" in target && target.exportId ? "Share link" : "Invitations"}
+					</h3>
 				{/if}
 			</div>
 			<button
@@ -92,85 +89,54 @@
 
 		{#if targetQuery?.error}
 			<p class="mt-2 text-sm text-error">
-				Could not load this {target?.exportId
-					? "export"
-					: target?.timelineId
-						? "timeline"
-						: "project"}.
+				Could not load this {!target || "organizationId" in target
+					? "organization"
+					: target.exportId
+						? "export"
+						: target.timelineId
+							? "timeline"
+							: "project"}.
 			</p>
 		{:else if targetQuery?.current}
 			{#if targetQuery.current.type !== "export"}
-				{@const inviteTarget = { type: targetQuery.current.type, id: targetQuery.current.id }}
-				{@const type = inviteTarget.type}
-				<div role="tablist" class="tabs tabs-border mt-2" aria-label="How to invite">
-					{#each tabs as t (t.id)}
+				{@const t = { type: targetQuery.current.type, id: targetQuery.current.id }}
+				<div role="tablist" class="tabs tabs-border mt-2" aria-label="Invitations">
+					{#each tabs as item (item.id)}
 						<button
 							type="button"
 							role="tab"
 							class="tab gap-2"
-							class:tab-active={tab === t.id}
-							aria-selected={tab === t.id}
-							onclick={() => (tab = t.id)}
+							class:tab-active={tab === item.id}
+							aria-selected={tab === item.id}
+							onclick={() => (tab = item.id)}
 						>
-							<t.icon class="size-4" />
-							{t.label}
+							<item.icon class="size-4" />
+							{item.label}
 						</button>
 					{/each}
 				</div>
-				<div role="tabpanel" class="mt-4 flex flex-col gap-2">
-					<div class="flex items-start gap-2">
-						<p class="flex-1 text-sm text-base-content/70">
-							{tabs.find((t) => t.id === tab)!.description(type)}
-						</p>
-						<InfoTip label="What happens next">
-							{#if tab === "members"}
-								<ul class="list-disc space-y-1 pl-4">
-									<li>They can open this {type} right away. No e-mail is sent.</li>
-									<li>Their role in the organization stays the same.</li>
-									{#if type === "project"}
-										<li>Access to a project includes all of its timelines.</li>
-									{/if}
-									<li>You can take access back anytime under Manage access.</li>
-								</ul>
-							{:else if tab === "email"}
-								<ul class="list-disc space-y-1 pl-4">
-									<li>
-										We send them an e-mail with a link to join. It stays valid for
-										{INVITATION_TTL_HOURS} hours.
-									</li>
-									<li>
-										They sign in or create an account and join your organization with the chosen
-										role.
-									</li>
-									<li>They only see this {type}, until someone gives them more.</li>
-									<li>
-										Until they accept, the invitation is listed under Manage access, where you can
-										resend or revoke it.
-									</li>
-								</ul>
-							{:else}
-								<ul class="list-disc space-y-1 pl-4">
-									<li>The link doesn't expire and works for any number of people.</li>
-									<li>
-										Whoever opens it signs in or creates an account and joins your organization with
-										that role. People already in your organization keep their role and get access to
-										this {type}.
-									</li>
-									<li>Anyone who has the link can join, so only send it to people you trust.</li>
-									<li>
-										Turning the link off or resetting it under Manage access stops new people from
-										joining. Those who joined keep their access.
-									</li>
-								</ul>
-							{/if}
-						</InfoTip>
-					</div>
-					{#if tab === "members"}
-						<OrgMemberInvite target={inviteTarget} />
-					{:else if tab === "email"}
-						<EmailInvite target={inviteTarget} />
+				<div role="tabpanel" class="mt-4 flex flex-col gap-3">
+					{#if tab === "add"}
+						<AddPeople target={t} />
+					{:else if tab === "links"}
+						<InviteLinks target={t} />
 					{:else}
-						<LinkInvite target={inviteTarget} />
+						{#if targetQuery.current.type !== "organization"}
+							<AccessGrants
+								target={{ type: targetQuery.current.type, id: targetQuery.current.id }}
+							/>
+						{/if}
+						<PendingInvitations target={t} />
+						<a
+							class="btn self-start btn-ghost btn-sm"
+							href={resolve("/(root)/organizations/[organization]/settings/members", {
+								organization: targetQuery.current.organizationSlug,
+							})}
+							onclick={() => dialog?.close()}
+						>
+							<Settings class="size-4" />
+							Manage all members
+						</a>
 					{/if}
 				</div>
 			{:else}
