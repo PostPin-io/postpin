@@ -24,7 +24,7 @@
 
 	let dialog: HTMLDialogElement;
 
-	let { presets, canCreate } = $derived(await getCategoryPresets(projectId));
+	let { presets, canApply, canCreate } = $derived(await getCategoryPresets(projectId));
 	let selectedId = $state("postpin");
 	// A deleted preset falls back to the first one
 	let selected = $derived(presets.find((p) => p.id === selectedId) ?? presets[0]);
@@ -224,16 +224,18 @@
 			<form method="dialog">
 				<button class="btn w-full sm:w-auto">Close</button>
 			</form>
-			<button
-				type="button"
-				class="btn btn-primary"
-				disabled={busy || missing === 0}
-				onclick={apply}
-			>
-				{missing === 0
-					? "All in project"
-					: `Add ${missing} ${missing === 1 ? "category" : "categories"}`}
-			</button>
+			{#if canApply}
+				<button
+					type="button"
+					class="btn btn-primary"
+					disabled={busy || missing === 0}
+					onclick={apply}
+				>
+					{missing === 0
+						? "All in project"
+						: `Add ${missing} ${missing === 1 ? "category" : "categories"}`}
+				</button>
+			{/if}
 		</div>
 	</div>
 	<form method="dialog" class="modal-backdrop">

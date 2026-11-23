@@ -29,7 +29,7 @@ export const getCategoryPresets = query(v.string(), async (projectId: string) =>
 		id: projectId,
 	});
 	// Reached through a project the user has a grant in
-	const allowed = (action: "read" | "create" | "delete", ownerId?: string | null) =>
+	const allowed = (action: "read" | "apply" | "create" | "delete", ownerId?: string | null) =>
 		can(member.role, "categoryPreset", action, {
 			hasGrant: true,
 			isOwn: ownerId != null && ownerId === user.id,
@@ -42,6 +42,7 @@ export const getCategoryPresets = query(v.string(), async (projectId: string) =>
 	});
 
 	return {
+		canApply: allowed("apply"),
 		canCreate: allowed("create"),
 		presets: [
 			...CATEGORY_PRESETS.map((p) => ({
@@ -72,10 +73,14 @@ export const applyCategoryPreset = command(
 		preset: v.string(),
 	}),
 	async (data) => {
-		const { user, target } = await authorize("category", "create", {
+		const { user, member, target } = await authorize("category", "create", {
 			type: "project",
 			id: data.projectId,
 		});
+		// Creating single categories isn't enough: a preset sets up the whole project's list
+		if (!can(member.role, "categoryPreset", "apply", { hasGrant: true })) {
+			error(403, "Not allowed");
+		}
 
 		const categories: readonly PresetCategory[] | undefined =
 			CATEGORY_PRESETS.find((p) => p.id === data.preset)?.categories ??
