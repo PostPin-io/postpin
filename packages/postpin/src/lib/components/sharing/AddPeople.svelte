@@ -127,6 +127,7 @@
 			placeholder={isOrg ? "E-mail" : mayInvite ? "Name or e-mail" : "Search by name or e-mail"}
 			aria-label="Name or e-mail address"
 			autocomplete="off"
+			data-guide={isOrg ? undefined : "project-access/add"}
 			class="input w-full"
 			bind:value={search}
 			oninput={() => (message = null)}

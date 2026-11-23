@@ -33,6 +33,8 @@
 	import { navigationTour } from "./tours/navigation.ts";
 	import { postpinGuidesTour } from "./tours/postpin-guides.ts";
 	import { shareLinkTour } from "./tours/share-link.ts";
+	import { inviteTeamTour } from "./tours/invite-team.ts";
+	import { projectAccessTour } from "./tours/project-access.ts";
 	import FirstUploadTutorial from "./tutorials/FirstUploadTutorial.svelte";
 	import InstallPrompt from "./tutorials/InstallPrompt.svelte";
 	import InstallDesktopTutorial from "./tutorials/InstallDesktopTutorial.svelte";
@@ -45,6 +47,8 @@
 		"postpin-guides": postpinGuidesTour,
 		navigation: navigationTour,
 		"share-link": shareLinkTour,
+		"invite-team": inviteTeamTour,
+		"project-access": projectAccessTour,
 		"marker-ranges": markerRangesTour,
 	};
 

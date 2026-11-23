@@ -14,6 +14,7 @@
 	import UserPlus from "@lucide/svelte/icons/user-plus";
 	import Link from "@lucide/svelte/icons/link";
 	import Users from "@lucide/svelte/icons/users";
+	import GuideButton from "#lib/components/guides/GuideButton.svelte";
 
 	type Target =
 		{ organizationId: string } | { projectId: string; timelineId?: string; exportId?: string };
@@ -24,9 +25,9 @@
 	let target = $state<Target | undefined>();
 
 	const tabs = [
-		{ id: "add", label: "Add people", icon: UserPlus },
-		{ id: "links", label: "Invite links", icon: Link },
-		{ id: "access", label: "Access", icon: Users },
+		{ id: "add", label: "Add people", icon: UserPlus, guide: undefined },
+		{ id: "links", label: "Invite links", icon: Link, guide: "project-access/links-tab" },
+		{ id: "access", label: "Access", icon: Users, guide: "project-access/access-tab" },
 	] as const;
 	let tab = $state<(typeof tabs)[number]["id"]>("add");
 
@@ -69,6 +70,9 @@
 							<FolderOpen class="size-3.5 shrink-0" />
 							<span class="truncate">{targetQuery.current.name}</span>
 						</span>
+						{#if targetQuery.current.type !== "organization"}
+							<GuideButton guide="project-access" />
+						{/if}
 					</div>
 				{:else}
 					<h3 class="text-lg font-bold">
@@ -100,6 +104,8 @@
 		{:else if targetQuery?.current}
 			{#if targetQuery.current.type !== "export"}
 				{@const t = { type: targetQuery.current.type, id: targetQuery.current.id }}
+				<!-- The project-access tour explains projects and timelines, not the organization -->
+				{@const guided = t.type !== "organization"}
 				<div role="tablist" class="tabs tabs-border mt-2" aria-label="Invitations">
 					{#each tabs as item (item.id)}
 						<button
@@ -108,6 +114,7 @@
 							class="tab gap-2"
 							class:tab-active={tab === item.id}
 							aria-selected={tab === item.id}
+							data-guide={guided ? item.guide : undefined}
 							onclick={() => (tab = item.id)}
 						>
 							<item.icon class="size-4" />
@@ -119,12 +126,16 @@
 					{#if tab === "add"}
 						<AddPeople target={t} />
 					{:else if tab === "links"}
-						<InviteLinks target={t} />
+						<div data-guide={guided ? "project-access/invite-link" : undefined}>
+							<InviteLinks target={t} />
+						</div>
 					{:else}
 						{#if targetQuery.current.type !== "organization"}
-							<AccessGrants
-								target={{ type: targetQuery.current.type, id: targetQuery.current.id }}
-							/>
+							<div class="flex flex-col gap-1" data-guide="project-access/grants">
+								<AccessGrants
+									target={{ type: targetQuery.current.type, id: targetQuery.current.id }}
+								/>
+							</div>
 						{/if}
 						<PendingInvitations target={t} />
 						<a

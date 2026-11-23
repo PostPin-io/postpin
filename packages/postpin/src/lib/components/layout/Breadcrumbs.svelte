@@ -222,6 +222,7 @@
 							class="btn btn-square btn-ghost btn-sm max-lg:order-2 lg:btn-xs"
 							title={label}
 							aria-label={label}
+							data-guide="project-access/open"
 							onclick={open}
 						>
 							<Icon class="size-3.5" />

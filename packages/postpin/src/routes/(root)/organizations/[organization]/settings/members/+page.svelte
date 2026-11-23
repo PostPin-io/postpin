@@ -17,6 +17,7 @@
 	import { Role } from "@postpin-io/shared/db/enums";
 	import MemberGrantsModal from "./MemberGrantsModal.svelte";
 	import InviteLinks from "#lib/components/sharing/InviteLinks.svelte";
+	import GuideButton from "#lib/components/guides/GuideButton.svelte";
 	let grantsModal: MemberGrantsModal | null = null;
 
 	const org = $derived(await getOrg(page.params.organization!));
@@ -203,24 +204,29 @@
 	</div>
 
 	{#if org.canSeeInvitations}
-		<h2 class="text-lg font-semibold">Invite by E-Mail</h2>
+		<div class="flex items-center gap-2">
+			<h2 class="text-lg font-semibold">Invite by E-Mail</h2>
+			{#if org.canInviteToOrg}<GuideButton guide="invite-team" />{/if}
+		</div>
 		<div class="overflow-x-auto rounded-box bg-base-100 shadow">
 			{#if org.canInviteToOrg}
-				<div class="m-3 flex gap-3">
+				<div class="m-3 flex gap-3" data-guide="invite-team/invite">
 					<input
 						type="email"
 						placeholder="name@example.com"
 						class="input-bordered input w-full"
 						bind:value={inviteEmail}
 					/>
-					{@render roleSelect(
-						inviteRole,
-						org.inviteRoles,
-						(role) => {
-							inviteRole = role as InviteRole;
-						},
-						inviting,
-					)}
+					<div data-guide="invite-team/roles">
+						{@render roleSelect(
+							inviteRole,
+							org.inviteRoles,
+							(role) => {
+								inviteRole = role as InviteRole;
+							},
+							inviting,
+						)}
+					</div>
 					<button class="btn btn-primary" onclick={inviteMember} disabled={inviting}>
 						Invite
 						{#if inviting}
@@ -292,7 +298,9 @@
 	{#if org.canManageInviteLinks}
 		<h2 class="text-lg font-semibold">Invite links</h2>
 		<p class="text-sm text-base-content/70">Anyone with a link joins with its role.</p>
-		{#if inviteLinksLoaded}<InviteLinks target={orgTarget} />{/if}
+		<div data-guide="invite-team/links">
+			{#if inviteLinksLoaded}<InviteLinks target={orgTarget} />{/if}
+		</div>
 	{/if}
 </div>
 
