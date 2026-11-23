@@ -7,6 +7,8 @@ import {
 	SMTP_SECURE,
 	SMTP_USER,
 } from "$app/env/private";
+import { LOGO_CID, type Email } from "./emails/layout.ts";
+import logo from "./emails/logo.png?inline";
 
 // Create a transporter using SMTP
 const transporter = nodemailer.createTransport({
@@ -26,19 +28,18 @@ try {
 	console.error("Verification failed:", err);
 }
 
-export function sendEmail(
-	to: string,
-	subject: string,
-	text: string,
-	options: { replyTo?: string } = {},
-) {
-	const mailOptions = {
+/** Sends a mail from `emails/templates.ts`: HTML with a plain-text alternative */
+export function sendEmail(to: string, email: Email, options: { replyTo?: string } = {}) {
+	return transporter.sendMail({
 		from: SMTP_MAIL_FROM ?? SMTP_USER,
 		to,
-		subject,
-		text,
+		subject: email.subject,
+		text: email.text,
+		html: email.html,
 		replyTo: options.replyTo,
-	};
-
-	return transporter.sendMail(mailOptions);
+		// Inline, so the logo shows without "load remote images" and without a public URL
+		attachments: email.html.includes(`cid:${LOGO_CID}`)
+			? [{ filename: "postpin.png", path: logo, cid: LOGO_CID, contentDisposition: "inline" }]
+			: [],
+	});
 }

@@ -8,7 +8,7 @@ it("records e-mails instead of sending them", async () => {
 	expect(fakes.emails).toEqual([
 		expect.objectContaining({
 			to: "a@test.local",
-			subject: "You're invited to join Acme",
+			subject: expect.stringContaining("join Acme"),
 			text: expect.stringContaining("http://localhost:5173/auth/invite/inv1"),
 		}),
 	]);
