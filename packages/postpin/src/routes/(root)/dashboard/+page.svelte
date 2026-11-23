@@ -13,6 +13,8 @@
 	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
 	import UploadDropOverlay from "#lib/components/exports/UploadDropOverlay.svelte";
 	import { heldUpload } from "#lib/upload/held-upload.svelte.ts";
+	import { getGuideProgress } from "#lib/components/guides/guides.remote.ts";
+	import { isOpen, requestGuide } from "#lib/components/guides/guide-state.svelte.ts";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
@@ -50,6 +52,10 @@
 	let accessDialog: ManageAccessModal | null = null;
 
 	let data = $derived(await getProjects());
+
+	// The first organization is made in the first-upload tutorial: while it's open, the welcome
+	// card starts it instead of the plain dialog, which would leave its organization step out
+	const firstUploadOpen = $derived(isOpen(await getGuideProgress(), "first-upload"));
 
 	// A video dropped here waits for its project: those it may go to stand out, the others fade
 	const canDropHere = $derived(data.projects.some((p) => p.canUpload));
@@ -217,9 +223,18 @@
 					</p>
 
 					<div class="mt-6 card-actions w-full">
-						<button class="btn btn-block btn-primary" onclick={() => dialog?.open()}>
-							Create organization
-						</button>
+						{#if firstUploadOpen}
+							<button
+								class="btn btn-block btn-primary"
+								onclick={() => requestGuide("first-upload")}
+							>
+								Get started
+							</button>
+						{:else}
+							<button class="btn btn-block btn-primary" onclick={() => dialog?.open()}>
+								Create organization
+							</button>
+						{/if}
 					</div>
 				</div>
 			</div>

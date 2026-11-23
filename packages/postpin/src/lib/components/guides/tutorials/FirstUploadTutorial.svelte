@@ -61,6 +61,14 @@
 		if (step === "create-organization" && hasOrganization) step = "create-project";
 	});
 	let context = $state<Record<string, string>>({ ...(stored?.context ?? {}) });
+	// The step bar shows only what the user does: no organization step for someone who had one
+	// already, but it stays for whoever made it here (flagged before it exists, so the bar
+	// doesn't jump while it is created)
+	const steps: readonly Step[] = $derived(
+		hasOrganization && context.organization !== "created"
+			? STEPS.filter((s) => s !== "create-organization")
+			: STEPS,
+	);
 
 	async function moveTo(next: Step, made: Record<string, string> = {}) {
 		context = { ...context, ...made };
@@ -88,7 +96,13 @@
 		try {
 			if (step === "create-organization") {
 				// also makes it the active one, where the project goes
-				await createOrganization(value);
+				context = { ...context, organization: "created" };
+				try {
+					await createOrganization(value);
+				} catch (err) {
+					delete context.organization;
+					throw err;
+				}
 				showGuideFeedback("Organization created", "tutorial");
 				await moveTo("create-project");
 			} else if (step === "create-project") {
@@ -151,8 +165,8 @@
 
 <TutorialShell
 	guideId="first-upload"
-	steps={STEPS.map((s) => LABELS[s])}
-	current={STEPS.indexOf(step)}
+	steps={steps.map((s) => LABELS[s])}
+	current={steps.indexOf(step)}
 	onskip={() => save(GuideStatus.SKIPPED)}
 >
 	{#if step === "welcome"}
