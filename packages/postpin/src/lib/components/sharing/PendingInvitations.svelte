@@ -10,7 +10,7 @@
 	} from "../../../routes/(root)/organizations/[organization]/settings/members/members.remote";
 
 	interface Props {
-		target: Exclude<InviteTarget, { type: "organization" }>;
+		target: InviteTarget;
 	}
 	let { target }: Props = $props();
 
@@ -35,12 +35,12 @@
 	}
 </script>
 
-{#if !mayInvite || invitations?.error}
-	<p class="text-sm text-base-content/60">You can't see the invitations to this {target.type}.</p>
-{:else if invitations?.current}
-	{#if invitations.current.length === 0}
-		<p class="text-sm text-base-content/60">No pending invitations.</p>
-	{:else}
+<!-- Nothing while there is nothing pending: it sits under the people with access -->
+{#if invitations?.error}
+	<p class="text-sm text-error">Could not load the pending invitations.</p>
+{:else if invitations?.current?.length}
+	<div class="flex flex-col gap-1">
+		<h5 class="text-xs text-base-content/60">Invited</h5>
 		<ul class="flex flex-col gap-1">
 			{#each invitations.current as inv (inv.id)}
 				<li class="flex items-center gap-2 text-sm">
@@ -65,8 +65,6 @@
 				</li>
 			{/each}
 		</ul>
-	{/if}
-	{#if errorText}<p class="text-sm text-error">{errorText}</p>{/if}
-{:else}
-	<span class="loading loading-sm loading-spinner"></span>
+		{#if errorText}<p class="text-sm text-error">{errorText}</p>{/if}
+	</div>
 {/if}

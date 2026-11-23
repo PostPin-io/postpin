@@ -11,6 +11,8 @@
 	import Unplug from "@lucide/svelte/icons/unplug";
 	import Info from "@lucide/svelte/icons/info";
 	import Link from "@lucide/svelte/icons/link";
+	import UserPlus from "@lucide/svelte/icons/user-plus";
+	import UserGroup from "@lucide/svelte/icons/user-group";
 	import Upload from "@lucide/svelte/icons/upload";
 	import ListTodo from "@lucide/svelte/icons/list-todo";
 	import Lock from "@lucide/svelte/icons/lock";
@@ -64,6 +66,8 @@
 		"postpin-guides": GraduationCap,
 		navigation: Compass,
 		"share-link": Link,
+		"invite-team": UserPlus,
+		"project-access": UserGroup,
 		"marker-ranges": MoveHorizontal,
 	};
 

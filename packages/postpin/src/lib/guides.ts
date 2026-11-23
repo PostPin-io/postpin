@@ -78,7 +78,8 @@ export const GUIDES = [
 			"Install the PostPin plugin in DaVinci Resolve Studio on macOS or Windows and sign it in.",
 		restartHint: "Starts right here.",
 		startFrom: "here",
-		minRole: Role.REVIEWER,
+		minRole: Role.MEMBER,
+		permission: ["plugin", "use"],
 	},
 	{
 		id: "install-premiere",
@@ -88,7 +89,8 @@ export const GUIDES = [
 		description: "Install the PostPin panel in Premiere Pro on macOS or Windows and sign it in.",
 		restartHint: "Starts right here.",
 		startFrom: "here",
-		minRole: Role.REVIEWER,
+		minRole: Role.MEMBER,
+		permission: ["plugin", "use"],
 	},
 	{
 		id: "install-desktop",
@@ -99,7 +101,8 @@ export const GUIDES = [
 			"Install PostPin Desktop for Pro Tools on macOS or Windows, connect it and sign it in.",
 		restartHint: "Starts right here.",
 		startFrom: "here",
-		minRole: Role.REVIEWER,
+		minRole: Role.MEMBER,
+		permission: ["plugin", "use"],
 	},
 	{
 		id: "sync-to-nle",
@@ -145,6 +148,29 @@ export const GUIDES = [
 		startFrom: "found",
 		minRole: Role.MEMBER,
 		permission: ["shareLink", "create"],
+	},
+	{
+		id: "invite-team",
+		type: "tour",
+		trigger: "manual",
+		title: "Inviting your team",
+		description: "Invite people into your organization by e-mail or with an invite link.",
+		restartHint: "Starts in the members settings.",
+		startFrom: "found",
+		minRole: Role.ADMIN,
+		// No `permission`: invitation.create is a Member right too (on their projects); inviting into
+		// the organization itself is for the org-wide roles, which the matrix doesn't express
+	},
+	{
+		id: "project-access",
+		type: "tour",
+		trigger: "manual",
+		title: "Project access",
+		description: "Give people access to just one project or timeline: by name, e-mail or link.",
+		restartHint: "Needs a project you may invite to: it starts there.",
+		startFrom: "found",
+		minRole: Role.MEMBER,
+		permission: ["grant", "create"],
 	},
 	{
 		id: "marker-ranges",

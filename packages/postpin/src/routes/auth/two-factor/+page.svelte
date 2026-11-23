@@ -49,9 +49,9 @@
 	description="Confirm your login with a second factor."
 />
 
-<header class="mb-6 space-y-2 text-center">
-	<h1 class="text-3xl font-bold">Two-factor authentication</h1>
-	<p class="text-base-content/70">
+<header class="space-y-1.5 text-center">
+	<h1 class="text-2xl font-semibold">Two-factor authentication</h1>
+	<p class="text-sm text-base-content/70">
 		{#if useBackupCode}
 			Enter one of the backup codes you saved when you turned on two-factor authentication.
 		{:else}
@@ -73,11 +73,11 @@
 	{/if}
 
 	<label class="block w-full">
-		<span class="mb-2 block">{useBackupCode ? "Backup code" : "Code"}</span>
+		<span class="mb-1.5 block text-sm font-medium">{useBackupCode ? "Backup code" : "Code"}</span>
 		{#if useBackupCode}
 			<input
 				type="text"
-				class="input-bordered input w-full font-mono"
+				class="input w-full font-mono"
 				autocomplete="off"
 				autocapitalize="off"
 				spellcheck="false"
@@ -92,7 +92,7 @@
 				pattern="[0-9 ]*"
 				maxlength="7"
 				placeholder="123 456"
-				class="input-bordered input w-full text-center font-mono text-lg tracking-widest"
+				class="input w-full text-center font-mono text-lg tracking-widest"
 				autocomplete="one-time-code"
 				autofocus
 				required

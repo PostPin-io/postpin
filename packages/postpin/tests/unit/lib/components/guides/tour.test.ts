@@ -21,6 +21,8 @@ import { postpinGuidesTour } from "#lib/components/guides/tours/postpin-guides.t
 import { navigationTour } from "#lib/components/guides/tours/navigation.ts";
 import { firstReviewTour } from "#lib/components/guides/tutorials/first-review.ts";
 import { markerRangesTour } from "#lib/components/guides/tours/marker-ranges.ts";
+import { inviteTeamTour } from "#lib/components/guides/tours/invite-team.ts";
+import { projectAccessTour } from "#lib/components/guides/tours/project-access.ts";
 
 const viewport = { width: 1000, height: 800 };
 const card = { width: 300, height: 200 };
@@ -65,7 +67,14 @@ describe("fallbackStep", () => {
 	});
 });
 
-const TOURS = [shareLinkTour, postpinGuidesTour, navigationTour, markerRangesTour];
+const TOURS = [
+	shareLinkTour,
+	postpinGuidesTour,
+	navigationTour,
+	markerRangesTour,
+	inviteTeamTour,
+	projectAccessTour,
+];
 
 describe.each(TOURS.map((t) => [t.guideId, t] as const))("%s tour", (_, tour) => {
 	it("is a known tour with unique step ids", () => {
@@ -164,6 +173,13 @@ describe("guide roles (rule 17)", () => {
 			expect(roleCanDo(byId(id), Role.MEMBER), id).toBe(true);
 		}
 		expect(roleCanDo(byId("first-review"), Role.REVIEWER)).toBe(true);
+	});
+
+	it("keeps the plugins, and so their install tutorials, from reviewers", () => {
+		for (const id of ["install-resolve", "install-premiere", "install-desktop", "sync-to-nle"]) {
+			expect(roleCanDo(byId(id), Role.REVIEWER), id).toBe(false);
+			expect(roleCanDo(byId(id), Role.MEMBER), id).toBe(true);
+		}
 	});
 
 	it("without an organization: what everyone can do, and what creates the organization", () => {
@@ -484,5 +500,49 @@ describe("keys in guide texts (rule 14)", () => {
 				);
 			}
 		}
+	});
+});
+
+describe("project-access tour", () => {
+	const byId = (id: string) => projectAccessTour.steps.find((s) => s.id === id)!;
+
+	function pageWith(...present: string[]) {
+		const element = { getBoundingClientRect: () => ({ width: 10, height: 10 }) };
+		vi.stubGlobal("document", {
+			querySelectorAll: (selector: string) =>
+				present.some((id) => selector.includes(`"project-access/${id}"`)) ? [element] : [],
+		});
+	}
+	afterEach(() => vi.unstubAllGlobals());
+
+	it("goes through the steps of its guide file, in order", () => {
+		expect(projectAccessTour.steps.map((s) => s.id)).toEqual([
+			"open",
+			"add",
+			"access-tab",
+			"grants",
+			"links-tab",
+			"invite-link",
+			"done",
+		]);
+	});
+
+	it("opens the dialog first, unless it was started from inside it", () => {
+		pageWith("open");
+		expect(byId("open").skipIf!()).toBe(false);
+		pageWith("add");
+		expect(byId("open").skipIf!()).toBe(true);
+	});
+
+	it("lets the user switch the tabs themselves", () => {
+		expect(byId("access-tab").advance).toBe("click");
+		expect(byId("links-tab").advance).toBe("click");
+	});
+});
+
+describe("invite-team tour", () => {
+	it("goes through the steps of its guide file, in order, for admins and up", () => {
+		expect(inviteTeamTour.steps.map((s) => s.id)).toEqual(["invite", "roles", "links", "done"]);
+		expect(GUIDES.find((g) => g.id === "invite-team")?.minRole).toBe(Role.ADMIN);
 	});
 });

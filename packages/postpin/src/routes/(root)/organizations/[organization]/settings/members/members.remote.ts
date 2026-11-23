@@ -166,19 +166,25 @@ export const getInviteLinks = query(InviteTarget, async (target) => {
 	const { user, member, target: resolved } = await authorize("inviteLink", "read", target);
 	const links = await prisma.inviteLink.findMany({
 		where: { organizationId: resolved.organizationId, ...targetColumns(target) },
+		include: { createdBy: { select: { name: true } } },
 	});
 	// Member sees only roles they may hand out (Member/Reviewer), Admin+ all invite roles
 	return INVITE_ROLES.filter((r) => canInviteAs(member.role, r)).map((role) => {
 		const link = links.find((l) => l.role === role);
+		// A disabled link is gone for good: turning it on again issues a new token
+		const live = link?.enabled ? link : undefined;
 		return {
 			role,
-			token: link?.token ?? null,
-			enabled: link?.enabled ?? false,
-			/** No link yet → anyone allowed to create one; existing → creator or Admin+ */
+			token: live?.token ?? null,
+			enabled: !!live,
+			createdBy: live
+				? { name: live.createdBy?.name ?? null, isYou: live.createdById === user.id }
+				: null,
+			/** No live link → anyone allowed to create one; live → creator or Admin+ */
 			canManage:
-				!link ||
+				!live ||
 				can(member.role, "inviteLink", "delete", {
-					isOwn: link.createdById === user.id,
+					isOwn: live.createdById === user.id,
 					hasGrant: true,
 				}),
 		};
@@ -194,9 +200,20 @@ export const setInviteLinkEnabled = command(
 		const where = { organizationId: resolved.organizationId, role, ...targetColumns(target) };
 		const existing = await prisma.inviteLink.findFirst({ where });
 
-		if (existing) {
-			assertMayManageLink(member.role, existing.createdById === user.id);
-			await prisma.inviteLink.update({ where: { id: existing.id }, data: { enabled } });
+		if (existing?.enabled) {
+			if (!enabled) {
+				assertMayManageLink(member.role, existing.createdById === user.id);
+				await prisma.inviteLink.update({ where: { id: existing.id }, data: { enabled: false } });
+			}
+		} else if (existing) {
+			// Turning a link back on must not revive a URL that was switched off (it may have been
+			// forwarded), so it gets a new token and counts as created by whoever turned it on
+			if (enabled) {
+				await prisma.inviteLink.update({
+					where: { id: existing.id },
+					data: { enabled: true, token: newInviteToken(), createdById: user.id },
+				});
+			}
 		} else if (enabled) {
 			try {
 				await prisma.inviteLink.create({
@@ -223,7 +240,7 @@ export const resetInviteLink = command(
 		const existing = await prisma.inviteLink.findFirst({
 			where: { organizationId: resolved.organizationId, role, ...targetColumns(target) },
 		});
-		if (!existing) error(404, "Invite link not found");
+		if (!existing?.enabled) error(404, "Invite link not found");
 		assertMayManageLink(member.role, existing.createdById === user.id);
 
 		await prisma.inviteLink.update({

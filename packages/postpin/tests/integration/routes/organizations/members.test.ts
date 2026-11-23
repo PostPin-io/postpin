@@ -650,8 +650,40 @@ describe("getInviteLinks", () => {
 		const res = await getInviteLinks(projectA());
 
 		expect(res.map((l) => l.role)).toEqual([MEMBER, REVIEWER]);
-		expect(res[0]).toEqual({ role: MEMBER, token: null, enabled: false, canManage: true });
-		expect(res[1]).toEqual({ role: REVIEWER, token: link.token, enabled: true, canManage: false });
+		expect(res[0]).toEqual({
+			role: MEMBER,
+			token: null,
+			enabled: false,
+			createdBy: null,
+			canManage: true,
+		});
+		expect(res[1]).toEqual({
+			role: REVIEWER,
+			token: link.token,
+			enabled: true,
+			createdBy: { name: w.admin.user.name, isYou: false },
+			canManage: false,
+		});
+	});
+
+	it("a disabled link hides its token and anyone allowed to invite may turn it on", async () => {
+		const link = await f.createInviteLink(w.org, {
+			role: REVIEWER,
+			createdBy: w.admin.user,
+			projectId: w.projectA.id,
+		});
+		await prisma.inviteLink.update({ where: { id: link.id }, data: { enabled: false } });
+
+		as(w.member);
+		const res = await getInviteLinks(projectA());
+
+		expect(res[1]).toEqual({
+			role: REVIEWER,
+			token: null,
+			enabled: false,
+			createdBy: null,
+			canManage: true,
+		});
 	});
 
 	it("reviewer cannot see links", async () => {
@@ -682,7 +714,7 @@ describe("setInviteLinkEnabled", () => {
 		expect(link.token.length).toBeGreaterThanOrEqual(32);
 	});
 
-	it("disabling and re-enabling keeps the token", async () => {
+	it("re-enabling a disabled link issues a new token, so the old URL stays dead", async () => {
 		as(w.owner);
 		await setInviteLinkEnabled({ target: orgTarget(), role: ADMIN, enabled: true });
 		const { token } = await prisma.inviteLink.findFirstOrThrow();
@@ -692,8 +724,34 @@ describe("setInviteLinkEnabled", () => {
 
 		await setInviteLinkEnabled({ target: orgTarget(), role: ADMIN, enabled: true });
 		const link = await prisma.inviteLink.findFirstOrThrow();
-		expect(link).toMatchObject({ enabled: true, token });
+		expect(link.enabled).toBe(true);
+		expect(link.token).not.toBe(token);
 		expect(await prisma.inviteLink.count()).toBe(1);
+	});
+
+	it("enabling a link that is already on keeps its token", async () => {
+		as(w.owner);
+		await setInviteLinkEnabled({ target: orgTarget(), role: ADMIN, enabled: true });
+		const { token } = await prisma.inviteLink.findFirstOrThrow();
+
+		await setInviteLinkEnabled({ target: orgTarget(), role: ADMIN, enabled: true });
+		expect((await prisma.inviteLink.findFirstOrThrow()).token).toBe(token);
+	});
+
+	it("member turns on a link someone else disabled and becomes its creator", async () => {
+		const link = await f.createInviteLink(w.org, {
+			role: MEMBER,
+			createdBy: w.admin.user,
+			projectId: w.projectA.id,
+		});
+		await prisma.inviteLink.update({ where: { id: link.id }, data: { enabled: false } });
+
+		as(w.member);
+		await setInviteLinkEnabled({ target: projectA(), role: MEMBER, enabled: true });
+
+		const after = await prisma.inviteLink.findUniqueOrThrow({ where: { id: link.id } });
+		expect(after).toMatchObject({ enabled: true, createdById: w.member.user.id });
+		expect(after.token).not.toBe(link.token);
 	});
 
 	it("disabling a link that doesn't exist creates nothing", async () => {
@@ -780,6 +838,13 @@ describe("resetInviteLink", () => {
 	});
 
 	it("404 when there is no link", async () => {
+		as(w.owner);
+		await expectStatus(resetInviteLink({ target: orgTarget(), role: MEMBER }), 404);
+	});
+
+	it("404 when the link is turned off", async () => {
+		const link = await f.createInviteLink(w.org, { role: MEMBER, createdBy: w.owner.user });
+		await prisma.inviteLink.update({ where: { id: link.id }, data: { enabled: false } });
 		as(w.owner);
 		await expectStatus(resetInviteLink({ target: orgTarget(), role: MEMBER }), 404);
 	});

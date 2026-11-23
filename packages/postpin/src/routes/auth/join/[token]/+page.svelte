@@ -32,17 +32,17 @@
 <PageMeta title="Join organization" description="Join a PostPin organization." />
 
 {#if !link.valid}
-	<header class="space-y-2 text-center">
-		<h1 class="text-3xl font-bold">Invite link not valid</h1>
-		<p class="text-base-content/70">
+	<header class="space-y-1.5 text-center">
+		<h1 class="text-2xl font-semibold">Invite link not valid</h1>
+		<p class="text-sm text-base-content/70">
 			This link was turned off or reset. Ask the organization for a new one.
 		</p>
 	</header>
 	<a class="btn w-full" href="/dashboard">Go to dashboard</a>
 {:else}
-	<header class="space-y-2 text-center">
-		<h1 class="text-3xl font-bold">Join {link.organizationName}</h1>
-		<p class="text-base-content/70">
+	<header class="space-y-1.5 text-center">
+		<h1 class="text-2xl font-semibold">Join {link.organizationName}</h1>
+		<p class="text-sm text-base-content/70">
 			{#if link.alreadyMember}
 				{#if link.targetName}
 					You're already a member. You'll get access to <span class="font-medium"

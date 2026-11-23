@@ -9,6 +9,7 @@ import Pause from "@lucide/svelte/icons/pause";
 import Play from "@lucide/svelte/icons/play";
 import Plus from "@lucide/svelte/icons/plus";
 import Send from "@lucide/svelte/icons/send";
+import UserGroup from "@lucide/svelte/icons/user-group";
 import ShareArrow from "#lib/components/icons/ShareArrow.svelte";
 import type { Component } from "svelte";
 import type { StepIcon } from "./tour.ts";
@@ -27,4 +28,5 @@ export const STEP_ICON_COMPONENTS: Record<StepIcon, Component<{ class?: string }
 	copy: Copy,
 	"move-horizontal": MoveHorizontal,
 	"chevrons-up-down": ChevronsUpDown,
+	"user-group": UserGroup,
 };

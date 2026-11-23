@@ -69,9 +69,9 @@
 
 <PageMeta title="Login" description="Log in to your PostPin account." />
 
-<header class="mb-6 space-y-2 text-center">
-	<h1 class="text-3xl font-bold">Welcome back</h1>
-	<p class="text-base-content/70">Log in to continue to PostPin.</p>
+<header class="space-y-1.5 text-center">
+	<h1 class="text-2xl font-semibold">Welcome back</h1>
+	<p class="text-sm text-base-content/70">Log in to continue to PostPin.</p>
 </header>
 
 <div class="space-y-4">
@@ -79,57 +79,34 @@
 		<div class="alert alert-error" role="alert">{errorText}</div>
 	{/if}
 
-	<SsoButtons
-		providers={data.providers}
-		callbackURL={redirectTo}
-		newUserCallbackURL={safeRedirect(page.url.searchParams.get("redirect"), "/welcome")}
-		onerror={(message) => (errorText = message)}
-	/>
-
-	<button
-		type="button"
-		class="auth-button"
-		onclick={() => passkeySignIn()}
-		disabled={passkeyLoading}
-		aria-busy={passkeyLoading}
-	>
-		<Fingerprint class="size-5 shrink-0" aria-hidden="true" />
-		<span class="auth-button-label">Sign in with a passkey</span>
-		{#if passkeyLoading}
-			<span class="loading loading-xs loading-spinner"></span>
-		{/if}
-	</button>
-
 	{#if !DISABLE_PASSWORD_LOGIN}
-		<div class="divider text-sm text-base-content/60">or</div>
-
 		<form class="space-y-4" onsubmit={handleLogin}>
 			<label class="block w-full">
-				<span class="mb-2 block">Email</span>
+				<span class="mb-1.5 block text-sm font-medium">Email</span>
 				<input
 					type="email"
 					placeholder="you@example.com"
-					class="input-bordered input w-full"
+					class="input w-full"
 					autocomplete="username webauthn"
 					required
 					bind:value={email}
 				/>
 			</label>
 
-			<label class="block w-full">
-				<span class="mb-2 block">Password</span>
+			<div>
+				<div class="mb-1.5 flex items-baseline justify-between">
+					<label for="login-password" class="text-sm font-medium">Password</label>
+					<a class="link text-sm link-hover" href="/auth/reset-password">Forgot password?</a>
+				</div>
 				<input
+					id="login-password"
 					type="password"
 					placeholder="Your password"
-					class="input-bordered input w-full"
+					class="input w-full"
 					autocomplete="current-password"
 					required
 					bind:value={password}
 				/>
-			</label>
-
-			<div class="text-right">
-				<a class="link text-sm link-hover" href="/auth/reset-password">Forgot password?</a>
 			</div>
 
 			<button type="submit" class="btn w-full btn-primary" disabled={isLoading}>
@@ -140,7 +117,32 @@
 				{/if}
 			</button>
 		</form>
+
+		<div class="divider my-2 text-xs text-base-content/60">OR</div>
 	{/if}
+
+	<div class="flex flex-col gap-2">
+		<SsoButtons
+			providers={data.providers}
+			callbackURL={redirectTo}
+			newUserCallbackURL={safeRedirect(page.url.searchParams.get("redirect"), "/welcome")}
+			onerror={(message) => (errorText = message)}
+		/>
+
+		<button
+			type="button"
+			class="auth-button"
+			onclick={() => passkeySignIn()}
+			disabled={passkeyLoading}
+			aria-busy={passkeyLoading}
+		>
+			<Fingerprint class="size-5 shrink-0" aria-hidden="true" />
+			<span class="auth-button-label">Sign in with a passkey</span>
+			{#if passkeyLoading}
+				<span class="loading loading-xs loading-spinner"></span>
+			{/if}
+		</button>
+	</div>
 </div>
 
 {#if !DISABLE_PASSWORD_LOGIN || data.providers.length > 0}

@@ -232,6 +232,33 @@ describe("guide start", () => {
 		expect(await getGuideStart("first-review")).toBeNull();
 	});
 
+	it("sends invite-team to the members settings, for admins and owners only", async () => {
+		const org = await f.createOrg();
+		const admin = await f.createMember(org, Role.ADMIN);
+		signIn(admin.user, org.id);
+		expect(await getGuideStart("invite-team")).toBe(`/organizations/${org.slug}/settings/members`);
+		const member = await f.createMember(org, Role.MEMBER);
+		signIn(member.user, org.id);
+		expect(await getGuideStart("invite-team")).toBeNull();
+	});
+
+	it("sends project-access to the latest project the member may give access to", async () => {
+		const org = await f.createOrg();
+		const owner = await f.createMember(org, Role.OWNER);
+		const granted = await f.createProject(org, { creator: owner.user });
+		await f.createProject(org, { creator: owner.user }); // newer, but no grant for the member
+		const member = await f.createMember(org, Role.MEMBER);
+		signIn(member.user, org.id);
+		expect(await getGuideStart("project-access")).toBeNull();
+		await f.grant(member, { projectId: granted.id });
+		expect(await getGuideStart("project-access")).toBe(`/projects/${granted.id}`);
+		// a reviewer can't give access, even with a grant
+		const reviewer = await f.createMember(org, Role.REVIEWER);
+		await f.grant(reviewer, { projectId: granted.id });
+		signIn(reviewer.user, org.id);
+		expect(await getGuideStart("project-access")).toBeNull();
+	});
+
 	it("only looks something up for guides that need it", async () => {
 		signIn(await f.createUser());
 		expect(await getGuideStart("navigation")).toBeNull();
