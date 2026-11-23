@@ -1,6 +1,6 @@
 {
 	"name": "@postpin-io/deploy",
-	"version": "0.6.1",
+	"version": "0.7.0",
 	"private": true,
 	"description": "Self-hosting files: compose.yml, .env.example and install.sh. Its CHANGELOG.md holds the notes for operators."
 }

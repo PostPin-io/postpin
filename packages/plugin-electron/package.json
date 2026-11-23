@@ -1,6 +1,6 @@
 {
 	"name": "@postpin-io/plugin-electron",
-	"version": "0.6.1",
+	"version": "0.7.0",
 	"description": "Electron main-process glue shared by the Resolve plugin and PostPin Desktop",
 	"private": true,
 	"license": "MIT",
