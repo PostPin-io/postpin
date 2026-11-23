@@ -38,9 +38,9 @@
 
 <PageMeta title="Reset Password" description="Reset your PostPin password." />
 
-<header class="mb-6 space-y-2 text-center">
-	<h1 class="text-3xl font-bold">Reset Password</h1>
-	<p class="text-base-content/70">
+<header class="space-y-1.5 text-center">
+	<h1 class="text-2xl font-semibold">Reset Password</h1>
+	<p class="text-sm text-base-content/70">
 		Enter your email address and we'll send you a link to reset your password.
 	</p>
 </header>
@@ -66,11 +66,11 @@
 	{/if}
 
 	<label class="block w-full">
-		<span class="mb-2 block">Email</span>
+		<span class="mb-1.5 block text-sm font-medium">Email</span>
 		<input
 			type="email"
 			placeholder="you@example.com"
-			class="input-bordered input w-full"
+			class="input w-full"
 			autocomplete="email"
 			required
 			bind:value={email}
@@ -87,5 +87,5 @@
 </form>
 
 <p class="text-center text-sm text-base-content/70">
-	New to PostPin? <a class="link link-primary" href="/auth/signup">Create an account</a>
+	Remember your password? <a class="link link-primary" href="/auth/login">Log in</a>
 </p>

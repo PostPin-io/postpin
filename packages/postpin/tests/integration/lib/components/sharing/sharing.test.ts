@@ -5,7 +5,7 @@ import { expectStatus } from "../../../../helpers/expect.ts";
 import * as f from "../../../../helpers/factories.ts";
 import { signIn, signOut } from "../../../../helpers/request-event.ts";
 
-const { OWNER, MEMBER, REVIEWER } = Role;
+const { OWNER, ADMIN, MEMBER, REVIEWER } = Role;
 
 async function world() {
 	const org = await f.createOrg();
@@ -59,7 +59,28 @@ describe("getSharingTarget", () => {
 			type: "project",
 			id: w.projectA.id,
 			name: "Alpha",
+			organizationSlug: w.org.slug,
 		});
+	});
+
+	it("organization, for an admin", async () => {
+		as(await f.createMember(w.org, ADMIN));
+		expect(await getSharingTarget({ organizationId: w.org.id })).toEqual({
+			type: "organization",
+			id: w.org.id,
+			name: w.org.name,
+			organizationSlug: w.org.slug,
+		});
+	});
+
+	it("organization: 403 for a member, who can't invite into the whole organization", async () => {
+		as(await f.createMember(w.org, MEMBER));
+		await expectStatus(getSharingTarget({ organizationId: w.org.id }), 403);
+	});
+
+	it("organization: 404 for another organization", async () => {
+		as(w.owner);
+		await expectStatus(getSharingTarget({ organizationId: w.other.id }), 404);
 	});
 
 	it("timeline wins over project", async () => {
@@ -68,6 +89,7 @@ describe("getSharingTarget", () => {
 			type: "timeline",
 			id: w.tlA.id,
 			name: "Cut A",
+			organizationSlug: w.org.slug,
 		});
 	});
 

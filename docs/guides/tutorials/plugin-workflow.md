@@ -75,9 +75,51 @@ is opened, so `os-security` goes before `install`:
 - **Built as** one frame, `tutorials/InstallTutorial.svelte` (steps, OS switch, download,
   sign-in, ending, polling), and one small component per plugin with its texts as snippets
   (`Install<Plugin>Tutorial.svelte`). Steps per OS: `install-steps.ts`.
+- **Starting:** the plugin question on the export list (next section), or by hand from the
+  PostPin Guides page. Started either way, a tutorial runs on the page where it was started; one
+  in progress goes on on the dashboard.
 - **Icon on the PostPin Guides page:** lucide `unplug` for every install tutorial (`GUIDE_ICONS`).
 - **Downloads** are the installers of the server's own release (`#lib/downloads.ts`), so plugin
   and server speak the same API; builds without a release link to the downloads page.
+
+### The plugin question
+
+How the install tutorials start on their own (rule 3). They are no tutorial to push onto everyone:
+which one fits depends on the program, so PostPin asks once, at the moment it matters. That is the
+**first visit to the export list of a timeline** (`/projects/…/timelines/…/exports`, all exports
+of one timeline): the user is about to upload there, and the plugin is the other way to do it.
+
+1. `ask`: A card in the middle of the screen in the tutorial style (`primary`, `graduation-cap`),
+   the page dimmed behind it: "Install a PostPin plugin?" · "Upload exports straight from your
+   editing program and get the markers back there." Buttons "No, thanks" and "Yes".
+   - **"No, thanks":** asks once for confirmation, like every skip (rule 7): "Skip the plugin
+     tutorials?" · "You can start them again under PostPin Guides in the account menu." ·
+     "Skip" / "Back" (back to the question). On "Skip" the card is gone at once and the export
+     list is there. All three install tutorials are stored as skipped: none of them starts on
+     its own again (rule 10) and the question never comes back. Each can still be started from
+     the PostPin Guides page.
+   - **"Yes":** goes to `choose`.
+2. `choose`: "Which program do you work in?" with one button per program (plain buttons in
+   the tutorial style): DaVinci Resolve, Premiere Pro, Pro Tools, and "Back" to `ask`. A choice starts
+   that install tutorial right there, as if started by hand ([install-resolve](install-resolve.md),
+   [install-premiere](install-premiere.md), [install-desktop](install-desktop.md)); the card is
+   gone. The other two stay "Not started".
+
+**Asked only when all of these hold:**
+
+- guides are switched on (rule 5),
+- the user may use the plugins in the active organization (`plugin.use`, Member and up; rule 17),
+- none of the three install tutorials was ever started, completed or skipped,
+- no plugin is signed in for the user (a valid session of a plugin client, `getPluginConnected`):
+  who has one doesn't need to be asked, which also spares existing accounts with a plugin,
+- first-upload isn't due any more (tutorials one at a time, it goes first),
+- no other guide runs or was started by hand,
+- a wide screen (at least 1024px, like sync-to-nle): the plugins run on a computer.
+
+Leaving the page without answering stores nothing: the question comes again on the next visit to
+an export list. The question has no progress of its own and no row on the PostPin Guides page: it
+is the automatic start of the install tutorials, not a guide. Built in
+`tutorials/InstallPrompt.svelte`, shown by `GuideHost`.
 
 ## Notes
 
@@ -87,7 +129,6 @@ is opened, so `os-security` goes before `install`:
   install tutorial runs and goes on after it), not a nested guide. To decide when implementing
   whether that is two guides in `GuideHost` or one tutorial that includes the install steps.
 - Continues with [first-review](first-review.md).
-- Roles: rendering and uploading from the plugin needs `export.upload` (Member and up). A reviewer
-  can use the plugin to pull and push markers, but never uploads, so this tutorial isn't for them:
-  they start an install tutorial from the PostPin Guides page, and [sync-to-nle](sync-to-nle.md)
-  follows on its own once the plugin is connected and first-review is done.
+- Roles: rendering and uploading from the plugin needs `export.upload` (Member and up). The
+  plugins as a whole are for members and up (`plugin.use`): a reviewer can't sign in a plugin, so
+  neither this tutorial nor the install tutorials nor [sync-to-nle](sync-to-nle.md) are for them.

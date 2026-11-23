@@ -54,17 +54,17 @@
 <PageMeta title="Invitation" description="Accept an invitation to a PostPin organization." />
 
 {#if !invite.valid}
-	<header class="space-y-2 text-center">
-		<h1 class="text-3xl font-bold">Invitation not found</h1>
-		<p class="text-base-content/70">
+	<header class="space-y-1.5 text-center">
+		<h1 class="text-2xl font-semibold">Invitation not found</h1>
+		<p class="text-sm text-base-content/70">
 			This invitation has expired, was revoked, or has already been used.
 		</p>
 	</header>
 	<a class="btn w-full" href="/dashboard">Go to dashboard</a>
 {:else}
-	<header class="space-y-2 text-center">
-		<h1 class="text-3xl font-bold">Join {invite.organizationName}</h1>
-		<p class="text-base-content/70">
+	<header class="space-y-1.5 text-center">
+		<h1 class="text-2xl font-semibold">Join {invite.organizationName}</h1>
+		<p class="text-sm text-base-content/70">
 			You've been invited to join as <span class="font-medium">{roleLabel(invite.role)}</span>.
 		</p>
 	</header>

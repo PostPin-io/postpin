@@ -3,13 +3,15 @@ id: install-premiere
 type: tutorial
 title: Installing the Premiere Pro plugin
 status: implemented
-minRole: reviewer
+minRole: member
+permission: plugin.use
 trigger: automatic
-starts: from the PostPin Guides page (later from plugin-workflow, when the user picks Premiere Pro); one in progress goes on on the dashboard
-prerequisites: []
+starts: on the first visit to the export list of a timeline, when the user answers the plugin question with Premiere Pro (see [plugin-workflow](plugin-workflow.md#the-plugin-question)) · from the PostPin Guides page; one in progress goes on on the dashboard
+prerequisites: [may use the plugins (`permission`)]
 code:
   - packages/postpin/src/lib/components/guides/tutorials/InstallPremiereTutorial.svelte
   - packages/postpin/src/lib/components/guides/tutorials/InstallTutorial.svelte
+  - packages/postpin/src/lib/components/guides/tutorials/InstallPrompt.svelte
   - packages/postpin/src/lib/downloads.ts
   - packages/plugin-premiere/scripts/build-ccx.sh
   - packages/plugin-premiere/public/manifest.json
@@ -65,6 +67,6 @@ of a link to the other OS. The OS only changes the fallback command in `install`
 - If the plugin is ever published on the Adobe Marketplace, `os-security` is left out (keep the
   step id).
 - Not yet: screenshots; "Continue" into plugin-workflow.
-- Roles: for everyone with an account, reviewers included: the plugin also pulls and pushes markers,
-  which a reviewer may do. They start it from the PostPin Guides page; it only starts on its own
-  from [plugin-workflow](plugin-workflow.md), i.e. for those who upload.
+- Roles: the plugins are for members and up (`plugin.use`; signing in a plugin is refused for
+  an account that is a reviewer in all its organizations), so `minRole` is Member. A reviewer sees
+  the row greyed out on the PostPin Guides page and is never asked the plugin question.

@@ -104,7 +104,7 @@
 				siblingHref: projectHref,
 				share: project.canShare
 					? {
-							label: "Invite to project",
+							label: "Invitations for this project",
 							icon: UserGroup,
 							open: () => sharingModal?.open({ projectId: project.id }),
 						}
@@ -121,7 +121,7 @@
 			siblingHref: (id) => timelineHref(project.id, id),
 			share: timeline.canShare
 				? {
-						label: "Invite to timeline",
+						label: "Invitations for this timeline",
 						icon: UserGroup,
 						open: () => sharingModal?.open({ projectId: project.id, timelineId: timeline.id }),
 					}
@@ -222,6 +222,7 @@
 							class="btn btn-square btn-ghost btn-sm max-lg:order-2 lg:btn-xs"
 							title={label}
 							aria-label={label}
+							data-guide="project-access/open"
 							onclick={open}
 						>
 							<Icon class="size-3.5" />

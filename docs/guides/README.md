@@ -42,7 +42,10 @@ feature you can discover later, it's a **tour**.
    The color tells tutorial from tour, not one guide from another. Never `secondary`.
 3. **Tutorials start automatically:** they are essential, so each starts on its own as soon as its
    prerequisites are met (e.g. first-upload on the dashboard of a fresh account). Only one guide
-   runs at a time; tutorials go first.
+   runs at a time; tutorials go first. Where the right tutorial depends on the user, PostPin asks
+   once instead: the install tutorials start from the plugin question on the first visit to an
+   export list ([plugin-workflow](tutorials/plugin-workflow.md#the-plugin-question)); "No, thanks"
+   (confirmed once, rule 7) skips them.
 4. **Tours start manually,** with a **guide button** at the feature they explain: a small
    `graduation-cap` button in the tour style (`accent`), right next to the element the tour's first
    step highlights (e.g. next to the share button of an export). It shows while the tour is not
@@ -219,6 +222,7 @@ All in `packages/postpin/src/`:
 | Tutorial frame (full screen)              | `lib/components/guides/TutorialShell.svelte`                           |
 | Tutorials                                 | `lib/components/guides/tutorials/<Name>Tutorial.svelte`                |
 | Install tutorials (one frame, per plugin) | `tutorials/InstallTutorial.svelte`, `Install<Plugin>Tutorial.svelte`   |
+| The plugin question (starts them)         | `tutorials/InstallPrompt.svelte`                                       |
 | Tour engine (spotlight + popover)         | `lib/components/guides/Tour.svelte`, `tour.ts`                         |
 | Tours (step lists)                        | `lib/components/guides/tours/<id>.ts`                                  |
 | Tutorials on a page (tour engine)         | `lib/components/guides/tutorials/<id>.ts`, e.g. `first-review.ts`      |
@@ -304,9 +308,9 @@ button next to the element of its first step.
 | ------------------------------------------------- | ---------------------------------- | ------------ |
 | [first-upload](tutorials/first-upload.md)         | Your first upload                  | Member       |
 | [plugin-workflow](tutorials/plugin-workflow.md)   | Working from your NLE              | Member       |
-| [install-resolve](tutorials/install-resolve.md)   | Installing the Resolve plugin      | Reviewer     |
-| [install-premiere](tutorials/install-premiere.md) | Installing the Premiere Pro plugin | Reviewer     |
-| [install-desktop](tutorials/install-desktop.md)   | Installing PostPin Desktop         | Reviewer     |
+| [install-resolve](tutorials/install-resolve.md)   | Installing the Resolve plugin      | Member       |
+| [install-premiere](tutorials/install-premiere.md) | Installing the Premiere Pro plugin | Member       |
+| [install-desktop](tutorials/install-desktop.md)   | Installing PostPin Desktop         | Member       |
 | [first-review](tutorials/first-review.md)         | Your first review                  | Reviewer     |
 | [sync-to-nle](tutorials/sync-to-nle.md)           | Using the plugin                   | Member       |
 

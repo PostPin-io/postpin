@@ -80,6 +80,7 @@ export const STEP_ICONS = [
 	"copy",
 	"move-horizontal",
 	"chevrons-up-down",
+	"user-group",
 ] as const;
 export type StepIcon = (typeof STEP_ICONS)[number];
 

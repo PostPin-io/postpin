@@ -9,16 +9,16 @@
 	import NewOrgModal from "../../../lib/components/organizations/NewOrgModal.svelte";
 	import DeleteProjectModal from "#lib/components/projects/DeleteProjectModal.svelte";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
-	import ManageAccessModal from "#lib/components/sharing/ManageAccessModal.svelte";
 	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
 	import UploadDropOverlay from "#lib/components/exports/UploadDropOverlay.svelte";
 	import { heldUpload } from "#lib/upload/held-upload.svelte.ts";
+	import { getGuideProgress } from "#lib/components/guides/guides.remote.ts";
+	import { isOpen, requestGuide } from "#lib/components/guides/guide-state.svelte.ts";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
 	import Apeture from "@lucide/svelte/icons/aperture";
 	import UserGroup from "@lucide/svelte/icons/user-group";
-	import ShieldUser from "@lucide/svelte/icons/shield-user";
 	import Ellipsis from "@lucide/svelte/icons/ellipsis";
 	import FolderOpen from "@lucide/svelte/icons/folder-open";
 	import Pencil from "@lucide/svelte/icons/pencil";
@@ -47,9 +47,12 @@
 	let renameProjectDialog: RenameProjectModal | null = null;
 	let delProjectDialog: DeleteProjectModal | null = null;
 	let inviteDialog: SharingSetupModal | null = null;
-	let accessDialog: ManageAccessModal | null = null;
 
 	let data = $derived(await getProjects());
+
+	// The first organization is made in the first-upload tutorial: while it's open, the welcome
+	// card starts it instead of the plain dialog, which would leave its organization step out
+	const firstUploadOpen = $derived(isOpen(await getGuideProgress(), "first-upload"));
 
 	// A video dropped here waits for its project: those it may go to stand out, the others fade
 	const canDropHere = $derived(data.projects.some((p) => p.canUpload));
@@ -82,14 +85,9 @@
 		renameProjectDialog?.open(project);
 	}
 
-	function inviteToProject(project: (typeof data.projects)[number]) {
+	function openInvitations(project: (typeof data.projects)[number]) {
 		closeMenu(project);
 		inviteDialog?.open({ projectId: project.id });
-	}
-
-	function manageProjectAccess(project: (typeof data.projects)[number]) {
-		closeMenu(project);
-		accessDialog?.open({ projectId: project.id });
 	}
 
 	function deleteProject(project: (typeof data.projects)[number]) {
@@ -157,15 +155,9 @@
 		</li>
 		{#if project.canShare}
 			<li class="mt-1 border-t border-base-300 pt-1">
-				<button type="button" onclick={() => inviteToProject(project)}>
+				<button type="button" onclick={() => openInvitations(project)}>
 					<UserGroup class="size-4" />
-					Invite to project
-				</button>
-			</li>
-			<li>
-				<button type="button" onclick={() => manageProjectAccess(project)}>
-					<ShieldUser class="size-4" />
-					Manage access
+					Invitations
 				</button>
 			</li>
 		{/if}
@@ -217,9 +209,18 @@
 					</p>
 
 					<div class="mt-6 card-actions w-full">
-						<button class="btn btn-block btn-primary" onclick={() => dialog?.open()}>
-							Create organization
-						</button>
+						{#if firstUploadOpen}
+							<button
+								class="btn btn-block btn-primary"
+								onclick={() => requestGuide("first-upload")}
+							>
+								Get started
+							</button>
+						{:else}
+							<button class="btn btn-block btn-primary" onclick={() => dialog?.open()}>
+								Create organization
+							</button>
+						{/if}
 					</div>
 				</div>
 			</div>
@@ -533,7 +534,6 @@
 <RenameProjectModal bind:this={renameProjectDialog} />
 <DeleteProjectModal bind:this={delProjectDialog} />
 <SharingSetupModal bind:this={inviteDialog} />
-<ManageAccessModal bind:this={accessDialog} oninvite={(t) => inviteDialog?.open(t)} />
 {#if canDropHere}
 	<UploadDropOverlay ondropped={(file) => heldUpload.hold(file)}>
 		Then choose the project and the timeline it goes to.

@@ -107,8 +107,9 @@ next page (`waitForElement`). Everything only explained is `inert`.
   current name.
 - **Organization switching** is only mentioned (`home`), not walked through: it lives in the
   account menu and changes the whole dashboard.
-- **Not part of this tour:** sharing and invitations (share buttons in the breadcrumbs and the
-  project/timeline menus), renaming and deleting (the actions menus of the items).
+- **Not part of this tour:** invitations (the Invitations buttons next to the organization name and
+  in the breadcrumbs, the "Invitations" entry of the project/timeline menus), share links of
+  exports, renaming and deleting (the actions menus of the items).
 - Roles: every role gets it (Reviewer and up). What the roles differ in is made by the **optional**
   steps: `new-project` and `new-timeline` only show for those who may create them (`project.create`,
   `timeline.create`), so a reviewer's tour has no create buttons. No text says "you can"

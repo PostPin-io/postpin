@@ -1,6 +1,6 @@
 {
 	"name": "@postpin-io/desktop",
-	"version": "0.5.2",
+	"version": "0.6.1",
 	"productName": "PostPin Desktop",
 	"description": "PostPin desktop app for NLEs with a local scripting API, starting with Pro Tools",
 	"main": "dist/main.cjs",

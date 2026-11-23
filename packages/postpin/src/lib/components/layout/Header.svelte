@@ -12,6 +12,9 @@
 	import Shield from "@lucide/svelte/icons/shield";
 	import User from "@lucide/svelte/icons/user";
 	import Sun from "@lucide/svelte/icons/sun";
+	import UserGroup from "@lucide/svelte/icons/user-group";
+	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
+	import { isOrgWide, toRole } from "#lib/roles.ts";
 	import { theme, type ThemePreference } from "#lib/theme.svelte.ts";
 
 	import type { Snippet } from "svelte";
@@ -31,6 +34,11 @@
 	let activeOrganization = $derived(
 		$organizations.data?.find((org) => org.id === activeOrganizationId),
 	);
+	// Inviting into the whole organization is for admins and owners; the server checks it again
+	const activeMember = authClient.useActiveMember();
+	const activeRole = $derived(toRole($activeMember.data?.role));
+	const mayInviteToOrg = $derived(activeRole ? isOrgWide(activeRole) : false);
+	let invitationsModal: SharingSetupModal | null = null;
 
 	async function switchOrganization(organizationId: string) {
 		(document.activeElement as HTMLElement | null)?.blur();
@@ -171,6 +179,18 @@
 					PostPin
 				</span>
 			</a>
+			{#if activeOrganization && mayInviteToOrg}
+				{@const org = activeOrganization}
+				<button
+					type="button"
+					class="btn btn-square btn-ghost btn-sm max-lg:hidden lg:btn-xs"
+					title="Invitations for this organization"
+					aria-label="Invitations for this organization"
+					onclick={() => invitationsModal?.open({ organizationId: org.id })}
+				>
+					<UserGroup class="size-3.5" />
+				</button>
+			{/if}
 			<GuideButton guide="navigation" />
 			<Breadcrumbs />
 			{#if page.data.isSystemAdmin}
@@ -207,3 +227,5 @@
 		</ul>
 	</div>
 </header>
+
+<SharingSetupModal bind:this={invitationsModal} />

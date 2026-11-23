@@ -4,7 +4,13 @@ import * as v from "valibot";
 import { Prisma } from "@postpin-io/shared/db";
 import { GuideStatus } from "@postpin-io/shared/db/enums";
 import { prisma } from "#lib/server/database.ts";
-import { accessChecker, accessibleExports, getActiveMember } from "#lib/server/org-access.ts";
+import {
+	accessChecker,
+	accessibleExports,
+	accessibleProjects,
+	getActiveMember,
+} from "#lib/server/org-access.ts";
+import { isOrgWide } from "#lib/roles.ts";
 import { DEVICE_CLIENTS } from "#lib/device-clients.ts";
 import { GUIDE_IDS, type GuideId } from "#lib/guides.ts";
 import { programByClient, programByHost } from "#lib/plugin-programs.ts";
@@ -113,6 +119,30 @@ export const getGuideStart = query(v.picklist(GUIDE_IDS), async (guideId) => {
 		const member = await getActiveMember();
 		return member && (await exportWithMarkers(member)) ? "/dashboard" : null;
 	}
+	// the members settings of the active organization, for who may invite into it
+	if (guideId === "invite-team") {
+		const member = await getActiveMember();
+		if (!member || !isOrgWide(member.role)) return null;
+		const org = await prisma.organization.findUniqueOrThrow({
+			where: { id: member.organizationId },
+			select: { slug: true },
+		});
+		return `/organizations/${org.slug}/settings/members`;
+	}
+	// a project the user may give access to; the tour opens its Invitations dialog there
+	if (guideId === "project-access") {
+		const member = await getActiveMember();
+		if (!member) return null;
+		const allowed = await accessChecker(member);
+		const projects = await prisma.project.findMany({
+			where: accessibleProjects(member),
+			select: { id: true },
+			orderBy: { createdAt: "desc" },
+			take: 50,
+		});
+		const project = projects.find((p) => allowed("grant", "create", { projectId: p.id }));
+		return project ? `/projects/${project.id}` : null;
+	}
 	if (!(guideId in START_RIGHTS)) return null;
 	const [area, action] = START_RIGHTS[guideId as keyof typeof START_RIGHTS];
 	const member = await getActiveMember();
@@ -149,6 +179,23 @@ export const getPluginSignIn = query(
 		return session?.createdAt.toISOString() ?? null;
 	},
 );
+
+/**
+ * Whether any plugin is signed in for the user (a valid session of a plugin client). Who has one
+ * isn't asked the plugin question on the export list.
+ */
+export const getPluginConnected = query(async () => {
+	const { id } = requireUser();
+	const session = await prisma.session.findFirst({
+		where: {
+			userId: id,
+			clientId: { in: Object.keys(DEVICE_CLIENTS) },
+			expiresAt: { gt: new Date() },
+		},
+		select: { id: true },
+	});
+	return !!session;
+});
 
 type ActiveMember = NonNullable<Awaited<ReturnType<typeof getActiveMember>>>;
 
