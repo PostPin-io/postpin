@@ -88,9 +88,9 @@
 
 <PageMeta title="Connect Device" description="Connect a device to your PostPin account." />
 
-<header class="space-y-2 text-center">
-	<h1 class="text-3xl font-bold">Connect a device</h1>
-	<p class="text-base-content/70">
+<header class="space-y-1.5 text-center">
+	<h1 class="text-2xl font-semibold">Connect a device</h1>
+	<p class="text-sm text-base-content/70">
 		{#if success === "accepted"}
 			{clientName}{data.deviceName ? ` on ${data.deviceName}` : ""} is now signed in.
 		{:else if success === "denied"}
@@ -162,11 +162,11 @@
 			}}
 		>
 			<label class="block w-full">
-				<span class="mb-2 block">Device code</span>
+				<span class="mb-1.5 block text-sm font-medium">Device code</span>
 				<input
 					type="text"
 					placeholder="ABCD-EFGH"
-					class="input-bordered input w-full font-mono tracking-widest uppercase"
+					class="input w-full font-mono tracking-widest uppercase"
 					autocomplete="one-time-code"
 					autocapitalize="characters"
 					spellcheck="false"
