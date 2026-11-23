@@ -1,5 +1,18 @@
 # @postpin-io/postpin
 
+## 0.7.0
+
+### Minor Changes
+
+- feat: all e-mails (invitation, share link, e-mail verification, password reset, account deletion, SMTP test) are now HTML mails in the PostPin look with the logo, one button and a plain-text part; they say how long their link works and why you got them
+- feat: two new tours under PostPin Guides. "Inviting your team" (admins and owners) explains the e-mail invitation, the roles and the invite links in the members settings. "Project access" (members and up) goes through the Invitations dialog of a project: adding people by name or e-mail, who has access, and the invite links.
+- feat: sharing a project or timeline happens in one dialog, "Invitations", instead of separate "Invite to …" and "Manage access" dialogs. Its tabs: "Add people" (type a name to give an organization member access, or an e-mail address to invite someone new), "Invite links" and "Access" (people with access and pending invitations). Admins and owners open the same dialog for the whole organization with the new button next to the organization name in the header. Invite links look and work the same in this dialog and in the members settings: one row per role with an on/off switch, copy and "New link". Turning a link off or replacing it asks first. Turning a link back on now always gives a new URL, so a link that was switched off can't come back to life, and anyone allowed to invite may turn it on again.
+- feat: on the first visit to a timeline's export list, members without a signed-in plugin are asked whether to install a plugin and pick DaVinci Resolve, Premiere Pro or Pro Tools, which starts its install tutorial; "No, thanks" skips them after one confirmation. The install tutorials now need the Member role, since reviewers can't sign in a plugin. The first-upload tutorial creates the first organization itself instead of the dashboard's plain dialog, and only shows the steps the user actually does. Fixed: after signing up, the first tutorial sometimes didn't start and "Get started" did nothing until a reload. The sign-in pages got a cleaner card with the logo, consistent headings and fields, and the email and password form now comes before SSO and passkeys.
+
+### Patch Changes
+
+- fix: starting a screening could crash the page ("can't access property guestCount") until a reload.
+
 ## 0.6.1
 
 ### Patch Changes
