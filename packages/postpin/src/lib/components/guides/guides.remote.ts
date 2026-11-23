@@ -150,6 +150,23 @@ export const getPluginSignIn = query(
 	},
 );
 
+/**
+ * Whether any plugin is signed in for the user (a valid session of a plugin client). Who has one
+ * isn't asked the plugin question on the export list.
+ */
+export const getPluginConnected = query(async () => {
+	const { id } = requireUser();
+	const session = await prisma.session.findFirst({
+		where: {
+			userId: id,
+			clientId: { in: Object.keys(DEVICE_CLIENTS) },
+			expiresAt: { gt: new Date() },
+		},
+		select: { id: true },
+	});
+	return !!session;
+});
+
 type ActiveMember = NonNullable<Awaited<ReturnType<typeof getActiveMember>>>;
 
 /**

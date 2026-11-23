@@ -3,13 +3,15 @@ id: install-resolve
 type: tutorial
 title: Installing the Resolve plugin
 status: implemented
-minRole: reviewer
+minRole: member
+permission: plugin.use
 trigger: automatic
-starts: from the PostPin Guides page (later from plugin-workflow, when the user picks DaVinci Resolve); one in progress goes on on the dashboard
-prerequisites: []
+starts: on the first visit to the export list of a timeline, when the user answers the plugin question with DaVinci Resolve (see [plugin-workflow](plugin-workflow.md#the-plugin-question)) · from the PostPin Guides page; one in progress goes on on the dashboard
+prerequisites: [may use the plugins (`permission`)]
 code:
   - packages/postpin/src/lib/components/guides/tutorials/InstallResolveTutorial.svelte
   - packages/postpin/src/lib/components/guides/tutorials/InstallTutorial.svelte
+  - packages/postpin/src/lib/components/guides/tutorials/InstallPrompt.svelte
   - packages/postpin/src/lib/components/guides/GuideHost.svelte
   - packages/postpin/src/lib/components/guides/guides.remote.ts
   - packages/postpin/src/lib/downloads.ts
@@ -74,7 +76,7 @@ stored on every step, so a reload goes on where the user left off.
 - **Download links** come from the server's own version: plugins and server are released together,
   so `…/releases/download/v<version>/PostPin-Resolve-<version>.pkg|exe` is the plugin that speaks
   this server's API. Builds without a release (`ci-…`) link to the downloads page instead.
-- **Where it runs:** started by hand, on the page where it was started; in progress, it goes on on
+- **Where it runs:** started from the plugin question or by hand, on the page where it was started; in progress, it goes on on
   the dashboard (while guides are on). Never on `/auth/*`, where the sign-in it waits for may
   happen. first-upload doesn't push in front of it while it was started by hand.
 - Install locations (shown at `open-in-nle`):
@@ -88,6 +90,6 @@ stored on every step, so a reload goes on where the user left off.
 - Once the Windows installer is signed, drop `os-security` for Windows too (keep the step id).
 - Linux (Resolve Studio runs there too): no installer yet, not covered; the OS switch offers macOS
   and Windows only.
-- Roles: for everyone with an account, reviewers included: the plugin also pulls and pushes markers,
-  which a reviewer may do. They start it from the PostPin Guides page; it only starts on its own
-  from [plugin-workflow](plugin-workflow.md), i.e. for those who upload.
+- Roles: the plugins are for members and up (`plugin.use`; signing in a plugin is refused for
+  an account that is a reviewer in all its organizations), so `minRole` is Member. A reviewer sees
+  the row greyed out on the PostPin Guides page and is never asked the plugin question.

@@ -78,7 +78,8 @@ export const GUIDES = [
 			"Install the PostPin plugin in DaVinci Resolve Studio on macOS or Windows and sign it in.",
 		restartHint: "Starts right here.",
 		startFrom: "here",
-		minRole: Role.REVIEWER,
+		minRole: Role.MEMBER,
+		permission: ["plugin", "use"],
 	},
 	{
 		id: "install-premiere",
@@ -88,7 +89,8 @@ export const GUIDES = [
 		description: "Install the PostPin panel in Premiere Pro on macOS or Windows and sign it in.",
 		restartHint: "Starts right here.",
 		startFrom: "here",
-		minRole: Role.REVIEWER,
+		minRole: Role.MEMBER,
+		permission: ["plugin", "use"],
 	},
 	{
 		id: "install-desktop",
@@ -99,7 +101,8 @@ export const GUIDES = [
 			"Install PostPin Desktop for Pro Tools on macOS or Windows, connect it and sign it in.",
 		restartHint: "Starts right here.",
 		startFrom: "here",
-		minRole: Role.REVIEWER,
+		minRole: Role.MEMBER,
+		permission: ["plugin", "use"],
 	},
 	{
 		id: "sync-to-nle",

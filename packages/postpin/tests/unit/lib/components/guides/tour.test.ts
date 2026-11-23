@@ -166,6 +166,13 @@ describe("guide roles (rule 17)", () => {
 		expect(roleCanDo(byId("first-review"), Role.REVIEWER)).toBe(true);
 	});
 
+	it("keeps the plugins, and so their install tutorials, from reviewers", () => {
+		for (const id of ["install-resolve", "install-premiere", "install-desktop", "sync-to-nle"]) {
+			expect(roleCanDo(byId(id), Role.REVIEWER), id).toBe(false);
+			expect(roleCanDo(byId(id), Role.MEMBER), id).toBe(true);
+		}
+	});
+
 	it("without an organization: what everyone can do, and what creates the organization", () => {
 		expect(roleCanDo(byId("first-upload"), null)).toBe(true);
 		expect(roleCanDo(byId("postpin-guides"), null)).toBe(true);

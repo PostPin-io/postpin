@@ -12,11 +12,19 @@
 	import { toRole } from "#lib/roles.ts";
 	import GuideFeedback from "./GuideFeedback.svelte";
 	import Tour from "./Tour.svelte";
-	import { endGuide, guideState, isOpen, statusOf, syncEnded } from "./guide-state.svelte.ts";
+	import {
+		endGuide,
+		guideState,
+		isOpen,
+		requestGuide,
+		statusOf,
+		syncEnded,
+	} from "./guide-state.svelte.ts";
 	import {
 		getGuideAvailability,
 		getGuideProgress,
 		getGuidesEnabled,
+		getPluginConnected,
 		getPluginTutorial,
 		saveGuideProgress,
 	} from "./guides.remote.ts";
@@ -26,6 +34,7 @@
 	import { postpinGuidesTour } from "./tours/postpin-guides.ts";
 	import { shareLinkTour } from "./tours/share-link.ts";
 	import FirstUploadTutorial from "./tutorials/FirstUploadTutorial.svelte";
+	import InstallPrompt from "./tutorials/InstallPrompt.svelte";
 	import InstallDesktopTutorial from "./tutorials/InstallDesktopTutorial.svelte";
 	import InstallPremiereTutorial from "./tutorials/InstallPremiereTutorial.svelte";
 	import InstallResolveTutorial from "./tutorials/InstallResolveTutorial.svelte";
@@ -98,14 +107,15 @@
 	type InstallId = keyof typeof INSTALL_TUTORIALS;
 	const INSTALL_IDS = Object.keys(INSTALL_TUTORIALS) as InstallId[];
 
-	// Started by hand (for now only from the PostPin Guides page, later from plugin-workflow), it
-	// runs where it was started; one in progress goes on on the dashboard. Never over the sign-in
-	// pages: the device approval it waits for may happen in this very tab.
+	// Started by hand (the plugin question below, the PostPin Guides page), it runs where it was
+	// started; one in progress goes on on the dashboard. Never over the sign-in pages: the device
+	// approval it waits for may happen in this very tab.
 	const install = $derived.by((): InstallId | null => {
 		if (firstUpload || page.route.id?.startsWith("/auth")) return null;
 		const byHand = INSTALL_IDS.find((id) => id === requested);
 		if (byHand) return byHand;
 		if (!enabled || page.route.id !== "/(root)/dashboard") return null;
+		if (!role || !roleAllowsGuide("install-resolve")) return null;
 		return INSTALL_IDS.find((id) => statusOf(progress, id) === GuideStatus.STARTED) ?? null;
 	});
 
@@ -120,6 +130,30 @@
 			handedOver = true;
 		}
 	});
+	// The plugin question: how the install tutorials start on their own. Once, on the first visit
+	// to a timeline's export list, for those who may use the plugins and have none signed in yet.
+	// Unanswered it comes again; "No, thanks" skips all three, so it never does.
+	const exportList = $derived(
+		page.route.id === "/(root)/projects/[project]/timelines/[timeline]/exports",
+	);
+	const installQuestionCandidate = $derived(
+		enabled &&
+			exportList &&
+			!guideState.requested &&
+			wide.current &&
+			!firstUploadDue &&
+			!!role &&
+			roleAllowsGuide("install-resolve") &&
+			INSTALL_IDS.every((id) => statusOf(progress, id) === undefined),
+	);
+	const installQuestion = $derived(
+		installQuestionCandidate && getPluginConnected().current === false,
+	);
+
+	function declineInstall() {
+		for (const id of INSTALL_IDS) void save(id)(GuideStatus.SKIPPED);
+	}
+
 	const pluginTutorialCandidate = $derived(
 		enabled &&
 			!guideState.requested &&
@@ -181,7 +215,7 @@
 	});
 
 	const tour = $derived.by((): GuideId | null => {
-		if (firstUpload || install || syncToNle || firstReview) return null;
+		if (firstUpload || install || installQuestion || syncToNle || firstReview) return null;
 		if (requested && TOURS[requested]) {
 			return TOURS[requested].desktopOnly && !wide.current ? null : requested;
 		}
@@ -222,6 +256,10 @@
 	{#key install}
 		<InstallGuide progress={progress[install]} save={save(install)} />
 	{/key}
+{/if}
+
+{#if installQuestion}
+	<InstallPrompt ondecline={declineInstall} onchoose={requestGuide} />
 {/if}
 
 {#if syncToNle}
