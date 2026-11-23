@@ -29,6 +29,8 @@ export default defineConfig({
 				experimental: { async: true },
 			},
 			adapter: adapter(),
+			// Sign in with Apple posts its callback as a form from appleid.apple.com
+			csrf: { trustedOrigins: ["https://appleid.apple.com"] },
 			experimental: { remoteFunctions: true },
 			inspector: true,
 			version: {

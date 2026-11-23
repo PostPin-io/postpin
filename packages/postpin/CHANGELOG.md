@@ -1,5 +1,11 @@
 # @postpin-io/postpin
 
+## 0.6.1
+
+### Patch Changes
+
+- Sign in with Apple works again: SvelteKit no longer rejects Apple's callback as a cross-site form submission.
+
 ## 0.6.0
 
 ### Minor Changes
