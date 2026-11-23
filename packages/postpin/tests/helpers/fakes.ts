@@ -6,7 +6,13 @@ import type { LiveScreening } from "@postpin-io/shared/live";
  * tests assert on `fakes.*` and the setup file clears them before each test.
  */
 
-export type SentEmail = { to: string; subject: string; text: string; replyTo?: string };
+export type SentEmail = {
+	to: string;
+	subject: string;
+	text: string;
+	html: string;
+	replyTo?: string;
+};
 export type S3Call = { command: string; input: Record<string, unknown> };
 export type QueueCall = { queue: string; method: string; args: unknown[] };
 
@@ -41,12 +47,18 @@ export const fakes = {
 export const fakeEmailModule = {
 	sendEmail: async (
 		to: string,
-		subject: string,
-		text: string,
+		email: { subject: string; text: string; html: string },
 		options: { replyTo?: string } = {},
 	) => {
-		// replyTo only when set, so the existing tests' toEqual(...) still match
-		fakes.emails.push({ to, subject, text, ...(options.replyTo && { replyTo: options.replyTo }) });
+		const { subject, text, html } = email;
+		// replyTo only when set, so toEqual(...) needs no `replyTo: undefined`
+		fakes.emails.push({
+			to,
+			subject,
+			text,
+			html,
+			...(options.replyTo && { replyTo: options.replyTo }),
+		});
 		return { messageId: `fake-${fakes.emails.length}` };
 	},
 };

@@ -8,6 +8,7 @@ import { prisma } from "#lib/server/database.ts";
 import { s3Client } from "#lib/server/storage.ts";
 import { HeadBucketCommand } from "@aws-sdk/client-s3";
 import { sendEmail } from "#lib/server/email.ts";
+import { testEmail } from "#lib/server/emails/templates.ts";
 import { version } from "$app/env";
 
 const heavyQueue = getQueue(Queues.heavy, env);
@@ -148,5 +149,5 @@ export const getHealth = query(async () => {
 
 export const sendTestEmail = command(async () => {
 	const user = requireSystemAdmin();
-	await sendEmail(user.email, "PostPin test email", "SMTP works.");
+	await sendEmail(user.email, testEmail({ appUrl: env.BETTER_AUTH_URL }));
 });
