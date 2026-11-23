@@ -54,12 +54,29 @@
 	});
 
 	let dialog = $state<HTMLDialogElement>();
-	let open = $state(false);
-	const setup = $derived(open ? getScreeningSetup(ids.exportId) : undefined);
+	// Stays true once the dialog was opened: closing it (as `start` does) must not drop the setup
+	// while the command refreshes it, `existing` would turn null under the closing dialog
+	let opened = $state(false);
+	const setup = $derived(opened ? getScreeningSetup(ids.exportId) : undefined);
 	const existing = $derived(setup?.current?.existing ?? null);
 	/** With a screening link still active: carry on with it, or start a new screening */
 	let choice = $state<"existing" | "new">("existing");
-	const continuing = $derived(!!existing && choice === "existing");
+	// The link itself, not a flag next to `existing`: Svelte (5.57) can flush a batch whose deriveds
+	// disagree (e.g. `existing` already null, a flag still true) when `startScreening` sets the
+	// session while the command's refreshed setup is pending. So everything null-checks this one
+	// value, and the template never reads `existing.…` directly.
+	const continued = $derived(choice === "existing" ? existing : null);
+	const continuing = $derived(!!continued);
+	const existingSummary = $derived.by(() => {
+		if (!existing) return "";
+		const started = existing.createdAt.toLocaleString(undefined, {
+			dateStyle: "medium",
+			timeStyle: "short",
+		});
+		const guests = `${existing.guestCount} guest${existing.guestCount === 1 ? "" : "s"}`;
+		const category = existing.categoryName ? ` · markers in "${existing.categoryName}"` : "";
+		return `Started ${started} · ${guests} · ${formatExpiry(existing.expiresAt).toLowerCase()}${category}`;
+	});
 
 	let maxGuests = $state<number | null>(null);
 	let busy = $state(false);
@@ -67,16 +84,16 @@
 	let notice = $state<string | null>(null);
 
 	// Whoever joined already stays: the limit of their link can't go below them
-	const minGuests = $derived(continuing ? Math.max(1, existing!.guestCount) : 1);
+	const minGuests = $derived(Math.max(1, continued?.guestCount ?? 0));
 	function suggestedLimit() {
 		const current = setup?.current;
 		if (!current) return null;
-		return continuing
-			? Math.max(existing!.maxGuests ?? current.defaultMaxGuests, existing!.guestCount)
+		return continued
+			? Math.max(continued.maxGuests ?? current.defaultMaxGuests, continued.guestCount)
 			: current.defaultMaxGuests;
 	}
 	// Once per opening: afterwards the field is the user's, also when they empty it to retype
-	let prefilled = false;
+	let prefilled = $state(false);
 	$effect(() => {
 		if (!setup?.current || prefilled) return;
 		prefilled = true;
@@ -102,8 +119,8 @@
 		prefilled = false;
 		choice = "existing";
 		// guests may have joined, or the link expired, since the dialog was last open
-		if (setup === undefined) void getScreeningSetup(ids.exportId).refresh();
-		open = true;
+		if (opened) void setup?.refresh();
+		opened = true;
 		dialog?.showModal();
 	}
 
@@ -116,11 +133,13 @@
 				"Your browser blocked the screening window. Allow pop-ups for this site and try again.";
 			return;
 		}
+		// as clicked: the setup refreshes during the awaits
+		const resumed = continued;
 		busy = true;
 		problem = null;
 		try {
-			const link = continuing
-				? await resumeScreeningLink({ id: existing!.id, maxGuests })
+			const link = resumed
+				? await resumeScreeningLink({ id: resumed.id, maxGuests })
 				: await createScreeningLink({
 						exportId: ids.exportId,
 						maxGuests,
@@ -128,7 +147,7 @@
 						timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 					});
 			startScreening(win, link, shareLinkUrl(page.url.origin, link.token));
-			notice = continuing
+			notice = resumed
 				? "Screening continued with the existing screening link."
 				: "Screening link created. It works for 24 hours; you find it in the share links.";
 			setTimeout(() => (notice = null), 6000);
@@ -164,7 +183,7 @@
 		</span>
 	</button>
 
-	<dialog class="modal" bind:this={dialog} onclose={() => (open = false)}>
+	<dialog class="modal" bind:this={dialog}>
 		<div class="modal-box">
 			<h3 class="flex items-center gap-2 text-lg font-bold"><Projector size={20} /> Screening</h3>
 			<p class="mt-2 text-sm text-base-content/70">Review this export live with an audience.</p>
@@ -221,15 +240,7 @@
 							/>
 							<span class="text-sm">
 								<strong>Continue the existing screening</strong>
-								<span class="block text-base-content/70">
-									Started {existing.createdAt.toLocaleString(undefined, {
-										dateStyle: "medium",
-										timeStyle: "short",
-									})} · {existing.guestCount} guest{existing.guestCount === 1 ? "" : "s"} ·
-									{formatExpiry(existing.expiresAt).toLowerCase()}{existing.categoryName
-										? ` · markers in "${existing.categoryName}"`
-										: ""}
-								</span>
+								<span class="block text-base-content/70">{existingSummary}</span>
 							</span>
 						</label>
 						<label
