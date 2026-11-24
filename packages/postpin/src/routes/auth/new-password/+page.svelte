@@ -50,11 +50,13 @@
 	description="Choose a new password for your PostPin account."
 />
 
-<header class="mb-6 space-y-2 text-center">
-	<h1 class="text-3xl font-bold">Choose a new password</h1>
-	<p class="text-base-content/70">Enter a new password for this account:</p>
-
-	{await getEmail(token)}
+<header class="space-y-1.5 text-center">
+	<h1 class="text-2xl font-semibold">Choose a new password</h1>
+	<p class="text-sm text-base-content/70">
+		Enter a new password for <span class="font-medium text-base-content"
+			>{await getEmail(token)}</span
+		>.
+	</p>
 </header>
 
 <form class="space-y-4" onsubmit={handleSetPassword}>
@@ -78,11 +80,11 @@
 	{/if}
 
 	<label class="block w-full">
-		<span class="mb-2 block">New Password</span>
+		<span class="mb-1.5 block text-sm font-medium">New Password</span>
 		<input
 			type="password"
 			placeholder="Your new password"
-			class="input-bordered input w-full"
+			class="input w-full"
 			autocomplete="new-password"
 			minlength="8"
 			required
@@ -100,5 +102,5 @@
 </form>
 
 <p class="text-center text-sm text-base-content/70">
-	New to PostPin? <a class="link link-primary" href="/auth/signup">Create an account</a>
+	<a class="link link-primary" href="/auth/login">Back to log in</a>
 </p>

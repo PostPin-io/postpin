@@ -80,6 +80,12 @@ export type TwoFactor = Prisma.TwoFactorModel;
  */
 export type Passkey = Prisma.PasskeyModel;
 /**
+ * Model GuideProgress
+ * PostPin Guides (tutorials and tours, see docs/guides/): one row per user and guide once it was
+ * started. No row = never started, so the guide may start on its own.
+ */
+export type GuideProgress = Prisma.GuideProgressModel;
+/**
  * Model Marker
  *
  */
@@ -106,6 +112,19 @@ export type CategoryPreset = Prisma.CategoryPresetModel;
  *
  */
 export type Response = Prisma.ResponseModel;
+/**
+ * Model DeletedMarker
+ * What's left of a marker deleted in PostPin, so the plugins neither push it back nor keep it in
+ * the NLE (they offer to remove it there)
+ */
+export type DeletedMarker = Prisma.DeletedMarkerModel;
+/**
+ * Model MarkerSet
+ * A backup of the markers taken before a plugin action (push, pull, delete all, restore), so the
+ * action can be undone. Holds both sides as they were before it: the NLE's markers and the
+ * export's. Never changes after creation.
+ */
+export type MarkerSet = Prisma.MarkerSetModel;
 /**
  * Model Media
  *

@@ -102,13 +102,6 @@ describe("getExport", () => {
 		});
 	});
 
-	it("a member may share the export from the review, a reviewer may not", async () => {
-		await signInAs(w.org, REVIEWER, [{ timelineId: w.tl1.id }]);
-		expect((await getExport(ids())).canShare).toBe(false);
-		await signInAs(w.org, MEMBER, [{ timelineId: w.tl1.id }]);
-		expect((await getExport(ids())).canShare).toBe(true);
-	});
-
 	it("tells the team whether the cut list was used, without where it is stored", async () => {
 		signIn(w.owner.user, w.org.id);
 		expect((await getExport(ids())).cutList).toBeNull();

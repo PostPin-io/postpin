@@ -3,6 +3,7 @@
 	import { page } from "$app/state";
 	import ShareArrow from "#lib/components/icons/ShareArrow.svelte";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
+	import GuideButton from "#lib/components/guides/GuideButton.svelte";
 	import { getShareLinks } from "#lib/components/sharing/share-links/share-links.remote.ts";
 	import { getBreadcrumbNames } from "./breadcrumbs.remote.ts";
 
@@ -36,10 +37,13 @@
 		class="btn gap-1.5 btn-ghost {count ? '' : 'btn-square'}"
 		title="Share links"
 		aria-label={count ? `Share links (${count} active)` : "Share links"}
+		data-guide="share-link/open"
 		onclick={() => sharingModal?.open({ projectId, timelineId, exportId: exp.id })}
 	>
 		<ShareArrow class="size-5" />
 		{#if count}<span class="badge badge-sm badge-primary">{count}</span>{/if}
 	</button>
+	<!-- the share-link tour starts at the share button right before it -->
+	<GuideButton guide="share-link" />
 	<SharingSetupModal bind:this={sharingModal} />
 {/if}

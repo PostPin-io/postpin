@@ -9,7 +9,6 @@
 	import RenameTimelineModal from "#lib/components/timelines/RenameTimelineModal.svelte";
 	import DeleteTimelineModal from "#lib/components/timelines/DeleteTimelineModal.svelte";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
-	import ManageAccessModal from "#lib/components/sharing/ManageAccessModal.svelte";
 	import UploadDropOverlay from "#lib/components/exports/UploadDropOverlay.svelte";
 	import { heldUpload } from "#lib/upload/held-upload.svelte.ts";
 	import Upload from "@lucide/svelte/icons/upload";
@@ -20,7 +19,6 @@
 	import List from "@lucide/svelte/icons/list";
 	import Link from "@lucide/svelte/icons/link";
 	import UserGroup from "@lucide/svelte/icons/user-group";
-	import ShieldUser from "@lucide/svelte/icons/shield-user";
 	import Pencil from "@lucide/svelte/icons/pencil";
 	import Trash from "@lucide/svelte/icons/trash";
 	import Plus from "@lucide/svelte/icons/plus";
@@ -46,7 +44,6 @@
 	let renameTimelineDialog: RenameTimelineModal | null = null;
 	let timelineDialog: NewTimelineModal | null = null;
 	let sharingDialog: SharingSetupModal | null = null;
-	let accessDialog: ManageAccessModal | null = null;
 
 	let data = $derived(await getTimelines(page.params.project || ""));
 
@@ -95,14 +92,9 @@
 		renameTimelineDialog?.open(timeline);
 	}
 
-	function inviteToTimeline(timeline: (typeof data.timelines)[number]) {
+	function openInvitations(timeline: (typeof data.timelines)[number]) {
 		closeMenu(timeline);
 		sharingDialog?.open({ projectId: page.params.project!, timelineId: timeline.id });
-	}
-
-	function manageTimelineAccess(timeline: (typeof data.timelines)[number]) {
-		closeMenu(timeline);
-		accessDialog?.open({ projectId: page.params.project!, timelineId: timeline.id });
 	}
 
 	function shareLatestExport(timeline: (typeof data.timelines)[number], exportId: string) {
@@ -189,15 +181,9 @@
 
 		{#if timeline.canShare}
 			<li class="mt-1 border-t border-base-300 pt-1">
-				<button type="button" onclick={() => inviteToTimeline(timeline)}>
+				<button type="button" onclick={() => openInvitations(timeline)}>
 					<UserGroup class="size-4" />
-					Invite to timeline
-				</button>
-			</li>
-			<li>
-				<button type="button" onclick={() => manageTimelineAccess(timeline)}>
-					<ShieldUser class="size-4" />
-					Manage access
+					Invitations
 				</button>
 			</li>
 		{/if}
@@ -266,6 +252,7 @@
 					<button
 						class="btn rounded-full btn-sm"
 						aria-label="New timeline"
+						data-guide="navigation/new-timeline"
 						onclick={() => timelineDialog?.open()}
 					>
 						<Plus />
@@ -297,7 +284,7 @@
 					{/if}
 				</button>
 
-				<div class="join max-md:hidden" role="group">
+				<div class="join max-md:hidden" role="group" data-guide="navigation/views">
 					<button
 						class="btn join-item btn-sm"
 						class:btn-active={viewMode === "table"}
@@ -326,6 +313,7 @@
 						role="button"
 						class="btn btn-circle btn-ghost"
 						aria-label="Sort options"
+						data-guide="navigation/sort"
 					>
 						<Ellipsis class="h-6 w-6" />
 					</div>
@@ -368,8 +356,14 @@
 				return (sortDirection == "asc" ? 1 : -1) * comparison || a.id.localeCompare(b.id);
 			})}
 
+		<!-- the tour opens a timeline that has an export -->
+		{@const leadsOn = sortedTimelines.find((t) => t.exports.length > 0)?.id}
+
 		{#if shownView === "table"}
-			<div class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 shadow">
+			<div
+				class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 shadow"
+				data-guide="navigation/timelines"
+			>
 				<table class="table table-zebra">
 					<thead>
 						<tr>
@@ -437,7 +431,12 @@
 								</td>
 
 								<td class="font-medium">
-									<a href={exportListHref} class="link link-hover">{timeline.name}</a>
+									<a
+										href={exportListHref}
+										class="link link-hover"
+										data-guide={timeline.id === leadsOn ? "navigation/open-timeline" : undefined}
+										>{timeline.name}</a
+									>
 								</td>
 								<td class="whitespace-nowrap text-base-content/70">
 									{new Date(timeline.createdAt).toLocaleDateString()}
@@ -474,7 +473,10 @@
 				</table>
 			</div>
 		{:else}
-			<div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+			<div
+				class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+				data-guide="navigation/timelines"
+			>
 				{#each sortedTimelines as timeline (timeline.id)}
 					{@const { latest, exportHref, exportListHref, uploadHere } = exportLinks(timeline)}
 					<article
@@ -512,6 +514,7 @@
 								<a
 									href={exportListHref}
 									class="min-w-0 flex-1 link truncate link-hover"
+									data-guide={timeline.id === leadsOn ? "navigation/open-timeline" : undefined}
 									title={timeline.name}
 								>
 									{timeline.name}
@@ -561,7 +564,6 @@
 <RenameTimelineModal bind:this={renameTimelineDialog} projectId={page.params.project!} />
 <DeleteTimelineModal bind:this={delTimelineDialog} />
 <SharingSetupModal bind:this={sharingDialog} />
-<ManageAccessModal bind:this={accessDialog} oninvite={(t) => sharingDialog?.open(t)} />
 {#if canDropHere}
 	<UploadDropOverlay ondropped={(file) => heldUpload.hold(file)}>
 		Then choose the timeline it goes to.

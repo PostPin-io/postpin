@@ -89,14 +89,15 @@ function mostUsedRuler(locations: MemoryLocation[]): Ruler | null {
 	return [...counts.values()].sort((a, b) => b.count - a.count)[0]?.ruler ?? null;
 }
 
-// Writes the markers and returns their memory location numbers. Markers whose nleId is still in
-// the session are edited in place and stay on their ruler, the others go on the most used ruler.
+// Writes the markers and returns their memory location numbers, null with the error for markers
+// Pro Tools refused. Markers whose nleId is still in the session are edited in place and stay on
+// their ruler, the others go on the most used ruler.
 // Ranges are selections on a marker ruler: a track marker that becomes a range moves to the ruler.
 export async function setMarkers(
 	timing: SessionTiming,
 	originId: string,
 	markers: NleMarker[],
-): Promise<number[]> {
+): Promise<({ number: number } | { number: null; error: string })[]> {
 	const allLocations = await listMemoryLocations();
 	const markerLocations = allLocations.filter(isMarkerLocation);
 	const existing = new Map(
@@ -108,8 +109,17 @@ export async function setMarkers(
 	let next = Math.max(0, ...allLocations.map((location) => location.number));
 
 	// One at a time, since each new marker takes the next number
-	const numbers: number[] = [];
+	const results: Awaited<ReturnType<typeof setMarkers>> = [];
 	for (const marker of markers) {
+		try {
+			results.push({ number: await writeMarker(marker) });
+		} catch (err) {
+			results.push({ number: null, error: err instanceof Error ? err.message : String(err) });
+		}
+	}
+	return results;
+
+	async function writeMarker(marker: NleMarker) {
 		const current = marker.nleId ? existing.get(marker.nleId) : undefined;
 		const duration = marker.duration ?? (current ? await durationOf(current, timing) : 0);
 		const samples = await frameToSamples(marker.frame, timing);
@@ -129,14 +139,25 @@ export async function setMarkers(
 					? (ruler ?? DEFAULT_RULER_PLACE)
 					: { location: current.location, trackName: current.trackName };
 			await editMarker(current, { ...fields, ...place });
-			numbers.push(current.number);
-		} else {
-			next += 1;
-			ruler = await createMarker(next, fields, ruler);
-			numbers.push(next);
+			return current.number;
 		}
+		next += 1;
+		ruler = await createMarker(next, fields, ruler);
+		return next;
 	}
-	return numbers;
+}
+
+// Deletes the markers with these ids; ids of other sessions or gone markers are skipped
+export async function removeMarkers(originId: string, nleIds: string[]) {
+	const wanted = new Set(nleIds);
+	const numbers = (await listMarkerLocations())
+		.map((location) => location.number)
+		.filter((number) => wanted.has(markerId(originId, number)));
+	if (numbers.length === 0) return;
+	const { failureList } = await send("ClearMemoryLocation", { locationList: numbers });
+	if (failureList.length > 0) {
+		throw new Error(`Pro Tools couldn't delete markers ${failureList.join(", ")}`);
+	}
 }
 
 // The range length of a marker already in the session, for updates that leave it out

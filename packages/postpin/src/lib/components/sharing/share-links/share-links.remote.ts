@@ -7,7 +7,6 @@ import {
 	SCREENING_DEFAULT_MAX_GUESTS,
 	SCREENING_PRESET,
 	expiresAtFor,
-	shareLinkMailContent,
 	shareLinkNote,
 	shareLinkPath,
 	shareLinkPreset,
@@ -16,6 +15,7 @@ import {
 	timeZone,
 } from "@postpin-io/shared/logic/share-links";
 import { sendEmail } from "#lib/server/email.ts";
+import { shareLinkEmail } from "#lib/server/emails/templates.ts";
 import { recipientsSentToday } from "#lib/server/share-link-mails.ts";
 import { endLiveScreening, notifyShareLinkRevoked } from "#lib/server/live.ts";
 
@@ -296,7 +296,8 @@ export const sendShareLink = command(
 			data: { shareLinkId: link.id, senderId: user.id, recipients: emails },
 		});
 
-		const { subject, text } = shareLinkMailContent({
+		const mail = shareLinkEmail({
+			appUrl: BETTER_AUTH_URL,
 			senderName: user.name,
 			exportName: link.export.name,
 			url: BETTER_AUTH_URL + shareLinkPath(link.token),
@@ -304,7 +305,7 @@ export const sendShareLink = command(
 			expiresAt: link.expiresAt,
 		});
 		const results = await Promise.allSettled(
-			emails.map((to) => sendEmail(to, subject, text, { replyTo: user.email })),
+			emails.map((to) => sendEmail(to, mail, { replyTo: user.email })),
 		);
 		const failed = emails.filter((_, i) => results[i]!.status === "rejected");
 		if (failed.length === emails.length) {

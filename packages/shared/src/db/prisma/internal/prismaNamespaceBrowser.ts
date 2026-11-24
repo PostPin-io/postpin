@@ -55,11 +55,14 @@ export const ModelName = {
 	DeviceCode: "DeviceCode",
 	TwoFactor: "TwoFactor",
 	Passkey: "Passkey",
+	GuideProgress: "GuideProgress",
 	Marker: "Marker",
 	MarkerPointer: "MarkerPointer",
 	Category: "Category",
 	CategoryPreset: "CategoryPreset",
 	Response: "Response",
+	DeletedMarker: "DeletedMarker",
+	MarkerSet: "MarkerSet",
 	Media: "Media",
 	MediaFile: "MediaFile",
 	Thumbnail: "Thumbnail",
@@ -101,8 +104,7 @@ export const UserScalarFieldEnum = {
 	emailVerified: "emailVerified",
 	image: "image",
 	storageQuota: "storageQuota",
-	tutorialCompletedAt: "tutorialCompletedAt",
-	tutorialSeenSteps: "tutorialSeenSteps",
+	guidesEnabled: "guidesEnabled",
 	twoFactorEnabled: "twoFactorEnabled",
 	lastActiveOrganizationId: "lastActiveOrganizationId",
 } as const;
@@ -204,6 +206,20 @@ export const PasskeyScalarFieldEnum = {
 export type PasskeyScalarFieldEnum =
 	(typeof PasskeyScalarFieldEnum)[keyof typeof PasskeyScalarFieldEnum];
 
+export const GuideProgressScalarFieldEnum = {
+	id: "id",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
+	userId: "userId",
+	guideId: "guideId",
+	status: "status",
+	step: "step",
+	context: "context",
+} as const;
+
+export type GuideProgressScalarFieldEnum =
+	(typeof GuideProgressScalarFieldEnum)[keyof typeof GuideProgressScalarFieldEnum];
+
 export const MarkerScalarFieldEnum = {
 	id: "id",
 	name: "name",
@@ -217,6 +233,8 @@ export const MarkerScalarFieldEnum = {
 	authorId: "authorId",
 	guestId: "guestId",
 	nleId: "nleId",
+	nleTimelineId: "nleTimelineId",
+	syncHash: "syncHash",
 } as const;
 
 export type MarkerScalarFieldEnum =
@@ -274,6 +292,36 @@ export const ResponseScalarFieldEnum = {
 
 export type ResponseScalarFieldEnum =
 	(typeof ResponseScalarFieldEnum)[keyof typeof ResponseScalarFieldEnum];
+
+export const DeletedMarkerScalarFieldEnum = {
+	markerId: "markerId",
+	exportId: "exportId",
+	nleId: "nleId",
+	nleTimelineId: "nleTimelineId",
+	syncHash: "syncHash",
+	deletedAt: "deletedAt",
+} as const;
+
+export type DeletedMarkerScalarFieldEnum =
+	(typeof DeletedMarkerScalarFieldEnum)[keyof typeof DeletedMarkerScalarFieldEnum];
+
+export const MarkerSetScalarFieldEnum = {
+	id: "id",
+	action: "action",
+	timelineId: "timelineId",
+	exportId: "exportId",
+	nleTimelineId: "nleTimelineId",
+	nleTimelineName: "nleTimelineName",
+	hostName: "hostName",
+	createdById: "createdById",
+	createdAt: "createdAt",
+	summary: "summary",
+	nleMarkers: "nleMarkers",
+	postpinMarkers: "postpinMarkers",
+} as const;
+
+export type MarkerSetScalarFieldEnum =
+	(typeof MarkerSetScalarFieldEnum)[keyof typeof MarkerSetScalarFieldEnum];
 
 export const MediaScalarFieldEnum = {
 	id: "id",
@@ -493,12 +541,6 @@ export const SortOrder = {
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder];
 
-export const JsonNullValueInput = {
-	JsonNull: JsonNull,
-} as const;
-
-export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
-
 export const NullableJsonNullValueInput = {
 	DbNull: DbNull,
 	JsonNull: JsonNull,
@@ -506,6 +548,12 @@ export const NullableJsonNullValueInput = {
 
 export type NullableJsonNullValueInput =
 	(typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput];
+
+export const JsonNullValueInput = {
+	JsonNull: JsonNull,
+} as const;
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
 
 export const QueryMode = {
 	default: "default",

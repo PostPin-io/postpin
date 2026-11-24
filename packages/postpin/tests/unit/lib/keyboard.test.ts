@@ -53,6 +53,12 @@ describe("isInsideOverlay", () => {
 	it("false outside overlays", () => {
 		expect(isInsideOverlay(event(new FakeElement(["input"])))).toBe(false);
 	});
+
+	it("false on a tour card: the keys a tour step lets through work while it has the focus", () => {
+		expect(isInsideOverlay(event(new FakeElement(["[role='dialog']", "[data-tour-card]"])))).toBe(
+			false,
+		);
+	});
 });
 
 describe("isPlainKey", () => {

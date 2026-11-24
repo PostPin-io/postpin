@@ -6,6 +6,13 @@
 //
 // Copying a marker copies its custom data, so copies share the original's id. The marker at (or
 // closest to) the last seen frame keeps it, the others get new ids and are new markers in PostPin.
+//
+// Two more fields work around Resolve's limits, both only valid while the marker stays where the
+// plugin put it (frame unchanged):
+// - pinnedFrame: Resolve takes one marker per frame, so a pulled marker whose frame was taken sits a
+//   few frames later. pinnedFrame is its real (absolute) frame, which the plugin reports instead.
+// - placeholderName: Resolve needs a name, so an untitled marker gets one. The plugin reports it
+//   as untitled again.
 
 import { parsePostPinData, stringifyPostPinData } from "@postpin-io/plugin-core/customData";
 
@@ -78,26 +85,58 @@ export function assignMarkerIds(
 		}
 		const nleId = m.nleId ?? newId();
 		const changed = m.nleId === null || m.lastFrame !== m.frame;
+		// Moved by the user: the frame the plugin worked around no longer applies
+		const moved = m.lastFrame !== null && m.lastFrame !== m.frame;
+		const data = moved ? { ...m.data, pinnedFrame: undefined } : m.data;
 		return {
 			frame: m.frame,
 			nleId,
-			customData: changed ? stringifyPostPinData({ ...m.data, nleId, frame: m.frame }) : customData,
+			customData: changed ? stringifyPostPinData({ ...data, nleId, frame: m.frame }) : customData,
 			changed,
 		};
 	});
 }
 
-// Id and custom data for a marker the plugin creates at frame (relative to the timeline start)
+/** The workaround fields for a marker the plugin writes, see the top of this file */
+export interface PlacementData {
+	pinnedFrame?: number;
+	placeholderName?: string;
+}
+
+// Id and custom data for a marker the plugin creates at frame (relative to the timeline start).
+// A marker that brings its id (restored from a backup) keeps it, unless another marker has it.
 export function newMarkerData(
 	timelineId: string,
 	frame: number,
 	customData: string | null,
+	placement: PlacementData = {},
+	isTaken: (nleId: string) => boolean = () => false,
 	newId: () => string = () => crypto.randomUUID(),
 ) {
 	const data = ownData(customData);
 	if (!data) return { nleId: `${timelineId}:${frame}`, customData };
-	const nleId = newId();
-	return { nleId, customData: stringifyPostPinData({ ...data, nleId, frame }) };
+	const own = typeof data.nleId === "string" && !isTaken(data.nleId) ? data.nleId : null;
+	const nleId = own ?? newId();
+	return {
+		nleId,
+		customData: stringifyPostPinData({ ...data, ...placementFields(placement), nleId, frame }),
+	};
+}
+
+// Undefined fields drop out of the JSON, so stale ones from earlier custom data disappear
+const placementFields = ({ pinnedFrame, placeholderName }: PlacementData) => ({
+	pinnedFrame,
+	placeholderName,
+});
+
+/** What the plugin reports for a marker: its real frame and title, see PlacementData */
+export function readPlacement(customData: string | null, frame: number, name: string) {
+	const data = customData ? parsePostPinData(customData) : null;
+	const unmoved = typeof data?.frame === "number" && data.frame === frame;
+	return {
+		pinnedFrame: unmoved && typeof data?.pinnedFrame === "number" ? data.pinnedFrame : null,
+		untitled: typeof data?.placeholderName === "string" && data.placeholderName === name,
+	};
 }
 
 // The custom data as an object when it's ours (empty or PostPin's data), null when it isn't
@@ -124,11 +163,21 @@ export function replacedMarkerData(
 	frame: number,
 	existingCustomData: string | null,
 	pulledCustomData: string | null,
+	placement: PlacementData = {},
 ) {
 	const existing = ownData(existingCustomData);
 	if (!existing) return { nleId: `${timelineId}:${frame}`, customData: existingCustomData };
 	const pulled = ownData(pulledCustomData) ?? {};
-	return { nleId, customData: stringifyPostPinData({ ...existing, ...pulled, nleId, frame }) };
+	return {
+		nleId,
+		customData: stringifyPostPinData({
+			...existing,
+			...pulled,
+			...placementFields(placement),
+			nleId,
+			frame,
+		}),
+	};
 }
 
 // Resolve gives every marker a duration, a plain marker has 1. In PostPin that is a point marker

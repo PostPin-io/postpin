@@ -32,6 +32,12 @@ model Marker {
   // id of the marker in the NLE, e.g. "<session origin id>:<memory location number>" in Pro Tools.
   // Unique per export, since every export of a timeline gets the same NLE markers.
   nleId String?
+  /// NLE timeline the marker was last synced with, so a sync can tell "deleted in the NLE" from
+  /// "never synced with this timeline"
+  nleTimelineId String?
+  /// The plugins' hash of the marker as it was at the last sync, the common base to tell which side
+  /// changed it since (see plugin-core's syncHash.ts). Opaque to the server.
+  syncHash String?
 
   @@unique([exportId, nleId])
   @@index([guestId])
@@ -129,4 +135,66 @@ model Response {
 
   @@index([markerId])
   @@map("response")
+}
+
+/// What's left of a marker deleted in PostPin, so the plugins neither push it back nor keep it in
+/// the NLE (they offer to remove it there)
+model DeletedMarker {
+  /// the deleted marker's id
+  markerId String @id
+
+  export   Export @relation(fields: [exportId], references: [id], onDelete: Cascade)
+  exportId String
+
+  nleId         String?
+  nleTimelineId String?
+  syncHash      String?
+
+  deletedAt DateTime @default(now())
+
+  @@index([exportId])
+  @@map("deleted_marker")
+}
+
+enum MarkerSetAction {
+  PUSH
+  PULL
+  CLEAR
+  RESTORE
+}
+
+/// A backup of the markers taken before a plugin action (push, pull, delete all, restore), so the
+/// action can be undone. Holds both sides as they were before it: the NLE's markers and the
+/// export's. Never changes after creation.
+model MarkerSet {
+  id String @id @default(cuid())
+
+  action MarkerSetAction
+
+  timeline   Timeline @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+  timelineId String
+  /// the export the action worked on; null for delete all without one, or when it was deleted
+  export     Export?  @relation(fields: [exportId], references: [id], onDelete: SetNull)
+  exportId   String?
+
+  /// the NLE timeline the action ran in, and its host ("Resolve", "Pro Tools")
+  nleTimelineId   String
+  nleTimelineName String?
+  hostName        String
+
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  /// what the action changed, for the history list: { added, updated, removed } per side
+  summary        Json
+  /// NleMarkerSnapshot, see shared/src/logic/marker-sets.ts
+  nleMarkers     Json
+  /// PostPinMarkerSnapshot (with responses and pointers); null without an export
+  postpinMarkers Json?
+
+  @@index([timelineId, nleTimelineId, createdAt])
+  @@index([exportId])
+  @@index([createdById])
+  @@map("marker_set")
 }

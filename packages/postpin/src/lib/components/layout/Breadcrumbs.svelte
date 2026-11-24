@@ -104,7 +104,7 @@
 				siblingHref: projectHref,
 				share: project.canShare
 					? {
-							label: "Invite to project",
+							label: "Invitations for this project",
 							icon: UserGroup,
 							open: () => sharingModal?.open({ projectId: project.id }),
 						}
@@ -121,7 +121,7 @@
 			siblingHref: (id) => timelineHref(project.id, id),
 			share: timeline.canShare
 				? {
-						label: "Invite to timeline",
+						label: "Invitations for this timeline",
 						icon: UserGroup,
 						open: () => sharingModal?.open({ projectId: project.id, timelineId: timeline.id }),
 					}
@@ -155,6 +155,7 @@
 			class="btn btn-square btn-ghost text-base-content/50 btn-sm lg:btn-xs"
 			title="Switch {crumb.level}"
 			aria-label="Switch {crumb.level}"
+			data-guide={crumb.level === "project" ? undefined : "navigation/switcher"}
 			onfocus={() => openMenu(crumb.level)}
 		>
 			<ChevronRight
@@ -188,7 +189,7 @@
 {/snippet}
 
 {#if crumbs.length}
-	<nav aria-label="Breadcrumb" class="min-w-0">
+	<nav aria-label="Breadcrumb" class="min-w-0" data-guide="navigation/breadcrumbs">
 		<ol class="flex min-w-0 items-center text-sm">
 			<!-- Mobile: only the current segment, plus a back link to its parent -->
 			<li class="lg:hidden">
@@ -196,6 +197,7 @@
 					href={crumbs.at(-2)?.href ?? resolve("/(root)/dashboard")}
 					class="btn btn-square btn-ghost btn-sm"
 					aria-label="Back"
+					data-guide="navigation/back"
 					title="Back"
 				>
 					<ChevronLeft class="size-4" />
@@ -220,6 +222,7 @@
 							class="btn btn-square btn-ghost btn-sm max-lg:order-2 lg:btn-xs"
 							title={label}
 							aria-label={label}
+							data-guide="project-access/open"
 							onclick={open}
 						>
 							<Icon class="size-3.5" />

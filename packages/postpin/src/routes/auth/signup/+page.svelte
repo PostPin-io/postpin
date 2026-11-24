@@ -11,8 +11,8 @@
 	let { data }: PageProps = $props();
 
 	// Someone who signs up to get somewhere (an invitation, a share link, a plugin login) goes
-	// there. Everyone else is new to PostPin and starts with the tutorial.
-	const redirectTo = safeRedirect(page.url.searchParams.get("redirect"), "/welcome");
+	// there. Everyone else starts on the dashboard, which sets up the first organization.
+	const redirectTo = safeRedirect(page.url.searchParams.get("redirect"), "/dashboard");
 	// keeps ?redirect= (and the invited email) when switching between login and signup
 	const authQuery = page.url.search;
 
@@ -55,9 +55,9 @@
 
 <PageMeta title="Sign Up" description="Create a new PostPin account." />
 
-<header class="mb-6 space-y-2 text-center">
-	<h1 class="text-3xl font-bold">Create an account</h1>
-	<p class="text-base-content/70">Sign up to start using PostPin.</p>
+<header class="space-y-1.5 text-center">
+	<h1 class="text-2xl font-semibold">Create an account</h1>
+	<p class="text-sm text-base-content/70">Sign up to start using PostPin.</p>
 </header>
 
 <div class="space-y-4">
@@ -65,25 +65,14 @@
 		<div class="alert alert-error" role="alert">{errorText}</div>
 	{/if}
 
-	<SsoButtons
-		providers={data.providers}
-		callbackURL={safeRedirect(page.url.searchParams.get("redirect"))}
-		newUserCallbackURL={redirectTo}
-		onerror={(message) => (errorText = message)}
-	/>
-
 	{#if !DISABLE_PASSWORD_LOGIN}
-		{#if data.providers.length > 0}
-			<div class="divider text-sm text-base-content/60">or</div>
-		{/if}
-
 		<form class="space-y-4" onsubmit={handleSignup}>
 			<label class="block w-full">
-				<span class="mb-2 block">First Name</span>
+				<span class="mb-1.5 block text-sm font-medium">First name</span>
 				<input
 					type="text"
-					placeholder="First Name"
-					class="input-bordered input w-full"
+					placeholder="Jane"
+					class="input w-full"
 					autocomplete="given-name"
 					required
 					bind:value={firstName}
@@ -91,22 +80,22 @@
 			</label>
 
 			<label class="block w-full">
-				<span class="mb-2 block">Last Name</span>
+				<span class="mb-1.5 block text-sm font-medium">Last name</span>
 				<input
 					type="text"
-					placeholder="Last Name"
-					class="input-bordered input w-full"
+					placeholder="Doe"
+					class="input w-full"
 					autocomplete="family-name"
 					bind:value={lastName}
 				/>
 			</label>
 
 			<label class="block w-full">
-				<span class="mb-2 block">Email</span>
+				<span class="mb-1.5 block text-sm font-medium">Email</span>
 				<input
 					type="email"
 					placeholder="you@example.com"
-					class="input-bordered input w-full"
+					class="input w-full"
 					autocomplete="email"
 					required
 					bind:value={email}
@@ -114,11 +103,11 @@
 			</label>
 
 			<label class="block w-full">
-				<span class="mb-2 block">Password</span>
+				<span class="mb-1.5 block text-sm font-medium">Password</span>
 				<input
 					type="password"
 					placeholder="At least 8 characters"
-					class="input-bordered input w-full"
+					class="input w-full"
 					autocomplete="new-password"
 					minlength="8"
 					required
@@ -130,15 +119,26 @@
 				{#if isLoading}
 					<span class="loading loading-md loading-spinner"></span>
 				{:else}
-					Sign Up
+					Sign up
 				{/if}
 			</button>
 		</form>
+
+		{#if data.providers.length > 0}
+			<div class="divider my-2 text-xs text-base-content/60">OR</div>
+		{/if}
 	{:else if data.providers.length === 0}
 		<p class="text-center text-sm text-base-content/70">
 			Sign-up is turned off on this PostPin instance.
 		</p>
 	{/if}
+
+	<SsoButtons
+		providers={data.providers}
+		callbackURL={safeRedirect(page.url.searchParams.get("redirect"))}
+		newUserCallbackURL={redirectTo}
+		onerror={(message) => (errorText = message)}
+	/>
 
 	{#if TERMS_URL || PRIVACY_URL}
 		<p class="text-center text-xs text-base-content/60">

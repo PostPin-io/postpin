@@ -10,7 +10,6 @@ import {
 	screeningDate,
 	screeningExpiresSoon,
 	shareGuestName,
-	shareLinkMailContent,
 	shareLinkNote,
 	shareLinkRecipients,
 	shareLinkStatus,
@@ -117,30 +116,6 @@ describe("shareLinkRecipients", () => {
 		["too many", Array.from({ length: MAX_RECIPIENTS_PER_SEND + 1 }, (_, i) => `u${i}@x.io`)],
 	])("rejects %s", (_, list) => {
 		expect(() => v.parse(shareLinkRecipients, list)).toThrow();
-	});
-});
-
-describe("shareLinkMailContent", () => {
-	const base = {
-		senderName: "Hannes",
-		exportName: "Cut 3",
-		url: "https://app.postpin.io/s/abc",
-		expiresAt: new Date("2026-11-16T12:00:00Z"),
-	};
-
-	it("names sender and export, ends with link and expiry", () => {
-		const mail = shareLinkMailContent({ ...base, note: null });
-		expect(mail.subject).toBe('Hannes shared "Cut 3" with you');
-		expect(mail.text).toContain("https://app.postpin.io/s/abc");
-		expect(mail.text).toContain("November 16, 2026");
-		expect(mail.text.split("\n")[1]).toBe("");
-	});
-
-	it("puts the note right after the first line", () => {
-		const lines = shareLinkMailContent({ ...base, note: "Please check the ending" }).text.split(
-			"\n",
-		);
-		expect(lines[2]).toBe("Please check the ending");
 	});
 });
 

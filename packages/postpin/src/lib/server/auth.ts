@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./database";
 import { sendEmail } from "./email";
+import { accountDeletedEmail, resetPasswordEmail, verifyEmailEmail } from "./emails/templates.ts";
 import { organization } from "better-auth/plugins";
 import { BETTER_AUTH_SECRET, BETTER_AUTH_URL } from "$app/env/private";
 import { DISABLE_PASSWORD_LOGIN } from "$app/env/public";
@@ -12,6 +13,9 @@ import { APIError, createAuthMiddleware, getIP } from "better-auth/api";
 import { prepareAccountDeletion } from "#lib/server/account-deletion.ts";
 import { Role } from "@postpin-io/shared/db";
 import { ac, betterAuthRoles } from "#lib/better-auth-roles.ts";
+import { getSessionFromCtx } from "better-auth/api";
+import { PLUGIN_SIGN_IN_DENIED } from "#lib/roles.ts";
+import { userMayUsePlugins } from "#lib/server/plugin-access.ts";
 import { twoFactor, genericOAuth } from "better-auth/plugins";
 import { passkey } from "@better-auth/passkey";
 import { oidcProvider, socialProviders } from "#lib/server/auth-providers.ts";
@@ -21,6 +25,10 @@ const social = socialProviders();
 
 /** How recent a sign-in must be to delete an account that has no password to confirm with */
 export const DELETE_WITHOUT_PASSWORD_MAX_AGE_MS = 10 * 60 * 1000;
+
+// better-auth's defaults, set here so the mails can name them
+const VERIFY_EMAIL_TTL_S = 60 * 60;
+const RESET_PASSWORD_TTL_S = 60 * 60;
 
 export const auth = betterAuth({
 	// The build imports this module without env (see env.ts), and better-auth refuses to start
@@ -68,6 +76,14 @@ export const auth = betterAuth({
 	},
 	hooks: {
 		before: createAuthMiddleware(async (ctx) => {
+			// Every device client is a plugin: a reviewer-only account may not sign one in (roles.ts)
+			if (ctx.path === "/device/approve") {
+				const session = await getSessionFromCtx(ctx);
+				if (session && !(await userMayUsePlugins(session.user.id))) {
+					throw new APIError("FORBIDDEN", { message: PLUGIN_SIGN_IN_DENIED });
+				}
+				return;
+			}
 			if (ctx.path !== "/delete-user" || ctx.body?.password) return;
 
 			// Not getSessionFromCtx: user hooks run before bearer()'s, so a desktop/plugin token
@@ -135,29 +151,40 @@ export const auth = betterAuth({
 			afterDelete: async (user) => {
 				await sendEmail(
 					user.email,
-					"Your PostPin account was deleted",
-					"Your PostPin account and all its sessions have been deleted. Markers and comments you wrote stay with their organizations and show as “Deleted User”.",
+					accountDeletedEmail({ appUrl: BETTER_AUTH_URL, name: user.name }),
 				).catch((err: unknown) => console.error("Account deletion mail failed", err));
 			},
 		},
 	},
 	emailVerification: {
+		expiresIn: VERIFY_EMAIL_TTL_S,
 		sendVerificationEmail: async ({ user, url }) => {
 			await sendEmail(
 				user.email,
-				"Verify your email address",
-				`Use this link to verify your email address: ${url}`,
+				verifyEmailEmail({
+					appUrl: BETTER_AUTH_URL,
+					url,
+					name: user.name,
+					email: user.email,
+					validForMs: VERIFY_EMAIL_TTL_S * 1000,
+				}),
 			);
 		},
 	},
 	emailAndPassword: {
 		// SSO-only instances; also blocks sign-up and password reset
 		enabled: !DISABLE_PASSWORD_LOGIN,
+		resetPasswordTokenExpiresIn: RESET_PASSWORD_TTL_S,
 		sendResetPassword: async ({ user, url }) => {
 			await sendEmail(
 				user.email,
-				"Reset your password",
-				`Use this link to reset your password: ${url}`,
+				resetPasswordEmail({
+					appUrl: BETTER_AUTH_URL,
+					url,
+					name: user.name,
+					email: user.email,
+					validForMs: RESET_PASSWORD_TTL_S * 1000,
+				}),
 			);
 		},
 	},

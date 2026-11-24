@@ -150,26 +150,3 @@ export function parseEmailList(text: string) {
 	}
 	return { valid, invalid };
 }
-
-const mailDate = new Intl.DateTimeFormat("en", { dateStyle: "long", timeZone: "UTC" });
-
-/** Subject and plain text of the mail; the note comes first, as the sender wrote it */
-export function shareLinkMailContent(mail: {
-	senderName: string;
-	exportName: string;
-	url: string;
-	note: string | null;
-	expiresAt: Date | null;
-}) {
-	const lines = [
-		`${mail.senderName} shared the video "${mail.exportName}" with you on PostPin.`,
-		...(mail.note ? ["", mail.note] : []),
-		"",
-		`Watch it and leave your markers: ${mail.url}`,
-		...(mail.expiresAt ? [`The link works until ${mailDate.format(mail.expiresAt)}.`] : []),
-	];
-	return {
-		subject: `${mail.senderName} shared "${mail.exportName}" with you`,
-		text: lines.join("\n"),
-	};
-}

@@ -9,17 +9,16 @@
 	import NewOrgModal from "../../../lib/components/organizations/NewOrgModal.svelte";
 	import DeleteProjectModal from "#lib/components/projects/DeleteProjectModal.svelte";
 	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
-	import ManageAccessModal from "#lib/components/sharing/ManageAccessModal.svelte";
 	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
-	import ContinueTutorialCard from "#lib/components/tutorial/ContinueTutorialCard.svelte";
 	import UploadDropOverlay from "#lib/components/exports/UploadDropOverlay.svelte";
 	import { heldUpload } from "#lib/upload/held-upload.svelte.ts";
+	import { getGuideProgress } from "#lib/components/guides/guides.remote.ts";
+	import { isOpen, requestGuide } from "#lib/components/guides/guide-state.svelte.ts";
 
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
 	import Apeture from "@lucide/svelte/icons/aperture";
 	import UserGroup from "@lucide/svelte/icons/user-group";
-	import ShieldUser from "@lucide/svelte/icons/shield-user";
 	import Ellipsis from "@lucide/svelte/icons/ellipsis";
 	import FolderOpen from "@lucide/svelte/icons/folder-open";
 	import Pencil from "@lucide/svelte/icons/pencil";
@@ -48,9 +47,12 @@
 	let renameProjectDialog: RenameProjectModal | null = null;
 	let delProjectDialog: DeleteProjectModal | null = null;
 	let inviteDialog: SharingSetupModal | null = null;
-	let accessDialog: ManageAccessModal | null = null;
 
 	let data = $derived(await getProjects());
+
+	// The first organization is made in the first-upload tutorial: while it's open, the welcome
+	// card starts it instead of the plain dialog, which would leave its organization step out
+	const firstUploadOpen = $derived(isOpen(await getGuideProgress(), "first-upload"));
 
 	// A video dropped here waits for its project: those it may go to stand out, the others fade
 	const canDropHere = $derived(data.projects.some((p) => p.canUpload));
@@ -83,14 +85,9 @@
 		renameProjectDialog?.open(project);
 	}
 
-	function inviteToProject(project: (typeof data.projects)[number]) {
+	function openInvitations(project: (typeof data.projects)[number]) {
 		closeMenu(project);
 		inviteDialog?.open({ projectId: project.id });
-	}
-
-	function manageProjectAccess(project: (typeof data.projects)[number]) {
-		closeMenu(project);
-		accessDialog?.open({ projectId: project.id });
 	}
 
 	function deleteProject(project: (typeof data.projects)[number]) {
@@ -158,15 +155,9 @@
 		</li>
 		{#if project.canShare}
 			<li class="mt-1 border-t border-base-300 pt-1">
-				<button type="button" onclick={() => inviteToProject(project)}>
+				<button type="button" onclick={() => openInvitations(project)}>
 					<UserGroup class="size-4" />
-					Invite to project
-				</button>
-			</li>
-			<li>
-				<button type="button" onclick={() => manageProjectAccess(project)}>
-					<ShieldUser class="size-4" />
-					Manage access
+					Invitations
 				</button>
 			</li>
 		{/if}
@@ -218,9 +209,18 @@
 					</p>
 
 					<div class="mt-6 card-actions w-full">
-						<button class="btn btn-block btn-primary" onclick={() => dialog?.open()}>
-							Create organization
-						</button>
+						{#if firstUploadOpen}
+							<button
+								class="btn btn-block btn-primary"
+								onclick={() => requestGuide("first-upload")}
+							>
+								Get started
+							</button>
+						{:else}
+							<button class="btn btn-block btn-primary" onclick={() => dialog?.open()}>
+								Create organization
+							</button>
+						{/if}
 					</div>
 				</div>
 			</div>
@@ -240,7 +240,6 @@
 			</div>
 		</div>
 	{:else}
-		<ContinueTutorialCard />
 		<header
 			class="flex flex-col gap-3 border-b border-base-300 pb-4 md:flex-row md:items-center md:justify-between"
 		>
@@ -250,6 +249,7 @@
 					<button
 						class="btn rounded-full btn-sm"
 						aria-label="New project"
+						data-guide="navigation/new-project"
 						onclick={() => projectDialog?.open()}
 					>
 						<Plus />
@@ -263,6 +263,7 @@
 						type="search"
 						placeholder="Search projects"
 						aria-label="Search projects"
+						data-guide="navigation/search"
 						class="input input-sm max-md:w-full"
 						bind:value={searchQuery}
 					/>
@@ -280,7 +281,7 @@
 						<ChevronDown />
 					{/if}
 				</button>
-				<div class="join max-md:hidden" role="group">
+				<div class="join max-md:hidden" role="group" data-guide="navigation/views">
 					<button
 						class="btn join-item btn-sm"
 						class:btn-active={viewMode === "table"}
@@ -309,6 +310,7 @@
 						role="button"
 						class="btn btn-circle btn-ghost"
 						aria-label="Sort options"
+						data-guide="navigation/sort"
 					>
 						<Ellipsis class="h-6 w-6" />
 					</div>
@@ -351,8 +353,14 @@
 				return (sortDirection == "asc" ? 1 : -1) * comparison || a.id.localeCompare(b.id);
 			})}
 
+		<!-- the tour opens a project that leads on to an export -->
+		{@const leadsOn = sortedProjects.find((p) => p.timelines.some((t) => t.exports.length > 0))?.id}
+
 		{#if shownView === "table"}
-			<div class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 shadow">
+			<div
+				class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 shadow"
+				data-guide="navigation/projects"
+			>
 				<table class="table table-zebra">
 					<thead>
 						<tr>
@@ -422,7 +430,12 @@
 								</td>
 
 								<td class="font-medium">
-									<a href={projectHref} class="link link-hover">{project.name}</a>
+									<a
+										href={projectHref}
+										class="link link-hover"
+										data-guide={project.id === leadsOn ? "navigation/open-project" : undefined}
+										>{project.name}</a
+									>
 								</td>
 								<td class="whitespace-nowrap text-base-content/70">
 									{new Date(project.createdAt).toLocaleDateString()}
@@ -447,7 +460,10 @@
 				</table>
 			</div>
 		{:else}
-			<div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+			<div
+				class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+				data-guide="navigation/projects"
+			>
 				{#each sortedProjects as project (project.id)}
 					{@const latest = project.timelines[0]?.exports[0]}
 					{@const projectHref = `/projects/${project.id}`}
@@ -481,6 +497,7 @@
 								<a
 									href={projectHref}
 									class="min-w-0 flex-1 link truncate link-hover"
+									data-guide={project.id === leadsOn ? "navigation/open-project" : undefined}
 									title={project.name}
 								>
 									{project.name}
@@ -517,7 +534,6 @@
 <RenameProjectModal bind:this={renameProjectDialog} />
 <DeleteProjectModal bind:this={delProjectDialog} />
 <SharingSetupModal bind:this={inviteDialog} />
-<ManageAccessModal bind:this={accessDialog} oninvite={(t) => inviteDialog?.open(t)} />
 {#if canDropHere}
 	<UploadDropOverlay ondropped={(file) => heldUpload.hold(file)}>
 		Then choose the project and the timeline it goes to.

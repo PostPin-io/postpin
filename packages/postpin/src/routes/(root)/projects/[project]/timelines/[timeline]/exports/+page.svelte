@@ -298,7 +298,7 @@
 					{/if}
 				</button>
 
-				<div class="join max-md:hidden" role="group">
+				<div class="join max-md:hidden" role="group" data-guide="navigation/views">
 					<button
 						class="btn join-item btn-sm"
 						class:btn-active={viewMode === "table"}
@@ -327,6 +327,7 @@
 						role="button"
 						class="btn btn-circle btn-ghost"
 						aria-label="Sort options"
+						data-guide="navigation/sort"
 					>
 						<Ellipsis class="h-6 w-6" />
 					</div>
@@ -369,8 +370,13 @@
 				return (sortDirection == "asc" ? 1 : -1) * comparison || a.id.localeCompare(b.id);
 			})}
 
+		{@const firstExport = sortedExports[0]?.id}
+
 		{#if shownView === "table"}
-			<div class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 shadow">
+			<div
+				class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 shadow"
+				data-guide="navigation/exports"
+			>
 				<table class="table table-zebra">
 					<thead>
 						<tr>
@@ -439,7 +445,13 @@
 								</td>
 
 								<td class="max-w-xs font-medium break-words">
-									<a href={exportHref} class="link link-hover">{singleExport.name}</a>
+									<a
+										href={exportHref}
+										class="link link-hover"
+										data-guide={singleExport.id === firstExport
+											? "navigation/open-export"
+											: undefined}>{singleExport.name}</a
+									>
 								</td>
 
 								<td class="whitespace-nowrap text-base-content/70">
@@ -465,7 +477,10 @@
 				</table>
 			</div>
 		{:else}
-			<div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+			<div
+				class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+				data-guide="navigation/exports"
+			>
 				{#each sortedExports as singleExport (singleExport.id)}
 					{@const exportHref = exportUrl(singleExport.id)}
 
@@ -494,6 +509,9 @@
 							<h2 class="card-title flex items-center justify-between gap-2">
 								<a
 									href={exportHref}
+									data-guide={singleExport.id === firstExport
+										? "navigation/open-export"
+										: undefined}
 									class="min-w-0 flex-1 link truncate link-hover"
 									title={singleExport.name}
 								>

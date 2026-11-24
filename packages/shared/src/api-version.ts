@@ -4,7 +4,7 @@
  * it with every change a plugin built for the previous one can't handle. Server and plugin
  * releases keep their own semver versions.
  */
-export const POSTPIN_API_VERSION = 1;
+export const POSTPIN_API_VERSION = 2;
 
 export const API_VERSION_HEADER = "X-PostPin-Api-Version";
 

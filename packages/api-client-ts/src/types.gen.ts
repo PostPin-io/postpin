@@ -33,6 +33,169 @@ export type ProjectWithTimelines = {
 	timelines: Array<Timeline>;
 };
 
+export type MarkerSetAction = "PUSH" | "PULL" | "CLEAR" | "RESTORE";
+
+/**
+ * How many markers an action added, changed and removed on one side
+ */
+export type MarkerSetSideSummary = {
+	added: number;
+	updated: number;
+	removed: number;
+};
+
+/**
+ * What an action changed: the NLE's markers, PostPin's, or both
+ */
+export type MarkerSetSummary = {
+	nle?: MarkerSetSideSummary;
+	postpin?: MarkerSetSideSummary;
+};
+
+export type MarkerSetListItem = {
+	id: string;
+	action: MarkerSetAction;
+	timelineId: string;
+	exportId: string | null;
+	exportName: string | null;
+	nleTimelineId: string;
+	nleTimelineName: string | null;
+	hostName: string;
+	createdAt: string;
+	createdBy: {
+		name: string;
+		id: string;
+	} | null;
+	summary: MarkerSetSummary;
+};
+
+/**
+ * A marker as the NLE reported it, see plugin-core's NleMarker
+ */
+export type NleMarkerSnapshotEntry = {
+	nleId: string | null;
+	title: string;
+	description: string;
+	/**
+	 * absolute timeline frame
+	 */
+	frame: number;
+	duration?: number;
+	color: string;
+	customData: string | null;
+};
+
+export type NleMarkerSnapshot = {
+	format: number;
+	markers: Array<NleMarkerSnapshotEntry>;
+};
+
+export type PostPinResponseSnapshot = {
+	id: string;
+	content: string;
+	authorId: string | null;
+	createdAt: string;
+	updatedAt: string;
+};
+
+export type PostPinPointerSnapshot = {
+	id: string;
+	kind: "ARROW" | "RECT";
+	x: number;
+	y: number;
+	width: number | null;
+	height: number | null;
+	color: string;
+	createdAt: string;
+};
+
+/**
+ * A marker of the export with everything needed to bring it back when it was deleted since
+ */
+export type PostPinMarkerSnapshotEntry = {
+	id: string;
+	name: string;
+	description: string | null;
+	frame: number;
+	duration: number;
+	categoryId: string;
+	/**
+	 * to find or recreate the category when it is gone by the time of a restore
+	 */
+	categoryName: string;
+	categoryColor: string;
+	nleId: string | null;
+	nleTimelineId: string | null;
+	syncHash: string | null;
+	authorId: string | null;
+	guestId: string | null;
+	createdAt: string;
+	responses: Array<PostPinResponseSnapshot>;
+	pointers: Array<PostPinPointerSnapshot>;
+};
+
+export type PostPinMarkerSnapshot = {
+	format: number;
+	markers: Array<PostPinMarkerSnapshotEntry>;
+};
+
+export type MarkerSetDetail = {
+	id: string;
+	action: MarkerSetAction;
+	timelineId: string;
+	exportId: string | null;
+	exportName: string | null;
+	nleTimelineId: string;
+	nleTimelineName: string | null;
+	hostName: string;
+	createdAt: string;
+	createdBy: {
+		name: string;
+		id: string;
+	} | null;
+	summary: MarkerSetSummary;
+	nleMarkers: NleMarkerSnapshot;
+	postpinMarkers: PostPinMarkerSnapshot | null;
+};
+
+export type MarkerSetCreate = {
+	summary: MarkerSetSummary;
+	/**
+	 * the NLE's markers before the action
+	 */
+	nleMarkers: Array<NleMarkerSnapshotEntry>;
+	hostName: string;
+	nleTimelineName?: string | null;
+	nleTimelineId: string;
+	/**
+	 * the export the action works on, if any; its markers are backed up too
+	 */
+	exportId?: string | null;
+	/**
+	 * PUSH sets are made by the push itself
+	 */
+	action: "PULL" | "CLEAR" | "RESTORE";
+};
+
+export type MarkerSetRestoreResult = {
+	summary: MarkerSetSummary;
+	/**
+	 * the backup of the state before the restore
+	 */
+	markerSetId: string;
+};
+
+export type MarkerSetRestore = {
+	nleSummary?: MarkerSetSideSummary;
+	/**
+	 * the NLE's markers now, for the backup of the restore
+	 */
+	nleMarkers: Array<NleMarkerSnapshotEntry>;
+	hostName: string;
+	nleTimelineName?: string | null;
+	nleTimelineId: string;
+};
+
 export type DefaultSelection36ResponsePayload = {
 	content: string;
 	markerId: string;
@@ -47,6 +210,8 @@ export type ResponseModel = DefaultSelection36ResponsePayload;
 export type MarkerResponse = ResponseModel;
 
 export type DefaultSelection36MarkerPayload = {
+	syncHash: string | null;
+	nleTimelineId: string | null;
 	nleId: string | null;
 	guestId: string | null;
 	authorId: string | null;
@@ -64,6 +229,8 @@ export type DefaultSelection36MarkerPayload = {
 export type MarkerModel = DefaultSelection36MarkerPayload;
 
 export type MarkerWithResponses = {
+	syncHash: string | null;
+	nleTimelineId: string | null;
 	nleId: string | null;
 	guestId: string | null;
 	authorId: string | null;
@@ -96,6 +263,97 @@ export type UploadMarker = {
 	frame: number;
 	description: string | null;
 	name: string;
+};
+
+export type MarkerOrigin = {
+	/**
+	 * uploaded in the browser, not rendered by a plugin from the NLE timeline
+	 */
+	webUpload: boolean;
+	/**
+	 * to show the markers' timecodes, null when unknown
+	 */
+	frameRate: {
+		dropFrame: boolean;
+		fpsDenominator: number;
+		fpsNumerator: number;
+	} | null;
+	/**
+	 * first frame of the export's timeline, null when unknown
+	 */
+	startFrameIndex: number | null;
+};
+
+export type DefaultSelection36DeletedMarkerPayload = {
+	deletedAt: string;
+	markerId: string;
+	syncHash: string | null;
+	nleTimelineId: string | null;
+	nleId: string | null;
+	exportId: string;
+};
+
+export type DeletedMarkerModel = DefaultSelection36DeletedMarkerPayload;
+
+export type DeletedMarker = DeletedMarkerModel;
+
+export type MarkerPushResult = {
+	/**
+	 * in the order of upserts
+	 */
+	markers: Array<{
+		nleId: string | null;
+		id: string;
+	}>;
+	/**
+	 * the backup taken before the push
+	 */
+	markerSetId: string;
+};
+
+export type SyncMarker = UploadMarker & {
+	/**
+	 * the plugins' hash of the marker as both sides now have it, see MarkerController.linkMarkers
+	 */
+	syncHash?: string | null;
+};
+
+export type MarkerPush = {
+	summary: MarkerSetSummary;
+	/**
+	 * markers deleted in the NLE that are to be deleted here too
+	 */
+	deleteIds: Array<string>;
+	/**
+	 * markers to add or update
+	 */
+	upserts: Array<SyncMarker>;
+	/**
+	 * all of the NLE's markers as they are, for the backup
+	 */
+	nleMarkers: Array<NleMarkerSnapshotEntry>;
+	/**
+	 * Capabilities.hostName, e.g. "Resolve"
+	 */
+	hostName: string;
+	nleTimelineName?: string | null;
+	/**
+	 * the NLE timeline the markers come from, see Marker.nleTimelineId
+	 */
+	nleTimelineId: string;
+};
+
+export type MarkerLinks = {
+	/**
+	 * ids of deleted markers that are no longer in the NLE either
+	 */
+	forgetDeleted: Array<string>;
+	links: Array<{
+		syncHash: string | null;
+		nleId: string | null;
+		id: string;
+	}>;
+	nleTimelineId: string;
 };
 
 export type MultipartUploadPartUrl = {
@@ -394,6 +652,13 @@ export type GetProjectsData = {
 	url: "/v1/projects";
 };
 
+export type GetProjectsErrors = {
+	/**
+	 * Reviewer in every organization: the plugins need the Member role
+	 */
+	403: unknown;
+};
+
 export type GetProjectsResponses = {
 	/**
 	 * Ok
@@ -454,6 +719,113 @@ export type GetProjectResponses = {
 
 export type GetProjectResponse = GetProjectResponses[keyof GetProjectResponses];
 
+export type GetMarkerSetsData = {
+	body?: never;
+	path: {
+		projectId: string;
+		timelineId: string;
+	};
+	query?: {
+		nleTimelineId?: string;
+	};
+	url: "/v1/projects/{projectId}/timelines/{timelineId}/marker-sets";
+};
+
+export type GetMarkerSetsResponses = {
+	/**
+	 * Ok
+	 */
+	200: Array<MarkerSetListItem>;
+};
+
+export type GetMarkerSetsResponse = GetMarkerSetsResponses[keyof GetMarkerSetsResponses];
+
+export type CreateMarkerSetData = {
+	body: MarkerSetCreate;
+	path: {
+		projectId: string;
+		timelineId: string;
+	};
+	query?: never;
+	url: "/v1/projects/{projectId}/timelines/{timelineId}/marker-sets";
+};
+
+export type CreateMarkerSetErrors = {
+	/**
+	 * Timeline or export not found
+	 */
+	404: unknown;
+};
+
+export type CreateMarkerSetResponses = {
+	/**
+	 * Ok
+	 */
+	200: {
+		id: string;
+	};
+};
+
+export type CreateMarkerSetResponse = CreateMarkerSetResponses[keyof CreateMarkerSetResponses];
+
+export type GetMarkerSetData = {
+	body?: never;
+	path: {
+		projectId: string;
+		timelineId: string;
+		markerSetId: string;
+	};
+	query?: never;
+	url: "/v1/projects/{projectId}/timelines/{timelineId}/marker-sets/{markerSetId}";
+};
+
+export type GetMarkerSetErrors = {
+	/**
+	 * Marker set not found
+	 */
+	404: unknown;
+};
+
+export type GetMarkerSetResponses = {
+	/**
+	 * Ok
+	 */
+	200: MarkerSetDetail;
+};
+
+export type GetMarkerSetResponse = GetMarkerSetResponses[keyof GetMarkerSetResponses];
+
+export type RestoreMarkerSetData = {
+	body: MarkerSetRestore;
+	path: {
+		projectId: string;
+		timelineId: string;
+		markerSetId: string;
+	};
+	query?: never;
+	url: "/v1/projects/{projectId}/timelines/{timelineId}/marker-sets/{markerSetId}/restore";
+};
+
+export type RestoreMarkerSetErrors = {
+	/**
+	 * Marker set not found
+	 */
+	404: unknown;
+	/**
+	 * The marker set has no export to restore
+	 */
+	409: unknown;
+};
+
+export type RestoreMarkerSetResponses = {
+	/**
+	 * Ok
+	 */
+	200: MarkerSetRestoreResult;
+};
+
+export type RestoreMarkerSetResponse = RestoreMarkerSetResponses[keyof RestoreMarkerSetResponses];
+
 export type GetMarkersData = {
 	body?: never;
 	path: {
@@ -501,6 +873,101 @@ export type UploadMarkersResponses = {
 
 export type UploadMarkersResponse = UploadMarkersResponses[keyof UploadMarkersResponses];
 
+export type GetMarkerOriginData = {
+	body?: never;
+	path: {
+		projectId: string;
+		timelineId: string;
+		exportId: string;
+	};
+	query?: never;
+	url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers/origin";
+};
+
+export type GetMarkerOriginResponses = {
+	/**
+	 * Ok
+	 */
+	200: MarkerOrigin;
+};
+
+export type GetMarkerOriginResponse = GetMarkerOriginResponses[keyof GetMarkerOriginResponses];
+
+export type GetDeletedMarkersData = {
+	body?: never;
+	path: {
+		projectId: string;
+		timelineId: string;
+		exportId: string;
+	};
+	query?: never;
+	url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers/deleted";
+};
+
+export type GetDeletedMarkersResponses = {
+	/**
+	 * Ok
+	 */
+	200: Array<DeletedMarker>;
+};
+
+export type GetDeletedMarkersResponse =
+	GetDeletedMarkersResponses[keyof GetDeletedMarkersResponses];
+
+export type SyncMarkersData = {
+	body: MarkerPush;
+	path: {
+		projectId: string;
+		timelineId: string;
+		exportId: string;
+	};
+	query?: never;
+	url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers/sync";
+};
+
+export type SyncMarkersErrors = {
+	/**
+	 * Export not found
+	 */
+	404: unknown;
+};
+
+export type SyncMarkersResponses = {
+	/**
+	 * Ok
+	 */
+	200: MarkerPushResult;
+};
+
+export type SyncMarkersResponse = SyncMarkersResponses[keyof SyncMarkersResponses];
+
+export type LinkMarkersData = {
+	body: MarkerLinks;
+	path: {
+		projectId: string;
+		timelineId: string;
+		exportId: string;
+	};
+	query?: never;
+	url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers/links";
+};
+
+export type LinkMarkersErrors = {
+	/**
+	 * Export not found
+	 */
+	404: unknown;
+};
+
+export type LinkMarkersResponses = {
+	/**
+	 * No content
+	 */
+	204: void;
+};
+
+export type LinkMarkersResponse = LinkMarkersResponses[keyof LinkMarkersResponses];
+
 export type GetExportsData = {
 	body?: never;
 	path: {
@@ -527,7 +994,11 @@ export type GetExportsResponses = {
 export type GetExportsResponse = GetExportsResponses[keyof GetExportsResponses];
 
 export type CreateExportData = {
+	/**
+	 * `name`: the export's name, at most 100 characters; left out or empty, the server names it
+	 */
 	body: {
+		name?: string | null;
 		nleProjectId: string | null;
 		nleTimelineId: string | null;
 	};

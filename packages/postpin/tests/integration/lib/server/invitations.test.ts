@@ -8,8 +8,9 @@ describe("sendInvitationEmail", () => {
 		expect(fakes.emails).toEqual([
 			{
 				to: "x@test.local",
-				subject: "You're invited to join Acme",
+				subject: expect.stringContaining("join Acme"),
 				text: expect.stringContaining("http://localhost:5173/auth/invite/inv123"),
+				html: expect.stringContaining("http://localhost:5173/auth/invite/inv123"),
 			},
 		]);
 		expect(fakes.emails[0].text).toContain("Alice");

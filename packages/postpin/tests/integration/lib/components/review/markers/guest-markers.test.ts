@@ -159,6 +159,7 @@ describe("visibility and ownership", () => {
 			responses: [],
 			canUpdate: true,
 			canDelete: true,
+			isOwn: true,
 			guest: { name: "Anna" },
 		});
 	});

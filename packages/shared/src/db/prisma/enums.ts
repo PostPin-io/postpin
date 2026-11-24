@@ -8,12 +8,29 @@
  * 🟢 You can import this file directly.
  */
 
+export const GuideStatus = {
+	STARTED: "STARTED",
+	COMPLETED: "COMPLETED",
+	SKIPPED: "SKIPPED",
+} as const;
+
+export type GuideStatus = (typeof GuideStatus)[keyof typeof GuideStatus];
+
 export const PointerKind = {
 	ARROW: "ARROW",
 	RECT: "RECT",
 } as const;
 
 export type PointerKind = (typeof PointerKind)[keyof typeof PointerKind];
+
+export const MarkerSetAction = {
+	PUSH: "PUSH",
+	PULL: "PULL",
+	CLEAR: "CLEAR",
+	RESTORE: "RESTORE",
+} as const;
+
+export type MarkerSetAction = (typeof MarkerSetAction)[keyof typeof MarkerSetAction];
 
 export const MediaStatus = {
 	PENDING: "PENDING",

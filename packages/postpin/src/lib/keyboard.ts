@@ -1,4 +1,4 @@
-const TYPING_SELECTOR = "input, textarea, select, [contenteditable]";
+export const TYPING_SELECTOR = "input, textarea, select, [contenteditable]";
 const OVERLAY_SELECTOR = "dialog[open], [role='dialog'], [role='menu'], [role='listbox']";
 
 /** True while the user is entering text, where shortcuts must not fire. */
@@ -10,7 +10,12 @@ export function isTypingTarget(event: KeyboardEvent): boolean {
 /** True inside modals/menus, which own their keyboard interaction. */
 export function isInsideOverlay(event: KeyboardEvent): boolean {
 	const target = event.target;
-	return target instanceof Element && target.closest(OVERLAY_SELECTOR) !== null;
+	return (
+		target instanceof Element &&
+		target.closest(OVERLAY_SELECTOR) !== null &&
+		// a tour card is a dialog, but the keys its step lets through belong to the page
+		target.closest("[data-tour-card]") === null
+	);
 }
 
 /** Key press without Ctrl/Alt/Meta (Shift is allowed; Meta only with `allowMeta`). */

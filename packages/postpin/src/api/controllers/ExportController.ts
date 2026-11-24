@@ -15,7 +15,10 @@ import type { UploadedPart } from "@postpin-io/shared/storage";
 import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 import { Body, Controller, Get, Path, Post, Response, Route, Security } from "@tsoa/runtime";
 import { HttpError } from "../HttpError.ts";
-import { apiAuthorize, apiCall } from "../access.ts";
+import { apiAuthorize, apiCall, apiPluginCall } from "../access.ts";
+
+/** Like the web app's export names (upload.remote.ts) */
+const MAX_EXPORT_NAME = 100;
 
 @Security("session")
 @Route("v1/projects/{projectId}/timelines/{timelineId}/exports")
@@ -47,9 +50,23 @@ export class ExportController extends Controller {
 	public async createExport(
 		@Path() projectId: string,
 		@Path() timelineId: string,
-		@Body() body: { nleTimelineId: string | null; nleProjectId: string | null },
+		/** `name`: the export's name, at most 100 characters; left out or empty, the server names it */
+		@Body()
+		body: { nleTimelineId: string | null; nleProjectId: string | null; name?: string | null },
 	): Promise<{ id: string }> {
-		return apiCall(createExport({ projectId, timelineId, nle: body }));
+		const name = body.name?.trim();
+		if (name && name.length > MAX_EXPORT_NAME) {
+			throw new HttpError(400, `The export name may have at most ${MAX_EXPORT_NAME} characters`);
+		}
+		return apiPluginCall(
+			{ type: "timeline", id: timelineId },
+			createExport({
+				projectId,
+				timelineId,
+				...(name && { name }),
+				nle: { nleTimelineId: body.nleTimelineId, nleProjectId: body.nleProjectId },
+			}),
+		);
 	}
 
 	/**
@@ -72,7 +89,8 @@ export class ExportController extends Controller {
 		 */
 		@Body() body: { fileSize: number; proxies?: ProxyUploadRequest[] },
 	): Promise<InitUploadResponse> {
-		return apiCall(
+		return apiPluginCall(
+			{ type: "export", id: exportId },
 			initUpload({
 				exportId,
 				path: { projectId, timelineId },
@@ -98,7 +116,8 @@ export class ExportController extends Controller {
 		@Path() exportId: string,
 		@Body() body: { proxies: ProxyUploadRequest[] },
 	): Promise<{ proxies: ProxyUpload[] }> {
-		return apiCall(
+		return apiPluginCall(
+			{ type: "export", id: exportId },
 			initProxyUploads({ exportId, path: { projectId, timelineId }, proxies: body.proxies }),
 		);
 	}
@@ -124,7 +143,10 @@ export class ExportController extends Controller {
 			proxies?: UploadedProxy[];
 		},
 	): Promise<CompleteUploadResponse> {
-		return apiCall(completeUpload({ exportId, path: { projectId, timelineId }, ...body }));
+		return apiPluginCall(
+			{ type: "export", id: exportId },
+			completeUpload({ exportId, path: { projectId, timelineId }, ...body }),
+		);
 	}
 
 	/** Discards an unfinished multipart upload, so its parts don't linger in storage. */
@@ -137,7 +159,8 @@ export class ExportController extends Controller {
 		@Path() exportId: string,
 		@Body() body: { uploadId: string; proxies?: { proxyId: string; uploadId: string }[] },
 	): Promise<void> {
-		await apiCall(
+		await apiPluginCall(
+			{ type: "export", id: exportId },
 			abortUpload({
 				exportId,
 				path: { projectId, timelineId },

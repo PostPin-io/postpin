@@ -15,6 +15,9 @@ import type {
 	CreateExportData,
 	CreateExportErrors,
 	CreateExportResponses,
+	CreateMarkerSetData,
+	CreateMarkerSetErrors,
+	CreateMarkerSetResponses,
 	CreateProjectData,
 	CreateProjectErrors,
 	CreateProjectResponses,
@@ -25,11 +28,20 @@ import type {
 	GetCategoriesResponses,
 	GetConfigData,
 	GetConfigResponses,
+	GetDeletedMarkersData,
+	GetDeletedMarkersResponses,
 	GetDocsHtmlData,
 	GetDocsHtmlResponses,
 	GetExportsData,
 	GetExportsResponses,
+	GetMarkerOriginData,
+	GetMarkerOriginResponses,
 	GetMarkersData,
+	GetMarkerSetData,
+	GetMarkerSetErrors,
+	GetMarkerSetResponses,
+	GetMarkerSetsData,
+	GetMarkerSetsResponses,
 	GetMarkersResponses,
 	GetOpenApiSpecData,
 	GetOpenApiSpecResponses,
@@ -37,6 +49,7 @@ import type {
 	GetProjectErrors,
 	GetProjectResponses,
 	GetProjectsData,
+	GetProjectsErrors,
 	GetProjectsResponses,
 	InitProxyUploadsData,
 	InitProxyUploadsErrors,
@@ -44,6 +57,15 @@ import type {
 	InitUploadData,
 	InitUploadErrors,
 	InitUploadResponses,
+	LinkMarkersData,
+	LinkMarkersErrors,
+	LinkMarkersResponses,
+	RestoreMarkerSetData,
+	RestoreMarkerSetErrors,
+	RestoreMarkerSetResponses,
+	SyncMarkersData,
+	SyncMarkersErrors,
+	SyncMarkersResponses,
 	UploadMarkersData,
 	UploadMarkersErrors,
 	UploadMarkersResponses,
@@ -98,8 +120,8 @@ export const getDocsHtml = <ThrowOnError extends boolean = false>(
 
 export const getProjects = <ThrowOnError extends boolean = false>(
 	options?: Options<GetProjectsData, ThrowOnError>,
-): RequestResult<GetProjectsResponses, unknown, ThrowOnError> =>
-	(options?.client ?? client).get<GetProjectsResponses, unknown, ThrowOnError>({
+): RequestResult<GetProjectsResponses, GetProjectsErrors, ThrowOnError> =>
+	(options?.client ?? client).get<GetProjectsResponses, GetProjectsErrors, ThrowOnError>({
 		security: [{ scheme: "bearer", type: "http" }],
 		url: "/v1/projects",
 		...options,
@@ -130,6 +152,62 @@ export const getProject = <ThrowOnError extends boolean = false>(
 		...options,
 	});
 
+/**
+ * Newest first, without the markers. nleTimelineId narrows it to one NLE timeline.
+ */
+export const getMarkerSets = <ThrowOnError extends boolean = false>(
+	options: Options<GetMarkerSetsData, ThrowOnError>,
+): RequestResult<GetMarkerSetsResponses, unknown, ThrowOnError> =>
+	(options.client ?? client).get<GetMarkerSetsResponses, unknown, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
+		url: "/v1/projects/{projectId}/timelines/{timelineId}/marker-sets",
+		...options,
+	});
+
+/**
+ * Backs up the markers before an action that changes the NLE (pull, delete all, restoring the
+ * NLE). The export's markers are read here; pushes back up on their own (MarkerController.sync).
+ * For delete all, the timeline's markers in PostPin are unlinked from the NLE timeline.
+ */
+export const createMarkerSet = <ThrowOnError extends boolean = false>(
+	options: Options<CreateMarkerSetData, ThrowOnError>,
+): RequestResult<CreateMarkerSetResponses, CreateMarkerSetErrors, ThrowOnError> =>
+	(options.client ?? client).post<CreateMarkerSetResponses, CreateMarkerSetErrors, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
+		url: "/v1/projects/{projectId}/timelines/{timelineId}/marker-sets",
+		...options,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
+	});
+
+export const getMarkerSet = <ThrowOnError extends boolean = false>(
+	options: Options<GetMarkerSetData, ThrowOnError>,
+): RequestResult<GetMarkerSetResponses, GetMarkerSetErrors, ThrowOnError> =>
+	(options.client ?? client).get<GetMarkerSetResponses, GetMarkerSetErrors, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
+		url: "/v1/projects/{projectId}/timelines/{timelineId}/marker-sets/{markerSetId}",
+		...options,
+	});
+
+/**
+ * Brings the export's markers back to how they were in the set, after backing up the current
+ * state as a RESTORE set (which can be restored in turn). The NLE side is restored by the plugin.
+ */
+export const restoreMarkerSet = <ThrowOnError extends boolean = false>(
+	options: Options<RestoreMarkerSetData, ThrowOnError>,
+): RequestResult<RestoreMarkerSetResponses, RestoreMarkerSetErrors, ThrowOnError> =>
+	(options.client ?? client).post<RestoreMarkerSetResponses, RestoreMarkerSetErrors, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
+		url: "/v1/projects/{projectId}/timelines/{timelineId}/marker-sets/{markerSetId}/restore",
+		...options,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
+	});
+
 export const getMarkers = <ThrowOnError extends boolean = false>(
 	options: Options<GetMarkersData, ThrowOnError>,
 ): RequestResult<GetMarkersResponses, unknown, ThrowOnError> =>
@@ -145,6 +223,67 @@ export const uploadMarkers = <ThrowOnError extends boolean = false>(
 	(options.client ?? client).put<UploadMarkersResponses, UploadMarkersErrors, ThrowOnError>({
 		security: [{ scheme: "bearer", type: "http" }],
 		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers",
+		...options,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
+	});
+
+/**
+ * Where the export's frames start, and whether it was uploaded in the browser: such an export
+ * may start at another timecode than the NLE timeline, the plugins then shift the frames
+ */
+export const getMarkerOrigin = <ThrowOnError extends boolean = false>(
+	options: Options<GetMarkerOriginData, ThrowOnError>,
+): RequestResult<GetMarkerOriginResponses, unknown, ThrowOnError> =>
+	(options.client ?? client).get<GetMarkerOriginResponses, unknown, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
+		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers/origin",
+		...options,
+	});
+
+/**
+ * Markers deleted in PostPin, so a pull can offer to remove them from the NLE too
+ */
+export const getDeletedMarkers = <ThrowOnError extends boolean = false>(
+	options: Options<GetDeletedMarkersData, ThrowOnError>,
+): RequestResult<GetDeletedMarkersResponses, unknown, ThrowOnError> =>
+	(options.client ?? client).get<GetDeletedMarkersResponses, unknown, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
+		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers/deleted",
+		...options,
+	});
+
+/**
+ * Push: writes the NLE's changes into the export in one transaction, after a backup of both
+ * sides (a marker set). Markers match by id, else by nleId; deleteIds are markers deleted in the
+ * NLE that the user agreed to delete here too. Returns the backup and every marker's id, in the
+ * order of upserts.
+ */
+export const syncMarkers = <ThrowOnError extends boolean = false>(
+	options: Options<SyncMarkersData, ThrowOnError>,
+): RequestResult<SyncMarkersResponses, SyncMarkersErrors, ThrowOnError> =>
+	(options.client ?? client).post<SyncMarkersResponses, SyncMarkersErrors, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
+		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers/sync",
+		...options,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
+	});
+
+/**
+ * After a pull: which NLE marker each PostPin marker is now, with the state both sides agree on
+ * (syncHash). forgetDeleted are deleted markers the pull removed from the NLE.
+ */
+export const linkMarkers = <ThrowOnError extends boolean = false>(
+	options: Options<LinkMarkersData, ThrowOnError>,
+): RequestResult<LinkMarkersResponses, LinkMarkersErrors, ThrowOnError> =>
+	(options.client ?? client).post<LinkMarkersResponses, LinkMarkersErrors, ThrowOnError>({
+		security: [{ scheme: "bearer", type: "http" }],
+		url: "/v1/projects/{projectId}/timelines/{timelineId}/exports/{exportId}/markers/links",
 		...options,
 		headers: {
 			"Content-Type": "application/json",

@@ -4,6 +4,7 @@
 	import ArrowLeft from "@lucide/svelte/icons/arrow-left";
 	import Send from "@lucide/svelte/icons/send";
 	import type { ReviewMarker } from "./types";
+	import { signalGuide } from "../../guides/guide-signals.svelte.ts";
 
 	interface Props {
 		marker: ReviewMarker;
@@ -26,6 +27,7 @@
 		try {
 			await createResponse({ markerId: marker.id, content: text });
 			content = "";
+			signalGuide("first-review", "reply");
 		} finally {
 			sending = false;
 		}
@@ -57,6 +59,7 @@
 
 		<form
 			class="flex flex-col gap-2"
+			data-guide="first-review/reply"
 			onsubmit={(e) => {
 				e.preventDefault();
 				void send();

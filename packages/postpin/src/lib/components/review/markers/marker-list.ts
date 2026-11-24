@@ -100,3 +100,14 @@ export function selectRange(
 		anchor: anchorId,
 	};
 }
+
+/**
+ * The user's own marker with exactly this range: adding one there again selects it instead.
+ * Someone else's marker on the same frame doesn't keep the user from adding their own.
+ */
+export function ownMarkerAt<T extends { frame: number; duration: number; isOwn: boolean }>(
+	markers: T[],
+	range: { frame: number; duration: number },
+): T | undefined {
+	return markers.find((m) => m.isOwn && m.frame === range.frame && m.duration === range.duration);
+}

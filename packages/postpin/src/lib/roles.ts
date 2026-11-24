@@ -21,6 +21,12 @@ export const ACTIONS = {
 	grant: ["create", "delete"],
 	member: ["read", "updateRole", "remove"],
 	organization: ["rename", "delete", "updateSettings"],
+	/**
+	 * The PostPin plugins (Resolve, Premiere, PostPin Desktop) and the REST API they speak. Not for
+	 * reviewers: they review in the browser, and the plugins are about rendering, uploading and
+	 * syncing everyone's markers.
+	 */
+	plugin: ["use"],
 } as const;
 
 export type Area = keyof typeof ACTIONS;
@@ -63,6 +69,7 @@ const member = extend(reviewer, {
 	inviteLink: { read: all, create: all, delete: own },
 	shareLink: { read: all, create: all, update: own, delete: own },
 	grant: { create: all, delete: own },
+	plugin: { use: all },
 });
 
 const admin = extend(member, {
@@ -160,6 +167,18 @@ export type AccessContext = {
 export function roleAllows<A extends Area>(role: Role, area: A, action: Action<A>): boolean {
 	return getRule(role, area, action) !== undefined;
 }
+
+/**
+ * Whether someone with these organization roles may sign in a plugin: in at least one organization
+ * they may use it. Without any organization yet they may too: the first one they create makes them
+ * its owner.
+ */
+export const mayUsePlugins = (roles: Role[]) =>
+	roles.length === 0 || roles.some((role) => roleAllows(role, "plugin", "use"));
+
+/** Shown where a reviewer-only account tries to sign in a plugin */
+export const PLUGIN_SIGN_IN_DENIED =
+	"PostPin plugins need the Member role, and you're a Reviewer in all your organizations. The plugins upload exports and sync everyone's markers, and a reviewer can do neither. Ask an admin to change your role, or review right here in the browser.";
 
 /**
  * Full check. Fails closed: if a rule needs `isOwn` or `hasGrant` and the

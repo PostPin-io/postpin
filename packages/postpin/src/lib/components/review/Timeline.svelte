@@ -13,6 +13,7 @@
 		collapsedLaneCount,
 		stepPlaybackRate,
 		dragRange,
+		dragSignals,
 		orderMarks,
 		tickStep,
 		timelineCuts,
@@ -30,6 +31,8 @@
 	import { useShare } from "./share-context.ts";
 	import { markersKey } from "./markers/marker-scope.ts";
 	import { lastFrameOf, type FrameRange } from "@postpin-io/shared/logic/ranges";
+	import GuideButton from "#lib/components/guides/GuideButton.svelte";
+	import { signalGuide } from "#lib/components/guides/guide-signals.svelte.ts";
 
 	interface Props {
 		snapshot: TimelineSnapshot;
@@ -45,6 +48,8 @@
 		onCollapsedHeight: (height: number) => void;
 		/** A marker on the timeline was clicked: the review selects it in the marker panel */
 		onmarkerclick?: (markerId: string) => void;
+		/** The one selected marker, if any: the marker-ranges tour points at it */
+		selectedMarkerId?: string | null;
 	}
 
 	const getShare = useShare();
@@ -61,6 +66,7 @@
 		inOut = $bindable({ in: null, out: null }),
 		onCollapsedHeight,
 		onmarkerclick,
+		selectedMarkerId = null,
 	}: Props = $props();
 
 	let hover = $state<{ time: number; x: number; y: number } | null>(null);
@@ -164,6 +170,10 @@
 		current: FrameRange;
 	} | null>(null);
 
+	// Alt turns a marker's head into a handle: a point marker pulls out a range, a range edge resizes
+	let altHeld = $state(false);
+	const trackAlt = (event: KeyboardEvent | PointerEvent) => (altHeld = event.altKey);
+
 	const rangeOf = (m: ReviewMarker): FrameRange =>
 		markerDrag?.id === m.id ? markerDrag.current : { frame: m.frame, duration: m.duration };
 
@@ -186,6 +196,8 @@
 		event: PointerEvent & { currentTarget: HTMLElement },
 		marker: ReviewMarker,
 		mode: RangeDragMode = "move",
+		/** The range edge whose head was grabbed: with Alt it resizes instead of moving the range */
+		edge?: "start" | "end",
 	) {
 		if (event.button !== 0) return;
 		// Keep the ruler from starting a scrub, and the bar from moving when a handle is grabbed
@@ -198,8 +210,9 @@
 		}
 		event.currentTarget.setPointerCapture(event.pointerId);
 		const origin = { frame: marker.frame, duration: marker.duration };
-		// Alt-dragging a point marker pulls a range out of it
-		const dragMode = event.altKey && origin.duration === 0 && mode === "move" ? "span" : mode;
+		// Alt-dragging a point marker pulls a range out of it, a range's edge changes its length
+		const dragMode =
+			event.altKey && mode === "move" ? (origin.duration === 0 ? "span" : (edge ?? mode)) : mode;
 		markerDrag = {
 			id: marker.id,
 			mode: dragMode,
@@ -254,6 +267,9 @@
 					shareToken: share?.token,
 				});
 				await getMarkers(markersKey(marker.exportId, share?.token)).refresh();
+				for (const signal of dragSignals(marker, { frame, duration })) {
+					signalGuide("marker-ranges", signal);
+				}
 			}
 		} finally {
 			markerDrag = null;
@@ -421,14 +437,24 @@
 </script>
 
 <!-- <pre>{JSON.stringify({ markers }, null, 2)}</pre> -->
+<!-- Pointer events too: Alt may go down while another window has focus -->
+<svelte:window
+	onkeydown={trackAlt}
+	onkeyup={trackAlt}
+	onpointermove={trackAlt}
+	onblur={() => (altHeld = false)}
+/>
 <div class="flex h-full flex-col">
 	<div
 		bind:offsetHeight={toolbarHeight}
 		class="flex items-center justify-between gap-2 border-b border-gray-300 p-2"
 	>
-		<span class="text-xs text-gray-500">
-			Space play/pause · ←/→ frame · ↑/↓ previous/next cut · +/- speed · I/O in/out · ⇧X clear · ⌥
-			drag a marker for a range
+		<span class="flex items-center gap-2 text-xs text-gray-500">
+			<span>
+				Space play/pause · ←/→ frame · ↑/↓ previous/next cut · +/- speed · I/O in/out · ⇧X clear · ⌥
+				drag a marker for a range or its edge to resize
+			</span>
+			<GuideButton guide="marker-ranges" />
 		</span>
 		<div>
 			Zoom:
@@ -524,6 +550,7 @@
 					{#each visibleMarkers as marker (marker.id)}
 						{@const range = rangeOf(marker)}
 						{@const width = range.duration * pixelsPerFrame}
+						{@const guided = marker.canUpdate && marker.id === selectedMarkerId}
 						<!-- The lane lines reach up under the icons, the icons' rounded tips stop short of the edge -->
 						{#if range.duration > 0}
 							{#each [toX(range.frame), toX(range.frame) + width - 1] as left, i (i)}
@@ -571,15 +598,27 @@
 							</div>
 						{/if}
 						{#if range.duration > 0}
-							<!-- A range has two equal edges: triangles whose flat side sits on the edge -->
+							<!-- A range has two equal edges: triangles whose flat side sits on the edge. The start
+							triangle is the range's head in the marker-ranges tour (the bar can be 2px or wider
+							than the timeline) -->
 							{#each ["start", "end"] as const as edge (edge)}
 								<div
 									class="absolute bottom-0 z-10 touch-none {edge === 'end'
 										? '-translate-x-full'
-										: ''} {markerDrag?.id === marker.id ? 'cursor-grabbing' : 'cursor-grab'}"
+										: ''} {marker.canUpdate &&
+									(markerDrag?.id === marker.id ? markerDrag.mode === edge : altHeld && !markerDrag)
+										? 'cursor-ew-resize'
+										: markerDrag?.id === marker.id
+											? 'cursor-grabbing'
+											: 'cursor-grab'}"
 									style="left: {toX(range.frame) + (edge === 'end' ? width : 0)}px"
-									title={marker.name}
-									onpointerdown={(event) => startMarkerDrag(event, marker)}
+									data-guide={guided
+										? `marker-ranges/${edge === "start" ? "move" : "end"}`
+										: undefined}
+									title={marker.canUpdate
+										? `${marker.name ?? ""} · Alt-drag to change the ${edge}`
+										: marker.name}
+									onpointerdown={(event) => startMarkerDrag(event, marker, "move", edge)}
 								>
 									<RangeEdgeIcon {edge} fill={marker.category.color} strokeWidth={0} />
 								</div>
@@ -594,6 +633,7 @@
 								title={marker.canUpdate
 									? `${marker.name ?? ""} · Alt-drag for a range`
 									: marker.name}
+								data-guide={guided ? "marker-ranges/move" : undefined}
 								onpointerdown={(event) => startMarkerDrag(event, marker)}
 							>
 								<!-- block: inline it would sit on the text baseline, above the ruler's edge -->

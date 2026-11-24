@@ -21,6 +21,7 @@
 	import Header from "#lib/components/layout/Header.svelte";
 	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
 	import MarkerPanel from "#lib/components/review/markers/MarkerPanel.svelte";
+	import { signalGuide } from "#lib/components/guides/guide-signals.svelte.ts";
 	import PointerOverlay from "#lib/components/review/PointerOverlay.svelte";
 	import {
 		PointerSession,
@@ -64,10 +65,8 @@
 
 	import { setShareContext, type ShareContext } from "./share-context.ts";
 	import ScreeningButton from "#lib/components/screening/ScreeningButton.svelte";
-	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
 	import UploadModal from "#lib/components/exports/UploadModal.svelte";
 	import UploadDropOverlay from "#lib/components/exports/UploadDropOverlay.svelte";
-	import ReviewTutorial from "#lib/components/tutorial/ReviewTutorial.svelte";
 	import ScreeningRemote from "#lib/components/screening/ScreeningRemote.svelte";
 	import EndScreeningDialog from "#lib/components/screening/EndScreeningDialog.svelte";
 	import ScreeningFollowView from "#lib/components/screening/ScreeningFollowView.svelte";
@@ -241,7 +240,6 @@
 		const marker = pointerMarkers.find((m) => m.id === id);
 		if (!marker?.canUpdate || !videoPaused || viewMode !== "timeline") pointerSession.stopDrawing();
 	});
-	let sharingDialog = $state<SharingSetupModal>();
 	let uploadDialog = $state<UploadModal>();
 	let originalUrl = $state<string | undefined>(undefined);
 	let thumbnailUrl = $state<string | undefined>(undefined);
@@ -538,6 +536,16 @@
 
 	// Single global keyboard handler. Shortcuts work wherever focus is, except while typing or
 	// inside modals. Components with their own shortcuts (MarkerPanel) skip the same targets.
+	// first-review: played and paused again, by button or key, so there is a frame to mark
+	let playedSincePause = false;
+	$effect(() => {
+		if (!videoPaused) playedSincePause = true;
+		else if (playedSincePause) {
+			playedSincePause = false;
+			signalGuide("first-review", "play");
+		}
+	});
+
 	function onGlobalKeyDown(event: KeyboardEvent) {
 		// The presenter plays and seeks
 		if (following) return;
@@ -647,22 +655,6 @@
 
 {#if !share}<EndScreeningDialog />{/if}
 {#if !share}
-	<SharingSetupModal bind:this={sharingDialog} />
-	{#if projectId && timelineId && exp?.canShare}
-		<!-- on its own boundary: the tutorial must never hold up or break the review -->
-		<svelte:boundary>
-			<ReviewTutorial
-				{projectId}
-				{timelineId}
-				{exportId}
-				exportName={exp.name}
-				ready={hlsReady && !!snapshot}
-				onshare={(target) => sharingDialog?.open(target)}
-			/>
-			{#snippet pending()}{/snippet}
-			{#snippet failed()}{/snippet}
-		</svelte:boundary>
-	{/if}
 	{#if projectId && timelineId && exp?.canUpload}
 		<!-- A new version of the cut, dropped right where it is reviewed: into the same timeline -->
 		<UploadModal bind:this={uploadDialog} {projectId} {timelineId} />
@@ -825,6 +817,7 @@
 			bind:inOut
 			onCollapsedHeight={(height) => (timelineCollapsedHeight = height)}
 			onmarkerclick={(id) => markerPanel?.setSelectedMarkerId(id)}
+			selectedMarkerId={selectedMarkerIds.length === 1 ? selectedMarkerIds[0] : null}
 			bind:videoPositionSeconds={videoPosition}
 			bind:paused={videoPaused}
 			bind:playbackRate={videoPlaybackRate}

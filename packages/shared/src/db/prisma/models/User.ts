@@ -42,7 +42,7 @@ export type UserMinAggregateOutputType = {
 	emailVerified: boolean | null;
 	image: string | null;
 	storageQuota: bigint | null;
-	tutorialCompletedAt: Date | null;
+	guidesEnabled: boolean | null;
 	twoFactorEnabled: boolean | null;
 	lastActiveOrganizationId: string | null;
 };
@@ -56,7 +56,7 @@ export type UserMaxAggregateOutputType = {
 	emailVerified: boolean | null;
 	image: string | null;
 	storageQuota: bigint | null;
-	tutorialCompletedAt: Date | null;
+	guidesEnabled: boolean | null;
 	twoFactorEnabled: boolean | null;
 	lastActiveOrganizationId: string | null;
 };
@@ -70,8 +70,7 @@ export type UserCountAggregateOutputType = {
 	emailVerified: number;
 	image: number;
 	storageQuota: number;
-	tutorialCompletedAt: number;
-	tutorialSeenSteps: number;
+	guidesEnabled: number;
 	twoFactorEnabled: number;
 	lastActiveOrganizationId: number;
 	_all: number;
@@ -94,7 +93,7 @@ export type UserMinAggregateInputType = {
 	emailVerified?: true;
 	image?: true;
 	storageQuota?: true;
-	tutorialCompletedAt?: true;
+	guidesEnabled?: true;
 	twoFactorEnabled?: true;
 	lastActiveOrganizationId?: true;
 };
@@ -108,7 +107,7 @@ export type UserMaxAggregateInputType = {
 	emailVerified?: true;
 	image?: true;
 	storageQuota?: true;
-	tutorialCompletedAt?: true;
+	guidesEnabled?: true;
 	twoFactorEnabled?: true;
 	lastActiveOrganizationId?: true;
 };
@@ -122,8 +121,7 @@ export type UserCountAggregateInputType = {
 	emailVerified?: true;
 	image?: true;
 	storageQuota?: true;
-	tutorialCompletedAt?: true;
-	tutorialSeenSteps?: true;
+	guidesEnabled?: true;
 	twoFactorEnabled?: true;
 	lastActiveOrganizationId?: true;
 	_all?: true;
@@ -225,8 +223,7 @@ export type UserGroupByOutputType = {
 	emailVerified: boolean;
 	image: string | null;
 	storageQuota: bigint | null;
-	tutorialCompletedAt: Date | null;
-	tutorialSeenSteps: string[];
+	guidesEnabled: boolean;
 	twoFactorEnabled: boolean | null;
 	lastActiveOrganizationId: string | null;
 	_count: UserCountAggregateOutputType | null;
@@ -260,8 +257,7 @@ export type UserWhereInput = {
 	emailVerified?: Prisma.BoolFilter<"User"> | boolean;
 	image?: Prisma.StringNullableFilter<"User"> | string | null;
 	storageQuota?: Prisma.BigIntNullableFilter<"User"> | bigint | number | null;
-	tutorialCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null;
-	tutorialSeenSteps?: Prisma.StringNullableListFilter<"User">;
+	guidesEnabled?: Prisma.BoolFilter<"User"> | boolean;
 	twoFactorEnabled?: Prisma.BoolNullableFilter<"User"> | boolean | null;
 	lastActiveOrganizationId?: Prisma.StringNullableFilter<"User"> | string | null;
 	uploadedExports?: Prisma.ExportListRelationFilter;
@@ -277,6 +273,7 @@ export type UserWhereInput = {
 		Prisma.OrganizationWhereInput
 	> | null;
 	markers?: Prisma.MarkerListRelationFilter;
+	markerSets?: Prisma.MarkerSetListRelationFilter;
 	responses?: Prisma.ResponseListRelationFilter;
 	createdGrants?: Prisma.MemberGrantListRelationFilter;
 	createdShareLinks?: Prisma.ShareLinkListRelationFilter;
@@ -284,6 +281,7 @@ export type UserWhereInput = {
 	createdCategories?: Prisma.CategoryListRelationFilter;
 	createdCategoryPresets?: Prisma.CategoryPresetListRelationFilter;
 	inviteLinks?: Prisma.InviteLinkListRelationFilter;
+	guideProgress?: Prisma.GuideProgressListRelationFilter;
 };
 
 export type UserOrderByWithRelationInput = {
@@ -295,8 +293,7 @@ export type UserOrderByWithRelationInput = {
 	emailVerified?: Prisma.SortOrder;
 	image?: Prisma.SortOrderInput | Prisma.SortOrder;
 	storageQuota?: Prisma.SortOrderInput | Prisma.SortOrder;
-	tutorialCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
-	tutorialSeenSteps?: Prisma.SortOrder;
+	guidesEnabled?: Prisma.SortOrder;
 	twoFactorEnabled?: Prisma.SortOrderInput | Prisma.SortOrder;
 	lastActiveOrganizationId?: Prisma.SortOrderInput | Prisma.SortOrder;
 	uploadedExports?: Prisma.ExportOrderByRelationAggregateInput;
@@ -309,6 +306,7 @@ export type UserOrderByWithRelationInput = {
 	invitations?: Prisma.InvitationOrderByRelationAggregateInput;
 	lastActiveOrganization?: Prisma.OrganizationOrderByWithRelationInput;
 	markers?: Prisma.MarkerOrderByRelationAggregateInput;
+	markerSets?: Prisma.MarkerSetOrderByRelationAggregateInput;
 	responses?: Prisma.ResponseOrderByRelationAggregateInput;
 	createdGrants?: Prisma.MemberGrantOrderByRelationAggregateInput;
 	createdShareLinks?: Prisma.ShareLinkOrderByRelationAggregateInput;
@@ -316,6 +314,7 @@ export type UserOrderByWithRelationInput = {
 	createdCategories?: Prisma.CategoryOrderByRelationAggregateInput;
 	createdCategoryPresets?: Prisma.CategoryPresetOrderByRelationAggregateInput;
 	inviteLinks?: Prisma.InviteLinkOrderByRelationAggregateInput;
+	guideProgress?: Prisma.GuideProgressOrderByRelationAggregateInput;
 };
 
 export type UserWhereUniqueInput = Prisma.AtLeast<
@@ -331,8 +330,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
 		emailVerified?: Prisma.BoolFilter<"User"> | boolean;
 		image?: Prisma.StringNullableFilter<"User"> | string | null;
 		storageQuota?: Prisma.BigIntNullableFilter<"User"> | bigint | number | null;
-		tutorialCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null;
-		tutorialSeenSteps?: Prisma.StringNullableListFilter<"User">;
+		guidesEnabled?: Prisma.BoolFilter<"User"> | boolean;
 		twoFactorEnabled?: Prisma.BoolNullableFilter<"User"> | boolean | null;
 		lastActiveOrganizationId?: Prisma.StringNullableFilter<"User"> | string | null;
 		uploadedExports?: Prisma.ExportListRelationFilter;
@@ -348,6 +346,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
 			Prisma.OrganizationWhereInput
 		> | null;
 		markers?: Prisma.MarkerListRelationFilter;
+		markerSets?: Prisma.MarkerSetListRelationFilter;
 		responses?: Prisma.ResponseListRelationFilter;
 		createdGrants?: Prisma.MemberGrantListRelationFilter;
 		createdShareLinks?: Prisma.ShareLinkListRelationFilter;
@@ -355,6 +354,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
 		createdCategories?: Prisma.CategoryListRelationFilter;
 		createdCategoryPresets?: Prisma.CategoryPresetListRelationFilter;
 		inviteLinks?: Prisma.InviteLinkListRelationFilter;
+		guideProgress?: Prisma.GuideProgressListRelationFilter;
 	},
 	"id" | "email"
 >;
@@ -368,8 +368,7 @@ export type UserOrderByWithAggregationInput = {
 	emailVerified?: Prisma.SortOrder;
 	image?: Prisma.SortOrderInput | Prisma.SortOrder;
 	storageQuota?: Prisma.SortOrderInput | Prisma.SortOrder;
-	tutorialCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
-	tutorialSeenSteps?: Prisma.SortOrder;
+	guidesEnabled?: Prisma.SortOrder;
 	twoFactorEnabled?: Prisma.SortOrderInput | Prisma.SortOrder;
 	lastActiveOrganizationId?: Prisma.SortOrderInput | Prisma.SortOrder;
 	_count?: Prisma.UserCountOrderByAggregateInput;
@@ -391,8 +390,7 @@ export type UserScalarWhereWithAggregatesInput = {
 	emailVerified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean;
 	image?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null;
 	storageQuota?: Prisma.BigIntNullableWithAggregatesFilter<"User"> | bigint | number | null;
-	tutorialCompletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null;
-	tutorialSeenSteps?: Prisma.StringNullableListFilter<"User">;
+	guidesEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean;
 	twoFactorEnabled?: Prisma.BoolNullableWithAggregatesFilter<"User"> | boolean | null;
 	lastActiveOrganizationId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null;
 };
@@ -406,8 +404,7 @@ export type UserCreateInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
@@ -419,6 +416,7 @@ export type UserCreateInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -426,6 +424,7 @@ export type UserCreateInput = {
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateInput = {
@@ -437,8 +436,7 @@ export type UserUncheckedCreateInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
@@ -450,6 +448,7 @@ export type UserUncheckedCreateInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -457,6 +456,7 @@ export type UserUncheckedCreateInput = {
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserUpdateInput = {
@@ -468,8 +468,7 @@ export type UserUpdateInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
@@ -481,6 +480,7 @@ export type UserUpdateInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -488,6 +488,7 @@ export type UserUpdateInput = {
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateInput = {
@@ -499,8 +500,7 @@ export type UserUncheckedUpdateInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
@@ -512,6 +512,7 @@ export type UserUncheckedUpdateInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -519,6 +520,7 @@ export type UserUncheckedUpdateInput = {
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateManyInput = {
@@ -530,8 +532,7 @@ export type UserCreateManyInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 };
@@ -545,8 +546,7 @@ export type UserUpdateManyMutationInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 };
 
@@ -559,18 +559,9 @@ export type UserUncheckedUpdateManyInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-};
-
-export type StringNullableListFilter<$PrismaModel = never> = {
-	equals?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null;
-	has?: string | Prisma.StringFieldRefInput<$PrismaModel> | null;
-	hasEvery?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>;
-	hasSome?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>;
-	isEmpty?: boolean;
 };
 
 export type UserCountOrderByAggregateInput = {
@@ -582,8 +573,7 @@ export type UserCountOrderByAggregateInput = {
 	emailVerified?: Prisma.SortOrder;
 	image?: Prisma.SortOrder;
 	storageQuota?: Prisma.SortOrder;
-	tutorialCompletedAt?: Prisma.SortOrder;
-	tutorialSeenSteps?: Prisma.SortOrder;
+	guidesEnabled?: Prisma.SortOrder;
 	twoFactorEnabled?: Prisma.SortOrder;
 	lastActiveOrganizationId?: Prisma.SortOrder;
 };
@@ -601,7 +591,7 @@ export type UserMaxOrderByAggregateInput = {
 	emailVerified?: Prisma.SortOrder;
 	image?: Prisma.SortOrder;
 	storageQuota?: Prisma.SortOrder;
-	tutorialCompletedAt?: Prisma.SortOrder;
+	guidesEnabled?: Prisma.SortOrder;
 	twoFactorEnabled?: Prisma.SortOrder;
 	lastActiveOrganizationId?: Prisma.SortOrder;
 };
@@ -615,7 +605,7 @@ export type UserMinOrderByAggregateInput = {
 	emailVerified?: Prisma.SortOrder;
 	image?: Prisma.SortOrder;
 	storageQuota?: Prisma.SortOrder;
-	tutorialCompletedAt?: Prisma.SortOrder;
+	guidesEnabled?: Prisma.SortOrder;
 	twoFactorEnabled?: Prisma.SortOrder;
 	lastActiveOrganizationId?: Prisma.SortOrder;
 };
@@ -644,10 +634,6 @@ export type UserOrderByRelationAggregateInput = {
 	_count?: Prisma.SortOrder;
 };
 
-export type UserCreatetutorialSeenStepsInput = {
-	set: string[];
-};
-
 export type StringFieldUpdateOperationsInput = {
 	set?: string;
 };
@@ -670,15 +656,6 @@ export type NullableBigIntFieldUpdateOperationsInput = {
 	decrement?: bigint | number;
 	multiply?: bigint | number;
 	divide?: bigint | number;
-};
-
-export type NullableDateTimeFieldUpdateOperationsInput = {
-	set?: Date | string | null;
-};
-
-export type UserUpdatetutorialSeenStepsInput = {
-	set?: string[];
-	push?: string | string[];
 };
 
 export type NullableBoolFieldUpdateOperationsInput = {
@@ -786,6 +763,32 @@ export type UserUpdateOneRequiredWithoutPasskeysNestedInput = {
 			Prisma.UserUpdateWithoutPasskeysInput
 		>,
 		Prisma.UserUncheckedUpdateWithoutPasskeysInput
+	>;
+};
+
+export type UserCreateNestedOneWithoutGuideProgressInput = {
+	create?: Prisma.XOR<
+		Prisma.UserCreateWithoutGuideProgressInput,
+		Prisma.UserUncheckedCreateWithoutGuideProgressInput
+	>;
+	connectOrCreate?: Prisma.UserCreateOrConnectWithoutGuideProgressInput;
+	connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneRequiredWithoutGuideProgressNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.UserCreateWithoutGuideProgressInput,
+		Prisma.UserUncheckedCreateWithoutGuideProgressInput
+	>;
+	connectOrCreate?: Prisma.UserCreateOrConnectWithoutGuideProgressInput;
+	upsert?: Prisma.UserUpsertWithoutGuideProgressInput;
+	connect?: Prisma.UserWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.UserUpdateToOneWithWhereWithoutGuideProgressInput,
+			Prisma.UserUpdateWithoutGuideProgressInput
+		>,
+		Prisma.UserUncheckedUpdateWithoutGuideProgressInput
 	>;
 };
 
@@ -898,6 +901,34 @@ export type UserUpdateOneWithoutResponsesNestedInput = {
 			Prisma.UserUpdateWithoutResponsesInput
 		>,
 		Prisma.UserUncheckedUpdateWithoutResponsesInput
+	>;
+};
+
+export type UserCreateNestedOneWithoutMarkerSetsInput = {
+	create?: Prisma.XOR<
+		Prisma.UserCreateWithoutMarkerSetsInput,
+		Prisma.UserUncheckedCreateWithoutMarkerSetsInput
+	>;
+	connectOrCreate?: Prisma.UserCreateOrConnectWithoutMarkerSetsInput;
+	connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneWithoutMarkerSetsNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.UserCreateWithoutMarkerSetsInput,
+		Prisma.UserUncheckedCreateWithoutMarkerSetsInput
+	>;
+	connectOrCreate?: Prisma.UserCreateOrConnectWithoutMarkerSetsInput;
+	upsert?: Prisma.UserUpsertWithoutMarkerSetsInput;
+	disconnect?: Prisma.UserWhereInput | boolean;
+	delete?: Prisma.UserWhereInput | boolean;
+	connect?: Prisma.UserWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.UserUpdateToOneWithWhereWithoutMarkerSetsInput,
+			Prisma.UserUpdateWithoutMarkerSetsInput
+		>,
+		Prisma.UserUncheckedUpdateWithoutMarkerSetsInput
 	>;
 };
 
@@ -1218,8 +1249,7 @@ export type UserCreateWithoutSessionsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
@@ -1230,6 +1260,7 @@ export type UserCreateWithoutSessionsInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -1237,6 +1268,7 @@ export type UserCreateWithoutSessionsInput = {
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -1248,8 +1280,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
@@ -1260,6 +1291,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -1267,6 +1299,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -1306,8 +1339,7 @@ export type UserUpdateWithoutSessionsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
@@ -1318,6 +1350,7 @@ export type UserUpdateWithoutSessionsInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -1325,6 +1358,7 @@ export type UserUpdateWithoutSessionsInput = {
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -1336,8 +1370,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
@@ -1348,6 +1381,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -1355,6 +1389,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutAccountsInput = {
@@ -1366,8 +1401,7 @@ export type UserCreateWithoutAccountsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
@@ -1378,6 +1412,7 @@ export type UserCreateWithoutAccountsInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -1385,6 +1420,7 @@ export type UserCreateWithoutAccountsInput = {
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutAccountsInput = {
@@ -1396,8 +1432,7 @@ export type UserUncheckedCreateWithoutAccountsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
@@ -1408,6 +1443,7 @@ export type UserUncheckedCreateWithoutAccountsInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -1415,6 +1451,7 @@ export type UserUncheckedCreateWithoutAccountsInput = {
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutAccountsInput = {
@@ -1454,8 +1491,7 @@ export type UserUpdateWithoutAccountsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
@@ -1466,6 +1502,7 @@ export type UserUpdateWithoutAccountsInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -1473,6 +1510,7 @@ export type UserUpdateWithoutAccountsInput = {
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -1484,8 +1522,7 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
@@ -1496,6 +1533,7 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -1503,6 +1541,7 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutTwoFactorsInput = {
@@ -1514,8 +1553,7 @@ export type UserCreateWithoutTwoFactorsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
@@ -1526,6 +1564,7 @@ export type UserCreateWithoutTwoFactorsInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -1533,6 +1572,7 @@ export type UserCreateWithoutTwoFactorsInput = {
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutTwoFactorsInput = {
@@ -1544,8 +1584,7 @@ export type UserUncheckedCreateWithoutTwoFactorsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
@@ -1556,6 +1595,7 @@ export type UserUncheckedCreateWithoutTwoFactorsInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -1563,6 +1603,7 @@ export type UserUncheckedCreateWithoutTwoFactorsInput = {
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutTwoFactorsInput = {
@@ -1602,8 +1643,7 @@ export type UserUpdateWithoutTwoFactorsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
@@ -1614,6 +1654,7 @@ export type UserUpdateWithoutTwoFactorsInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -1621,6 +1662,7 @@ export type UserUpdateWithoutTwoFactorsInput = {
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutTwoFactorsInput = {
@@ -1632,8 +1674,7 @@ export type UserUncheckedUpdateWithoutTwoFactorsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
@@ -1644,6 +1685,7 @@ export type UserUncheckedUpdateWithoutTwoFactorsInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -1651,6 +1693,7 @@ export type UserUncheckedUpdateWithoutTwoFactorsInput = {
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutPasskeysInput = {
@@ -1662,8 +1705,7 @@ export type UserCreateWithoutPasskeysInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
@@ -1674,6 +1716,7 @@ export type UserCreateWithoutPasskeysInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -1681,6 +1724,7 @@ export type UserCreateWithoutPasskeysInput = {
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutPasskeysInput = {
@@ -1692,8 +1736,7 @@ export type UserUncheckedCreateWithoutPasskeysInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
@@ -1704,6 +1747,7 @@ export type UserUncheckedCreateWithoutPasskeysInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -1711,6 +1755,7 @@ export type UserUncheckedCreateWithoutPasskeysInput = {
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutPasskeysInput = {
@@ -1750,8 +1795,7 @@ export type UserUpdateWithoutPasskeysInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
@@ -1762,6 +1806,7 @@ export type UserUpdateWithoutPasskeysInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -1769,6 +1814,7 @@ export type UserUpdateWithoutPasskeysInput = {
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutPasskeysInput = {
@@ -1780,8 +1826,7 @@ export type UserUncheckedUpdateWithoutPasskeysInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
@@ -1792,6 +1837,160 @@ export type UserUncheckedUpdateWithoutPasskeysInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
+	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
+	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
+};
+
+export type UserCreateWithoutGuideProgressInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	email: string;
+	emailVerified?: boolean;
+	image?: string | null;
+	storageQuota?: bigint | number | null;
+	guidesEnabled?: boolean;
+	twoFactorEnabled?: boolean | null;
+	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
+	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
+	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
+	twoFactors?: Prisma.TwoFactorCreateNestedManyWithoutUserInput;
+	passkeys?: Prisma.PasskeyCreateNestedManyWithoutUserInput;
+	createdProjects?: Prisma.ProjectCreateNestedManyWithoutCreatorInput;
+	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
+	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
+	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
+	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
+	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
+	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
+	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+};
+
+export type UserUncheckedCreateWithoutGuideProgressInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	email: string;
+	emailVerified?: boolean;
+	image?: string | null;
+	storageQuota?: bigint | number | null;
+	guidesEnabled?: boolean;
+	twoFactorEnabled?: boolean | null;
+	lastActiveOrganizationId?: string | null;
+	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
+	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
+	accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput;
+	twoFactors?: Prisma.TwoFactorUncheckedCreateNestedManyWithoutUserInput;
+	passkeys?: Prisma.PasskeyUncheckedCreateNestedManyWithoutUserInput;
+	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
+	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
+	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
+	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
+	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
+	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+};
+
+export type UserCreateOrConnectWithoutGuideProgressInput = {
+	where: Prisma.UserWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.UserCreateWithoutGuideProgressInput,
+		Prisma.UserUncheckedCreateWithoutGuideProgressInput
+	>;
+};
+
+export type UserUpsertWithoutGuideProgressInput = {
+	update: Prisma.XOR<
+		Prisma.UserUpdateWithoutGuideProgressInput,
+		Prisma.UserUncheckedUpdateWithoutGuideProgressInput
+	>;
+	create: Prisma.XOR<
+		Prisma.UserCreateWithoutGuideProgressInput,
+		Prisma.UserUncheckedCreateWithoutGuideProgressInput
+	>;
+	where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutGuideProgressInput = {
+	where?: Prisma.UserWhereInput;
+	data: Prisma.XOR<
+		Prisma.UserUpdateWithoutGuideProgressInput,
+		Prisma.UserUncheckedUpdateWithoutGuideProgressInput
+	>;
+};
+
+export type UserUpdateWithoutGuideProgressInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	email?: Prisma.StringFieldUpdateOperationsInput | string;
+	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
+	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
+	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
+	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
+	twoFactors?: Prisma.TwoFactorUpdateManyWithoutUserNestedInput;
+	passkeys?: Prisma.PasskeyUpdateManyWithoutUserNestedInput;
+	createdProjects?: Prisma.ProjectUpdateManyWithoutCreatorNestedInput;
+	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
+	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
+	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
+	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
+	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
+	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
+	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutGuideProgressInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	email?: Prisma.StringFieldUpdateOperationsInput | string;
+	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
+	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
+	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
+	accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput;
+	twoFactors?: Prisma.TwoFactorUncheckedUpdateManyWithoutUserNestedInput;
+	passkeys?: Prisma.PasskeyUncheckedUpdateManyWithoutUserNestedInput;
+	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
+	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
+	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -1810,8 +2009,7 @@ export type UserCreateWithoutMarkersInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
@@ -1822,6 +2020,7 @@ export type UserCreateWithoutMarkersInput = {
 	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -1829,6 +2028,7 @@ export type UserCreateWithoutMarkersInput = {
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutMarkersInput = {
@@ -1840,8 +2040,7 @@ export type UserUncheckedCreateWithoutMarkersInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
@@ -1852,6 +2051,7 @@ export type UserUncheckedCreateWithoutMarkersInput = {
 	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -1859,6 +2059,7 @@ export type UserUncheckedCreateWithoutMarkersInput = {
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutMarkersInput = {
@@ -1898,8 +2099,7 @@ export type UserUpdateWithoutMarkersInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
@@ -1910,6 +2110,7 @@ export type UserUpdateWithoutMarkersInput = {
 	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -1917,6 +2118,7 @@ export type UserUpdateWithoutMarkersInput = {
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutMarkersInput = {
@@ -1928,8 +2130,7 @@ export type UserUncheckedUpdateWithoutMarkersInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
@@ -1940,6 +2141,7 @@ export type UserUncheckedUpdateWithoutMarkersInput = {
 	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -1947,6 +2149,7 @@ export type UserUncheckedUpdateWithoutMarkersInput = {
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutCreatedCategoriesInput = {
@@ -1958,8 +2161,7 @@ export type UserCreateWithoutCreatedCategoriesInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
@@ -1971,12 +2173,14 @@ export type UserCreateWithoutCreatedCategoriesInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutCreatedCategoriesInput = {
@@ -1988,8 +2192,7 @@ export type UserUncheckedCreateWithoutCreatedCategoriesInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
@@ -2001,12 +2204,14 @@ export type UserUncheckedCreateWithoutCreatedCategoriesInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutCreatedCategoriesInput = {
@@ -2046,8 +2251,7 @@ export type UserUpdateWithoutCreatedCategoriesInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
@@ -2059,12 +2263,14 @@ export type UserUpdateWithoutCreatedCategoriesInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutCreatedCategoriesInput = {
@@ -2076,8 +2282,7 @@ export type UserUncheckedUpdateWithoutCreatedCategoriesInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
@@ -2089,12 +2294,14 @@ export type UserUncheckedUpdateWithoutCreatedCategoriesInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutCreatedCategoryPresetsInput = {
@@ -2106,8 +2313,7 @@ export type UserCreateWithoutCreatedCategoryPresetsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
@@ -2119,12 +2325,14 @@ export type UserCreateWithoutCreatedCategoryPresetsInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutCreatedCategoryPresetsInput = {
@@ -2136,8 +2344,7 @@ export type UserUncheckedCreateWithoutCreatedCategoryPresetsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
@@ -2149,12 +2356,14 @@ export type UserUncheckedCreateWithoutCreatedCategoryPresetsInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutCreatedCategoryPresetsInput = {
@@ -2194,8 +2403,7 @@ export type UserUpdateWithoutCreatedCategoryPresetsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
@@ -2207,12 +2415,14 @@ export type UserUpdateWithoutCreatedCategoryPresetsInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutCreatedCategoryPresetsInput = {
@@ -2224,8 +2434,7 @@ export type UserUncheckedUpdateWithoutCreatedCategoryPresetsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
@@ -2237,12 +2446,14 @@ export type UserUncheckedUpdateWithoutCreatedCategoryPresetsInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutResponsesInput = {
@@ -2254,8 +2465,7 @@ export type UserCreateWithoutResponsesInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
@@ -2267,12 +2477,14 @@ export type UserCreateWithoutResponsesInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutResponsesInput = {
@@ -2284,8 +2496,7 @@ export type UserUncheckedCreateWithoutResponsesInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
@@ -2297,12 +2508,14 @@ export type UserUncheckedCreateWithoutResponsesInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutResponsesInput = {
@@ -2342,8 +2555,7 @@ export type UserUpdateWithoutResponsesInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
@@ -2355,12 +2567,14 @@ export type UserUpdateWithoutResponsesInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutResponsesInput = {
@@ -2372,8 +2586,7 @@ export type UserUncheckedUpdateWithoutResponsesInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
@@ -2385,15 +2598,17 @@ export type UserUncheckedUpdateWithoutResponsesInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
-export type UserCreateWithoutLastActiveOrganizationInput = {
+export type UserCreateWithoutMarkerSetsInput = {
 	id?: string;
 	name: string;
 	createdAt?: Date | string;
@@ -2402,8 +2617,7 @@ export type UserCreateWithoutLastActiveOrganizationInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
@@ -2413,6 +2627,7 @@ export type UserCreateWithoutLastActiveOrganizationInput = {
 	createdProjects?: Prisma.ProjectCreateNestedManyWithoutCreatorInput;
 	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
+	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
@@ -2421,9 +2636,10 @@ export type UserCreateWithoutLastActiveOrganizationInput = {
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
-export type UserUncheckedCreateWithoutLastActiveOrganizationInput = {
+export type UserUncheckedCreateWithoutMarkerSetsInput = {
 	id?: string;
 	name: string;
 	createdAt?: Date | string;
@@ -2432,9 +2648,9 @@ export type UserUncheckedCreateWithoutLastActiveOrganizationInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
+	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput;
@@ -2451,6 +2667,159 @@ export type UserUncheckedCreateWithoutLastActiveOrganizationInput = {
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
+};
+
+export type UserCreateOrConnectWithoutMarkerSetsInput = {
+	where: Prisma.UserWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.UserCreateWithoutMarkerSetsInput,
+		Prisma.UserUncheckedCreateWithoutMarkerSetsInput
+	>;
+};
+
+export type UserUpsertWithoutMarkerSetsInput = {
+	update: Prisma.XOR<
+		Prisma.UserUpdateWithoutMarkerSetsInput,
+		Prisma.UserUncheckedUpdateWithoutMarkerSetsInput
+	>;
+	create: Prisma.XOR<
+		Prisma.UserCreateWithoutMarkerSetsInput,
+		Prisma.UserUncheckedCreateWithoutMarkerSetsInput
+	>;
+	where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutMarkerSetsInput = {
+	where?: Prisma.UserWhereInput;
+	data: Prisma.XOR<
+		Prisma.UserUpdateWithoutMarkerSetsInput,
+		Prisma.UserUncheckedUpdateWithoutMarkerSetsInput
+	>;
+};
+
+export type UserUpdateWithoutMarkerSetsInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	email?: Prisma.StringFieldUpdateOperationsInput | string;
+	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
+	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
+	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
+	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
+	twoFactors?: Prisma.TwoFactorUpdateManyWithoutUserNestedInput;
+	passkeys?: Prisma.PasskeyUpdateManyWithoutUserNestedInput;
+	createdProjects?: Prisma.ProjectUpdateManyWithoutCreatorNestedInput;
+	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
+	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
+	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
+	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
+	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
+	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
+	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutMarkerSetsInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	email?: Prisma.StringFieldUpdateOperationsInput | string;
+	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
+	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
+	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
+	accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput;
+	twoFactors?: Prisma.TwoFactorUncheckedUpdateManyWithoutUserNestedInput;
+	passkeys?: Prisma.PasskeyUncheckedUpdateManyWithoutUserNestedInput;
+	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
+	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
+	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
+	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
+	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
+};
+
+export type UserCreateWithoutLastActiveOrganizationInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	email: string;
+	emailVerified?: boolean;
+	image?: string | null;
+	storageQuota?: bigint | number | null;
+	guidesEnabled?: boolean;
+	twoFactorEnabled?: boolean | null;
+	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
+	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
+	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
+	twoFactors?: Prisma.TwoFactorCreateNestedManyWithoutUserInput;
+	passkeys?: Prisma.PasskeyCreateNestedManyWithoutUserInput;
+	createdProjects?: Prisma.ProjectCreateNestedManyWithoutCreatorInput;
+	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
+	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
+	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
+	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
+	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
+	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
+};
+
+export type UserUncheckedCreateWithoutLastActiveOrganizationInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	email: string;
+	emailVerified?: boolean;
+	image?: string | null;
+	storageQuota?: bigint | number | null;
+	guidesEnabled?: boolean;
+	twoFactorEnabled?: boolean | null;
+	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
+	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
+	accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput;
+	twoFactors?: Prisma.TwoFactorUncheckedCreateNestedManyWithoutUserInput;
+	passkeys?: Prisma.PasskeyUncheckedCreateNestedManyWithoutUserInput;
+	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
+	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
+	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
+	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
+	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
+	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutLastActiveOrganizationInput = {
@@ -2508,8 +2877,7 @@ export type UserScalarWhereInput = {
 	emailVerified?: Prisma.BoolFilter<"User"> | boolean;
 	image?: Prisma.StringNullableFilter<"User"> | string | null;
 	storageQuota?: Prisma.BigIntNullableFilter<"User"> | bigint | number | null;
-	tutorialCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null;
-	tutorialSeenSteps?: Prisma.StringNullableListFilter<"User">;
+	guidesEnabled?: Prisma.BoolFilter<"User"> | boolean;
 	twoFactorEnabled?: Prisma.BoolNullableFilter<"User"> | boolean | null;
 	lastActiveOrganizationId?: Prisma.StringNullableFilter<"User"> | string | null;
 };
@@ -2523,8 +2891,7 @@ export type UserCreateWithoutMembershipsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
@@ -2535,6 +2902,7 @@ export type UserCreateWithoutMembershipsInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -2542,6 +2910,7 @@ export type UserCreateWithoutMembershipsInput = {
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutMembershipsInput = {
@@ -2553,8 +2922,7 @@ export type UserUncheckedCreateWithoutMembershipsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
@@ -2565,6 +2933,7 @@ export type UserUncheckedCreateWithoutMembershipsInput = {
 	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -2572,6 +2941,7 @@ export type UserUncheckedCreateWithoutMembershipsInput = {
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutMembershipsInput = {
@@ -2611,8 +2981,7 @@ export type UserUpdateWithoutMembershipsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
@@ -2623,6 +2992,7 @@ export type UserUpdateWithoutMembershipsInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -2630,6 +3000,7 @@ export type UserUpdateWithoutMembershipsInput = {
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutMembershipsInput = {
@@ -2641,8 +3012,7 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
@@ -2653,6 +3023,7 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
 	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -2660,6 +3031,7 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutInvitationsInput = {
@@ -2671,8 +3043,7 @@ export type UserCreateWithoutInvitationsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
@@ -2683,6 +3054,7 @@ export type UserCreateWithoutInvitationsInput = {
 	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -2690,6 +3062,7 @@ export type UserCreateWithoutInvitationsInput = {
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutInvitationsInput = {
@@ -2701,8 +3074,7 @@ export type UserUncheckedCreateWithoutInvitationsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
@@ -2713,6 +3085,7 @@ export type UserUncheckedCreateWithoutInvitationsInput = {
 	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -2720,6 +3093,7 @@ export type UserUncheckedCreateWithoutInvitationsInput = {
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutInvitationsInput = {
@@ -2759,8 +3133,7 @@ export type UserUpdateWithoutInvitationsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
@@ -2771,6 +3144,7 @@ export type UserUpdateWithoutInvitationsInput = {
 	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -2778,6 +3152,7 @@ export type UserUpdateWithoutInvitationsInput = {
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutInvitationsInput = {
@@ -2789,8 +3164,7 @@ export type UserUncheckedUpdateWithoutInvitationsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
@@ -2801,6 +3175,7 @@ export type UserUncheckedUpdateWithoutInvitationsInput = {
 	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -2808,6 +3183,7 @@ export type UserUncheckedUpdateWithoutInvitationsInput = {
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutInviteLinksInput = {
@@ -2819,8 +3195,7 @@ export type UserCreateWithoutInviteLinksInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
@@ -2832,12 +3207,14 @@ export type UserCreateWithoutInviteLinksInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutInviteLinksInput = {
@@ -2849,8 +3226,7 @@ export type UserUncheckedCreateWithoutInviteLinksInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
@@ -2862,12 +3238,14 @@ export type UserUncheckedCreateWithoutInviteLinksInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutInviteLinksInput = {
@@ -2907,8 +3285,7 @@ export type UserUpdateWithoutInviteLinksInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
@@ -2920,12 +3297,14 @@ export type UserUpdateWithoutInviteLinksInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutInviteLinksInput = {
@@ -2937,8 +3316,7 @@ export type UserUncheckedUpdateWithoutInviteLinksInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
@@ -2950,12 +3328,14 @@ export type UserUncheckedUpdateWithoutInviteLinksInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutCreatedGrantsInput = {
@@ -2967,8 +3347,7 @@ export type UserCreateWithoutCreatedGrantsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
@@ -2980,12 +3359,14 @@ export type UserCreateWithoutCreatedGrantsInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutCreatedGrantsInput = {
@@ -2997,8 +3378,7 @@ export type UserUncheckedCreateWithoutCreatedGrantsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
@@ -3010,12 +3390,14 @@ export type UserUncheckedCreateWithoutCreatedGrantsInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutCreatedGrantsInput = {
@@ -3055,8 +3437,7 @@ export type UserUpdateWithoutCreatedGrantsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
@@ -3068,12 +3449,14 @@ export type UserUpdateWithoutCreatedGrantsInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutCreatedGrantsInput = {
@@ -3085,8 +3468,7 @@ export type UserUncheckedUpdateWithoutCreatedGrantsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
@@ -3098,12 +3480,14 @@ export type UserUncheckedUpdateWithoutCreatedGrantsInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutCreatedProjectsInput = {
@@ -3115,8 +3499,7 @@ export type UserCreateWithoutCreatedProjectsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
@@ -3127,6 +3510,7 @@ export type UserCreateWithoutCreatedProjectsInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -3134,6 +3518,7 @@ export type UserCreateWithoutCreatedProjectsInput = {
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutCreatedProjectsInput = {
@@ -3145,8 +3530,7 @@ export type UserUncheckedCreateWithoutCreatedProjectsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
@@ -3157,6 +3541,7 @@ export type UserUncheckedCreateWithoutCreatedProjectsInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -3164,6 +3549,7 @@ export type UserUncheckedCreateWithoutCreatedProjectsInput = {
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutCreatedProjectsInput = {
@@ -3203,8 +3589,7 @@ export type UserUpdateWithoutCreatedProjectsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
@@ -3215,6 +3600,7 @@ export type UserUpdateWithoutCreatedProjectsInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -3222,6 +3608,7 @@ export type UserUpdateWithoutCreatedProjectsInput = {
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutCreatedProjectsInput = {
@@ -3233,8 +3620,7 @@ export type UserUncheckedUpdateWithoutCreatedProjectsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
@@ -3245,6 +3631,7 @@ export type UserUncheckedUpdateWithoutCreatedProjectsInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -3252,6 +3639,7 @@ export type UserUncheckedUpdateWithoutCreatedProjectsInput = {
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutUploadedExportsInput = {
@@ -3263,8 +3651,7 @@ export type UserCreateWithoutUploadedExportsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
 	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
@@ -3275,6 +3662,7 @@ export type UserCreateWithoutUploadedExportsInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -3282,6 +3670,7 @@ export type UserCreateWithoutUploadedExportsInput = {
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutUploadedExportsInput = {
@@ -3293,8 +3682,7 @@ export type UserUncheckedCreateWithoutUploadedExportsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
@@ -3305,6 +3693,7 @@ export type UserUncheckedCreateWithoutUploadedExportsInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -3312,6 +3701,7 @@ export type UserUncheckedCreateWithoutUploadedExportsInput = {
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutUploadedExportsInput = {
@@ -3351,8 +3741,7 @@ export type UserUpdateWithoutUploadedExportsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
 	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
@@ -3363,6 +3752,7 @@ export type UserUpdateWithoutUploadedExportsInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -3370,6 +3760,7 @@ export type UserUpdateWithoutUploadedExportsInput = {
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutUploadedExportsInput = {
@@ -3381,8 +3772,7 @@ export type UserUncheckedUpdateWithoutUploadedExportsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
@@ -3393,6 +3783,7 @@ export type UserUncheckedUpdateWithoutUploadedExportsInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -3400,6 +3791,7 @@ export type UserUncheckedUpdateWithoutUploadedExportsInput = {
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutCreatedShareLinksInput = {
@@ -3411,8 +3803,7 @@ export type UserCreateWithoutCreatedShareLinksInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
@@ -3424,12 +3815,14 @@ export type UserCreateWithoutCreatedShareLinksInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutCreatedShareLinksInput = {
@@ -3441,8 +3834,7 @@ export type UserUncheckedCreateWithoutCreatedShareLinksInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
@@ -3454,12 +3846,14 @@ export type UserUncheckedCreateWithoutCreatedShareLinksInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutCreatedShareLinksInput = {
@@ -3499,8 +3893,7 @@ export type UserUpdateWithoutCreatedShareLinksInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
@@ -3512,12 +3905,14 @@ export type UserUpdateWithoutCreatedShareLinksInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutCreatedShareLinksInput = {
@@ -3529,8 +3924,7 @@ export type UserUncheckedUpdateWithoutCreatedShareLinksInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
@@ -3542,12 +3936,14 @@ export type UserUncheckedUpdateWithoutCreatedShareLinksInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutSentShareLinkMailsInput = {
@@ -3559,8 +3955,7 @@ export type UserCreateWithoutSentShareLinkMailsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
 	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
@@ -3572,12 +3967,14 @@ export type UserCreateWithoutSentShareLinkMailsInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutSentShareLinkMailsInput = {
@@ -3589,8 +3986,7 @@ export type UserUncheckedCreateWithoutSentShareLinkMailsInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 	lastActiveOrganizationId?: string | null;
 	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
@@ -3602,12 +3998,14 @@ export type UserUncheckedCreateWithoutSentShareLinkMailsInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutSentShareLinkMailsInput = {
@@ -3647,8 +4045,7 @@ export type UserUpdateWithoutSentShareLinkMailsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
@@ -3660,12 +4057,14 @@ export type UserUpdateWithoutSentShareLinkMailsInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutSentShareLinkMailsInput = {
@@ -3677,8 +4076,7 @@ export type UserUncheckedUpdateWithoutSentShareLinkMailsInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
@@ -3690,12 +4088,14 @@ export type UserUncheckedUpdateWithoutSentShareLinkMailsInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateManyLastActiveOrganizationInput = {
@@ -3707,8 +4107,7 @@ export type UserCreateManyLastActiveOrganizationInput = {
 	emailVerified?: boolean;
 	image?: string | null;
 	storageQuota?: bigint | number | null;
-	tutorialCompletedAt?: Date | string | null;
-	tutorialSeenSteps?: Prisma.UserCreatetutorialSeenStepsInput | string[];
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean | null;
 };
 
@@ -3721,8 +4120,7 @@ export type UserUpdateWithoutLastActiveOrganizationInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
@@ -3733,6 +4131,7 @@ export type UserUpdateWithoutLastActiveOrganizationInput = {
 	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -3740,6 +4139,7 @@ export type UserUpdateWithoutLastActiveOrganizationInput = {
 	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutLastActiveOrganizationInput = {
@@ -3751,8 +4151,7 @@ export type UserUncheckedUpdateWithoutLastActiveOrganizationInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
 	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
@@ -3763,6 +4162,7 @@ export type UserUncheckedUpdateWithoutLastActiveOrganizationInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -3770,6 +4170,7 @@ export type UserUncheckedUpdateWithoutLastActiveOrganizationInput = {
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateManyWithoutLastActiveOrganizationInput = {
@@ -3781,8 +4182,7 @@ export type UserUncheckedUpdateManyWithoutLastActiveOrganizationInput = {
 	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
-	tutorialCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-	tutorialSeenSteps?: Prisma.UserUpdatetutorialSeenStepsInput | string[];
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
 };
 
@@ -3800,6 +4200,7 @@ export type UserCountOutputType = {
 	memberships: number;
 	invitations: number;
 	markers: number;
+	markerSets: number;
 	responses: number;
 	createdGrants: number;
 	createdShareLinks: number;
@@ -3807,6 +4208,7 @@ export type UserCountOutputType = {
 	createdCategories: number;
 	createdCategoryPresets: number;
 	inviteLinks: number;
+	guideProgress: number;
 };
 
 export type UserCountOutputTypeSelect<
@@ -3821,6 +4223,7 @@ export type UserCountOutputTypeSelect<
 	memberships?: boolean | UserCountOutputTypeCountMembershipsArgs;
 	invitations?: boolean | UserCountOutputTypeCountInvitationsArgs;
 	markers?: boolean | UserCountOutputTypeCountMarkersArgs;
+	markerSets?: boolean | UserCountOutputTypeCountMarkerSetsArgs;
 	responses?: boolean | UserCountOutputTypeCountResponsesArgs;
 	createdGrants?: boolean | UserCountOutputTypeCountCreatedGrantsArgs;
 	createdShareLinks?: boolean | UserCountOutputTypeCountCreatedShareLinksArgs;
@@ -3828,6 +4231,7 @@ export type UserCountOutputTypeSelect<
 	createdCategories?: boolean | UserCountOutputTypeCountCreatedCategoriesArgs;
 	createdCategoryPresets?: boolean | UserCountOutputTypeCountCreatedCategoryPresetsArgs;
 	inviteLinks?: boolean | UserCountOutputTypeCountInviteLinksArgs;
+	guideProgress?: boolean | UserCountOutputTypeCountGuideProgressArgs;
 };
 
 /**
@@ -3926,6 +4330,15 @@ export type UserCountOutputTypeCountMarkersArgs<
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountMarkerSetsArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	where?: Prisma.MarkerSetWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountResponsesArgs<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
@@ -3986,6 +4399,15 @@ export type UserCountOutputTypeCountInviteLinksArgs<
 	where?: Prisma.InviteLinkWhereInput;
 };
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountGuideProgressArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	where?: Prisma.GuideProgressWhereInput;
+};
+
 export type UserSelect<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = runtime.Types.Extensions.GetSelect<
@@ -3998,8 +4420,7 @@ export type UserSelect<
 		emailVerified?: boolean;
 		image?: boolean;
 		storageQuota?: boolean;
-		tutorialCompletedAt?: boolean;
-		tutorialSeenSteps?: boolean;
+		guidesEnabled?: boolean;
 		twoFactorEnabled?: boolean;
 		lastActiveOrganizationId?: boolean;
 		uploadedExports?: boolean | Prisma.User$uploadedExportsArgs<ExtArgs>;
@@ -4012,6 +4433,7 @@ export type UserSelect<
 		invitations?: boolean | Prisma.User$invitationsArgs<ExtArgs>;
 		lastActiveOrganization?: boolean | Prisma.User$lastActiveOrganizationArgs<ExtArgs>;
 		markers?: boolean | Prisma.User$markersArgs<ExtArgs>;
+		markerSets?: boolean | Prisma.User$markerSetsArgs<ExtArgs>;
 		responses?: boolean | Prisma.User$responsesArgs<ExtArgs>;
 		createdGrants?: boolean | Prisma.User$createdGrantsArgs<ExtArgs>;
 		createdShareLinks?: boolean | Prisma.User$createdShareLinksArgs<ExtArgs>;
@@ -4019,6 +4441,7 @@ export type UserSelect<
 		createdCategories?: boolean | Prisma.User$createdCategoriesArgs<ExtArgs>;
 		createdCategoryPresets?: boolean | Prisma.User$createdCategoryPresetsArgs<ExtArgs>;
 		inviteLinks?: boolean | Prisma.User$inviteLinksArgs<ExtArgs>;
+		guideProgress?: boolean | Prisma.User$guideProgressArgs<ExtArgs>;
 		_count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
 	},
 	ExtArgs["result"]["user"]
@@ -4036,8 +4459,7 @@ export type UserSelectCreateManyAndReturn<
 		emailVerified?: boolean;
 		image?: boolean;
 		storageQuota?: boolean;
-		tutorialCompletedAt?: boolean;
-		tutorialSeenSteps?: boolean;
+		guidesEnabled?: boolean;
 		twoFactorEnabled?: boolean;
 		lastActiveOrganizationId?: boolean;
 		lastActiveOrganization?: boolean | Prisma.User$lastActiveOrganizationArgs<ExtArgs>;
@@ -4057,8 +4479,7 @@ export type UserSelectUpdateManyAndReturn<
 		emailVerified?: boolean;
 		image?: boolean;
 		storageQuota?: boolean;
-		tutorialCompletedAt?: boolean;
-		tutorialSeenSteps?: boolean;
+		guidesEnabled?: boolean;
 		twoFactorEnabled?: boolean;
 		lastActiveOrganizationId?: boolean;
 		lastActiveOrganization?: boolean | Prisma.User$lastActiveOrganizationArgs<ExtArgs>;
@@ -4075,8 +4496,7 @@ export type UserSelectScalar = {
 	emailVerified?: boolean;
 	image?: boolean;
 	storageQuota?: boolean;
-	tutorialCompletedAt?: boolean;
-	tutorialSeenSteps?: boolean;
+	guidesEnabled?: boolean;
 	twoFactorEnabled?: boolean;
 	lastActiveOrganizationId?: boolean;
 };
@@ -4092,8 +4512,7 @@ export type UserOmit<
 	| "emailVerified"
 	| "image"
 	| "storageQuota"
-	| "tutorialCompletedAt"
-	| "tutorialSeenSteps"
+	| "guidesEnabled"
 	| "twoFactorEnabled"
 	| "lastActiveOrganizationId",
 	ExtArgs["result"]["user"]
@@ -4111,6 +4530,7 @@ export type UserInclude<
 	invitations?: boolean | Prisma.User$invitationsArgs<ExtArgs>;
 	lastActiveOrganization?: boolean | Prisma.User$lastActiveOrganizationArgs<ExtArgs>;
 	markers?: boolean | Prisma.User$markersArgs<ExtArgs>;
+	markerSets?: boolean | Prisma.User$markerSetsArgs<ExtArgs>;
 	responses?: boolean | Prisma.User$responsesArgs<ExtArgs>;
 	createdGrants?: boolean | Prisma.User$createdGrantsArgs<ExtArgs>;
 	createdShareLinks?: boolean | Prisma.User$createdShareLinksArgs<ExtArgs>;
@@ -4118,6 +4538,7 @@ export type UserInclude<
 	createdCategories?: boolean | Prisma.User$createdCategoriesArgs<ExtArgs>;
 	createdCategoryPresets?: boolean | Prisma.User$createdCategoryPresetsArgs<ExtArgs>;
 	inviteLinks?: boolean | Prisma.User$inviteLinksArgs<ExtArgs>;
+	guideProgress?: boolean | Prisma.User$guideProgressArgs<ExtArgs>;
 	_count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type UserIncludeCreateManyAndReturn<
@@ -4146,6 +4567,7 @@ export type $UserPayload<
 		invitations: Prisma.$InvitationPayload<ExtArgs>[];
 		lastActiveOrganization: Prisma.$OrganizationPayload<ExtArgs> | null;
 		markers: Prisma.$MarkerPayload<ExtArgs>[];
+		markerSets: Prisma.$MarkerSetPayload<ExtArgs>[];
 		responses: Prisma.$ResponsePayload<ExtArgs>[];
 		createdGrants: Prisma.$MemberGrantPayload<ExtArgs>[];
 		createdShareLinks: Prisma.$ShareLinkPayload<ExtArgs>[];
@@ -4153,6 +4575,7 @@ export type $UserPayload<
 		createdCategories: Prisma.$CategoryPayload<ExtArgs>[];
 		createdCategoryPresets: Prisma.$CategoryPresetPayload<ExtArgs>[];
 		inviteLinks: Prisma.$InviteLinkPayload<ExtArgs>[];
+		guideProgress: Prisma.$GuideProgressPayload<ExtArgs>[];
 	};
 	scalars: runtime.Types.Extensions.GetPayloadResult<
 		{
@@ -4165,13 +4588,9 @@ export type $UserPayload<
 			image: string | null;
 			storageQuota: bigint | null;
 			/**
-			 * Onboarding tutorial: set when it was finished or skipped; null = still running
+			 * PostPin Guides: off = nothing starts on its own and no guide buttons (the guides page still works)
 			 */
-			tutorialCompletedAt: Date | null;
-			/**
-			 * Tutorial steps that can't be derived from the data (explanations seen), see TUTORIAL_SEEN_STEPS
-			 */
-			tutorialSeenSteps: string[];
+			guidesEnabled: boolean;
 			twoFactorEnabled: boolean | null;
 			lastActiveOrganizationId: string | null;
 		},
@@ -4796,6 +5215,17 @@ export interface Prisma__UserClient<
 		  >
 		| Null
 	>;
+	markerSets<T extends Prisma.User$markerSetsArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.User$markerSetsArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		| runtime.Types.Result.GetResult<
+				Prisma.$MarkerSetPayload<ExtArgs>,
+				T,
+				"findMany",
+				GlobalOmitOptions
+		  >
+		| Null
+	>;
 	responses<T extends Prisma.User$responsesArgs<ExtArgs> = {}>(
 		args?: Prisma.Subset<T, Prisma.User$responsesArgs<ExtArgs>>,
 	): Prisma.PrismaPromise<
@@ -4873,6 +5303,17 @@ export interface Prisma__UserClient<
 		  >
 		| Null
 	>;
+	guideProgress<T extends Prisma.User$guideProgressArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.User$guideProgressArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		| runtime.Types.Result.GetResult<
+				Prisma.$GuideProgressPayload<ExtArgs>,
+				T,
+				"findMany",
+				GlobalOmitOptions
+		  >
+		| Null
+	>;
 	/**
 	 * Attaches callbacks for the resolution and/or rejection of the Promise.
 	 * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4912,8 +5353,7 @@ export interface UserFieldRefs {
 	readonly emailVerified: Prisma.FieldRef<"User", "Boolean">;
 	readonly image: Prisma.FieldRef<"User", "String">;
 	readonly storageQuota: Prisma.FieldRef<"User", "BigInt">;
-	readonly tutorialCompletedAt: Prisma.FieldRef<"User", "DateTime">;
-	readonly tutorialSeenSteps: Prisma.FieldRef<"User", "String[]">;
+	readonly guidesEnabled: Prisma.FieldRef<"User", "Boolean">;
 	readonly twoFactorEnabled: Prisma.FieldRef<"User", "Boolean">;
 	readonly lastActiveOrganizationId: Prisma.FieldRef<"User", "String">;
 }
@@ -5599,6 +6039,32 @@ export type User$markersArgs<
 };
 
 /**
+ * User.markerSets
+ */
+export type User$markerSetsArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the MarkerSet
+	 */
+	select?: Prisma.MarkerSetSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the MarkerSet
+	 */
+	omit?: Prisma.MarkerSetOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.MarkerSetInclude<ExtArgs> | null;
+	where?: Prisma.MarkerSetWhereInput;
+	orderBy?: Prisma.MarkerSetOrderByWithRelationInput | Prisma.MarkerSetOrderByWithRelationInput[];
+	cursor?: Prisma.MarkerSetWhereUniqueInput;
+	take?: number;
+	skip?: number;
+	distinct?: Prisma.MarkerSetScalarFieldEnum | Prisma.MarkerSetScalarFieldEnum[];
+};
+
+/**
  * User.responses
  */
 export type User$responsesArgs<
@@ -5781,6 +6247,33 @@ export type User$inviteLinksArgs<
 	take?: number;
 	skip?: number;
 	distinct?: Prisma.InviteLinkScalarFieldEnum | Prisma.InviteLinkScalarFieldEnum[];
+};
+
+/**
+ * User.guideProgress
+ */
+export type User$guideProgressArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the GuideProgress
+	 */
+	select?: Prisma.GuideProgressSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the GuideProgress
+	 */
+	omit?: Prisma.GuideProgressOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.GuideProgressInclude<ExtArgs> | null;
+	where?: Prisma.GuideProgressWhereInput;
+	orderBy?:
+		Prisma.GuideProgressOrderByWithRelationInput | Prisma.GuideProgressOrderByWithRelationInput[];
+	cursor?: Prisma.GuideProgressWhereUniqueInput;
+	take?: number;
+	skip?: number;
+	distinct?: Prisma.GuideProgressScalarFieldEnum | Prisma.GuideProgressScalarFieldEnum[];
 };
 
 /**

@@ -16,6 +16,9 @@ concurrency:
 
 jobs:
   changeset:
+    # release PRs consume the changesets (changeset version), so there's nothing left to check.
+    # A skipped job still counts as passed for the required check.
+    if: ${{ !startsWith(github.head_ref, 'release/') }}
     runs-on: ubuntu-latest
     steps:
       # changeset status compares against the base branch, so it needs the history

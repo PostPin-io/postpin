@@ -9,7 +9,8 @@ import type { Role } from "@postpin-io/shared/db/enums";
  * The object an action is performed on. For `create`, this is the parent:
  * new timeline → project, new marker → export, new project → organization.
  */
-export type Target = { type: Area; id: string };
+// The plugin right has no target: it is checked on the role (roleAllows), not on a resource
+export type Target = { type: Exclude<Area, "plugin">; id: string };
 
 /** What `can()` needs to know about a target, loaded from the DB */
 export type ResolvedTarget = {
@@ -329,6 +330,22 @@ async function requireMember(organizationId: string, userId: string) {
 	// 404, not 403: don't reveal that the org exists
 	if (!member) error(404, "Not found");
 	return member;
+}
+
+/**
+ * The signed-in user's role in the organization the target belongs to, or null when the target
+ * doesn't exist or the user isn't in its organization. For checks that depend on the role alone
+ * (the plugin right); prefer authorize().
+ */
+export async function roleAt(target: Target) {
+	const user = requireUser();
+	const resolved = await resolveTarget(target);
+	if (!resolved) return null;
+	const member = await prisma.member.findFirst({
+		where: { organizationId: resolved.organizationId, userId: user.id },
+		select: { role: true },
+	});
+	return member?.role ?? null;
 }
 
 /** For checks about who someone is, e.g. "admins and above". Prefer authorize(). */

@@ -24,6 +24,7 @@ import {
 	fromResolveDuration,
 	newMarkerData,
 	readMarkerIds,
+	readPlacement,
 	replacedMarkerData,
 	toResolveDuration,
 } from "./markerIds";
@@ -39,6 +40,7 @@ import type {
 	DiskRenderOptions,
 	NleBridge,
 	NleMarker,
+	SetMarkerResult,
 	RenderProgress,
 } from "@postpin-io/plugin-core/bridge";
 import { createWindow, exposeHostBridge, exposeNleBridge } from "@postpin-io/plugin-electron/main";
@@ -398,14 +400,17 @@ async function buildTimelineSnapshot(): Promise<TimelineSnapshot | null> {
 	};
 }
 
-// Resolve throws instead of returning false for some failures, e.g. when no marker is at the frame
+// Resolve throws instead of returning false for some failures, e.g. when no marker is at the frame.
+// Tries twice: right after other marker calls Resolve sometimes doesn't find the marker yet.
 async function updateMarkerCustomData(timeline: Timeline, frame: number, customData: string) {
-	try {
-		return await timeline.UpdateMarkerCustomData(frame, customData);
-	} catch (error) {
-		console.warn(`Couldn't store the marker id at frame ${frame}:`, error);
-		return false;
+	for (let attempt = 0; attempt < 2; attempt++) {
+		try {
+			if (await timeline.UpdateMarkerCustomData(frame, customData)) return true;
+		} catch (error) {
+			if (attempt === 1) console.warn(`Couldn't store the marker id at frame ${frame}:`, error);
+		}
 	}
+	return false;
 }
 
 // The timeline's markers with their real frames (relative to the timeline start).
@@ -484,6 +489,24 @@ async function addMarker(timeline: Timeline, frame: number, marker: MarkerInfo) 
 	}
 }
 
+/** How many frames later a marker may go when its own frame is taken */
+const MAX_FRAME_SHIFT = 10;
+
+// Resolve takes one marker per frame (PostPin has several, e.g. from different reviewers), so a
+// marker whose frame is taken goes on the next free one. build gives the marker for a frame.
+// Returns the marker's id, or null when it couldn't be placed.
+async function addNear(
+	timeline: Timeline,
+	frame: number,
+	build: (frame: number) => { nleId: string; info: MarkerInfo },
+) {
+	for (let at = frame; at <= frame + MAX_FRAME_SHIFT; at++) {
+		const { nleId, info } = build(at);
+		if (await addMarker(timeline, at, info)) return nleId;
+	}
+	return null;
+}
+
 const resolveBridge: NleBridge = {
 	getCapabilities: async () => ({
 		hostName: "Resolve",
@@ -511,6 +534,7 @@ const resolveBridge: NleBridge = {
 			projectId: await project.GetUniqueId(),
 			projectName: await project.GetName(),
 			thumbnailDataUrl: frame ? `data:image/png;base64,${frame.data}` : undefined,
+			startFrame: await timeline.GetStartFrame(),
 		};
 	},
 	// Resolve marker frames are relative to the timeline start, bridge frames are absolute.
@@ -540,11 +564,13 @@ const resolveBridge: NleBridge = {
 				nleId = `${timelineId}:${frame}`;
 				customData = marker.customData || null;
 			}
+			// A marker the plugin had to move or name reports its real frame and title
+			const { pinnedFrame, untitled } = readPlacement(customData, frame, marker.name);
 			result.push({
 				nleId,
-				title: marker.name,
+				title: untitled ? "" : marker.name,
 				description: marker.note,
-				frame: frame + startFrame,
+				frame: pinnedFrame ?? frame + startFrame,
 				duration: fromResolveDuration(marker.duration),
 				color: marker.color,
 				customData,
@@ -564,6 +590,7 @@ const resolveBridge: NleBridge = {
 			timelineId,
 			current.map(({ frame, info }) => ({ frame, customData: info.customData || null, info })),
 		);
+		const takenIds = new Set(byId.keys());
 
 		// Remove the markers to update first, so markers moving onto each other's frames don't collide
 		const replaced = new Map<NleMarker, NonNullable<ReturnType<typeof byId.get>>>();
@@ -573,44 +600,78 @@ const resolveBridge: NleBridge = {
 			if (await timeline.DeleteMarkerAtFrame(existing.frame)) replaced.set(marker, existing);
 		}
 
-		const ids: string[] = [];
-		const failedFrames: number[] = [];
+		const results: SetMarkerResult[] = [];
 		for (const [i, marker] of markers.entries()) {
 			const frame = marker.frame - startFrame;
 			const existing = replaced.get(marker);
-			const { nleId, customData } = existing
-				? replacedMarkerData(
-						timelineId,
-						marker.nleId!,
-						frame,
-						existing.customData,
-						marker.customData,
-					)
-				: newMarkerData(timelineId, frame, marker.customData);
-			const added = await addMarker(timeline, frame, {
-				color: marker.color as MarkerColor,
-				name: marker.title || `M${i + 1}`,
-				note: marker.description,
-				duration: toResolveDuration(marker.duration, existing?.info.duration),
-				customData: customData ?? "",
-			});
-			if (added) {
-				ids.push(nleId);
+			// Typical when the export starts at another timecode than the timeline (e.g. an upload
+			// from the browser starting at 00:00:00:00, the timeline at 01:00:00:00)
+			if (frame < 0) {
+				if (existing) await addMarker(timeline, existing.frame, existing.info);
+				results.push({
+					nleId: existing ? marker.nleId : null,
+					error:
+						`it's before the start of the Resolve timeline (frame ${startFrame}). ` +
+						"Do the export and the timeline start at the same timecode?",
+				});
 				continue;
 			}
-			// Usually another marker is at that frame. Put back the marker this one should have replaced.
-			failedFrames.push(marker.frame);
+			const placeholderName = marker.title ? undefined : `M${i + 1}`;
+			const written = await addNear(timeline, frame, (at) => {
+				const placement = { pinnedFrame: at === frame ? undefined : marker.frame, placeholderName };
+				const { nleId, customData } = existing
+					? replacedMarkerData(
+							timelineId,
+							marker.nleId!,
+							at,
+							existing.customData,
+							marker.customData,
+							placement,
+						)
+					: newMarkerData(timelineId, at, marker.customData, placement, (id) => takenIds.has(id));
+				return {
+					nleId,
+					info: {
+						color: marker.color as MarkerColor,
+						name: marker.title || placeholderName!,
+						note: marker.description,
+						duration: toResolveDuration(marker.duration, existing?.info.duration),
+						customData: customData ?? "",
+					},
+				};
+			});
+			if (written) {
+				takenIds.add(written);
+				results.push({ nleId: written });
+				continue;
+			}
+			// Put back the marker this one should have replaced
 			if (existing) await addMarker(timeline, existing.frame, existing.info);
-			ids.push(existing ? marker.nleId! : "");
+			results.push({
+				nleId: existing ? marker.nleId : null,
+				error: `Resolve couldn't place it at frame ${marker.frame} or the ${MAX_FRAME_SHIFT} frames after it`,
+			});
 		}
-
-		if (failedFrames.length > 0) {
-			throw new Error(
-				`Couldn't place ${failedFrames.length} marker(s) at frame ${failedFrames.join(", ")}, ` +
-					"there is probably another marker at the same frame in Resolve",
-			);
+		return results;
+	},
+	removeMarkers: async (nleIds) => {
+		const timeline = await getCurrentTimeline();
+		const [timelineId, current] = await Promise.all([
+			timeline.GetUniqueId(),
+			listMarkers(timeline, { probe: false }),
+		]);
+		const byId = readMarkerIds(
+			timelineId,
+			current.map(({ frame, info }) => ({ frame, customData: info.customData || null })),
+		);
+		const failed: number[] = [];
+		for (const nleId of nleIds) {
+			const marker = byId.get(nleId);
+			if (marker && !(await timeline.DeleteMarkerAtFrame(marker.frame))) failed.push(marker.frame);
 		}
-		return ids;
+		if (failed.length > 0) {
+			throw new Error(`Resolve couldn't delete the markers at frame ${failed.join(", ")}`);
+		}
 	},
 	clearMarkers: async () => {
 		await (await getCurrentTimeline()).DeleteMarkersByColor("All");

@@ -171,3 +171,13 @@ export function rangeFromMarks(inOut: InOut, playhead: number): FrameRange {
 	}
 	return { frame: inOut.in ?? playhead, duration: 0 };
 }
+
+/**
+ * What a saved marker drag tells the marker-ranges tour: "move" for any change, "end" when only
+ * the end moved and it is still a range (dragged onto its start, it is a point again)
+ */
+export function dragSignals(before: FrameRange, after: FrameRange): ("move" | "end")[] {
+	if (after.frame === before.frame && after.duration === before.duration) return [];
+	const endOnly = after.frame === before.frame && after.duration > 0;
+	return endOnly ? ["move", "end"] : ["move"];
+}

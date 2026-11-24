@@ -3,8 +3,7 @@
 	import Download from "@lucide/svelte/icons/download";
 	import Upload from "@lucide/svelte/icons/upload";
 	import X from "@lucide/svelte/icons/x";
-
-	const DOWNLOADS_URL = "https://docs.postpin.io/downloads";
+	import { DOWNLOADS_URL } from "#lib/downloads.ts";
 
 	interface Props {
 		/** "I want to upload manually" */

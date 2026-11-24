@@ -1,5 +1,11 @@
 import { vi } from "vitest";
-import type { Capabilities, HostBridge, NleBridge, NleMarker } from "../src/bridge.ts";
+import type {
+	Capabilities,
+	HostBridge,
+	NleBridge,
+	NleMarker,
+	SetMarkerResult,
+} from "../src/bridge.ts";
 
 export const RESOLVE_CAPABILITIES: Capabilities = {
 	hostName: "Resolve",
@@ -31,19 +37,24 @@ export function fakeNle(
 			projectName: "Feature",
 		})),
 		getMarkers: vi.fn(async () => state.markers.map((m) => ({ ...m }))),
-		setMarkers: vi.fn(async (written: NleMarker[]) =>
+		setMarkers: vi.fn(async (written: NleMarker[]): Promise<SetMarkerResult[]> =>
 			written.map((m) => {
 				const existing = m.nleId ? state.markers.find((e) => e.nleId === m.nleId) : undefined;
 				if (existing) {
 					Object.assign(existing, m);
-					return existing.nleId!;
+					return { nleId: existing.nleId! };
 				}
 				const nleId = `nle-${state.nextId++}`;
 				state.markers.push({ ...m, nleId });
-				return nleId;
+				return { nleId };
 			}),
 		),
-		clearMarkers: vi.fn(async () => {}),
+		removeMarkers: vi.fn(async (nleIds: string[]) => {
+			state.markers = state.markers.filter((m) => !m.nleId || !nleIds.includes(m.nleId));
+		}),
+		clearMarkers: vi.fn(async () => {
+			state.markers = [];
+		}),
 		getRenderPresets: vi.fn(async () => []),
 		renderPreview: vi.fn(async () => "/renders/cut3.mp4"),
 		renderToDisk: vi.fn(async () => "/masters/cut3.mov"),

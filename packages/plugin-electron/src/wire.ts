@@ -1,9 +1,10 @@
 // eipc is missing unions, so we cant send the pallette type over the wire
 
-import type { Capabilities, NleMarker } from "@postpin-io/plugin-core/bridge";
+import type { Capabilities, NleMarker, SetMarkerResult } from "@postpin-io/plugin-core/bridge";
 import type {
 	Capabilities as WireCapabilities,
 	NleMarker as WireMarker,
+	SetMarkerResult as WireSetMarkerResult,
 } from "./ipc/common/PostPin";
 
 export function toWireCapabilities({ palette, ...capabilities }: Capabilities): WireCapabilities {
@@ -33,4 +34,15 @@ export function toWireMarker({ nleId, customData, ...marker }: NleMarker): WireM
 
 export function fromWireMarker(marker: WireMarker): NleMarker {
 	return { ...marker, nleId: marker.nleId ?? null, customData: marker.customData ?? null };
+}
+
+export function toWireSetMarkerResult({ nleId, error }: SetMarkerResult): WireSetMarkerResult {
+	return { ...(nleId === null ? {} : { nleId }), ...(error === undefined ? {} : { error }) };
+}
+
+export function fromWireSetMarkerResult(result: WireSetMarkerResult): SetMarkerResult {
+	return {
+		nleId: result.nleId ?? null,
+		...(result.error === undefined ? {} : { error: result.error }),
+	};
 }

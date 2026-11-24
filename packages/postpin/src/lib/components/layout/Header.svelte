@@ -8,14 +8,20 @@
 	import Menu from "@lucide/svelte/icons/menu";
 	import Monitor from "@lucide/svelte/icons/monitor";
 	import Moon from "@lucide/svelte/icons/moon";
+	import Settings from "@lucide/svelte/icons/settings";
+	import Shield from "@lucide/svelte/icons/shield";
+	import User from "@lucide/svelte/icons/user";
 	import Sun from "@lucide/svelte/icons/sun";
+	import UserGroup from "@lucide/svelte/icons/user-group";
+	import SharingSetupModal from "#lib/components/sharing/SharingSetupModal.svelte";
+	import { isOrgWide, toRole } from "#lib/roles.ts";
 	import { theme, type ThemePreference } from "#lib/theme.svelte.ts";
-	import { reviewTour } from "#lib/components/tutorial/review-tour.svelte.ts";
 
 	import type { Snippet } from "svelte";
 	import Logo from "#lib/components/layout/Logo.svelte";
 
 	import Breadcrumbs from "#lib/components/layout/Breadcrumbs.svelte";
+	import GuideButton from "#lib/components/guides/GuideButton.svelte";
 	import ExportShareButton from "#lib/components/layout/ExportShareButton.svelte";
 
 	const session = authClient.useSession();
@@ -28,6 +34,11 @@
 	let activeOrganization = $derived(
 		$organizations.data?.find((org) => org.id === activeOrganizationId),
 	);
+	// Inviting into the whole organization is for admins and owners; the server checks it again
+	const activeMember = authClient.useActiveMember();
+	const activeRole = $derived(toRole($activeMember.data?.role));
+	const mayInviteToOrg = $derived(activeRole ? isOrgWide(activeRole) : false);
+	let invitationsModal: SharingSetupModal | null = null;
 
 	async function switchOrganization(organizationId: string) {
 		(document.activeElement as HTMLElement | null)?.blur();
@@ -75,19 +86,41 @@
 		{/each}
 		<li></li>
 	{/if}
-	<li><a href={resolve("/(root)/profile")}>Profile</a></li>
+	<!-- links to other pages: all with an icon -->
+	<li>
+		<a href={resolve("/(root)/profile")}>
+			<User class="size-4" />
+			Profile
+		</a>
+	</li>
 	{#if activeOrganization}
 		<li>
 			<a
 				href={resolve("/(root)/organizations/[organization]/settings", {
 					organization: activeOrganization.slug,
-				})}>Settings</a
+				})}
 			>
+				<Settings class="size-4" />
+				Settings
+			</a>
 		</li>
 	{/if}
+	<li>
+		<a href={resolve("/(root)/guides")} data-guide="postpin-guides/page">
+			<GraduationCap class="size-4" />
+			PostPin Guides
+		</a>
+	</li>
 	{#if mobile && page.data.isSystemAdmin}
-		<li><a href={resolve("/(root)/admin")}>System</a></li>
+		<li>
+			<a href={resolve("/(root)/admin")}>
+				<Shield class="size-4" />
+				System
+			</a>
+		</li>
 	{/if}
+	<li></li>
+	<!-- actions: theme and logout -->
 	<!-- a row like the items above, so it lines up with them and the dividers -->
 	<li>
 		<div class="cursor-default justify-between py-1 hover:bg-transparent active:bg-transparent!">
@@ -123,13 +156,19 @@
 
 	<nav class="collapse-title navbar max-lg:px-2">
 		<div class="navbar-start min-w-0 max-lg:w-auto max-lg:flex-1">
-			<label for="navbar-1-toggle" class="btn btn-square btn-ghost lg:hidden" aria-label="Menu">
+			<label
+				for="navbar-1-toggle"
+				class="btn btn-square btn-ghost lg:hidden"
+				aria-label="Menu"
+				data-guide="postpin-guides/menu"
+			>
 				<Menu class="size-5" />
 			</label>
 			<a
 				href={resolve("/(root)/dashboard")}
 				class="btn btn-ghost text-xl max-lg:btn-square"
 				aria-label="Dashboard"
+				data-guide="navigation/go-home navigation/home"
 			>
 				<Logo class="h-6 w-auto" />
 				<span class="flex items-center gap-2 max-lg:hidden">
@@ -140,19 +179,20 @@
 					PostPin
 				</span>
 			</a>
-			<Breadcrumbs />
-			{#if reviewTour.shareOffered}
-				<!-- Tutorial only: next to the breadcrumbs, whose buttons it explains. Not called
-				     "Share", which would look like the way to share. -->
+			{#if activeOrganization && mayInviteToOrg}
+				{@const org = activeOrganization}
 				<button
 					type="button"
-					class="btn ml-1 shrink-0 btn-primary btn-sm"
-					onclick={() => (reviewTour.shareOpen = true)}
+					class="btn btn-square btn-ghost btn-sm max-lg:hidden lg:btn-xs"
+					title="Invitations for this organization"
+					aria-label="Invitations for this organization"
+					onclick={() => invitationsModal?.open({ organizationId: org.id })}
 				>
-					<GraduationCap class="size-4" />
-					Share Guide
+					<UserGroup class="size-3.5" />
 				</button>
 			{/if}
+			<GuideButton guide="navigation" />
+			<Breadcrumbs />
 			{#if page.data.isSystemAdmin}
 				<ul class="menu menu-horizontal px-1 max-lg:hidden">
 					<li><a href={resolve("/(root)/admin")}>System</a></li>
@@ -167,7 +207,7 @@
 			{#if actions}<div class="contents max-lg:hidden">{@render actions()}</div>{/if}
 			<ExportShareButton />
 			<div class="dropdown dropdown-end max-lg:hidden">
-				<div tabindex="0" role="button" class="btn btn-ghost">
+				<div tabindex="0" role="button" class="btn btn-ghost" data-guide="postpin-guides/menu">
 					{$session.data?.user.name ?? "Account"}
 				</div>
 				<ul
@@ -187,3 +227,5 @@
 		</ul>
 	</div>
 </header>
+
+<SharingSetupModal bind:this={invitationsModal} />

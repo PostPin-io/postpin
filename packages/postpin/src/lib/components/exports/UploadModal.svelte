@@ -48,8 +48,10 @@
 	interface Props {
 		projectId: string;
 		timelineId: string;
+		/** The upload started: the new export's id */
+		onstarted?: (exportId: string) => void;
 	}
-	let { projectId, timelineId }: Props = $props();
+	let { projectId, timelineId, onstarted }: Props = $props();
 
 	const LEVELS = ["sensitive", "medium", "insensitive"] as const;
 
@@ -221,7 +223,7 @@
 		starting = true;
 		submitError = null;
 		try {
-			await uploads.start({
+			const exportId = await uploads.start({
 				file,
 				projectId,
 				timelineId,
@@ -230,6 +232,7 @@
 				cutList: usesCutList ? cutList : null,
 			});
 			dialog?.close();
+			onstarted?.(exportId);
 		} catch (e) {
 			submitError =
 				(e as { body?: { message?: string } })?.body?.message ??

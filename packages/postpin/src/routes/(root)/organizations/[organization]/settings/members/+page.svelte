@@ -1,16 +1,14 @@
 <script lang="ts">
 	import PageMeta from "#lib/components/layout/PageMeta.svelte";
 	import {
+		getInviteLinks,
 		cancelInvitation,
 		changeInvitationRole,
 		changeMemberRole,
-		getInviteLinks,
 		getOrg,
 		inviteMember as inviteMemberCommand,
 		removeMember,
 		resendInvitation,
-		resetInviteLink,
-		setInviteLinkEnabled,
 	} from "./members.remote";
 
 	import { page } from "$app/state";
@@ -18,10 +16,22 @@
 
 	import { Role } from "@postpin-io/shared/db/enums";
 	import MemberGrantsModal from "./MemberGrantsModal.svelte";
+	import InviteLinks from "#lib/components/sharing/InviteLinks.svelte";
+	import GuideButton from "#lib/components/guides/GuideButton.svelte";
 	let grantsModal: MemberGrantsModal | null = null;
 
 	const org = $derived(await getOrg(page.params.organization!));
 	const orgTarget = $derived({ type: "organization" as const, id: org.id }); // bzw. organizationId
+	// Loaded here with `await` so InviteLinks mounts with data: a `.current` result arriving during
+	// a navigation can stay stale
+	const inviteLinksLoaded = $derived(
+		org.canManageInviteLinks
+			? await getInviteLinks(orgTarget).then(
+					() => true,
+					() => true,
+				)
+			: false,
+	);
 
 	let changingRoleOf = $state<string | null>(null);
 	async function changeRole(memberId: string, newRole: Role) {
@@ -110,39 +120,6 @@
 		await getOrg(page.params.organization!).refresh();
 		cancelingInviteId = null;
 	}
-
-	const inviteLinks = $derived(org.canManageInviteLinks ? await getInviteLinks(orgTarget) : []);
-	let updatingLinkRole = $state<string | null>(null);
-	let copiedLinkRole = $state<string | null>(null);
-
-	const linkUrl = (token: string) => `${page.url.origin}/auth/join/${token}`;
-
-	async function toggleLink(role: InviteRole, enabled: boolean) {
-		updatingLinkRole = role;
-		try {
-			await setInviteLinkEnabled({ target: orgTarget, role, enabled });
-		} catch (e) {
-			alert(`Could not update invite link: ${(e as Error).message}`);
-		}
-		updatingLinkRole = null;
-	}
-
-	async function resetLink(role: InviteRole) {
-		if (!confirm("Reset this link? The current link will stop working immediately.")) return;
-		updatingLinkRole = role;
-		try {
-			await resetInviteLink({ target: orgTarget, role });
-		} catch (e) {
-			alert(`Could not reset invite link: ${(e as Error).message}`);
-		}
-		updatingLinkRole = null;
-	}
-
-	async function copyLink(role: string, token: string) {
-		await navigator.clipboard.writeText(linkUrl(token));
-		copiedLinkRole = role;
-		setTimeout(() => (copiedLinkRole = null), 1500);
-	}
 </script>
 
 <PageMeta
@@ -227,24 +204,29 @@
 	</div>
 
 	{#if org.canSeeInvitations}
-		<h2 class="text-lg font-semibold">Invite by E-Mail</h2>
+		<div class="flex items-center gap-2">
+			<h2 class="text-lg font-semibold">Invite by E-Mail</h2>
+			{#if org.canInviteToOrg}<GuideButton guide="invite-team" />{/if}
+		</div>
 		<div class="overflow-x-auto rounded-box bg-base-100 shadow">
 			{#if org.canInviteToOrg}
-				<div class="m-3 flex gap-3">
+				<div class="m-3 flex gap-3" data-guide="invite-team/invite">
 					<input
 						type="email"
 						placeholder="name@example.com"
 						class="input-bordered input w-full"
 						bind:value={inviteEmail}
 					/>
-					{@render roleSelect(
-						inviteRole,
-						org.inviteRoles,
-						(role) => {
-							inviteRole = role as InviteRole;
-						},
-						inviting,
-					)}
+					<div data-guide="invite-team/roles">
+						{@render roleSelect(
+							inviteRole,
+							org.inviteRoles,
+							(role) => {
+								inviteRole = role as InviteRole;
+							},
+							inviting,
+						)}
+					</div>
 					<button class="btn btn-primary" onclick={inviteMember} disabled={inviting}>
 						Invite
 						{#if inviting}
@@ -315,68 +297,9 @@
 
 	{#if org.canManageInviteLinks}
 		<h2 class="text-lg font-semibold">Invite links</h2>
-		<p class="text-sm text-base-content/70">
-			Anyone with a link can join with that role. Reset a link to invalidate the old one.
-		</p>
-		<div class="overflow-x-auto rounded-box bg-base-100 shadow">
-			<table class="table w-full">
-				<thead>
-					<tr>
-						<th>Role</th>
-						<th>Enabled</th>
-						<th>Link</th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each inviteLinks as link (link.role)}
-						<tr>
-							<td class="capitalize">{ROLE_LABELS[link.role]}</td>
-							<td>
-								<input
-									type="checkbox"
-									class="toggle toggle-sm"
-									checked={link.enabled}
-									disabled={updatingLinkRole === link.role}
-									onchange={(e) => toggleLink(link.role, e.currentTarget.checked)}
-								/>
-							</td>
-							<td class="w-full">
-								{#if link.enabled && link.token}
-									<input
-										type="text"
-										readonly
-										class="input w-full font-mono input-sm"
-										value={linkUrl(link.token)}
-										onfocus={(e) => e.currentTarget.select()}
-									/>
-								{:else}
-									<span class="text-sm text-base-content/50">Off</span>
-								{/if}
-							</td>
-							<td>
-								{#if link.enabled && link.token}
-									<div class="flex">
-										<button
-											class="btn btn-ghost btn-sm"
-											onclick={() => copyLink(link.role, link.token!)}
-										>
-											{copiedLinkRole === link.role ? "Copied" : "Copy"}
-										</button>
-										<button
-											class="btn btn-ghost text-error btn-sm"
-											onclick={() => resetLink(link.role)}
-											disabled={updatingLinkRole === link.role}
-										>
-											Reset
-										</button>
-									</div>
-								{/if}
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
+		<p class="text-sm text-base-content/70">Anyone with a link joins with its role.</p>
+		<div data-guide="invite-team/links">
+			{#if inviteLinksLoaded}<InviteLinks target={orgTarget} />{/if}
 		</div>
 	{/if}
 </div>

@@ -1,18 +1,16 @@
 model User {
-  id                  String    @id @default(cuid())
-  name                String
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  email               String
-  emailVerified       Boolean   @default(false)
-  image               String?
-  storageQuota        BigInt? // null = STORAGE_DEFAULT_USER_QUOTA
-  /// Onboarding tutorial: set when it was finished or skipped; null = still running
-  tutorialCompletedAt DateTime?
-  /// Tutorial steps that can't be derived from the data (explanations seen), see TUTORIAL_SEEN_STEPS
-  tutorialSeenSteps   String[]  @default([])
-  uploadedExports     Export[]  @relation("ExportUploader")
-  twoFactorEnabled    Boolean?  @default(false)
+  id               String   @id @default(cuid())
+  name             String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  email            String
+  emailVerified    Boolean  @default(false)
+  image            String?
+  storageQuota     BigInt? // null = STORAGE_DEFAULT_USER_QUOTA
+  /// PostPin Guides: off = nothing starts on its own and no guide buttons (the guides page still works)
+  guidesEnabled    Boolean  @default(true)
+  uploadedExports  Export[] @relation("ExportUploader")
+  twoFactorEnabled Boolean? @default(false)
 
   sessions        Session[]
   accounts        Account[]
@@ -25,6 +23,7 @@ model User {
   lastActiveOrganizationId String?
   lastActiveOrganization   Organization?    @relation("LastActiveOrganization", fields: [lastActiveOrganizationId], references: [id], onDelete: SetNull)
   markers                  Marker[]
+  markerSets               MarkerSet[]
   responses                Response[]
   createdGrants            MemberGrant[]
   createdShareLinks        ShareLink[]
@@ -32,6 +31,7 @@ model User {
   createdCategories        Category[]
   createdCategoryPresets   CategoryPreset[]
   inviteLinks              InviteLink[]
+  guideProgress            GuideProgress[]
 
   @@unique([email])
   @@map("user")

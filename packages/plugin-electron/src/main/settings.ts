@@ -12,6 +12,7 @@ export function createSettings() {
 				outputPath: settings.outputPath ?? "",
 				renderToDisk: settings.renderToDisk ?? false,
 				renderPreset: settings.renderPreset ?? "",
+				...(settings.targets !== undefined && { targets: settings.targets }),
 			};
 		},
 		save(settings: Settings) {
