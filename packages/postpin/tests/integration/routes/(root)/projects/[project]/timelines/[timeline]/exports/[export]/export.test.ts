@@ -78,6 +78,15 @@ describe("getExport", () => {
 		expect((await getExport(ids())).importedMarkers).toEqual({ edl: 2, fcpxml: 1 });
 	});
 
+	it("names the organization, project and timeline it lies in", async () => {
+		signIn(w.owner.user, w.org.id);
+		expect((await getExport(ids())).location).toEqual({
+			organization: w.org.name,
+			project: w.projectA.name,
+			timeline: w.tl1.name,
+		});
+	});
+
 	it("a reviewer may import markers, a member also change the cuts and upload", async () => {
 		await signInAs(w.org, REVIEWER, [{ timelineId: w.tl1.id }]);
 		expect(await getExport(ids())).toMatchObject({

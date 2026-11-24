@@ -845,6 +845,9 @@
 		startFrame={snapshot!.startFrameIndex}
 		frameRate={snapshot!.frameRate}
 		frameCount={snapshot!.durationFrameCount}
+		exportName={exp?.name}
+		location={exp?.location}
+		{videoSource}
 	/>
 {/snippet}
 

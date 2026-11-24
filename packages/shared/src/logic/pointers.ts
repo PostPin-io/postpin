@@ -144,6 +144,63 @@ export function arrowTail(tip: Point, picture: Size, length = ARROW_LENGTH): Poi
 	};
 }
 
+/** Line width (px) of a pointer: scales with the picture, so it looks the same at every size */
+export const pointerStroke = (pictureHeight: number) => Math.max(2, pictureHeight * 0.004);
+/** Corner radius (px) of a box */
+export const pointerRadius = (pictureHeight: number) => Math.min(12, pictureHeight * 0.012);
+
+export type PointerShape =
+	| ({ kind: "RECT" } & Box)
+	| {
+			kind: "ARROW";
+			tip: Point;
+			tail: Point;
+			/** Where the line ends: the base of the arrowhead, so the tip stays sharp */
+			base: Point;
+			/** The arrowhead triangle: tip and the two back corners */
+			head: [Point, Point, Point];
+	  };
+
+/**
+ * A pointer in pixels of its element, ready to draw. `picture` is where the picture sits in the
+ * element (see pictureBox); on a canvas holding just the frame it is 0, 0, width, height.
+ */
+export function pointerShape(
+	geometry: PointerGeometry,
+	picture: Box,
+	stroke: number,
+): PointerShape {
+	if (geometry.kind === "RECT") {
+		const topLeft = fromPicture(geometry, picture);
+		return {
+			kind: "RECT",
+			x: topLeft.x,
+			y: topLeft.y,
+			width: geometry.width * picture.width,
+			height: geometry.height * picture.height,
+		};
+	}
+	const tip = fromPicture(geometry, picture);
+	const tail = fromPicture(arrowTail(geometry, picture), picture);
+	const length = Math.hypot(tip.x - tail.x, tip.y - tail.y) || 1;
+	const ux = (tip.x - tail.x) / length;
+	const uy = (tip.y - tail.y) / length;
+	const headLength = stroke * 4.5;
+	const half = stroke * 2.6;
+	const base = { x: tip.x - ux * headLength, y: tip.y - uy * headLength };
+	return {
+		kind: "ARROW",
+		tip,
+		tail,
+		base,
+		head: [
+			tip,
+			{ x: base.x - uy * half, y: base.y + ux * half },
+			{ x: base.x + uy * half, y: base.y - ux * half },
+		],
+	};
+}
+
 // ─── Validation of client input (remote functions) ───────────────────────────
 const fraction = v.pipe(v.number(), v.finite(), v.minValue(0), v.maxValue(1));
 const side = v.pipe(v.number(), v.finite(), v.minValue(MIN_BOX_SIZE), v.maxValue(1));

@@ -8,6 +8,8 @@
 	import UpdateMarker from "./UpdateMarker.svelte";
 	import ResponseMarker from "./ResponseMarker.svelte";
 	import MobileMarkerModal from "./MobileMarkerModal.svelte";
+	import ExportMarkersModal from "./export/ExportMarkersModal.svelte";
+	import type { VideoSource } from "../VideoPlayer.svelte";
 	import CategoryBadge from "../../categories/CategoryBadge.svelte";
 	import { markerFilter } from "./marker-filter.svelte.ts";
 	import { defaultCategory } from "./default-category.svelte.ts";
@@ -60,6 +62,12 @@
 		mobile?: boolean;
 		/** The review shows the selected markers' pointers on the picture */
 		selectedMarkerIds?: string[];
+		/** For the marker export: its heading and file name */
+		exportName?: string;
+		/** Organization, project and timeline names for the marker export; null for guests */
+		location?: { organization: string; project: string; timeline: string } | null;
+		/** What the review plays: the marker export grabs its thumbnails from it */
+		videoSource?: VideoSource;
 	}
 	let {
 		exportId,
@@ -72,8 +80,12 @@
 		frameCount,
 		mobile = false,
 		selectedMarkerIds = $bindable([]),
+		exportName = "",
+		location = null,
+		videoSource,
 	}: Props = $props();
 	let updateMarkerComponent: UpdateMarker | null = null;
+	let exportModal = $state<ExportMarkersModal>();
 
 	// On a share link: guests see only their own markers, no categories, no copy/paste
 	const getShare = useShare();
@@ -569,6 +581,17 @@
 						{/if}
 					</li>
 				{/if}
+				<li class:menu-disabled={markers.length === 0}>
+					<button
+						type="button"
+						disabled={markers.length === 0}
+						onclick={(event) => {
+							// Closes the dropdown, which stays open while it has the focus
+							event.currentTarget.blur();
+							exportModal?.open();
+						}}>Export…</button
+					>
+				</li>
 			</ul>
 		</div>
 	</div>
@@ -660,6 +683,18 @@
 		{/if}
 	</Splitpanes>
 </div>
+
+<ExportMarkersModal
+	bind:this={exportModal}
+	{markers}
+	panelMarkers={visibleMarkers}
+	selectedIds={selectedMarkerIds}
+	exportName={exportName || "Markers"}
+	{location}
+	{frameRate}
+	{startFrame}
+	{videoSource}
+/>
 
 {#if mobile}
 	<MobileMarkerModal
