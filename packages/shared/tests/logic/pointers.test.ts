@@ -11,6 +11,7 @@ import {
 	pictureBox,
 	pointerColorSchema,
 	pointerGeometrySchema,
+	pointerShape,
 	pointersVisibleAt,
 	resizeBox,
 	toPicture,
@@ -201,5 +202,33 @@ describe("pointerGeometrySchema", () => {
 	it("only the known colors", () => {
 		expect(v.safeParse(pointerColorSchema, "#CE272D").success).toBe(true);
 		expect(v.safeParse(pointerColorSchema, "#123456").success).toBe(false);
+	});
+});
+
+describe("pointerShape", () => {
+	const picture = { x: 10, y: 20, width: 1600, height: 900 };
+
+	it("a box in element pixels, offset by the letterbox", () => {
+		expect(
+			pointerShape({ kind: "RECT", x: 0.5, y: 0.5, width: 0.25, height: 0.5 }, picture, 4),
+		).toEqual({ kind: "RECT", x: 810, y: 470, width: 400, height: 450 });
+	});
+
+	it("an arrow ends in a head at its tip", () => {
+		const shape = pointerShape({ kind: "ARROW", x: 0.5, y: 0.5 }, picture, 4);
+		if (shape.kind !== "ARROW") throw new Error("not an arrow");
+		expect(shape.tip).toEqual({ x: 810, y: 470 });
+		expect(shape.head[0]).toEqual(shape.tip);
+		// Comes in from the lower right at 45°; the line stops 4.5 strokes before the tip
+		expect(shape.tail.x).toBeGreaterThan(shape.tip.x);
+		expect(shape.tail.y).toBeGreaterThan(shape.tip.y);
+		expect(Math.hypot(shape.tip.x - shape.base.x, shape.tip.y - shape.base.y)).toBeCloseTo(18);
+	});
+
+	it("an arrow at the lower right corner points in from the other side", () => {
+		const shape = pointerShape({ kind: "ARROW", x: 1, y: 1 }, picture, 4);
+		if (shape.kind !== "ARROW") throw new Error("not an arrow");
+		expect(shape.tail.x).toBeLessThan(shape.tip.x);
+		expect(shape.tail.y).toBeLessThan(shape.tip.y);
 	});
 });

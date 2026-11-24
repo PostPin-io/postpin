@@ -4,6 +4,7 @@ packages:
 
 allowBuilds:
   "@prisma/engines": true
+  core-js: false
   electron: true
   electron-winstaller: false
   esbuild: true
