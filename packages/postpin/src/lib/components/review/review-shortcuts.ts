@@ -1,4 +1,4 @@
-import { isInsideOverlay, isPlainKey, isTypingTarget } from "#lib/keyboard.ts";
+import { hasCommandKey, isApplePlatform, isInsideOverlay, isTypingTarget } from "#lib/keyboard.ts";
 
 /** What the shortcuts act on. Missing parts (no timeline on a share link) just do nothing. */
 export type ReviewShortcutTargets = {
@@ -13,6 +13,8 @@ export type ReviewShortcutTargets = {
 	};
 	player?: { toggleFullscreen(): void };
 	togglePlayback(): void;
+	/** Opens the list of all shortcuts */
+	showShortcuts?(): void;
 };
 
 /**
@@ -21,23 +23,27 @@ export type ReviewShortcutTargets = {
  */
 export function handleReviewShortcut(
 	event: KeyboardEvent,
-	{ timeline, player, togglePlayback }: ReviewShortcutTargets,
+	{ timeline, player, togglePlayback, showShortcuts }: ReviewShortcutTargets,
+	{ apple = isApplePlatform() } = {},
 ) {
-	if (event.defaultPrevented || !isPlainKey(event, { allowMeta: true })) return;
+	if (event.defaultPrevented || event.altKey) return;
+	// ⌘ on a Mac, Ctrl elsewhere (hasCommandKey). The other one is never a review shortcut.
+	if (apple ? event.ctrlKey : event.metaKey) return;
+	const cmd = hasCommandKey(event, apple);
 	if (isTypingTarget(event) || isInsideOverlay(event)) return;
 
 	switch (event.key) {
 		case " ":
 			// preventDefault also stops the native click on a focused button
-			if (event.repeat || event.metaKey) return;
+			if (event.repeat || cmd) return;
 			togglePlayback();
 			break;
 		case "ArrowLeft":
-			if (event.metaKey) timeline?.stepFrames(-1, event.shiftKey);
+			if (cmd) timeline?.stepFrames(-1, event.shiftKey);
 			else timeline?.seekToAdjacentMarker(-1);
 			break;
 		case "ArrowRight":
-			if (event.metaKey) timeline?.stepFrames(1, event.shiftKey);
+			if (cmd) timeline?.stepFrames(1, event.shiftKey);
 			else timeline?.seekToAdjacentMarker(1);
 			break;
 		case "ArrowUp":
@@ -54,34 +60,38 @@ export function handleReviewShortcut(
 			break;
 		case "f":
 		case "F":
-			if (event.metaKey || event.repeat) return;
+			if (cmd || event.repeat) return;
 			player?.toggleFullscreen();
 			break;
 		case "+":
 		case "-":
-			if (event.metaKey) return;
+			if (cmd) return;
 			timeline?.changePlaybackRate(event.key === "+" ? 1 : -1);
 			break;
 		case "i":
 		case "I":
-			if (event.metaKey || event.repeat) return;
+			if (cmd || event.repeat) return;
 			timeline?.marks?.markIn();
 			break;
 		case "o":
 		case "O":
-			if (event.metaKey || event.repeat) return;
+			if (cmd || event.repeat) return;
 			timeline?.marks?.markOut();
 			break;
 		case "c":
 		case "C":
-			if (event.metaKey || event.repeat) return;
+			if (cmd || event.repeat) return;
 			timeline?.marks?.clearMarks();
 			break;
 		case "X":
 		case "x":
 			// deliberately only with Shift
-			if (event.metaKey || event.repeat || !event.shiftKey) return;
+			if (cmd || event.repeat || !event.shiftKey) return;
 			timeline?.marks?.clearMarks();
+			break;
+		case "?":
+			if (cmd || event.repeat) return;
+			showShortcuts?.();
 			break;
 		default:
 			return;
