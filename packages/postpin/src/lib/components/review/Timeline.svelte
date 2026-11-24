@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { tick } from "svelte";
 	import Diamond from "@lucide/svelte/icons/diamond";
+	import ZoomIn from "@lucide/svelte/icons/zoom-in";
 	import RangeEdgeIcon from "#lib/components/review/RangeEdgeIcon.svelte";
 	import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot";
 	import { onMount } from "svelte";
@@ -11,6 +12,7 @@
 		buildLanes,
 		clipStyle,
 		collapsedLaneCount,
+		laneClass,
 		stepPlaybackRate,
 		dragRange,
 		dragSignals,
@@ -32,6 +34,7 @@
 	import { markersKey } from "./markers/marker-scope.ts";
 	import { lastFrameOf, type FrameRange } from "@postpin-io/shared/logic/ranges";
 	import GuideButton from "#lib/components/guides/GuideButton.svelte";
+	import { commandKeyLabel } from "#lib/keyboard.ts";
 	import { signalGuide } from "#lib/components/guides/guide-signals.svelte.ts";
 
 	interface Props {
@@ -102,7 +105,6 @@
 	let content = $state<HTMLDivElement>();
 	let lanesOffsetHeight = $state(0);
 	let lanesClientHeight = $state(0);
-	let toolbarHeight = $state(0);
 	const COLLAPSED_BOTTOM_SPACE = 24;
 
 	// Compact layout has one merged lane per track type, regardless of the current state.
@@ -110,9 +112,9 @@
 	const collapsedLanes = $derived(collapsedLaneCount(snapshot.tracks, mode));
 
 	$effect(() => {
-		// toolbar, ruler (h-12), 28px lanes, plus fixed room for the scrollbar. Not measured, as the
+		// Ruler (h-8), 28px lanes, plus fixed room for the scrollbar. Not measured, as the
 		// scrollbar appearing would resize the pane and loop.
-		onCollapsedHeight(toolbarHeight + 48 + collapsedLanes * 28 + COLLAPSED_BOTTOM_SPACE);
+		onCollapsedHeight(32 + collapsedLanes * 28 + COLLAPSED_BOTTOM_SPACE);
 	});
 
 	const fps = $derived(snapshot.frameRate.fpsNumerator / snapshot.frameRate.fpsDenominator);
@@ -445,37 +447,32 @@
 	onblur={() => (altHeld = false)}
 />
 <div class="flex h-full flex-col">
-	<div
-		bind:offsetHeight={toolbarHeight}
-		class="flex items-center justify-between gap-2 border-b border-gray-300 p-2"
-	>
-		<span class="flex items-center gap-2 text-xs text-gray-500">
-			<span>
-				Space play/pause · ←/→ frame · ↑/↓ previous/next cut · +/- speed · I/O in/out · ⇧X clear · ⌥
-				drag a marker for a range or its edge to resize
-			</span>
-			<GuideButton guide="marker-ranges" />
-		</span>
-		<div>
-			Zoom:
-			<input
-				type="range"
-				min="0"
-				max={Math.log(maxZoom)}
-				step="0.01"
-				value={Math.log(zoom)}
-				oninput={(event) => setZoom(Math.exp(Number(event.currentTarget.value)))}
-				class="range w-32 range-primary"
-			/>
-		</div>
-	</div>
-
 	<div class="flex min-h-0 flex-1">
-		<div bind:this={headers} class="w-32 shrink-0 overflow-hidden border-r border-gray-300">
-			<div class="sticky top-0 z-20 h-12 border-b border-gray-300 bg-base-100"></div>
-			{#each tracks as track (track.id)}
+		<div
+			bind:this={headers}
+			class="w-32 shrink-0 overflow-hidden border-r border-base-300 bg-base-100"
+		>
+			<!-- The corner above the track names holds the zoom, so the timeline needs no toolbar -->
+			<div
+				class="sticky top-0 z-20 flex h-8 items-center gap-1.5 border-b border-base-300 bg-base-100 px-2"
+			>
+				<GuideButton guide="marker-ranges" />
+				<ZoomIn class="size-3.5 shrink-0 text-base-content/60" aria-hidden="true" />
+				<input
+					type="range"
+					min="0"
+					max={Math.log(maxZoom)}
+					step="0.01"
+					value={Math.log(zoom)}
+					oninput={(event) => setZoom(Math.exp(Number(event.currentTarget.value)))}
+					class="range min-w-0 flex-1 range-primary range-xs"
+					title="Zoom ({commandKeyLabel().replace(/\+$/, '')} + scroll or pinch)"
+					aria-label="Zoom"
+				/>
+			</div>
+			{#each tracks as track, index (track.id)}
 				<div
-					class="flex {laneHeight} items-center truncate border-b border-gray-300 px-2 text-sm"
+					class="flex {laneHeight} items-center truncate px-2 text-sm {laneClass(tracks, index)}"
 					title={track.name}
 				>
 					{track.name}
@@ -504,7 +501,7 @@
 			>
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
-					class="sticky top-0 z-20 h-[calc(3rem-1px)] cursor-ew-resize overflow-hidden bg-base-100 select-none"
+					class="sticky top-0 z-20 h-[calc(2rem-1px)] cursor-ew-resize overflow-hidden bg-base-100 select-none"
 					tabindex="-1"
 					onpointerdown={startScrub}
 					onpointerup={endScrub}
@@ -517,7 +514,7 @@
 				>
 					{#each ticks as tickFrame (tickFrame)}
 						<div
-							class="absolute top-0 h-full border-l border-gray-400 pt-1 pl-1 font-mono text-xs text-gray-500"
+							class="absolute top-0 h-full border-l border-base-content/20 pt-0.5 pl-1 font-mono text-xs leading-none text-base-content/60"
 							style="left: {toX(tickFrame)}px"
 						>
 							{formatTimecode(tickFrame, snapshot.frameRate)}
@@ -649,20 +646,20 @@
 					{/each}
 
 					<div
-						class="pointer-events-none absolute bottom-0 -ml-1.5 border-x-[6px] border-t-8 border-x-transparent border-t-red-500"
+						class="pointer-events-none absolute bottom-0 -ml-1.5 border-x-[6px] border-t-8 border-x-transparent border-t-error"
 						style="left: {toX(playHeadPosition)}px"
 					></div>
 				</div>
 				<!-- The ruler's bottom line, apart from the ruler so the marker lines can cross it while the
 				ruler still covers them when the lanes scroll up -->
-				<div class="pointer-events-none sticky top-[calc(3rem-1px)] z-18 h-px bg-gray-300"></div>
+				<div class="pointer-events-none sticky top-[calc(2rem-1px)] z-18 h-px bg-base-300"></div>
 
-				{#each tracks as track (track.id)}
-					<div class="relative {laneHeight} border-b border-gray-300">
+				{#each tracks as track, index (track.id)}
+					<div class="relative {laneHeight} {laneClass(tracks, index)}">
 						{#each track.clips as clip (clip.id)}
 							<button
 								type="button"
-								class="absolute inset-y-1 cursor-pointer overflow-hidden rounded-sm border border-1 border-white px-1 text-left text-xs text-ellipsis whitespace-nowrap text-white"
+								class="absolute inset-y-1 cursor-pointer overflow-hidden rounded-sm border px-1 text-left text-xs text-ellipsis whitespace-nowrap"
 								style="left: {toX(clip.startFrameIndex)}px; width: {clip.durationFrameCount *
 									pixelsPerFrame}px; {clipStyle(clip, track.type)}"
 								title={clip.name}
@@ -675,7 +672,7 @@
 				{/each}
 
 				<div
-					class="pointer-events-none absolute inset-y-0 left-0 z-30 w-px bg-red-500"
+					class="pointer-events-none absolute inset-y-0 left-0 z-30 w-px bg-error"
 					style="transform: translateX({toX(playHeadPosition)}px)"
 				></div>
 
