@@ -173,7 +173,7 @@
 	}
 </script>
 
-<div class="w-full shrink-0 border-t-1">
+<div class="w-full shrink-0 border-t border-base-300">
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
 		class="w-full cursor-pointer touch-none {mobile ? 'py-3' : 'py-1'}"
@@ -182,7 +182,7 @@
 		onpointerup={endScrub}
 		onpointercancel={endScrub}
 	>
-		<div class="relative h-1 w-full bg-base-300">
+		<div class="relative h-1 w-full bg-base-content/20">
 			<div class="h-full bg-primary" style:width="{progress * 100}%"></div>
 			{#if showMarkers}
 				{#each markers as marker (marker.id)}

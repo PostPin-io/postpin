@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getShots } from "../../src/logic/shots.ts";
+import { getShots, getTopClipShots } from "../../src/logic/shots.ts";
 import type { Clip, Track, TimelineSnapshot } from "../../src/types/TimelineSnapshot.ts";
 
 const clip = (id: string, startFrameIndex: number, durationFrameCount: number): Clip => ({
@@ -89,19 +89,45 @@ describe("getShots", () => {
 		]);
 	});
 
-	it("ignores cuts on lower tracks that are fully covered", () => {
+	it("starts a shot at every cut, also under a clip that covers it", () => {
+		// the thumbnail comes from the exported video, so it shows whatever is on top
 		expect(
 			summary(snapshot(video(clip("a", 20, 10), clip("c", 30, 10)), video(clip("b", 0, 50)))),
-		).toEqual([["b", 0, 50]]);
+		).toEqual([
+			["b", 0, 20],
+			["a", 20, 10],
+			["c", 30, 10],
+			// no clip comes in here, so the one on top names it
+			["b", 40, 10],
+		]);
 	});
 
-	it("merges a top clip across a cut underneath it and recomputes its thumbnail", () => {
+	it("names a shot after the clip that comes to view when the clip above it ends", () => {
 		const shots = getShots(
 			snapshot(video(clip("a", 0, 100), clip("c", 100, 100)), video(clip("b", 0, 150))),
 		);
 		expect(shots).toMatchObject([
-			{ index: 0, clipId: "b", startFrameIndex: 0, durationFrameCount: 150, thumbnailFrame: 75 },
-			{ index: 1, clipId: "c", startFrameIndex: 150, durationFrameCount: 50, thumbnailFrame: 175 },
+			// both begin here; b runs on across the next cut
+			{ index: 0, clipId: "a", startFrameIndex: 0, durationFrameCount: 100, thumbnailFrame: 50 },
+			{ index: 1, clipId: "c", startFrameIndex: 100, durationFrameCount: 50, thumbnailFrame: 125 },
+			{ index: 2, clipId: "c", startFrameIndex: 150, durationFrameCount: 50, thumbnailFrame: 175 },
+		]);
+	});
+
+	it("sees the cuts under an adjustment layer and never names a shot after it", () => {
+		expect(
+			summary(
+				snapshot(
+					video(clip("a", 0, 90), clip("b", 149, 117)),
+					video(clip("c", 90, 75)),
+					video(clip("adjustment", 0, 266)),
+				),
+			),
+		).toEqual([
+			["a", 0, 90],
+			["c", 90, 59],
+			["b", 149, 16],
+			["b", 165, 101],
 		]);
 	});
 
@@ -138,5 +164,53 @@ describe("getShots", () => {
 			["c", 60, 10],
 			["b", 70, 20],
 		]);
+	});
+});
+
+describe("getTopClipShots", () => {
+	const top = (s: TimelineSnapshot) =>
+		getTopClipShots(s).map((shot) => [
+			shot.clipId,
+			shot.startFrameIndex,
+			shot.durationFrameCount,
+			shot.thumbnailIndex,
+		]);
+
+	it("merges a top clip across a cut underneath it and shows the thumbnail its middle lies in", () => {
+		const s = snapshot(video(clip("a", 0, 100), clip("c", 100, 100)), video(clip("b", 0, 150)));
+		// the cut shots: a 0-100, c 100-150, c 150-200
+		expect(getTopClipShots(s)).toMatchObject([
+			{ index: 0, clipId: "b", name: "Clip b", durationFrameCount: 150, thumbnailFrame: 75 },
+			{ index: 1, clipId: "c", startFrameIndex: 150, thumbnailFrame: 175, thumbnailIndex: 2 },
+		]);
+		expect(getTopClipShots(s)[0]!.thumbnailIndex).toBe(0);
+	});
+
+	it("makes one shot of a timeline under an adjustment layer", () => {
+		expect(
+			top(
+				snapshot(
+					video(clip("a", 0, 90), clip("b", 149, 117)),
+					video(clip("c", 90, 75)),
+					video(clip("adjustment", 0, 266)),
+				),
+			),
+		).toEqual([["adjustment", 0, 266, 1]]);
+	});
+
+	it("starts a shot where the clip on top changes, also back to the one underneath", () => {
+		expect(top(snapshot(video(clip("a", 0, 100)), video(clip("b", 40, 20))))).toEqual([
+			["a", 0, 40, 0],
+			["b", 40, 20, 1],
+			["a", 60, 40, 2],
+		]);
+	});
+
+	it("keeps gaps apart and has no shots without video", () => {
+		expect(top(snapshot(video(clip("a", 0, 10), clip("a2", 20, 10))))).toEqual([
+			["a", 0, 10, 0],
+			["a2", 20, 10, 1],
+		]);
+		expect(getTopClipShots(snapshot(audio(clip("x", 0, 10))))).toEqual([]);
 	});
 });

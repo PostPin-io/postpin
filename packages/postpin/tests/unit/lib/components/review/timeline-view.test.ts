@@ -4,6 +4,7 @@ import {
 	adjacentCut,
 	buildLanes,
 	clipStyle,
+	laneClass,
 	collapsedLaneCount,
 	dragRange,
 	dragSignals,
@@ -166,17 +167,47 @@ describe("visibleTicks", () => {
 	});
 });
 
+describe("laneClass", () => {
+	const lane = (id: string, type: "video" | "audio") => ({ id, name: id, type, clips: [] });
+	const lanes = [
+		lane("v2", "video"),
+		lane("v1", "video"),
+		lane("a1", "audio"),
+		lane("a2", "audio"),
+	];
+
+	it("shades every other lane", () => {
+		expect(laneClass(lanes, 0)).not.toContain("bg-");
+		expect(laneClass(lanes, 1)).toContain("bg-base-content/4");
+		expect(laneClass(lanes, 2)).not.toContain("bg-");
+	});
+
+	it("draws a stronger line where video turns into audio", () => {
+		expect(laneClass(lanes, 0)).toContain("border-base-content/10");
+		expect(laneClass(lanes, 1)).toContain("border-base-content/40");
+		expect(laneClass(lanes, 3)).toContain("border-base-content/10");
+	});
+});
+
 describe("clipStyle", () => {
-	it("uses the clip's color, with readable text", () => {
+	it("uses the clip's color, with readable text and a darker edge", () => {
 		const yellow = { ...clip("y", 0, 10), color: { name: "Lemon", hex: "#dfec53" } };
-		expect(clipStyle(yellow, "video")).toBe("background-color: #dfec53; color: #000000;");
+		expect(clipStyle(yellow, "video")).toBe(
+			"background-color: #dfec53; color: #000000; border-color: color-mix(in oklab, #dfec53 75%, black);",
+		);
 		const navy = { ...clip("n", 0, 10), color: { name: "Navy", hex: "#006086" } };
-		expect(clipStyle(navy, "video")).toBe("background-color: #006086; color: #ffffff;");
+		expect(clipStyle(navy, "video")).toBe(
+			"background-color: #006086; color: #ffffff; border-color: color-mix(in oklab, #006086 75%, black);",
+		);
 	});
 
 	it("falls back to the track type's color for clips without one", () => {
-		expect(clipStyle(clip("v", 0, 10), "video")).toBe("background-color: #3b82f6; color: #ffffff;");
-		expect(clipStyle(clip("a", 0, 10), "audio")).toBe("background-color: #16a34a; color: #ffffff;");
+		expect(clipStyle(clip("v", 0, 10), "video")).toBe(
+			"background-color: #3b82f6; color: #ffffff; border-color: color-mix(in oklab, #3b82f6 75%, black);",
+		);
+		expect(clipStyle(clip("a", 0, 10), "audio")).toBe(
+			"background-color: #16a34a; color: #ffffff; border-color: color-mix(in oklab, #16a34a 75%, black);",
+		);
 	});
 });
 

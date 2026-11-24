@@ -15,6 +15,7 @@
 	import PageMeta from "#lib/components/layout/PageMeta.svelte";
 	import ShareHeader from "#lib/components/share-view/ShareHeader.svelte";
 	import Timeline from "#lib/components/review/Timeline.svelte";
+	import KeyboardShortcutsModal from "#lib/components/review/KeyboardShortcutsModal.svelte";
 	import ShotGrid from "#lib/components/review/ShotGrid.svelte";
 	import MovieBarcode from "#lib/components/review/MovieBarcode.svelte";
 
@@ -531,6 +532,7 @@
 	});
 
 	let timeline = $state<Timeline>();
+	let shortcutsModal = $state<KeyboardShortcutsModal>();
 	// Set in the timeline with I and O, used by the marker panel for the next marker
 	let inOut = $state<InOut>({ in: null, out: null });
 
@@ -556,6 +558,7 @@
 				videoPaused = !videoPaused;
 				if (videoPaused) videoPlaybackRate = 1;
 			},
+			showShortcuts: () => shortcutsModal?.open(),
 		});
 	}
 
@@ -652,6 +655,8 @@
 {/if}
 
 <svelte:window onkeydown={onGlobalKeyDown} />
+
+<KeyboardShortcutsModal bind:this={shortcutsModal} share={!!share} />
 
 {#if !share}<EndScreeningDialog />{/if}
 {#if !share}
@@ -892,7 +897,7 @@
 		{#if share}
 			{@render shareHeader(share)}
 		{:else}
-			<Header>
+			<Header onshowshortcuts={() => shortcutsModal?.open()}>
 				{#snippet actions()}
 					{#if projectId && timelineId}
 						<ScreeningButton

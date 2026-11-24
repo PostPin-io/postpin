@@ -69,6 +69,11 @@
 	margin-top: 1px;
 }
 
+/* Sliders show only the thumb on the track, without daisyUI's filled part left of it */
+.range {
+	--range-fill: 0;
+}
+
 select {
 	padding-top: 0;
 	padding-bottom: 0;
