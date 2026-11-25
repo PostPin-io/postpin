@@ -119,6 +119,10 @@ describe("getExport as guest", () => {
 		expect((await getExport({ exportId, ...as() })).timelineSnapshot).toEqual(snapshot);
 	});
 
+	it("doesn't name the team's organization, project or timeline", async () => {
+		expect((await getExport({ exportId, ...as() })).location).toBeNull();
+	});
+
 	it("404 for another export with this link's token", async () => {
 		await expectStatus(getExport({ exportId: otherExportId, ...as() }), 404);
 	});

@@ -51,6 +51,12 @@ export const getExport = query(
 						thumbnail: true,
 					},
 				},
+				timeline: {
+					select: {
+						name: true,
+						project: { select: { name: true, organization: { select: { name: true } } } },
+					},
+				},
 			},
 		});
 		if (!exp) error(404, "Not found");
@@ -65,7 +71,7 @@ export const getExport = query(
 		const media = exp.media && withoutScores(exp.media);
 		const hideClips = reader.kind === "guest" && !reader.link.timelinePanelVisible;
 		// where the cut list lies is the server's business; whether it worked is the team's
-		const { cutListKey, cutListError, ...fields } = exp;
+		const { cutListKey, cutListError, timeline, ...fields } = exp;
 		// the reader got here through authorize("export", "read"), so their grant covers the export
 		const mayUpload =
 			reader.kind === "member" && can(reader.member.role, "export", "upload", { hasGrant: true });
@@ -73,6 +79,15 @@ export const getExport = query(
 			...fields,
 			media,
 			cutList: cutListKey === null || reader.kind === "guest" ? null : { error: cutListError },
+			/** Where the export lies, e.g. for the marker export's heading; guests don't see the team's names */
+			location:
+				reader.kind === "guest"
+					? null
+					: {
+							organization: timeline.project.organization.name,
+							project: timeline.project.name,
+							timeline: timeline.name,
+						},
 			/** Markers imported from timeline data, by format; the team's business only */
 			importedMarkers:
 				reader.kind === "guest" ? null : await importedMarkerCounts(prisma, exportId),

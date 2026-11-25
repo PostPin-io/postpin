@@ -5,6 +5,7 @@
 	import { afterNavigate, goto, refreshAll } from "$app/navigation";
 
 	import GraduationCap from "@lucide/svelte/icons/graduation-cap";
+	import Keyboard from "@lucide/svelte/icons/keyboard";
 	import Menu from "@lucide/svelte/icons/menu";
 	import Monitor from "@lucide/svelte/icons/monitor";
 	import Moon from "@lucide/svelte/icons/moon";
@@ -66,9 +67,11 @@
 		children?: Snippet;
 		/** Buttons next to the account menu (desktop only, like the menu itself) */
 		actions?: Snippet;
+		/** Pages with keyboard shortcuts get an account menu entry that lists them */
+		onshowshortcuts?: () => void;
 	}
 
-	let { children, actions }: Props = $props();
+	let { children, actions, onshowshortcuts }: Props = $props();
 </script>
 
 {#snippet accountItems(mobile: boolean)}
@@ -111,6 +114,22 @@
 			PostPin Guides
 		</a>
 	</li>
+	{#if onshowshortcuts && !mobile}
+		<li>
+			<button
+				type="button"
+				onclick={() => {
+					// The dropdown stays open while it has focus
+					(document.activeElement as HTMLElement | null)?.blur();
+					onshowshortcuts();
+				}}
+			>
+				<Keyboard class="size-4" />
+				Keyboard shortcuts
+				<kbd class="ml-auto kbd kbd-xs">?</kbd>
+			</button>
+		</li>
+	{/if}
 	{#if mobile && page.data.isSystemAdmin}
 		<li>
 			<a href={resolve("/(root)/admin")}>

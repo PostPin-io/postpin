@@ -31,6 +31,17 @@ export function buildLanes(tracks: Track[], mode: TimelineMode): Lane[] {
 	return [...merge("video", "Video", video), ...merge("audio", "Audio", audio)];
 }
 
+/**
+ * Zebra rows, and a stronger line under the last video lane where the audio lanes start. Shared by
+ * the track names and the lanes, so both rows line up.
+ */
+export function laneClass(lanes: Lane[], index: number): string {
+	const next = lanes[index + 1];
+	const border =
+		next && next.type !== lanes[index]!.type ? "border-base-content/40" : "border-base-content/10";
+	return `border-b ${border}${index % 2 === 1 ? " bg-base-content/4" : ""}`;
+}
+
 /** Number of lanes in compact mode (one per present track type) */
 export function collapsedLaneCount(tracks: Track[], mode: TimelineMode): number {
 	if (mode === "hidden") return 0;
@@ -99,10 +110,14 @@ export function visibleTicks(v: {
 // Tailwind's blue-500 and green-600, for clips without a color (Pro Tools, older plugins)
 const TRACK_COLORS: Record<TrackType, string> = { video: "#3b82f6", audio: "#16a34a" };
 
-/** Inline style with the clip's color from the editing software, or its track type's */
+/**
+ * Inline style with the clip's color from the editing software, or its track type's. The border is
+ * a darker shade of it, so neighbouring clips stay apart on light and dark themes alike.
+ */
 export function clipStyle(clip: Clip, trackType: TrackType) {
 	const background = clip.color?.hex ?? TRACK_COLORS[trackType];
-	return `background-color: ${background}; color: ${contrastColor(background) ?? "#ffffff"};`;
+	const text = contrastColor(background) ?? "#ffffff";
+	return `background-color: ${background}; color: ${text}; border-color: color-mix(in oklab, ${background} 75%, black);`;
 }
 
 /** "span" drags a point marker into a range: the marker's frame stays one end, the pointer is the other */

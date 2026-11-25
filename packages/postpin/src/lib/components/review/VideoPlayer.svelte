@@ -12,6 +12,7 @@
 <script lang="ts">
 	import { untrack, type Snippet } from "svelte";
 	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
+	import { isBuffered, once } from "./video-seek.ts";
 	import type { HlsJsVideoElement } from "@videojs/html/media/hlsjs-video";
 	import type { FrameTiming } from "@postpin-io/shared/logic/timecode";
 
@@ -71,25 +72,6 @@
 
 	let reloads = $state(0);
 	let recentReloads: number[] = [];
-
-	function once(target: EventTarget, type: string, timeoutMs = 10_000) {
-		return new Promise<void>((resolve) => {
-			const done = () => {
-				clearTimeout(timer);
-				target.removeEventListener(type, done);
-				resolve();
-			};
-			const timer = setTimeout(done, timeoutMs);
-			target.addEventListener(type, done);
-		});
-	}
-
-	function isBuffered(ranges: TimeRanges, time: number) {
-		for (let i = 0; i < ranges.length; i++) {
-			if (time >= ranges.start(i) && time < ranges.end(i)) return true;
-		}
-		return false;
-	}
 
 	async function seekTo(time: number) {
 		const el = media;

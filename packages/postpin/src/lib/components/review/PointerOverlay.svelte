@@ -1,12 +1,13 @@
 <script lang="ts">
 	import {
-		arrowTail,
 		boxFromCorners,
-		fromPicture,
 		isClick,
 		isUsableBox,
 		movePointer,
 		pictureBox,
+		pointerRadius,
+		pointerShape,
+		pointerStroke,
 		resizeBox,
 		toPicture,
 		type Box,
@@ -20,7 +21,7 @@
 	import MoveUpLeft from "@lucide/svelte/icons/move-up-left";
 	import Move from "@lucide/svelte/icons/move";
 	import Square from "@lucide/svelte/icons/square";
-	import { contrastColor } from "../categories/category-color.ts";
+	import { haloOf } from "./markers/pointer-style.ts";
 	import { usePointerSession } from "./markers/pointer-session.svelte.ts";
 	import {
 		addPointer,
@@ -61,13 +62,9 @@
 		}
 	});
 
-	// An outline in the opposite brightness keeps dark and light colors readable on any footage
-	const haloOf = (color: string) =>
-		contrastColor(color) === "#ffffff" ? "rgb(255 255 255 / 0.7)" : "rgb(0 0 0 / 0.55)";
-
 	// ─── Sizes: scale with the picture, like the pointers themselves ───
-	const stroke = $derived(Math.max(2, picture.height * 0.004));
-	const radius = $derived(Math.min(12, picture.height * 0.012));
+	const stroke = $derived(pointerStroke(picture.height));
+	const radius = $derived(pointerRadius(picture.height));
 	const handle = 10;
 
 	// ─── Dragging: a pointer being drawn, moved or resized ───
@@ -240,32 +237,9 @@
 
 	// ─── Geometry in overlay pixels ───
 	function shapeOf(geometry: PointerGeometry) {
-		if (geometry.kind === "RECT") {
-			const topLeft = fromPicture(geometry, picture);
-			return {
-				kind: "RECT" as const,
-				x: topLeft.x,
-				y: topLeft.y,
-				width: geometry.width * picture.width,
-				height: geometry.height * picture.height,
-			};
-		}
-		const tip = fromPicture(geometry, picture);
-		const tail = fromPicture(arrowTail(geometry, picture), picture);
-		// Arrowhead: a triangle at the tip, the line stops at its base so the tip stays sharp
-		const length = Math.hypot(tip.x - tail.x, tip.y - tail.y) || 1;
-		const ux = (tip.x - tail.x) / length;
-		const uy = (tip.y - tail.y) / length;
-		const head = stroke * 4.5;
-		const half = stroke * 2.6;
-		const base = { x: tip.x - ux * head, y: tip.y - uy * head };
-		return {
-			kind: "ARROW" as const,
-			tip,
-			tail,
-			base,
-			head: `${tip.x},${tip.y} ${base.x - uy * half},${base.y + ux * half} ${base.x + uy * half},${base.y - ux * half}`,
-		};
+		const shape = pointerShape(geometry, picture, stroke);
+		if (shape.kind === "RECT") return shape;
+		return { ...shape, head: shape.head.map((p) => `${p.x},${p.y}`).join(" ") };
 	}
 
 	const drawPreview = $derived.by(() => {
