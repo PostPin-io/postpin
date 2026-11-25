@@ -1,5 +1,7 @@
 // Official app icons, scaled down to 128px: Resolve from Blackmagic Design's press kit,
-// Premiere Pro and Pro Tools from their app bundles (pr_app_icons.icns, ProTools.icns)
+// Premiere Pro, Pro Tools and FilmCraft from their app bundles (pr_app_icons.icns, ProTools.icns,
+// FilmCraft.icns)
+import filmCraftIcon from "./logos/filmcraft.png";
 import premiereIcon from "./logos/premiere-pro.png";
 import proToolsIcon from "./logos/pro-tools.png";
 import resolveIcon from "./logos/davinci-resolve.png";
@@ -23,6 +25,7 @@ const HOSTS: Record<string, HostInfo> = {
 	Resolve: { displayName: "DaVinci Resolve", logo: resolveIcon },
 	"Pro Tools": { displayName: "Pro Tools", logo: proToolsIcon },
 	"Premiere Pro": { displayName: "Premiere Pro", logo: premiereIcon },
+	FilmCraft: { displayName: "FilmCraft", logo: filmCraftIcon },
 	// TODO: Reaper and Baselight aren't in simple-icons or devicon, add their logos from the vendors' press kits
 	Reaper: { displayName: "Reaper", logo: null },
 	Baselight: { displayName: "Baselight", logo: null },
