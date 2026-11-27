@@ -1,5 +1,5 @@
 import { prisma } from "#lib/server/database.ts";
-import { command, query } from "$app/server";
+import { command, getRequestEvent, query } from "$app/server";
 import { Prisma } from "@postpin-io/shared/db";
 import { error } from "@sveltejs/kit";
 import { shareLinkCategory } from "#lib/server/share-links.ts";
@@ -7,6 +7,15 @@ import { readExport, requireMarkers } from "#lib/server/review-access.ts";
 import { markersKey, scopeOf } from "./marker-scope.ts";
 import { notifyCategories, notifyMarkers, notifyResponses } from "#lib/server/live.ts";
 import { deleteMarkersRecorded } from "#lib/server/marker-sets.ts";
+import {
+	arrive,
+	leave,
+	moveInHistory,
+	ownerWhere,
+	recordStep,
+	type Actor,
+} from "#lib/server/marker-history.ts";
+import { requireShareGuest } from "#lib/server/share-guests.ts";
 
 import {
 	accessChecker,
@@ -27,6 +36,10 @@ import {
 } from "@postpin-io/shared/logic/pointers";
 
 const MAX_BULK = 500;
+/** Bulk actions write one marker at a time, and the undo step reads them all twice */
+const BULK_TRANSACTION = { timeout: 60_000, maxWait: 10_000 };
+
+type Tx = Prisma.TransactionClient;
 
 const authorSelect = { select: { id: true, name: true, image: true } } as const;
 
@@ -189,6 +202,11 @@ export const getMarkersbyCategory = query(v.string(), async (categoryId: string)
 
 // ─── Marker: Commands ───────────────────────────────────────────────────────
 
+/**
+ * Pastes what was copied or cut. Copy makes new markers; cut moves the markers themselves, so they
+ * keep their id, author, responses and pointers (and their NLE link within the same export).
+ * Guests paste only their own markers, within their link's export.
+ */
 export const pasteMarkers = command(
 	v.object({
 		sourceExportId: v.string(),
@@ -196,102 +214,179 @@ export const pasteMarkers = command(
 		targetExportId: v.string(),
 		/** Frame where the earliest pasted marker lands (playhead) */
 		anchorFrame: v.pipe(v.number(), v.integer(), v.minValue(0)),
-		/** Category for markers whose category doesn't exist in the target project */
-		fallbackCategoryId: v.string(),
+		/** Members only: category for markers whose category doesn't exist in the target project */
+		fallbackCategoryId: v.optional(v.string()),
 		mode: v.picklist(["copy", "cut"]),
+		shareToken,
 	}),
 	async (data) => {
-		// 1. Rechte: Quelle lesen, Ziel beschreiben
-		await authorize("export", "read", { type: "export", id: data.sourceExportId });
-		const { user, target } = await authorize("marker", "create", {
-			type: "export",
-			id: data.targetExportId,
-		});
-		await assertCategoriesInProject([data.fallbackCategoryId], target.projectId);
-
-		// 2. Quelle aus der DB laden – Inhalte kommen NIE vom Client
-		const source = await prisma.marker.findMany({
-			where: { id: { in: data.markerIds }, exportId: data.sourceExportId },
-			include: {
-				responses: { select: { content: true, authorId: true, createdAt: true } },
-				category: { select: { name: true, projectId: true } },
-				pointers: {
-					select: { kind: true, x: true, y: true, width: true, height: true, color: true },
-					orderBy: { createdAt: "asc" },
-				},
-			},
-		});
-		// Schon gelöschte Marker im Clipboard werden übersprungen, nicht als Fehler gewertet
+		const paste = data.shareToken ? await guestPaste(data) : await memberPaste(data);
+		const { source, actor, key, categoryOf, authorOf } = paste;
+		// Markers deleted since they were copied are skipped, not an error
 		if (source.length === 0) error(404, "Nothing to paste");
 
-		// 3. Bei "cut" muss der User die Quell-Marker löschen dürfen (Reviewer: nur eigene)
-		if (data.mode === "cut") {
-			await authorizeMarkers(
-				"delete",
-				data.sourceExportId,
-				source.map((m) => m.id),
-			);
-		}
-
-		// 4. Kategorien zuordnen (siehe Schritt 3)
-		const categoryOf = await mapCategories(source, target.projectId!, data.fallbackCategoryId);
-
-		// 5. Anlegen (+ bei "cut" Quelle löschen) in EINER Transaktion
 		const minFrame = Math.min(...source.map((m) => m.frame));
+		const frameOf = (m: { frame: number }) => data.anchorFrame + (m.frame - minFrame);
 		await assertRangesInTimeline(
 			data.targetExportId,
-			source.map((m) => ({ frame: data.anchorFrame + (m.frame - minFrame), duration: m.duration })),
+			source.map((m) => ({ frame: frameOf(m), duration: m.duration })),
 		);
-		await prisma.$transaction(async (tx) => {
-			for (const m of source) {
-				await tx.marker.create({
-					data: {
-						name: m.name,
-						description: m.description,
-						frame: data.anchorFrame + (m.frame - minFrame),
-						duration: m.duration,
-						exportId: data.targetExportId,
-						categoryId: categoryOf(m),
-						// cut = move → the author stays (a guest too); copy = new marker → whoever pastes
-						authorId: data.mode === "cut" ? m.authorId : user.id,
-						guestId: data.mode === "cut" ? m.guestId : null,
 
-						// nleId is deliberately NOT copied: unique per export, it belongs to the NLE original
-						responses: {
-							create: m.responses.map((r) => ({
-								content: r.content,
-								authorId: r.authorId,
-								createdAt: r.createdAt,
-							})),
-						},
-						pointers: { create: m.pointers },
+		const cut = data.mode === "cut";
+		await prisma.$transaction(
+			(tx) =>
+				recordStep(
+					tx,
+					actor,
+					{ action: cut ? "CUT" : "PASTE", ids: cut ? source.map((m) => m.id) : [] },
+					async () => {
+						const created: string[] = [];
+						for (const m of source) {
+							const fields = {
+								frame: frameOf(m),
+								categoryId: await categoryOf(tx, m),
+							};
+							if (cut) {
+								const moved = m.exportId !== data.targetExportId;
+								await tx.marker.update({
+									where: { id: m.id },
+									data: {
+										...fields,
+										...(moved && {
+											exportId: data.targetExportId,
+											...(await arrive(tx, m.id, data.targetExportId)),
+										}),
+									},
+								});
+								if (moved) await leave(tx, m);
+								continue;
+							}
+							const marker = await tx.marker.create({
+								data: {
+									...fields,
+									name: m.name,
+									description: m.description,
+									duration: m.duration,
+									exportId: data.targetExportId,
+									...authorOf,
+									// nleId is deliberately not copied: unique per export, it belongs to the NLE original
+									responses: {
+										create: m.responses.map((r) => ({
+											content: r.content,
+											authorId: r.authorId,
+											createdAt: r.createdAt,
+										})),
+									},
+									pointers: { create: m.pointers },
+								},
+								select: { id: true },
+							});
+							created.push(marker.id);
+						}
+						if (cut) {
+							await tx.markerClipboard.deleteMany({
+								where: { ...ownerWhere(actor), mode: "cut" },
+							});
+						}
+						return created;
 					},
-				});
-			}
-			if (data.mode === "cut") {
-				await deleteMarkersRecorded(tx, {
-					id: { in: source.map((m) => m.id) },
-					exportId: data.sourceExportId,
-				});
-			}
-		});
+					(created) => created,
+				),
+			BULK_TRANSACTION,
+		);
 
-		// 6. Refresh; a cut keeps the guests, so their tabs hear about both sides
-		const movedGuests = data.mode === "cut" ? source.map((m) => m.guestId) : [];
-		void notifyMarkers(data.targetExportId, movedGuests);
-		if (data.mode === "cut" && data.sourceExportId !== data.targetExportId) {
-			void notifyMarkers(data.sourceExportId, movedGuests);
-		}
+		const guests = source.map((m) => m.guestId);
+		void notifyMarkers(data.targetExportId, guests);
+		const otherSide = cut && data.sourceExportId !== data.targetExportId;
+		if (otherSide) void notifyMarkers(data.sourceExportId, guests);
 		await Promise.all([
-			getMarkers(data.targetExportId).refresh(),
-			...(data.mode === "cut" && data.sourceExportId !== data.targetExportId
-				? [getMarkers(data.sourceExportId).refresh()]
-				: []),
+			getMarkers(key(data.targetExportId)).refresh(),
+			...(otherSide ? [getMarkers(key(data.sourceExportId)).refresh()] : []),
+			...(cut ? [getMarkerClipboard(data.shareToken ?? "").refresh()] : []),
 		]);
 
 		return { count: source.length, skipped: new Set(data.markerIds).size - source.length };
 	},
 );
+
+type PasteInput = {
+	sourceExportId: string;
+	markerIds: string[];
+	targetExportId: string;
+	fallbackCategoryId?: string;
+	mode: "copy" | "cut";
+	shareToken?: string;
+};
+
+const pasteSourceInclude = {
+	responses: { select: { content: true, authorId: true, createdAt: true } },
+	category: { select: { name: true, projectId: true } },
+	pointers: {
+		select: { kind: true, x: true, y: true, width: true, height: true, color: true },
+		orderBy: { createdAt: "asc" },
+	},
+} as const;
+
+async function memberPaste(data: PasteInput) {
+	// Read the source, write the target
+	await authorize("export", "read", { type: "export", id: data.sourceExportId });
+	const { user, target } = await authorize("marker", "create", {
+		type: "export",
+		id: data.targetExportId,
+	});
+	if (!data.fallbackCategoryId) error(400, "Fallback category required");
+	await assertCategoriesInProject([data.fallbackCategoryId], target.projectId);
+
+	// The content always comes from the database, never from the client
+	const source = await prisma.marker.findMany({
+		where: { id: { in: data.markerIds }, exportId: data.sourceExportId },
+		include: pasteSourceInclude,
+	});
+
+	// A cut moves the originals away, so it needs the right to delete them (reviewers: own only)
+	if (data.mode === "cut" && source.length > 0) {
+		await authorizeMarkers(
+			"delete",
+			data.sourceExportId,
+			source.map((m) => m.id),
+		);
+	}
+
+	// Same project: same category; another project: same name there, else the fallback
+	const mapped = await mapCategories(source, target.projectId!, data.fallbackCategoryId);
+	return {
+		source,
+		actor: { userId: user.id } satisfies Actor,
+		key: (exportId: string) => markersKey(exportId),
+		categoryOf: async (_tx: Tx, m: (typeof source)[number]) => mapped(m),
+		// copy = new marker → whoever pastes; cut keeps the author (a guest too)
+		authorOf: { authorId: user.id, guestId: null },
+	};
+}
+
+async function guestPaste(data: PasteInput) {
+	const token = data.shareToken!;
+	// Their link's export only, both ways
+	const reader = await readExport(data.targetExportId, token);
+	if (reader.kind !== "guest" || data.sourceExportId !== data.targetExportId) {
+		error(404, "Not found");
+	}
+	requireMarkers(reader);
+	const source = await prisma.marker.findMany({
+		where: { id: { in: data.markerIds }, exportId: data.sourceExportId, guestId: reader.guest.id },
+		// Guests never see responses, so their copies don't get any
+		include: { ...pasteSourceInclude, responses: { select: { id: true }, take: 0 } },
+	});
+	const projectId = reader.link.export.timeline.projectId;
+	return {
+		source: source.map((m) => ({ ...m, responses: [] })),
+		actor: { guestId: reader.guest.id } satisfies Actor,
+		key: (exportId: string) => markersKey(exportId, token),
+		categoryOf: (tx: Tx) => shareLinkCategory(tx, reader.link, projectId),
+		authorOf: { authorId: null, guestId: reader.guest.id },
+	};
+}
+
 export const createMarker = command(
 	v.object({
 		name: v.string(),
@@ -312,29 +407,36 @@ export const createMarker = command(
 			await assertRangesInTimeline(data.exportId, [{ frame: data.frame, duration: data.duration }]);
 
 			const marker = await prisma.$transaction(async (tx) =>
-				tx.marker.create({
-					data: {
-						name: data.name,
-						description: data.description,
-						frame: data.frame,
-						exportId: data.exportId,
-						categoryId: await shareLinkCategory(
-							tx,
-							reader.link,
-							reader.link.export.timeline.projectId,
-						),
-						guestId: reader.guest.id,
-					},
-				}),
+				recordStep(
+					tx,
+					{ guestId: reader.guest.id },
+					{ action: "CREATE", ids: [] },
+					async () =>
+						tx.marker.create({
+							data: {
+								name: data.name,
+								description: data.description,
+								frame: data.frame,
+								exportId: data.exportId,
+								categoryId: await shareLinkCategory(
+									tx,
+									reader.link,
+									reader.link.export.timeline.projectId,
+								),
+								guestId: reader.guest.id,
+							},
+						}),
+					(m) => [m.id],
+				),
 			);
 			void notifyMarkers(data.exportId, [reader.guest.id]);
 			await getMarkers(markersKey(data.exportId, data.shareToken)).refresh();
 			return marker;
 		}
 
-		// ─── Member: as before ───
+		// ─── Member ───
 		if (!data.categoryId) error(400, "Category required");
-		// Bei `create` ist das Target der Parent (der Export)
+		// Creating checks the parent, the export
 		const { user, target } = await authorize("marker", "create", {
 			type: "export",
 			id: data.exportId,
@@ -342,22 +444,40 @@ export const createMarker = command(
 		await assertCategoriesInProject([data.categoryId], target.projectId);
 		await assertRangesInTimeline(data.exportId, [{ frame: data.frame, duration: data.duration }]);
 
-		const marker = await prisma.marker.create({
-			data: {
-				name: data.name,
-				description: data.description,
-				frame: data.frame,
-				duration: data.duration,
-				exportId: data.exportId,
-				categoryId: data.categoryId,
-				authorId: user.id,
-			},
-		});
+		const marker = await prisma.$transaction((tx) =>
+			recordStep(
+				tx,
+				{ userId: user.id },
+				{ action: "CREATE", ids: [] },
+				() =>
+					tx.marker.create({
+						data: {
+							name: data.name,
+							description: data.description,
+							frame: data.frame,
+							duration: data.duration,
+							exportId: data.exportId,
+							categoryId: data.categoryId!,
+							authorId: user.id,
+						},
+					}),
+				(m) => [m.id],
+			),
+		);
 		void notifyMarkers(data.exportId);
 		await getMarkers(data.exportId).refresh();
 		return marker;
 	},
 );
+
+/** Typing a title or description: one step per marker while the edits follow each other */
+const textOnly = (
+	before: { frame: number; duration: number; categoryId: string },
+	next: { frame: number; duration?: number; categoryId?: string },
+) =>
+	before.frame === next.frame &&
+	(next.duration === undefined || next.duration === before.duration) &&
+	(next.categoryId === undefined || next.categoryId === before.categoryId);
 
 export const updateMarker = command(
 	v.object({
@@ -374,60 +494,156 @@ export const updateMarker = command(
 	async (data) => {
 		// ─── Guest: only own markers, category stays ───
 		if (data.shareToken) {
-			const { exportId, duration } = await guestMarker(data.id, data.shareToken);
+			const { exportId, duration, reader } = await guestMarker(data.id, data.shareToken);
 			await assertRangesInTimeline(exportId, [
 				{ frame: data.frame, duration: data.duration ?? duration },
 			]);
-			const marker = await prisma.marker.update({
+			const before = await prisma.marker.findUniqueOrThrow({
 				where: { id: data.id },
-				data: {
-					name: data.name,
-					description: data.description,
-					frame: data.frame,
-					duration: data.duration,
-				},
+				select: { frame: true, duration: true, categoryId: true },
 			});
+			const marker = await prisma.$transaction((tx) =>
+				recordStep(
+					tx,
+					{ guestId: reader.guest.id },
+					{
+						action: "UPDATE",
+						ids: [data.id],
+						coalesceKey: textOnly(before, { ...data, categoryId: undefined })
+							? `text:${data.id}`
+							: undefined,
+					},
+					() =>
+						tx.marker.update({
+							where: { id: data.id },
+							data: {
+								name: data.name,
+								description: data.description,
+								frame: data.frame,
+								duration: data.duration,
+							},
+						}),
+				),
+			);
 			void notifyMarkers(exportId, [marker.guestId]);
 			await getMarkers(markersKey(exportId, data.shareToken)).refresh();
 			return marker;
 		}
 
-		// ─── Member: as before ───
-		const { target } = await authorize("marker", "update", { type: "marker", id: data.id });
+		// ─── Member ───
+		const { user, target } = await authorize("marker", "update", { type: "marker", id: data.id });
 		await assertCategoriesInProject([data.categoryId], target.projectId);
-		const { exportId, duration } = await prisma.marker.findUniqueOrThrow({
+		const before = await prisma.marker.findUniqueOrThrow({
 			where: { id: data.id },
-			select: { exportId: true, duration: true },
+			select: { exportId: true, frame: true, duration: true, categoryId: true },
 		});
-		await assertRangesInTimeline(exportId, [
-			{ frame: data.frame, duration: data.duration ?? duration },
+		await assertRangesInTimeline(before.exportId, [
+			{ frame: data.frame, duration: data.duration ?? before.duration },
 		]);
 
-		const marker = await prisma.marker.update({
-			where: { id: data.id },
-			data: {
-				name: data.name,
-				description: data.description,
-				frame: data.frame,
-				duration: data.duration,
-				categoryId: data.categoryId,
-			},
-		});
+		const marker = await prisma.$transaction((tx) =>
+			recordStep(
+				tx,
+				{ userId: user.id },
+				{
+					action: "UPDATE",
+					ids: [data.id],
+					coalesceKey: textOnly(before, data) ? `text:${data.id}` : undefined,
+				},
+				() =>
+					tx.marker.update({
+						where: { id: data.id },
+						data: {
+							name: data.name,
+							description: data.description,
+							frame: data.frame,
+							duration: data.duration,
+							categoryId: data.categoryId,
+						},
+					}),
+			),
+		);
 		void notifyMarkers(marker.exportId, [marker.guestId]);
 		await getMarkers(marker.exportId).refresh();
 		return marker;
 	},
 );
 
+/**
+ * Changes many markers of an export at once: the batch panel. Every field is optional; one step
+ * in the history for all of them.
+ */
+export const updateMarkers = command(
+	v.object({
+		exportId: v.string(),
+		ids: v.pipe(v.array(v.string()), v.minLength(1), v.maxLength(MAX_BULK)),
+		/** Moves them into this category */
+		categoryId: v.optional(v.string()),
+		/** Moves them by this many frames, back when negative */
+		shift: v.optional(v.pipe(v.number(), v.integer())),
+	}),
+	async (data) => {
+		const { user, target } = await authorizeMarkers("update", data.exportId, data.ids);
+		if (data.categoryId) await assertCategoriesInProject([data.categoryId], target.projectId);
+
+		const markers = await prisma.marker.findMany({
+			where: { id: { in: data.ids }, exportId: data.exportId },
+			select: { id: true, frame: true, duration: true, guestId: true },
+		});
+		const next = markers.map((m) => ({
+			id: m.id,
+			frame: m.frame + (data.shift ?? 0),
+			duration: m.duration,
+		}));
+		if (next.some((m) => m.frame < 0)) error(400, "Marker before the start of the timeline");
+		await assertRangesInTimeline(data.exportId, next);
+
+		await prisma.$transaction(
+			(tx) =>
+				recordStep(
+					tx,
+					{ userId: user.id },
+					{ action: "BATCH_UPDATE", ids: markers.map((m) => m.id) },
+					async () => {
+						if (data.categoryId) {
+							await tx.marker.updateMany({
+								where: { id: { in: markers.map((m) => m.id) } },
+								data: { categoryId: data.categoryId },
+							});
+						}
+						if (data.shift) {
+							for (const m of next) {
+								await tx.marker.update({ where: { id: m.id }, data: { frame: m.frame } });
+							}
+						}
+					},
+				),
+			BULK_TRANSACTION,
+		);
+
+		void notifyMarkers(
+			data.exportId,
+			markers.map((m) => m.guestId),
+		);
+		await Promise.all([
+			getMarkers(data.exportId).refresh(),
+			...(data.categoryId ? [getCategoryUsage(data.categoryId).refresh()] : []),
+		]);
+		return { count: markers.length };
+	},
+);
+
 // Deleted markers are remembered, so the NLE plugins don't push them back (see marker-sets.ts)
-async function deleteOne(id: string) {
-	const [marker] = await prisma.$transaction((tx) => deleteMarkersRecorded(tx, { id }));
-	if (!marker) error(404, "Marker not found");
-	return marker;
-}
-async function deleteMany(where: Prisma.MarkerWhereInput) {
-	const markers = await prisma.$transaction((tx) => deleteMarkersRecorded(tx, where));
-	return { count: markers.length };
+async function deleteRecorded(actor: Actor, where: Prisma.MarkerWhereInput) {
+	const ids = (await prisma.marker.findMany({ where, select: { id: true } })).map((m) => m.id);
+	if (ids.length === 0) return [];
+	return prisma.$transaction(
+		(tx) =>
+			recordStep(tx, actor, { action: "DELETE", ids }, () =>
+				deleteMarkersRecorded(tx, { ...where, id: { in: ids } }),
+			),
+		BULK_TRANSACTION,
+	);
 }
 
 export const deleteMarker = command(
@@ -435,18 +651,20 @@ export const deleteMarker = command(
 	async (arg) => {
 		// ─── Guest ───
 		if (typeof arg !== "string") {
-			const { exportId } = await guestMarker(arg.id, arg.shareToken);
-			const marker = await deleteOne(arg.id);
+			const { exportId, reader } = await guestMarker(arg.id, arg.shareToken);
+			const [marker] = await deleteRecorded({ guestId: reader.guest.id }, { id: arg.id });
+			if (!marker) error(404, "Marker not found");
 			void notifyMarkers(exportId, [marker.guestId]);
 			await getMarkers(markersKey(exportId, arg.shareToken)).refresh();
 			return marker;
 		}
 
-		// ─── Member: as before ───
+		// ─── Member ───
 		const id = arg;
-		await authorize("marker", "delete", { type: "marker", id });
+		const { user } = await authorize("marker", "delete", { type: "marker", id });
 
-		const marker = await deleteOne(id);
+		const [marker] = await deleteRecorded({ userId: user.id }, { id });
+		if (!marker) error(404, "Marker not found");
 		void notifyMarkers(marker.exportId, [marker.guestId]);
 
 		await Promise.all([
@@ -470,23 +688,22 @@ export const deleteMarkers = command(
 			const reader = await readExport(data.exportId, data.shareToken);
 			if (reader.kind !== "guest") error(404, "Not found");
 			requireMarkers(reader);
-			const result = await deleteMany({
-				id: { in: data.ids },
-				exportId: data.exportId,
-				guestId: reader.guest.id,
-			});
+			const markers = await deleteRecorded(
+				{ guestId: reader.guest.id },
+				{ id: { in: data.ids }, exportId: data.exportId, guestId: reader.guest.id },
+			);
 			void notifyMarkers(data.exportId, [reader.guest.id]);
 			await getMarkers(markersKey(data.exportId, data.shareToken)).refresh();
-			return result;
+			return { count: markers.length };
 		}
 
-		// ─── Member: as before ───
-		const { markers } = await authorizeMarkers("delete", data.exportId, data.ids);
+		// ─── Member ───
+		const { user, markers } = await authorizeMarkers("delete", data.exportId, data.ids);
 
-		const result = await deleteMany({
-			id: { in: markers.map((m) => m.id) },
-			exportId: data.exportId,
-		});
+		const deleted = await deleteRecorded(
+			{ userId: user.id },
+			{ id: { in: markers.map((m) => m.id) }, exportId: data.exportId },
+		);
 		void notifyMarkers(
 			data.exportId,
 			markers.map((m) => m.guestId),
@@ -498,75 +715,110 @@ export const deleteMarkers = command(
 			...[...categoryIds].map((categoryId) => getCategoryUsage(categoryId).refresh()),
 		]);
 
-		return result;
+		return { count: deleted.length };
 	},
 );
 
-export const moveMarker = command(
+// ─── Undo / redo ────────────────────────────────────────────────────────────
+
+/** Whose history and clipboard a call works with: the guest's with a share token */
+async function actorFor(shareToken: string | undefined): Promise<Actor> {
+	if (shareToken) {
+		const session = await requireShareGuest(shareToken, getRequestEvent().cookies);
+		requireMarkers({ kind: "guest", ...session });
+		return { guestId: session.guest.id };
+	}
+	const { user } = getRequestEvent().locals;
+	if (!user) error(401, "Not signed in");
+	return { userId: user.id };
+}
+
+const historyInput = v.object({
+	shareToken,
+	/** Go ahead although markers were changed since */
+	force: v.optional(v.boolean()),
+});
+
+async function stepInHistory(direction: "undo" | "redo", data: v.InferOutput<typeof historyInput>) {
+	const actor = await actorFor(data.shareToken);
+	const result = await moveInHistory(direction, actor, data);
+	if (result.status !== "done") return result;
+	for (const exportId of result.exportIds) void notifyMarkers(exportId, [actor.guestId]);
+	const [exports] = await Promise.all([
+		prisma.export.findMany({
+			where: { id: { in: result.exportIds } },
+			select: { id: true, name: true, timeline: { select: { id: true, projectId: true } } },
+		}),
+		...result.exportIds.map((exportId) =>
+			getMarkers(markersKey(exportId, data.shareToken)).refresh(),
+		),
+	]);
+	return {
+		status: result.status,
+		label: result.label,
+		// For "Undid: … on <export>" when the step wasn't on the open one; guests have only one
+		exports: exports.map((e) => ({
+			id: e.id,
+			name: e.name,
+			href: actor.userId
+				? `/projects/${e.timeline.projectId}/timelines/${e.timeline.id}/exports/${e.id}`
+				: null,
+		})),
+	};
+}
+
+/** ⌘Z: takes back the newest step of the user's (or guest's) history, on whichever export */
+export const undoMarkers = command(historyInput, (data) => stepInHistory("undo", data));
+
+/** ⌘⇧Z: does the last undone step again */
+export const redoMarkers = command(historyInput, (data) => stepInHistory("redo", data));
+
+// ─── Clipboard: ⌘C / ⌘X, in every window and device of the user ──────────────
+
+/** "" for the team, else the share token; null when nothing is copied */
+export const getMarkerClipboard = query(v.string(), async (token) => {
+	// Nothing to paste rather than an error: the panel asks on every focus, also before a guest
+	// entered their name
+	const actor = await actorFor(token || undefined).catch(() => null);
+	if (!actor) return null;
+	const clipboard = await prisma.markerClipboard.findUnique({
+		where: actor.userId ? { userId: actor.userId } : { guestId: actor.guestId },
+		select: { sourceExportId: true, markerIds: true, mode: true },
+	});
+	if (!clipboard) return null;
+	return { ...clipboard, mode: clipboard.mode === "cut" ? ("cut" as const) : ("copy" as const) };
+});
+
+export const setMarkerClipboard = command(
 	v.object({
-		exportId: v.string(),
-		ids: v.pipe(v.array(v.string()), v.maxLength(MAX_BULK)),
-		targetCategoryId: v.string(),
+		sourceExportId: v.string(),
+		markerIds: v.pipe(v.array(v.string()), v.minLength(1), v.maxLength(MAX_BULK)),
+		mode: v.picklist(["copy", "cut"]),
+		shareToken,
 	}),
 	async (data) => {
-		const { user, target, markers } = await authorizeMarkers("update", data.exportId, data.ids);
-
-		await assertCategoriesInProject([data.targetCategoryId], target.projectId);
-
-		const markerIds = markers.map((m) => m.id);
-		const sourceCategoryIds = [...new Set(markers.map((m) => m.categoryId))].filter(
-			(id) => id !== data.targetCategoryId,
-		);
-
-		// The transaction now only performs the move. Automatic cleanup happens afterwards,
-		// so that a race condition (new marker in the source category → P2003) does not roll back the allowed
-		// move.
-		const { count: moved } = await prisma.marker.updateMany({
-			where: { id: { in: markerIds }, exportId: data.exportId },
-			data: { categoryId: data.targetCategoryId },
+		const actor = await actorFor(data.shareToken);
+		requireMarkers(await readExport(data.sourceExportId, data.shareToken));
+		const fields = {
+			sourceExportId: data.sourceExportId,
+			markerIds: [...new Set(data.markerIds)],
+			mode: data.mode,
+		};
+		const owner = ownerWhere(actor);
+		await prisma.markerClipboard.upsert({
+			where: actor.userId ? { userId: actor.userId } : { guestId: actor.guestId },
+			create: { ...owner, ...fields },
+			update: fields,
 		});
-
-		const deletedCategoryIds: string[] = [];
-		for (const categoryId of sourceCategoryIds) {
-			// "Empty" = no markers in the entire project (categories are attached to the project)
-			if ((await prisma.marker.count({ where: { categoryId } })) > 0) continue;
-
-			try {
-				// Only delete if the user created it themselves. Not the category of a screening
-				// whose link still works: its guests' next markers belong there.
-				const res = await prisma.category.deleteMany({
-					where: {
-						id: categoryId,
-						createdById: user.id,
-						shareLinks: { none: activeShareLink() },
-					},
-				});
-				if (res.count > 0) deletedCategoryIds.push(categoryId);
-			} catch (e) {
-				// In the meantime, a marker has been added: the category simply remains
-				if (!(e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003")) throw e;
-			}
-		}
-
-		void notifyMarkers(
-			data.exportId,
-			markers.map((m) => m.guestId),
-		);
-		if (deletedCategoryIds.length > 0) void notifyCategories(target.projectId!);
-
-		// Don't refresh deleted categories anymore: getCategoryUsage would return a 404 there
-		const stillExisting = sourceCategoryIds.filter((id) => !deletedCategoryIds.includes(id));
-
-		await Promise.all([
-			getMarkers(data.exportId).refresh(),
-			getCategoryUsage(data.targetCategoryId).refresh(),
-			...stillExisting.map((id) => getCategoryUsage(id).refresh()),
-			...(deletedCategoryIds.length > 0 ? [getCategories(target.projectId!).refresh()] : []),
-		]);
-
-		return { count: moved, deletedCategoryIds };
+		await getMarkerClipboard(data.shareToken ?? "").refresh();
 	},
 );
+
+export const clearMarkerClipboard = command(v.object({ shareToken }), async (data) => {
+	const actor = await actorFor(data.shareToken);
+	await prisma.markerClipboard.deleteMany({ where: ownerWhere(actor) });
+	await getMarkerClipboard(data.shareToken ?? "").refresh();
+});
 
 export const changeDescription = command(
 	v.object({
@@ -914,7 +1166,7 @@ export const deleteCategory = command(
 				return { success: true } as const;
 			});
 		} catch (e) {
-			// Race: zwischen count und delete ist ein neuer Marker dazugekommen
+			// Race: a marker was added between the count and the delete
 			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
 				return { success: false, reason: "CATEGORY_IN_USE" } as const;
 			}
@@ -924,7 +1176,7 @@ export const deleteCategory = command(
 		// A merge moves markers of every export in the project; clients reload them on this event too
 		void notifyCategories(target.projectId!);
 
-		// getCategoryUsage(id) der gelöschten Kategorie nicht refreshen: würde jetzt 404 werfen
+		// Not getCategoryUsage of the deleted category: it would throw a 404 now
 		await Promise.all([
 			getCategories(target.projectId!).refresh(),
 			...(mergeIntoId ? [getCategoryUsage(mergeIntoId).refresh()] : []),
@@ -936,8 +1188,8 @@ export const deleteCategory = command(
 );
 
 /**
- * `page.params.export` gibt es auf dem Server nicht zuverlässig. Wenn die Marker-Liste
- * den neuen Namen sofort zeigen soll, übergibt der Client die aktuelle `exportId` mit.
+ * The server can't rely on `page.params.export`: the client passes the open `exportId` so the
+ * marker list shows the new name right away.
  */
 export const renameCategory = command(
 	v.object({

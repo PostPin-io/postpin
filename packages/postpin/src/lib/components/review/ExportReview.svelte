@@ -22,6 +22,11 @@
 	import Header from "#lib/components/layout/Header.svelte";
 	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
 	import MarkerPanel from "#lib/components/review/markers/MarkerPanel.svelte";
+	import MarkerHistoryNotice from "#lib/components/review/markers/MarkerHistoryNotice.svelte";
+	import {
+		MarkerHistory,
+		setMarkerHistory,
+	} from "#lib/components/review/markers/marker-history.svelte.ts";
 	import { signalGuide } from "#lib/components/guides/guide-signals.svelte.ts";
 	import PointerOverlay from "#lib/components/review/PointerOverlay.svelte";
 	import {
@@ -101,6 +106,10 @@
 	setPointerSession(pointerSession);
 
 	const shareToken = $derived(share?.token);
+
+	// ⌘Z / ⌘⇧Z for marker actions, shared by the marker panel, its editor and the timeline
+	const markerHistory = new MarkerHistory(() => ({ exportId, shareToken }));
+	setMarkerHistory(markerHistory);
 
 	// ─── Screening guests ───────────────────────────────────────────────────
 	// While the screening of their link runs, guests have no video: the picture is on the big
@@ -655,6 +664,7 @@
 {/if}
 
 <svelte:window onkeydown={onGlobalKeyDown} />
+<MarkerHistoryNotice history={markerHistory} />
 
 <KeyboardShortcutsModal bind:this={shortcutsModal} share={!!share} />
 
