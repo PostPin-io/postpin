@@ -336,6 +336,33 @@ describe("getShotThumbnails", () => {
 		expect(res.urls.map((u) => new URL(u!).pathname)).toEqual(
 			[0, 1].map((i) => `/postpin-test/${mediaId}/shotThumbnails-g7-${i}`),
 		);
+		// rendered before there were large images
+		expect(res.large).toBeNull();
+	});
+
+	it("also returns the large images' size and URLs, for the ready shots", async () => {
+		await prisma.media.update({
+			where: { id: mediaId },
+			data: {
+				shotThumbnails: {
+					count: 3,
+					width: 320,
+					height: 180,
+					generation: "g7",
+					ready: 2,
+					large: { width: 1280, height: 720 },
+				},
+			},
+		});
+		signIn(w.owner.user, w.org.id);
+
+		const res = await getShotThumbnails({ mediaId });
+		expect(res.large).toMatchObject({ width: 1280, height: 720 });
+		expect(res.large!.urls.map((u) => u && new URL(u).pathname)).toEqual([
+			`/postpin-test/${mediaId}/shotThumbnails-g7-0_large`,
+			`/postpin-test/${mediaId}/shotThumbnails-g7-1_large`,
+			null,
+		]);
 	});
 });
 

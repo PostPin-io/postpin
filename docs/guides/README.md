@@ -113,8 +113,8 @@ feature you can discover later, it's a **tour**.
     lets through (`keys`) is named in its text this way, so the user sees that it works (a test
     checks both).
     Never "NLE" on screen: users don't know the word. It is **the plugin**, and where the program
-    matters its name (DaVinci Resolve, Premiere Pro, Pro Tools; there the plugin is PostPin
-    Desktop). "NLE" stays in ids and code (`NleBridge`, `open-in-nle`).
+    matters its name (DaVinci Resolve, Premiere Pro, Pro Tools, FilmCraft; for the last two the
+    plugin is PostPin Desktop). "NLE" stays in ids and code (`NleBridge`, `open-in-nle`).
 15. **As short as possible, as long as necessary.** Every tour text has to earn its place:
     - one idea per step; the title names it, the text says what to do or why it matters,
     - usually one or two short sentences (aim for 25 words at most),

@@ -12,7 +12,6 @@ export interface HostAdapter {
 
 export const ADAPTERS: HostAdapter[] = [
 	{ id: "pro-tools", name: "Pro Tools", create: createProToolsAdapter },
-	// experimental, see adapters/filmcraft
 	{ id: "filmcraft", name: "FilmCraft", create: createFilmCraftAdapter },
 	{ id: "reaper", name: "REAPER", create: createReaperAdapter },
 ];

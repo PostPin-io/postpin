@@ -16,10 +16,10 @@ import {
 	getMarkers,
 	getMarkersbyCategory,
 	getResponses,
-	moveMarker,
 	pasteMarkers,
 	renameCategory,
 	updateMarker,
+	updateMarkers,
 } from "#lib/components/review/markers/markers.remote.ts";
 import {
 	applyCategoryPreset,
@@ -419,123 +419,76 @@ describe("deleteMarkers", () => {
 	});
 });
 
-// ─── moveMarker (bulk) ──────────────────────────────────────────────────────
+// ─── updateMarkers (batch panel) ────────────────────────────────────────────
 
-describe("moveMarker", () => {
-	it("moves markers into the target category", async () => {
-		const target = await f.createCategory(w.projectA, { createdBy: w.owner.user });
-		const a = await f.createMarker(w.exp1, w.catA);
-		const b = await f.createMarker(w.exp1, w.catA);
-		await f.createMarker(w.exp2, w.catA); // keeps catA in use
-		signIn(w.owner.user, w.org.id);
+describe("updateMarkers", () => {
+	it("moves markers into a category and keeps the emptied one", async () => {
+		const me = await signInAs(w.org, MEMBER, [projectGrant()]);
+		const mineCat = await f.createCategory(w.projectA, { createdBy: me.user });
+		const a = await f.createMarker(w.exp1, mineCat);
+		const b = await f.createMarker(w.exp1, mineCat);
 
-		const res = await moveMarker({
+		const res = await updateMarkers({
 			exportId: w.exp1.id,
 			ids: [a.id, b.id],
-			targetCategoryId: target.id,
+			categoryId: w.catA.id,
 		});
-		expect(res).toEqual({ count: 2, deletedCategoryIds: [] });
+		expect(res).toEqual({ count: 2 });
 		const moved = await prisma.marker.findMany({ where: { id: { in: [a.id, b.id] } } });
-		expect(moved.every((m) => m.categoryId === target.id)).toBe(true);
-		expect(await prisma.category.count({ where: { id: w.catA.id } })).toBe(1);
+		expect(moved.every((m) => m.categoryId === w.catA.id)).toBe(true);
+		// an undo puts the markers back into it
+		expect(await prisma.category.count({ where: { id: mineCat.id } })).toBe(1);
 	});
 
-	it("keeps the emptied category of a screening while its link works", async () => {
-		const screeningCategory = await f.createCategory(w.projectA, { createdBy: w.owner.user });
-		const link = await f.createShareLink(w.exp1, { creator: w.owner.user });
-		await prisma.shareLink.update({
-			where: { id: link.id },
-			data: { kind: "SCREENING", categoryId: screeningCategory.id },
-		});
-		const a = await f.createMarker(w.exp1, screeningCategory);
-		const b = await f.createMarker(w.exp1, screeningCategory);
+	it("shifts markers, ranges keep their length", async () => {
+		const a = await f.createMarker(w.exp1, w.catA, { frame: 10 });
+		const b = await f.createMarker(w.exp1, w.catA, { frame: 20, duration: 5 });
 		signIn(w.owner.user, w.org.id);
-		const move = (id: string) =>
-			moveMarker({ exportId: w.exp1.id, ids: [id], targetCategoryId: w.catA.id });
 
-		// guests may still add markers: their category must be there
-		await move(a.id);
-		expect((await move(b.id)).deletedCategoryIds).toEqual([]);
-		expect(await prisma.category.count({ where: { id: screeningCategory.id } })).toBe(1);
-
-		// after the link ended it is a category like any other
-		await prisma.shareLink.update({ where: { id: link.id }, data: { revokedAt: new Date() } });
-		const c = await f.createMarker(w.exp1, screeningCategory);
-		expect((await move(c.id)).deletedCategoryIds).toEqual([screeningCategory.id]);
+		await updateMarkers({ exportId: w.exp1.id, ids: [a.id, b.id], shift: -5 });
+		const after = await prisma.marker.findMany({ orderBy: { frame: "asc" } });
+		expect(after.map((m) => [m.frame, m.duration])).toEqual([
+			[5, 0],
+			[15, 5],
+		]);
 	});
 
-	it("deletes source categories that end up empty, but only those the user created", async () => {
-		const me = await signInAs(w.org, MEMBER, [projectGrant()]);
-		const mineCat = await f.createCategory(w.projectA, { createdBy: me.user });
-		const target = await f.createCategory(w.projectA);
-		const a = await f.createMarker(w.exp1, mineCat);
-		const b = await f.createMarker(w.exp1, w.catA); // catA belongs to the owner
-
-		const res = await moveMarker({
-			exportId: w.exp1.id,
-			ids: [a.id, b.id],
-			targetCategoryId: target.id,
-		});
-		expect(res).toEqual({ count: 2, deletedCategoryIds: [mineCat.id] });
-		expect(await prisma.category.count({ where: { id: mineCat.id } })).toBe(0);
-		expect(await prisma.category.count({ where: { id: w.catA.id } })).toBe(1);
-	});
-
-	it("keeps an own source category that is still used in another export", async () => {
-		const me = await signInAs(w.org, MEMBER, [projectGrant()]);
-		const mineCat = await f.createCategory(w.projectA, { createdBy: me.user });
-		const a = await f.createMarker(w.exp1, mineCat);
-		await f.createMarker(w.exp2, mineCat);
-		const res = await moveMarker({ exportId: w.exp1.id, ids: [a.id], targetCategoryId: w.catA.id });
-		expect(res.deletedCategoryIds).toEqual([]);
-		expect(await prisma.category.count({ where: { id: mineCat.id } })).toBe(1);
-	});
-
-	it("never deletes the target category", async () => {
-		const me = await signInAs(w.org, MEMBER, [projectGrant()]);
-		const mineCat = await f.createCategory(w.projectA, { createdBy: me.user });
-		const a = await f.createMarker(w.exp1, mineCat);
-		const res = await moveMarker({
-			exportId: w.exp1.id,
-			ids: [a.id],
-			targetCategoryId: mineCat.id,
-		});
-		expect(res).toEqual({ count: 1, deletedCategoryIds: [] });
-		expect(await prisma.category.count({ where: { id: mineCat.id } })).toBe(1);
+	it("400 and nothing changes when a shift ends before the start", async () => {
+		const a = await f.createMarker(w.exp1, w.catA, { frame: 3 });
+		signIn(w.owner.user, w.org.id);
+		await expectStatus(updateMarkers({ exportId: w.exp1.id, ids: [a.id], shift: -4 }), 400);
+		expect((await prisma.marker.findUniqueOrThrow({ where: { id: a.id } })).frame).toBe(3);
 	});
 
 	it.each([
 		["another project", () => w.catB.id],
 		["another org", () => w.otherCat.id],
-	])("404 for a target category from %s, nothing moved", async (_, cat) => {
+	])("404 for a category from %s, nothing moved", async (_, cat) => {
 		const a = await f.createMarker(w.exp1, w.catA);
 		signIn(w.owner.user, w.org.id);
-		await expectStatus(
-			moveMarker({ exportId: w.exp1.id, ids: [a.id], targetCategoryId: cat() }),
-			404,
-		);
+		await expectStatus(updateMarkers({ exportId: w.exp1.id, ids: [a.id], categoryId: cat() }), 404);
 		expect((await prisma.marker.findUniqueOrThrow({ where: { id: a.id } })).categoryId).toBe(
 			w.catA.id,
 		);
 	});
 
-	it("403 for a reviewer moving someone else's marker", async () => {
+	it("403 for a reviewer changing someone else's marker", async () => {
 		const me = await signInAs(w.org, REVIEWER, [tl1Grant()]);
 		const target = await f.createCategory(w.projectA);
 		const mine = await f.createMarker(w.exp1, w.catA, { author: me.user });
 		const theirs = await f.createMarker(w.exp1, w.catA, { author: w.owner.user });
 		await expectStatus(
-			moveMarker({ exportId: w.exp1.id, ids: [mine.id, theirs.id], targetCategoryId: target.id }),
+			updateMarkers({ exportId: w.exp1.id, ids: [mine.id, theirs.id], categoryId: target.id }),
 			403,
 		);
 		expect(await prisma.marker.count({ where: { categoryId: target.id } })).toBe(0);
 	});
 
-	it("a reviewer moves their own markers", async () => {
+	it("a reviewer changes their own markers", async () => {
 		const me = await signInAs(w.org, REVIEWER, [tl1Grant()]);
 		const target = await f.createCategory(w.projectA);
 		const mine = await f.createMarker(w.exp1, w.catA, { author: me.user });
-		await moveMarker({ exportId: w.exp1.id, ids: [mine.id], targetCategoryId: target.id });
+		await updateMarkers({ exportId: w.exp1.id, ids: [mine.id], categoryId: target.id });
 		expect((await prisma.marker.findUniqueOrThrow({ where: { id: mine.id } })).categoryId).toBe(
 			target.id,
 		);
@@ -543,10 +496,7 @@ describe("moveMarker", () => {
 
 	it("400 for an empty list", async () => {
 		signIn(w.owner.user, w.org.id);
-		await expectStatus(
-			moveMarker({ exportId: w.exp1.id, ids: [], targetCategoryId: w.catA.id }),
-			400,
-		);
+		await expectStatus(updateMarkers({ exportId: w.exp1.id, ids: [], categoryId: w.catA.id }), 400);
 	});
 
 	it("404 when an id belongs to another export", async () => {
@@ -554,7 +504,7 @@ describe("moveMarker", () => {
 		const target = await f.createCategory(w.projectA);
 		signIn(w.owner.user, w.org.id);
 		await expectStatus(
-			moveMarker({ exportId: w.exp1.id, ids: [elsewhere.id], targetCategoryId: target.id }),
+			updateMarkers({ exportId: w.exp1.id, ids: [elsewhere.id], categoryId: target.id }),
 			404,
 		);
 		expect(
@@ -1245,7 +1195,7 @@ describe("guest category: an ordinary category", () => {
 
 	it("team members can move markers into it", async () => {
 		const m = await f.createMarker(w.exp1, w.catA, { author: w.owner.user });
-		await moveMarker({ exportId: w.exp1.id, ids: [m.id], targetCategoryId: guestId });
+		await updateMarkers({ exportId: w.exp1.id, ids: [m.id], categoryId: guestId });
 		expect((await prisma.marker.findUniqueOrThrow({ where: { id: m.id } })).categoryId).toBe(
 			guestId,
 		);

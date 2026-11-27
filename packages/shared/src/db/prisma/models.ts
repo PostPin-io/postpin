@@ -15,6 +15,8 @@ export type * from "./models/DeviceCode.ts";
 export type * from "./models/TwoFactor.ts";
 export type * from "./models/Passkey.ts";
 export type * from "./models/GuideProgress.ts";
+export type * from "./models/MarkerUndoStep.ts";
+export type * from "./models/MarkerClipboard.ts";
 export type * from "./models/Marker.ts";
 export type * from "./models/MarkerPointer.ts";
 export type * from "./models/Category.ts";

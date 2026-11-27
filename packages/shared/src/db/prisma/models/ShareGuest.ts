@@ -189,6 +189,11 @@ export type ShareGuestWhereInput = {
 	lastViewedAt?: Prisma.DateTimeNullableFilter<"ShareGuest"> | Date | string | null;
 	shareLink?: Prisma.XOR<Prisma.ShareLinkScalarRelationFilter, Prisma.ShareLinkWhereInput>;
 	markers?: Prisma.MarkerListRelationFilter;
+	markerUndoSteps?: Prisma.MarkerUndoStepListRelationFilter;
+	markerClipboard?: Prisma.XOR<
+		Prisma.MarkerClipboardNullableScalarRelationFilter,
+		Prisma.MarkerClipboardWhereInput
+	> | null;
 };
 
 export type ShareGuestOrderByWithRelationInput = {
@@ -200,6 +205,8 @@ export type ShareGuestOrderByWithRelationInput = {
 	lastViewedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
 	shareLink?: Prisma.ShareLinkOrderByWithRelationInput;
 	markers?: Prisma.MarkerOrderByRelationAggregateInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepOrderByRelationAggregateInput;
+	markerClipboard?: Prisma.MarkerClipboardOrderByWithRelationInput;
 };
 
 export type ShareGuestWhereUniqueInput = Prisma.AtLeast<
@@ -215,6 +222,11 @@ export type ShareGuestWhereUniqueInput = Prisma.AtLeast<
 		lastViewedAt?: Prisma.DateTimeNullableFilter<"ShareGuest"> | Date | string | null;
 		shareLink?: Prisma.XOR<Prisma.ShareLinkScalarRelationFilter, Prisma.ShareLinkWhereInput>;
 		markers?: Prisma.MarkerListRelationFilter;
+		markerUndoSteps?: Prisma.MarkerUndoStepListRelationFilter;
+		markerClipboard?: Prisma.XOR<
+			Prisma.MarkerClipboardNullableScalarRelationFilter,
+			Prisma.MarkerClipboardWhereInput
+		> | null;
 	},
 	"id" | "sessionTokenHash"
 >;
@@ -255,6 +267,8 @@ export type ShareGuestCreateInput = {
 	lastViewedAt?: Date | string | null;
 	shareLink: Prisma.ShareLinkCreateNestedOneWithoutGuestsInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutGuestInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutGuestInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutGuestInput;
 };
 
 export type ShareGuestUncheckedCreateInput = {
@@ -265,6 +279,8 @@ export type ShareGuestUncheckedCreateInput = {
 	sessionTokenHash: string;
 	lastViewedAt?: Date | string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutGuestInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutGuestInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutGuestInput;
 };
 
 export type ShareGuestUpdateInput = {
@@ -275,6 +291,8 @@ export type ShareGuestUpdateInput = {
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	shareLink?: Prisma.ShareLinkUpdateOneRequiredWithoutGuestsNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutGuestNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutGuestNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutGuestNestedInput;
 };
 
 export type ShareGuestUncheckedUpdateInput = {
@@ -285,6 +303,8 @@ export type ShareGuestUncheckedUpdateInput = {
 	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutGuestNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutGuestNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutGuestNestedInput;
 };
 
 export type ShareGuestCreateManyInput = {
@@ -353,6 +373,62 @@ export type ShareGuestMinOrderByAggregateInput = {
 	name?: Prisma.SortOrder;
 	sessionTokenHash?: Prisma.SortOrder;
 	lastViewedAt?: Prisma.SortOrder;
+};
+
+export type ShareGuestCreateNestedOneWithoutMarkerUndoStepsInput = {
+	create?: Prisma.XOR<
+		Prisma.ShareGuestCreateWithoutMarkerUndoStepsInput,
+		Prisma.ShareGuestUncheckedCreateWithoutMarkerUndoStepsInput
+	>;
+	connectOrCreate?: Prisma.ShareGuestCreateOrConnectWithoutMarkerUndoStepsInput;
+	connect?: Prisma.ShareGuestWhereUniqueInput;
+};
+
+export type ShareGuestUpdateOneWithoutMarkerUndoStepsNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.ShareGuestCreateWithoutMarkerUndoStepsInput,
+		Prisma.ShareGuestUncheckedCreateWithoutMarkerUndoStepsInput
+	>;
+	connectOrCreate?: Prisma.ShareGuestCreateOrConnectWithoutMarkerUndoStepsInput;
+	upsert?: Prisma.ShareGuestUpsertWithoutMarkerUndoStepsInput;
+	disconnect?: Prisma.ShareGuestWhereInput | boolean;
+	delete?: Prisma.ShareGuestWhereInput | boolean;
+	connect?: Prisma.ShareGuestWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.ShareGuestUpdateToOneWithWhereWithoutMarkerUndoStepsInput,
+			Prisma.ShareGuestUpdateWithoutMarkerUndoStepsInput
+		>,
+		Prisma.ShareGuestUncheckedUpdateWithoutMarkerUndoStepsInput
+	>;
+};
+
+export type ShareGuestCreateNestedOneWithoutMarkerClipboardInput = {
+	create?: Prisma.XOR<
+		Prisma.ShareGuestCreateWithoutMarkerClipboardInput,
+		Prisma.ShareGuestUncheckedCreateWithoutMarkerClipboardInput
+	>;
+	connectOrCreate?: Prisma.ShareGuestCreateOrConnectWithoutMarkerClipboardInput;
+	connect?: Prisma.ShareGuestWhereUniqueInput;
+};
+
+export type ShareGuestUpdateOneWithoutMarkerClipboardNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.ShareGuestCreateWithoutMarkerClipboardInput,
+		Prisma.ShareGuestUncheckedCreateWithoutMarkerClipboardInput
+	>;
+	connectOrCreate?: Prisma.ShareGuestCreateOrConnectWithoutMarkerClipboardInput;
+	upsert?: Prisma.ShareGuestUpsertWithoutMarkerClipboardInput;
+	disconnect?: Prisma.ShareGuestWhereInput | boolean;
+	delete?: Prisma.ShareGuestWhereInput | boolean;
+	connect?: Prisma.ShareGuestWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.ShareGuestUpdateToOneWithWhereWithoutMarkerClipboardInput,
+			Prisma.ShareGuestUpdateWithoutMarkerClipboardInput
+		>,
+		Prisma.ShareGuestUncheckedUpdateWithoutMarkerClipboardInput
+	>;
 };
 
 export type ShareGuestCreateNestedOneWithoutMarkersInput = {
@@ -469,6 +545,150 @@ export type ShareGuestUncheckedUpdateManyWithoutShareLinkNestedInput = {
 	deleteMany?: Prisma.ShareGuestScalarWhereInput | Prisma.ShareGuestScalarWhereInput[];
 };
 
+export type ShareGuestCreateWithoutMarkerUndoStepsInput = {
+	id?: string;
+	createdAt?: Date | string;
+	name?: string | null;
+	sessionTokenHash: string;
+	lastViewedAt?: Date | string | null;
+	shareLink: Prisma.ShareLinkCreateNestedOneWithoutGuestsInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutGuestInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutGuestInput;
+};
+
+export type ShareGuestUncheckedCreateWithoutMarkerUndoStepsInput = {
+	id?: string;
+	createdAt?: Date | string;
+	shareLinkId: string;
+	name?: string | null;
+	sessionTokenHash: string;
+	lastViewedAt?: Date | string | null;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutGuestInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutGuestInput;
+};
+
+export type ShareGuestCreateOrConnectWithoutMarkerUndoStepsInput = {
+	where: Prisma.ShareGuestWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.ShareGuestCreateWithoutMarkerUndoStepsInput,
+		Prisma.ShareGuestUncheckedCreateWithoutMarkerUndoStepsInput
+	>;
+};
+
+export type ShareGuestUpsertWithoutMarkerUndoStepsInput = {
+	update: Prisma.XOR<
+		Prisma.ShareGuestUpdateWithoutMarkerUndoStepsInput,
+		Prisma.ShareGuestUncheckedUpdateWithoutMarkerUndoStepsInput
+	>;
+	create: Prisma.XOR<
+		Prisma.ShareGuestCreateWithoutMarkerUndoStepsInput,
+		Prisma.ShareGuestUncheckedCreateWithoutMarkerUndoStepsInput
+	>;
+	where?: Prisma.ShareGuestWhereInput;
+};
+
+export type ShareGuestUpdateToOneWithWhereWithoutMarkerUndoStepsInput = {
+	where?: Prisma.ShareGuestWhereInput;
+	data: Prisma.XOR<
+		Prisma.ShareGuestUpdateWithoutMarkerUndoStepsInput,
+		Prisma.ShareGuestUncheckedUpdateWithoutMarkerUndoStepsInput
+	>;
+};
+
+export type ShareGuestUpdateWithoutMarkerUndoStepsInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
+	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	shareLink?: Prisma.ShareLinkUpdateOneRequiredWithoutGuestsNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutGuestNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutGuestNestedInput;
+};
+
+export type ShareGuestUncheckedUpdateWithoutMarkerUndoStepsInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	shareLinkId?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
+	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutGuestNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutGuestNestedInput;
+};
+
+export type ShareGuestCreateWithoutMarkerClipboardInput = {
+	id?: string;
+	createdAt?: Date | string;
+	name?: string | null;
+	sessionTokenHash: string;
+	lastViewedAt?: Date | string | null;
+	shareLink: Prisma.ShareLinkCreateNestedOneWithoutGuestsInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutGuestInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutGuestInput;
+};
+
+export type ShareGuestUncheckedCreateWithoutMarkerClipboardInput = {
+	id?: string;
+	createdAt?: Date | string;
+	shareLinkId: string;
+	name?: string | null;
+	sessionTokenHash: string;
+	lastViewedAt?: Date | string | null;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutGuestInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutGuestInput;
+};
+
+export type ShareGuestCreateOrConnectWithoutMarkerClipboardInput = {
+	where: Prisma.ShareGuestWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.ShareGuestCreateWithoutMarkerClipboardInput,
+		Prisma.ShareGuestUncheckedCreateWithoutMarkerClipboardInput
+	>;
+};
+
+export type ShareGuestUpsertWithoutMarkerClipboardInput = {
+	update: Prisma.XOR<
+		Prisma.ShareGuestUpdateWithoutMarkerClipboardInput,
+		Prisma.ShareGuestUncheckedUpdateWithoutMarkerClipboardInput
+	>;
+	create: Prisma.XOR<
+		Prisma.ShareGuestCreateWithoutMarkerClipboardInput,
+		Prisma.ShareGuestUncheckedCreateWithoutMarkerClipboardInput
+	>;
+	where?: Prisma.ShareGuestWhereInput;
+};
+
+export type ShareGuestUpdateToOneWithWhereWithoutMarkerClipboardInput = {
+	where?: Prisma.ShareGuestWhereInput;
+	data: Prisma.XOR<
+		Prisma.ShareGuestUpdateWithoutMarkerClipboardInput,
+		Prisma.ShareGuestUncheckedUpdateWithoutMarkerClipboardInput
+	>;
+};
+
+export type ShareGuestUpdateWithoutMarkerClipboardInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
+	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	shareLink?: Prisma.ShareLinkUpdateOneRequiredWithoutGuestsNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutGuestNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutGuestNestedInput;
+};
+
+export type ShareGuestUncheckedUpdateWithoutMarkerClipboardInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	shareLinkId?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
+	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutGuestNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutGuestNestedInput;
+};
+
 export type ShareGuestCreateWithoutMarkersInput = {
 	id?: string;
 	createdAt?: Date | string;
@@ -476,6 +696,8 @@ export type ShareGuestCreateWithoutMarkersInput = {
 	sessionTokenHash: string;
 	lastViewedAt?: Date | string | null;
 	shareLink: Prisma.ShareLinkCreateNestedOneWithoutGuestsInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutGuestInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutGuestInput;
 };
 
 export type ShareGuestUncheckedCreateWithoutMarkersInput = {
@@ -485,6 +707,8 @@ export type ShareGuestUncheckedCreateWithoutMarkersInput = {
 	name?: string | null;
 	sessionTokenHash: string;
 	lastViewedAt?: Date | string | null;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutGuestInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutGuestInput;
 };
 
 export type ShareGuestCreateOrConnectWithoutMarkersInput = {
@@ -522,6 +746,8 @@ export type ShareGuestUpdateWithoutMarkersInput = {
 	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	shareLink?: Prisma.ShareLinkUpdateOneRequiredWithoutGuestsNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutGuestNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutGuestNestedInput;
 };
 
 export type ShareGuestUncheckedUpdateWithoutMarkersInput = {
@@ -531,6 +757,8 @@ export type ShareGuestUncheckedUpdateWithoutMarkersInput = {
 	name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutGuestNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutGuestNestedInput;
 };
 
 export type ShareGuestCreateWithoutShareLinkInput = {
@@ -540,6 +768,8 @@ export type ShareGuestCreateWithoutShareLinkInput = {
 	sessionTokenHash: string;
 	lastViewedAt?: Date | string | null;
 	markers?: Prisma.MarkerCreateNestedManyWithoutGuestInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutGuestInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutGuestInput;
 };
 
 export type ShareGuestUncheckedCreateWithoutShareLinkInput = {
@@ -549,6 +779,8 @@ export type ShareGuestUncheckedCreateWithoutShareLinkInput = {
 	sessionTokenHash: string;
 	lastViewedAt?: Date | string | null;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutGuestInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutGuestInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutGuestInput;
 };
 
 export type ShareGuestCreateOrConnectWithoutShareLinkInput = {
@@ -619,6 +851,8 @@ export type ShareGuestUpdateWithoutShareLinkInput = {
 	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	markers?: Prisma.MarkerUpdateManyWithoutGuestNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutGuestNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutGuestNestedInput;
 };
 
 export type ShareGuestUncheckedUpdateWithoutShareLinkInput = {
@@ -628,6 +862,8 @@ export type ShareGuestUncheckedUpdateWithoutShareLinkInput = {
 	sessionTokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
 	lastViewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutGuestNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutGuestNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutGuestNestedInput;
 };
 
 export type ShareGuestUncheckedUpdateManyWithoutShareLinkInput = {
@@ -644,12 +880,14 @@ export type ShareGuestUncheckedUpdateManyWithoutShareLinkInput = {
 
 export type ShareGuestCountOutputType = {
 	markers: number;
+	markerUndoSteps: number;
 };
 
 export type ShareGuestCountOutputTypeSelect<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
 	markers?: boolean | ShareGuestCountOutputTypeCountMarkersArgs;
+	markerUndoSteps?: boolean | ShareGuestCountOutputTypeCountMarkerUndoStepsArgs;
 };
 
 /**
@@ -673,6 +911,15 @@ export type ShareGuestCountOutputTypeCountMarkersArgs<
 	where?: Prisma.MarkerWhereInput;
 };
 
+/**
+ * ShareGuestCountOutputType without action
+ */
+export type ShareGuestCountOutputTypeCountMarkerUndoStepsArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	where?: Prisma.MarkerUndoStepWhereInput;
+};
+
 export type ShareGuestSelect<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = runtime.Types.Extensions.GetSelect<
@@ -685,6 +932,8 @@ export type ShareGuestSelect<
 		lastViewedAt?: boolean;
 		shareLink?: boolean | Prisma.ShareLinkDefaultArgs<ExtArgs>;
 		markers?: boolean | Prisma.ShareGuest$markersArgs<ExtArgs>;
+		markerUndoSteps?: boolean | Prisma.ShareGuest$markerUndoStepsArgs<ExtArgs>;
+		markerClipboard?: boolean | Prisma.ShareGuest$markerClipboardArgs<ExtArgs>;
 		_count?: boolean | Prisma.ShareGuestCountOutputTypeDefaultArgs<ExtArgs>;
 	},
 	ExtArgs["result"]["shareGuest"]
@@ -740,6 +989,8 @@ export type ShareGuestInclude<
 > = {
 	shareLink?: boolean | Prisma.ShareLinkDefaultArgs<ExtArgs>;
 	markers?: boolean | Prisma.ShareGuest$markersArgs<ExtArgs>;
+	markerUndoSteps?: boolean | Prisma.ShareGuest$markerUndoStepsArgs<ExtArgs>;
+	markerClipboard?: boolean | Prisma.ShareGuest$markerClipboardArgs<ExtArgs>;
 	_count?: boolean | Prisma.ShareGuestCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type ShareGuestIncludeCreateManyAndReturn<
@@ -760,6 +1011,8 @@ export type $ShareGuestPayload<
 	objects: {
 		shareLink: Prisma.$ShareLinkPayload<ExtArgs>;
 		markers: Prisma.$MarkerPayload<ExtArgs>[];
+		markerUndoSteps: Prisma.$MarkerUndoStepPayload<ExtArgs>[];
+		markerClipboard: Prisma.$MarkerClipboardPayload<ExtArgs> | null;
 	};
 	scalars: runtime.Types.Extensions.GetPayloadResult<
 		{
@@ -1335,6 +1588,30 @@ export interface Prisma__ShareGuestClient<
 		  >
 		| Null
 	>;
+	markerUndoSteps<T extends Prisma.ShareGuest$markerUndoStepsArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.ShareGuest$markerUndoStepsArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		| runtime.Types.Result.GetResult<
+				Prisma.$MarkerUndoStepPayload<ExtArgs>,
+				T,
+				"findMany",
+				GlobalOmitOptions
+		  >
+		| Null
+	>;
+	markerClipboard<T extends Prisma.ShareGuest$markerClipboardArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.ShareGuest$markerClipboardArgs<ExtArgs>>,
+	): Prisma.Prisma__MarkerClipboardClient<
+		runtime.Types.Result.GetResult<
+			Prisma.$MarkerClipboardPayload<ExtArgs>,
+			T,
+			"findUniqueOrThrow",
+			GlobalOmitOptions
+		> | null,
+		null,
+		ExtArgs,
+		GlobalOmitOptions
+	>;
 	/**
 	 * Attaches callbacks for the resolution and/or rejection of the Promise.
 	 * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1829,6 +2106,54 @@ export type ShareGuest$markersArgs<
 	take?: number;
 	skip?: number;
 	distinct?: Prisma.MarkerScalarFieldEnum | Prisma.MarkerScalarFieldEnum[];
+};
+
+/**
+ * ShareGuest.markerUndoSteps
+ */
+export type ShareGuest$markerUndoStepsArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the MarkerUndoStep
+	 */
+	select?: Prisma.MarkerUndoStepSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the MarkerUndoStep
+	 */
+	omit?: Prisma.MarkerUndoStepOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.MarkerUndoStepInclude<ExtArgs> | null;
+	where?: Prisma.MarkerUndoStepWhereInput;
+	orderBy?:
+		Prisma.MarkerUndoStepOrderByWithRelationInput | Prisma.MarkerUndoStepOrderByWithRelationInput[];
+	cursor?: Prisma.MarkerUndoStepWhereUniqueInput;
+	take?: number;
+	skip?: number;
+	distinct?: Prisma.MarkerUndoStepScalarFieldEnum | Prisma.MarkerUndoStepScalarFieldEnum[];
+};
+
+/**
+ * ShareGuest.markerClipboard
+ */
+export type ShareGuest$markerClipboardArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the MarkerClipboard
+	 */
+	select?: Prisma.MarkerClipboardSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the MarkerClipboard
+	 */
+	omit?: Prisma.MarkerClipboardOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.MarkerClipboardInclude<ExtArgs> | null;
+	where?: Prisma.MarkerClipboardWhereInput;
 };
 
 /**

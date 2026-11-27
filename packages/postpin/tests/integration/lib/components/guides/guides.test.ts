@@ -387,11 +387,11 @@ describe("plugin tutorial", () => {
 				id: randomUUID(),
 				token: randomUUID(),
 				userId: me.user.id,
-				clientId: "io.postpin.desktop",
+				clientId: "io.postpin.plugin.resolve",
 				expiresAt: new Date(Date.now() + 60_000),
 			},
 		});
-		expect(await getPluginTutorial()).toMatchObject({ connected: true, program: "Pro Tools" });
+		expect(await getPluginTutorial()).toMatchObject({ connected: true, program: "Resolve" });
 
 		await markerSet({
 			userId: me.user.id,
@@ -402,6 +402,31 @@ describe("plugin tutorial", () => {
 			summary: { nle: { added: 1, updated: 0, removed: 0 } },
 		});
 		expect((await getPluginTutorial()).program).toBe("Premiere Pro");
+	});
+
+	it("doesn't guess the program from PostPin Desktop alone: it works with Pro Tools and FilmCraft", async () => {
+		const { timeline, me } = await setup(Role.OWNER);
+		const exp = await f.createExport(timeline);
+		await prisma.session.create({
+			data: {
+				id: randomUUID(),
+				token: randomUUID(),
+				userId: me.user.id,
+				clientId: "io.postpin.desktop",
+				expiresAt: new Date(Date.now() + 60_000),
+			},
+		});
+		expect(await getPluginTutorial()).toMatchObject({ connected: true, program: null });
+
+		await markerSet({
+			userId: me.user.id,
+			timelineId: timeline.id,
+			exportId: exp.id,
+			action: "PULL",
+			hostName: "FilmCraft",
+			summary: { nle: { added: 1, updated: 0, removed: 0 } },
+		});
+		expect((await getPluginTutorial()).program).toBe("FilmCraft");
 	});
 
 	it("reports the latest pull, and the latest push that brought a marker", async () => {

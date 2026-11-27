@@ -9,10 +9,15 @@ export interface S3Object {
 	index?: number;
 	/** Shot thumbnails: the render they belong to, see ShotThumbnails */
 	generation?: string;
+	/**
+	 * Shot thumbnails: the large version of the image. A suffix on the index, not another "-" part,
+	 * so the generation stays the second part of the key (see shotThumbnailGeneration).
+	 */
+	large?: boolean;
 }
 
-export function getS3ObjectPath({ mediaId, type, proxyId, index, generation }: S3Object) {
-	return `${mediaId}/${type}${proxyId ? `-${proxyId}` : ""}${generation ? `-${generation}` : ""}${index !== undefined ? `-${index}` : ""}`;
+export function getS3ObjectPath({ mediaId, type, proxyId, index, generation, large }: S3Object) {
+	return `${mediaId}/${type}${proxyId ? `-${proxyId}` : ""}${generation ? `-${generation}` : ""}${index !== undefined ? `-${index}` : ""}${large ? "_large" : ""}`;
 }
 
 export function getPresignedUrl(

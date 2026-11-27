@@ -25,6 +25,10 @@ describe("getS3ObjectPath", () => {
 			{ mediaId: "m1", type: "shotThumbnails", generation: "0mhx3k2a9b7c1", index: 4 },
 			"m1/shotThumbnails-0mhx3k2a9b7c1-4",
 		],
+		[
+			{ mediaId: "m1", type: "shotThumbnails", generation: "0mhx3k2a9b7c1", index: 4, large: true },
+			"m1/shotThumbnails-0mhx3k2a9b7c1-4_large",
+		],
 		[{ mediaId: "m1", type: "proxy", proxyId: "p1", index: 2 }, "m1/proxy-p1-2"],
 		// an empty proxy id is left out
 		[{ mediaId: "m1", type: "proxy", proxyId: "" }, "m1/proxy"],

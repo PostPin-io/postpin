@@ -3,7 +3,12 @@
 	import { tick } from "svelte";
 	import { SvelteSet } from "svelte/reactivity";
 	import RouteOff from "@lucide/svelte/icons/route-off";
-	import { hasCommandKey, isTypingTarget } from "#lib/keyboard.ts";
+	import {
+		hasCommandKey,
+		isApplePlatform,
+		isInsideOverlay,
+		isTypingTarget,
+	} from "#lib/keyboard.ts";
 	import Marker from "./Marker.svelte";
 	import UpdateMarker from "./UpdateMarker.svelte";
 	import ResponseMarker from "./ResponseMarker.svelte";
@@ -34,12 +39,12 @@
 		updateMarker,
 		deleteMarkers,
 		createCategory,
-	} from "./markers.remote.ts";
-	import {
-		readMarkerClipboard,
-		writeMarkerClipboard,
+		getMarkerClipboard,
+		setMarkerClipboard,
 		clearMarkerClipboard,
-	} from "./marker-clipboard.ts";
+	} from "./markers.remote.ts";
+	import { useMarkerHistory } from "./marker-history.svelte.ts";
+	import BatchUpdateMarkers from "./BatchUpdateMarkers.svelte";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 	import ChevronUp from "@lucide/svelte/icons/chevron-up";
 	import ChevronDown from "@lucide/svelte/icons/chevron-down";
@@ -87,8 +92,11 @@
 	let updateMarkerComponent: UpdateMarker | null = null;
 	let exportModal = $state<ExportMarkersModal>();
 
-	// On a share link: guests see only their own markers, no categories, no copy/paste
+	// On a share link: guests see only their own markers and have no categories
 	const getShare = useShare();
+	const markerHistory = useMarkerHistory();
+	/** Marker changes ⌘Z must wait for: it takes back the newest step */
+	const tracked = <T,>(promise: Promise<T>) => markerHistory?.track(promise) ?? promise;
 	const share = $derived(getShare());
 	const shareToken = $derived(share?.token);
 
@@ -153,6 +161,13 @@
 	// The editor is only shown while exactly one marker is selected
 	let selectedMarkerId = $derived(selectedMarkerIds.length === 1 ? selectedMarkerIds[0] : null);
 	let selectedMarker = $derived(markers.find((marker) => marker.id === selectedMarkerId));
+
+	// Two or more: the batch panel instead (team only, guests have nothing to batch but deleting)
+	let selectedMarkers = $derived(markers.filter((marker) => selectedMarkerIds.includes(marker.id)));
+	let hiddenSelectedCount = $derived(
+		selectedMarkers.filter((marker) => !visibleMarkers.some((v) => v.id === marker.id)).length,
+	);
+	let showBatch = $derived(selectedMarkers.length > 1 && !mobile && !share);
 
 	// Phones: the marker open in the modal
 	let editingMarkerId = $state<string | null>(null);
@@ -235,14 +250,16 @@
 		try {
 			// Guests have no categories: the server puts their markers in the guest category
 			const categoryId = share ? undefined : (await resolveDefaultCategory()).categoryId;
-			const marker = await createMarker({
-				exportId: currentExportId,
-				name: "",
-				description: "",
-				categoryId,
-				...range,
-				shareToken,
-			});
+			const marker = await tracked(
+				createMarker({
+					exportId: currentExportId,
+					name: "",
+					description: "",
+					categoryId,
+					...range,
+					shareToken,
+				}),
+			);
 			// The in point was used up, like in the NLEs
 			if (inOut.in !== null) onrangeused?.();
 			return marker;
@@ -270,7 +287,7 @@
 			.filter((marker) => selectedMarkerIds.includes(marker.id))
 			.map((marker) => marker.id);
 		if (ids.length === 0) return;
-		await deleteMarkers({ exportId: currentExportId, ids, shareToken });
+		await tracked(deleteMarkers({ exportId: currentExportId, ids, shareToken }));
 		selectedMarkerIds = [];
 	}
 
@@ -287,17 +304,13 @@
 		if (event.key !== "Escape" || isTypingTarget(event)) return;
 		// Cancels a pending cut first, the markers stay where they are
 		if (cutIds.size > 0) {
-			clearMarkerClipboard();
-			reloadClipboard();
+			void clearMarkerClipboard({ shareToken });
 			return;
 		}
 		selectedMarkerIds = [];
 	}
 
 	function copyOrCutKeypress(event: KeyboardEvent) {
-		// Copy and paste work across exports: team only
-		if (share) return;
-
 		if (!hasCommandKey(event) || event.altKey || event.shiftKey) return;
 		const key = event.key.toLowerCase();
 		if (key !== "c" && key !== "x") return;
@@ -311,16 +324,18 @@
 		event.preventDefault();
 		if (key === "x" && !deletable) return;
 
-		writeMarkerClipboard({
+		void setMarkerClipboard({
 			sourceExportId: currentExportId,
 			markerIds: selected.map((m) => m.id),
 			mode: key === "x" ? "cut" : "copy",
+			shareToken,
 		});
-		reloadClipboard();
 	}
 
+	// On the server, so it reaches every window and device of the user: ⌘C here, ⌘V there
+	const clipboardQuery = $derived(getMarkerClipboard(shareToken ?? ""));
+	let clipboard = $derived(await clipboardQuery);
 	// Markers cut with ⌘X on this export, shown faded until pasted
-	let clipboard = $state(readMarkerClipboard());
 	let cutIds = $derived(
 		new Set(
 			clipboard?.mode === "cut" && clipboard.sourceExportId === currentExportId
@@ -329,30 +344,30 @@
 		),
 	);
 
-	// Also when another tab cuts or pastes
+	// Another window may have copied or pasted meanwhile
 	function reloadClipboard() {
-		clipboard = readMarkerClipboard();
+		if (document.visibilityState === "visible") void clipboardQuery.refresh();
 	}
 
 	let pasting = false;
 
 	async function pasteMarkers() {
-		const pasted = readMarkerClipboard();
+		const pasted = clipboard;
 		if (!pasted || pasting) return;
 		pasting = true;
 		try {
-			const { categoryId: fallbackCategoryId } = await resolveDefaultCategory();
-			const { skipped } = await pasteMarkersRemote({
-				...pasted,
-				targetExportId: currentExportId,
-				anchorFrame: Math.max(0, currentFrame),
-				fallbackCategoryId,
-			});
-
-			if (pasted.mode === "cut") {
-				clearMarkerClipboard();
-				reloadClipboard();
-			}
+			// Guests' markers go to the link's category
+			const fallbackCategoryId = share ? undefined : (await resolveDefaultCategory()).categoryId;
+			// A cut empties the clipboard on the server
+			const { skipped } = await tracked(
+				pasteMarkersRemote({
+					...pasted,
+					targetExportId: currentExportId,
+					anchorFrame: Math.max(0, currentFrame),
+					fallbackCategoryId,
+					shareToken,
+				}),
+			);
 			if (skipped > 0) alert(`${skipped} marker(s) no longer exist and were skipped.`);
 		} catch (e) {
 			alert(`Could not paste markers: ${(e as Error).message}`);
@@ -362,16 +377,25 @@
 	}
 
 	function pasteKeypress(event: KeyboardEvent) {
-		// Copy and paste work across exports: team only
-		if (share) return;
-
 		if (!hasCommandKey(event) || event.altKey || event.shiftKey) return;
 		if (event.key !== "v" && event.key !== "V") return;
 		if (isTypingTarget(event)) return;
-		if (!readMarkerClipboard()) return;
+		if (!clipboard) return;
 
 		event.preventDefault();
 		void pasteMarkers();
+	}
+
+	// ⌘Z / ⌘⇧Z, and Ctrl+Y off Apple keyboards. In a text field it's the field's own undo.
+	function undoKeypress(event: KeyboardEvent) {
+		if (!markerHistory || !hasCommandKey(event) || event.altKey) return;
+		if (isTypingTarget(event) || isInsideOverlay(event)) return;
+		const key = event.key.toLowerCase();
+		const redo = (key === "z" && event.shiftKey) || (key === "y" && !isApplePlatform());
+		if (key !== "z" && !redo) return;
+		event.preventDefault();
+		if (event.repeat) return;
+		void (redo ? markerHistory.redo() : markerHistory.undo());
 	}
 
 	function mKeypress(event: KeyboardEvent) {
@@ -448,14 +472,16 @@
 	async function saveRange(marker: (typeof markers)[number], range: FrameRange) {
 		if (range.frame === marker.frame && range.duration === marker.duration) return false;
 		if (!isInTimeline(range, timeline)) return false;
-		await updateMarker({
-			id: marker.id,
-			name: marker.name ?? "",
-			description: marker.description ?? "",
-			categoryId: marker.categoryId,
-			...range,
-			shareToken,
-		});
+		await tracked(
+			updateMarker({
+				id: marker.id,
+				name: marker.name ?? "",
+				description: marker.description ?? "",
+				categoryId: marker.categoryId,
+				...range,
+				shareToken,
+			}),
+		);
 		return true;
 	}
 
@@ -657,10 +683,26 @@
 				{/if}
 			</div>
 		</Pane>
-		{#if selectedMarker && !mobile}
+		{#if showBatch}
 			<Pane minSize={29} maxSize={70} class="overflow-auto">
 				<div class="h-full shrink-0 pb-10">
-					{#key selectedMarker.id}
+					<BatchUpdateMarkers
+						markers={selectedMarkers}
+						hiddenCount={hiddenSelectedCount}
+						{projectId}
+						{startFrame}
+						{frameRate}
+						{frameCount}
+						ondelete={deleteSelectedMarkers}
+						onclose={() => (selectedMarkerIds = [])}
+					/>
+				</div>
+			</Pane>
+		{:else if selectedMarker && !mobile}
+			<Pane minSize={29} maxSize={70} class="overflow-auto">
+				<div class="h-full shrink-0 pb-10">
+					<!-- After an undo or redo the editor starts over, or its next autosave would overwrite it -->
+					{#key `${selectedMarker.id}:${markerHistory?.revision ?? 0}`}
 						{#if isResponding}
 							<ResponseMarker
 								bind:this={responseMarkerComponent}
@@ -710,8 +752,10 @@
 	/>
 {/if}
 
+<svelte:document on:visibilitychange={reloadClipboard} />
 <svelte:window
-	on:storage={reloadClipboard}
+	on:focus={reloadClipboard}
+	on:keydown={undoKeypress}
 	on:keydown={mKeypress}
 	on:keydown={deleteKeypress}
 	on:keydown={escapeKeypress}

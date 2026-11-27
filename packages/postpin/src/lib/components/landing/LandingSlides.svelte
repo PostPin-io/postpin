@@ -114,6 +114,7 @@
 		{ name: "DaVinci Resolve Studio", icon: "davinci-resolve", docs: "/plugins/resolve" },
 		{ name: "Adobe Premiere Pro", icon: "premiere-pro", docs: "/plugins/premiere" },
 		{ name: "Avid Pro Tools", icon: "pro-tools", docs: "/plugins/desktop" },
+		{ name: "FilmCraft", icon: "filmcraft", docs: "/plugins/filmcraft" },
 	];
 
 	const slides = [
@@ -368,7 +369,7 @@
 				{/each}
 				<a
 					href="{DOCS}/guide/projects#upload-from-the-browser"
-					class="card-lift card border border-dashed border-base-300 bg-base-100 hover:border-primary"
+					class="card-lift card border border-dashed border-base-300 bg-base-100 hover:border-primary sm:col-span-2"
 				>
 					<div class="card-body flex-row items-center gap-4">
 						<span class="grid size-12 shrink-0 place-items-center rounded-box bg-base-200">

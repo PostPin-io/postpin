@@ -398,6 +398,8 @@ export const ModelName = {
 	TwoFactor: "TwoFactor",
 	Passkey: "Passkey",
 	GuideProgress: "GuideProgress",
+	MarkerUndoStep: "MarkerUndoStep",
+	MarkerClipboard: "MarkerClipboard",
 	Marker: "Marker",
 	MarkerPointer: "MarkerPointer",
 	Category: "Category",
@@ -447,6 +449,8 @@ export type TypeMap<
 			| "twoFactor"
 			| "passkey"
 			| "guideProgress"
+			| "markerUndoStep"
+			| "markerClipboard"
 			| "marker"
 			| "markerPointer"
 			| "category"
@@ -1062,6 +1066,156 @@ export type TypeMap<
 					args: Prisma.GuideProgressCountArgs<ExtArgs>;
 					result:
 						runtime.Types.Utils.Optional<Prisma.GuideProgressCountAggregateOutputType> | number;
+				};
+			};
+		};
+		MarkerUndoStep: {
+			payload: Prisma.$MarkerUndoStepPayload<ExtArgs>;
+			fields: Prisma.MarkerUndoStepFieldRefs;
+			operations: {
+				findUnique: {
+					args: Prisma.MarkerUndoStepFindUniqueArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerUndoStepPayload> | null;
+				};
+				findUniqueOrThrow: {
+					args: Prisma.MarkerUndoStepFindUniqueOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerUndoStepPayload>;
+				};
+				findFirst: {
+					args: Prisma.MarkerUndoStepFindFirstArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerUndoStepPayload> | null;
+				};
+				findFirstOrThrow: {
+					args: Prisma.MarkerUndoStepFindFirstOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerUndoStepPayload>;
+				};
+				findMany: {
+					args: Prisma.MarkerUndoStepFindManyArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerUndoStepPayload>[];
+				};
+				create: {
+					args: Prisma.MarkerUndoStepCreateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerUndoStepPayload>;
+				};
+				createMany: {
+					args: Prisma.MarkerUndoStepCreateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				createManyAndReturn: {
+					args: Prisma.MarkerUndoStepCreateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerUndoStepPayload>[];
+				};
+				delete: {
+					args: Prisma.MarkerUndoStepDeleteArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerUndoStepPayload>;
+				};
+				update: {
+					args: Prisma.MarkerUndoStepUpdateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerUndoStepPayload>;
+				};
+				deleteMany: {
+					args: Prisma.MarkerUndoStepDeleteManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateMany: {
+					args: Prisma.MarkerUndoStepUpdateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateManyAndReturn: {
+					args: Prisma.MarkerUndoStepUpdateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerUndoStepPayload>[];
+				};
+				upsert: {
+					args: Prisma.MarkerUndoStepUpsertArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerUndoStepPayload>;
+				};
+				aggregate: {
+					args: Prisma.MarkerUndoStepAggregateArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.AggregateMarkerUndoStep>;
+				};
+				groupBy: {
+					args: Prisma.MarkerUndoStepGroupByArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.MarkerUndoStepGroupByOutputType>[];
+				};
+				count: {
+					args: Prisma.MarkerUndoStepCountArgs<ExtArgs>;
+					result:
+						runtime.Types.Utils.Optional<Prisma.MarkerUndoStepCountAggregateOutputType> | number;
+				};
+			};
+		};
+		MarkerClipboard: {
+			payload: Prisma.$MarkerClipboardPayload<ExtArgs>;
+			fields: Prisma.MarkerClipboardFieldRefs;
+			operations: {
+				findUnique: {
+					args: Prisma.MarkerClipboardFindUniqueArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerClipboardPayload> | null;
+				};
+				findUniqueOrThrow: {
+					args: Prisma.MarkerClipboardFindUniqueOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerClipboardPayload>;
+				};
+				findFirst: {
+					args: Prisma.MarkerClipboardFindFirstArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerClipboardPayload> | null;
+				};
+				findFirstOrThrow: {
+					args: Prisma.MarkerClipboardFindFirstOrThrowArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerClipboardPayload>;
+				};
+				findMany: {
+					args: Prisma.MarkerClipboardFindManyArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerClipboardPayload>[];
+				};
+				create: {
+					args: Prisma.MarkerClipboardCreateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerClipboardPayload>;
+				};
+				createMany: {
+					args: Prisma.MarkerClipboardCreateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				createManyAndReturn: {
+					args: Prisma.MarkerClipboardCreateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerClipboardPayload>[];
+				};
+				delete: {
+					args: Prisma.MarkerClipboardDeleteArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerClipboardPayload>;
+				};
+				update: {
+					args: Prisma.MarkerClipboardUpdateArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerClipboardPayload>;
+				};
+				deleteMany: {
+					args: Prisma.MarkerClipboardDeleteManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateMany: {
+					args: Prisma.MarkerClipboardUpdateManyArgs<ExtArgs>;
+					result: BatchPayload;
+				};
+				updateManyAndReturn: {
+					args: Prisma.MarkerClipboardUpdateManyAndReturnArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerClipboardPayload>[];
+				};
+				upsert: {
+					args: Prisma.MarkerClipboardUpsertArgs<ExtArgs>;
+					result: runtime.Types.Utils.PayloadToResult<Prisma.$MarkerClipboardPayload>;
+				};
+				aggregate: {
+					args: Prisma.MarkerClipboardAggregateArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.AggregateMarkerClipboard>;
+				};
+				groupBy: {
+					args: Prisma.MarkerClipboardGroupByArgs<ExtArgs>;
+					result: runtime.Types.Utils.Optional<Prisma.MarkerClipboardGroupByOutputType>[];
+				};
+				count: {
+					args: Prisma.MarkerClipboardCountArgs<ExtArgs>;
+					result:
+						runtime.Types.Utils.Optional<Prisma.MarkerClipboardCountAggregateOutputType> | number;
 				};
 			};
 		};
@@ -2792,6 +2946,38 @@ export const GuideProgressScalarFieldEnum = {
 export type GuideProgressScalarFieldEnum =
 	(typeof GuideProgressScalarFieldEnum)[keyof typeof GuideProgressScalarFieldEnum];
 
+export const MarkerUndoStepScalarFieldEnum = {
+	id: "id",
+	userId: "userId",
+	guestId: "guestId",
+	action: "action",
+	label: "label",
+	coalesceKey: "coalesceKey",
+	exportIds: "exportIds",
+	markerIds: "markerIds",
+	before: "before",
+	after: "after",
+	undoneAt: "undoneAt",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
+} as const;
+
+export type MarkerUndoStepScalarFieldEnum =
+	(typeof MarkerUndoStepScalarFieldEnum)[keyof typeof MarkerUndoStepScalarFieldEnum];
+
+export const MarkerClipboardScalarFieldEnum = {
+	id: "id",
+	userId: "userId",
+	guestId: "guestId",
+	sourceExportId: "sourceExportId",
+	markerIds: "markerIds",
+	mode: "mode",
+	updatedAt: "updatedAt",
+} as const;
+
+export type MarkerClipboardScalarFieldEnum =
+	(typeof MarkerClipboardScalarFieldEnum)[keyof typeof MarkerClipboardScalarFieldEnum];
+
 export const MarkerScalarFieldEnum = {
 	id: "id",
 	name: "name",
@@ -3225,6 +3411,22 @@ export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "J
 export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, "QueryMode">;
 
 /**
+ * Reference to a field of type 'MarkerUndoAction'
+ */
+export type EnumMarkerUndoActionFieldRefInput<$PrismaModel> = FieldRefInputType<
+	$PrismaModel,
+	"MarkerUndoAction"
+>;
+
+/**
+ * Reference to a field of type 'MarkerUndoAction[]'
+ */
+export type ListEnumMarkerUndoActionFieldRefInput<$PrismaModel> = FieldRefInputType<
+	$PrismaModel,
+	"MarkerUndoAction[]"
+>;
+
+/**
  * Reference to a field of type 'PointerKind'
  */
 export type EnumPointerKindFieldRefInput<$PrismaModel> = FieldRefInputType<
@@ -3473,6 +3675,8 @@ export type GlobalOmitConfig = {
 	twoFactor?: Prisma.TwoFactorOmit;
 	passkey?: Prisma.PasskeyOmit;
 	guideProgress?: Prisma.GuideProgressOmit;
+	markerUndoStep?: Prisma.MarkerUndoStepOmit;
+	markerClipboard?: Prisma.MarkerClipboardOmit;
 	marker?: Prisma.MarkerOmit;
 	markerPointer?: Prisma.MarkerPointerOmit;
 	category?: Prisma.CategoryOmit;

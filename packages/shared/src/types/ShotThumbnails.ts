@@ -15,6 +15,11 @@ export const shotThumbnails = v.object({
 	 * Missing once every image is there.
 	 */
 	ready: v.optional(v.number()),
+	/**
+	 * Every shot also has a large image of this size, for big tiles in the shot grid. Missing on
+	 * thumbnails rendered before there were large ones.
+	 */
+	large: v.optional(v.object({ width: v.number(), height: v.number() })),
 });
 
 export type ShotThumbnails = v.InferOutput<typeof shotThumbnails>;

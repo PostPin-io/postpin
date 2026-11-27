@@ -274,6 +274,11 @@ export type UserWhereInput = {
 	> | null;
 	markers?: Prisma.MarkerListRelationFilter;
 	markerSets?: Prisma.MarkerSetListRelationFilter;
+	markerUndoSteps?: Prisma.MarkerUndoStepListRelationFilter;
+	markerClipboard?: Prisma.XOR<
+		Prisma.MarkerClipboardNullableScalarRelationFilter,
+		Prisma.MarkerClipboardWhereInput
+	> | null;
 	responses?: Prisma.ResponseListRelationFilter;
 	createdGrants?: Prisma.MemberGrantListRelationFilter;
 	createdShareLinks?: Prisma.ShareLinkListRelationFilter;
@@ -307,6 +312,8 @@ export type UserOrderByWithRelationInput = {
 	lastActiveOrganization?: Prisma.OrganizationOrderByWithRelationInput;
 	markers?: Prisma.MarkerOrderByRelationAggregateInput;
 	markerSets?: Prisma.MarkerSetOrderByRelationAggregateInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepOrderByRelationAggregateInput;
+	markerClipboard?: Prisma.MarkerClipboardOrderByWithRelationInput;
 	responses?: Prisma.ResponseOrderByRelationAggregateInput;
 	createdGrants?: Prisma.MemberGrantOrderByRelationAggregateInput;
 	createdShareLinks?: Prisma.ShareLinkOrderByRelationAggregateInput;
@@ -347,6 +354,11 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
 		> | null;
 		markers?: Prisma.MarkerListRelationFilter;
 		markerSets?: Prisma.MarkerSetListRelationFilter;
+		markerUndoSteps?: Prisma.MarkerUndoStepListRelationFilter;
+		markerClipboard?: Prisma.XOR<
+			Prisma.MarkerClipboardNullableScalarRelationFilter,
+			Prisma.MarkerClipboardWhereInput
+		> | null;
 		responses?: Prisma.ResponseListRelationFilter;
 		createdGrants?: Prisma.MemberGrantListRelationFilter;
 		createdShareLinks?: Prisma.ShareLinkListRelationFilter;
@@ -417,6 +429,8 @@ export type UserCreateInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -449,6 +463,8 @@ export type UserUncheckedCreateInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -481,6 +497,8 @@ export type UserUpdateInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -513,6 +531,8 @@ export type UserUncheckedUpdateInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -789,6 +809,62 @@ export type UserUpdateOneRequiredWithoutGuideProgressNestedInput = {
 			Prisma.UserUpdateWithoutGuideProgressInput
 		>,
 		Prisma.UserUncheckedUpdateWithoutGuideProgressInput
+	>;
+};
+
+export type UserCreateNestedOneWithoutMarkerUndoStepsInput = {
+	create?: Prisma.XOR<
+		Prisma.UserCreateWithoutMarkerUndoStepsInput,
+		Prisma.UserUncheckedCreateWithoutMarkerUndoStepsInput
+	>;
+	connectOrCreate?: Prisma.UserCreateOrConnectWithoutMarkerUndoStepsInput;
+	connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneWithoutMarkerUndoStepsNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.UserCreateWithoutMarkerUndoStepsInput,
+		Prisma.UserUncheckedCreateWithoutMarkerUndoStepsInput
+	>;
+	connectOrCreate?: Prisma.UserCreateOrConnectWithoutMarkerUndoStepsInput;
+	upsert?: Prisma.UserUpsertWithoutMarkerUndoStepsInput;
+	disconnect?: Prisma.UserWhereInput | boolean;
+	delete?: Prisma.UserWhereInput | boolean;
+	connect?: Prisma.UserWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.UserUpdateToOneWithWhereWithoutMarkerUndoStepsInput,
+			Prisma.UserUpdateWithoutMarkerUndoStepsInput
+		>,
+		Prisma.UserUncheckedUpdateWithoutMarkerUndoStepsInput
+	>;
+};
+
+export type UserCreateNestedOneWithoutMarkerClipboardInput = {
+	create?: Prisma.XOR<
+		Prisma.UserCreateWithoutMarkerClipboardInput,
+		Prisma.UserUncheckedCreateWithoutMarkerClipboardInput
+	>;
+	connectOrCreate?: Prisma.UserCreateOrConnectWithoutMarkerClipboardInput;
+	connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneWithoutMarkerClipboardNestedInput = {
+	create?: Prisma.XOR<
+		Prisma.UserCreateWithoutMarkerClipboardInput,
+		Prisma.UserUncheckedCreateWithoutMarkerClipboardInput
+	>;
+	connectOrCreate?: Prisma.UserCreateOrConnectWithoutMarkerClipboardInput;
+	upsert?: Prisma.UserUpsertWithoutMarkerClipboardInput;
+	disconnect?: Prisma.UserWhereInput | boolean;
+	delete?: Prisma.UserWhereInput | boolean;
+	connect?: Prisma.UserWhereUniqueInput;
+	update?: Prisma.XOR<
+		Prisma.XOR<
+			Prisma.UserUpdateToOneWithWhereWithoutMarkerClipboardInput,
+			Prisma.UserUpdateWithoutMarkerClipboardInput
+		>,
+		Prisma.UserUncheckedUpdateWithoutMarkerClipboardInput
 	>;
 };
 
@@ -1261,6 +1337,8 @@ export type UserCreateWithoutSessionsInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -1292,6 +1370,8 @@ export type UserUncheckedCreateWithoutSessionsInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -1351,6 +1431,8 @@ export type UserUpdateWithoutSessionsInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -1382,6 +1464,8 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -1413,6 +1497,8 @@ export type UserCreateWithoutAccountsInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -1444,6 +1530,8 @@ export type UserUncheckedCreateWithoutAccountsInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -1503,6 +1591,8 @@ export type UserUpdateWithoutAccountsInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -1534,6 +1624,8 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -1565,6 +1657,8 @@ export type UserCreateWithoutTwoFactorsInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -1596,6 +1690,8 @@ export type UserUncheckedCreateWithoutTwoFactorsInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -1655,6 +1751,8 @@ export type UserUpdateWithoutTwoFactorsInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -1686,6 +1784,8 @@ export type UserUncheckedUpdateWithoutTwoFactorsInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -1717,6 +1817,8 @@ export type UserCreateWithoutPasskeysInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -1748,6 +1850,8 @@ export type UserUncheckedCreateWithoutPasskeysInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -1807,6 +1911,8 @@ export type UserUpdateWithoutPasskeysInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -1838,6 +1944,8 @@ export type UserUncheckedUpdateWithoutPasskeysInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -1870,6 +1978,8 @@ export type UserCreateWithoutGuideProgressInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -1901,6 +2011,8 @@ export type UserUncheckedCreateWithoutGuideProgressInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -1960,6 +2072,8 @@ export type UserUpdateWithoutGuideProgressInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -1991,6 +2105,8 @@ export type UserUncheckedUpdateWithoutGuideProgressInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -1998,6 +2114,326 @@ export type UserUncheckedUpdateWithoutGuideProgressInput = {
 	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
 	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+};
+
+export type UserCreateWithoutMarkerUndoStepsInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	email: string;
+	emailVerified?: boolean;
+	image?: string | null;
+	storageQuota?: bigint | number | null;
+	guidesEnabled?: boolean;
+	twoFactorEnabled?: boolean | null;
+	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
+	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
+	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
+	twoFactors?: Prisma.TwoFactorCreateNestedManyWithoutUserInput;
+	passkeys?: Prisma.PasskeyCreateNestedManyWithoutUserInput;
+	createdProjects?: Prisma.ProjectCreateNestedManyWithoutCreatorInput;
+	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
+	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
+	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
+	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
+	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
+	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
+	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
+	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
+};
+
+export type UserUncheckedCreateWithoutMarkerUndoStepsInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	email: string;
+	emailVerified?: boolean;
+	image?: string | null;
+	storageQuota?: bigint | number | null;
+	guidesEnabled?: boolean;
+	twoFactorEnabled?: boolean | null;
+	lastActiveOrganizationId?: string | null;
+	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
+	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
+	accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput;
+	twoFactors?: Prisma.TwoFactorUncheckedCreateNestedManyWithoutUserInput;
+	passkeys?: Prisma.PasskeyUncheckedCreateNestedManyWithoutUserInput;
+	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
+	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
+	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
+	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
+	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
+	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
+	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
+};
+
+export type UserCreateOrConnectWithoutMarkerUndoStepsInput = {
+	where: Prisma.UserWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.UserCreateWithoutMarkerUndoStepsInput,
+		Prisma.UserUncheckedCreateWithoutMarkerUndoStepsInput
+	>;
+};
+
+export type UserUpsertWithoutMarkerUndoStepsInput = {
+	update: Prisma.XOR<
+		Prisma.UserUpdateWithoutMarkerUndoStepsInput,
+		Prisma.UserUncheckedUpdateWithoutMarkerUndoStepsInput
+	>;
+	create: Prisma.XOR<
+		Prisma.UserCreateWithoutMarkerUndoStepsInput,
+		Prisma.UserUncheckedCreateWithoutMarkerUndoStepsInput
+	>;
+	where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutMarkerUndoStepsInput = {
+	where?: Prisma.UserWhereInput;
+	data: Prisma.XOR<
+		Prisma.UserUpdateWithoutMarkerUndoStepsInput,
+		Prisma.UserUncheckedUpdateWithoutMarkerUndoStepsInput
+	>;
+};
+
+export type UserUpdateWithoutMarkerUndoStepsInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	email?: Prisma.StringFieldUpdateOperationsInput | string;
+	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
+	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
+	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
+	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
+	twoFactors?: Prisma.TwoFactorUpdateManyWithoutUserNestedInput;
+	passkeys?: Prisma.PasskeyUpdateManyWithoutUserNestedInput;
+	createdProjects?: Prisma.ProjectUpdateManyWithoutCreatorNestedInput;
+	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
+	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
+	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
+	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
+	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
+	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
+	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
+	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutMarkerUndoStepsInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	email?: Prisma.StringFieldUpdateOperationsInput | string;
+	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
+	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
+	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
+	accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput;
+	twoFactors?: Prisma.TwoFactorUncheckedUpdateManyWithoutUserNestedInput;
+	passkeys?: Prisma.PasskeyUncheckedUpdateManyWithoutUserNestedInput;
+	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
+	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
+	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
+	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
+	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
+	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
+};
+
+export type UserCreateWithoutMarkerClipboardInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	email: string;
+	emailVerified?: boolean;
+	image?: string | null;
+	storageQuota?: bigint | number | null;
+	guidesEnabled?: boolean;
+	twoFactorEnabled?: boolean | null;
+	uploadedExports?: Prisma.ExportCreateNestedManyWithoutUploadedByInput;
+	sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
+	accounts?: Prisma.AccountCreateNestedManyWithoutUserInput;
+	twoFactors?: Prisma.TwoFactorCreateNestedManyWithoutUserInput;
+	passkeys?: Prisma.PasskeyCreateNestedManyWithoutUserInput;
+	createdProjects?: Prisma.ProjectCreateNestedManyWithoutCreatorInput;
+	memberships?: Prisma.MemberCreateNestedManyWithoutUserInput;
+	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
+	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
+	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
+	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
+	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
+	createdCategories?: Prisma.CategoryCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetCreateNestedManyWithoutCreatedByInput;
+	inviteLinks?: Prisma.InviteLinkCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressCreateNestedManyWithoutUserInput;
+};
+
+export type UserUncheckedCreateWithoutMarkerClipboardInput = {
+	id?: string;
+	name: string;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	email: string;
+	emailVerified?: boolean;
+	image?: string | null;
+	storageQuota?: bigint | number | null;
+	guidesEnabled?: boolean;
+	twoFactorEnabled?: boolean | null;
+	lastActiveOrganizationId?: string | null;
+	uploadedExports?: Prisma.ExportUncheckedCreateNestedManyWithoutUploadedByInput;
+	sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
+	accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput;
+	twoFactors?: Prisma.TwoFactorUncheckedCreateNestedManyWithoutUserInput;
+	passkeys?: Prisma.PasskeyUncheckedCreateNestedManyWithoutUserInput;
+	createdProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCreatorInput;
+	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
+	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
+	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
+	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
+	createdCategories?: Prisma.CategoryUncheckedCreateNestedManyWithoutCreatedByInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedCreateNestedManyWithoutCreatedByInput;
+	inviteLinks?: Prisma.InviteLinkUncheckedCreateNestedManyWithoutCreatedByInput;
+	guideProgress?: Prisma.GuideProgressUncheckedCreateNestedManyWithoutUserInput;
+};
+
+export type UserCreateOrConnectWithoutMarkerClipboardInput = {
+	where: Prisma.UserWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.UserCreateWithoutMarkerClipboardInput,
+		Prisma.UserUncheckedCreateWithoutMarkerClipboardInput
+	>;
+};
+
+export type UserUpsertWithoutMarkerClipboardInput = {
+	update: Prisma.XOR<
+		Prisma.UserUpdateWithoutMarkerClipboardInput,
+		Prisma.UserUncheckedUpdateWithoutMarkerClipboardInput
+	>;
+	create: Prisma.XOR<
+		Prisma.UserCreateWithoutMarkerClipboardInput,
+		Prisma.UserUncheckedCreateWithoutMarkerClipboardInput
+	>;
+	where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutMarkerClipboardInput = {
+	where?: Prisma.UserWhereInput;
+	data: Prisma.XOR<
+		Prisma.UserUpdateWithoutMarkerClipboardInput,
+		Prisma.UserUncheckedUpdateWithoutMarkerClipboardInput
+	>;
+};
+
+export type UserUpdateWithoutMarkerClipboardInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	email?: Prisma.StringFieldUpdateOperationsInput | string;
+	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
+	uploadedExports?: Prisma.ExportUpdateManyWithoutUploadedByNestedInput;
+	sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
+	accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput;
+	twoFactors?: Prisma.TwoFactorUpdateManyWithoutUserNestedInput;
+	passkeys?: Prisma.PasskeyUpdateManyWithoutUserNestedInput;
+	createdProjects?: Prisma.ProjectUpdateManyWithoutCreatorNestedInput;
+	memberships?: Prisma.MemberUpdateManyWithoutUserNestedInput;
+	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
+	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
+	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
+	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
+	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
+	createdCategories?: Prisma.CategoryUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUpdateManyWithoutCreatedByNestedInput;
+	inviteLinks?: Prisma.InviteLinkUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUpdateManyWithoutUserNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutMarkerClipboardInput = {
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	name?: Prisma.StringFieldUpdateOperationsInput | string;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	email?: Prisma.StringFieldUpdateOperationsInput | string;
+	emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	storageQuota?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null;
+	guidesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+	twoFactorEnabled?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null;
+	lastActiveOrganizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+	uploadedExports?: Prisma.ExportUncheckedUpdateManyWithoutUploadedByNestedInput;
+	sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
+	accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput;
+	twoFactors?: Prisma.TwoFactorUncheckedUpdateManyWithoutUserNestedInput;
+	passkeys?: Prisma.PasskeyUncheckedUpdateManyWithoutUserNestedInput;
+	createdProjects?: Prisma.ProjectUncheckedUpdateManyWithoutCreatorNestedInput;
+	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
+	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
+	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
+	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
+	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
+	createdCategories?: Prisma.CategoryUncheckedUpdateManyWithoutCreatedByNestedInput;
+	createdCategoryPresets?: Prisma.CategoryPresetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	inviteLinks?: Prisma.InviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput;
+	guideProgress?: Prisma.GuideProgressUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutMarkersInput = {
@@ -2021,6 +2457,8 @@ export type UserCreateWithoutMarkersInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -2052,6 +2490,8 @@ export type UserUncheckedCreateWithoutMarkersInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -2111,6 +2551,8 @@ export type UserUpdateWithoutMarkersInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -2142,6 +2584,8 @@ export type UserUncheckedUpdateWithoutMarkersInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -2174,6 +2618,8 @@ export type UserCreateWithoutCreatedCategoriesInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -2205,6 +2651,8 @@ export type UserUncheckedCreateWithoutCreatedCategoriesInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -2264,6 +2712,8 @@ export type UserUpdateWithoutCreatedCategoriesInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -2295,6 +2745,8 @@ export type UserUncheckedUpdateWithoutCreatedCategoriesInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -2326,6 +2778,8 @@ export type UserCreateWithoutCreatedCategoryPresetsInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -2357,6 +2811,8 @@ export type UserUncheckedCreateWithoutCreatedCategoryPresetsInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -2416,6 +2872,8 @@ export type UserUpdateWithoutCreatedCategoryPresetsInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -2447,6 +2905,8 @@ export type UserUncheckedUpdateWithoutCreatedCategoryPresetsInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -2478,6 +2938,8 @@ export type UserCreateWithoutResponsesInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
@@ -2509,6 +2971,8 @@ export type UserUncheckedCreateWithoutResponsesInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
@@ -2568,6 +3032,8 @@ export type UserUpdateWithoutResponsesInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
@@ -2599,6 +3065,8 @@ export type UserUncheckedUpdateWithoutResponsesInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
@@ -2629,6 +3097,8 @@ export type UserCreateWithoutMarkerSetsInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -2660,6 +3130,8 @@ export type UserUncheckedCreateWithoutMarkerSetsInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -2719,6 +3191,8 @@ export type UserUpdateWithoutMarkerSetsInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -2750,6 +3224,8 @@ export type UserUncheckedUpdateWithoutMarkerSetsInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -2781,6 +3257,8 @@ export type UserCreateWithoutLastActiveOrganizationInput = {
 	invitations?: Prisma.InvitationCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -2812,6 +3290,8 @@ export type UserUncheckedCreateWithoutLastActiveOrganizationInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -2903,6 +3383,8 @@ export type UserCreateWithoutMembershipsInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -2934,6 +3416,8 @@ export type UserUncheckedCreateWithoutMembershipsInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -2993,6 +3477,8 @@ export type UserUpdateWithoutMembershipsInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -3024,6 +3510,8 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -3055,6 +3543,8 @@ export type UserCreateWithoutInvitationsInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -3086,6 +3576,8 @@ export type UserUncheckedCreateWithoutInvitationsInput = {
 	memberships?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -3145,6 +3637,8 @@ export type UserUpdateWithoutInvitationsInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -3176,6 +3670,8 @@ export type UserUncheckedUpdateWithoutInvitationsInput = {
 	memberships?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -3208,6 +3704,8 @@ export type UserCreateWithoutInviteLinksInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -3239,6 +3737,8 @@ export type UserUncheckedCreateWithoutInviteLinksInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -3298,6 +3798,8 @@ export type UserUpdateWithoutInviteLinksInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -3329,6 +3831,8 @@ export type UserUncheckedUpdateWithoutInviteLinksInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -3360,6 +3864,8 @@ export type UserCreateWithoutCreatedGrantsInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
@@ -3391,6 +3897,8 @@ export type UserUncheckedCreateWithoutCreatedGrantsInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
@@ -3450,6 +3958,8 @@ export type UserUpdateWithoutCreatedGrantsInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
@@ -3481,6 +3991,8 @@ export type UserUncheckedUpdateWithoutCreatedGrantsInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
@@ -3511,6 +4023,8 @@ export type UserCreateWithoutCreatedProjectsInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -3542,6 +4056,8 @@ export type UserUncheckedCreateWithoutCreatedProjectsInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -3601,6 +4117,8 @@ export type UserUpdateWithoutCreatedProjectsInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -3632,6 +4150,8 @@ export type UserUncheckedUpdateWithoutCreatedProjectsInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -3663,6 +4183,8 @@ export type UserCreateWithoutUploadedExportsInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -3694,6 +4216,8 @@ export type UserUncheckedCreateWithoutUploadedExportsInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -3753,6 +4277,8 @@ export type UserUpdateWithoutUploadedExportsInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -3784,6 +4310,8 @@ export type UserUncheckedUpdateWithoutUploadedExportsInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -3816,6 +4344,8 @@ export type UserCreateWithoutCreatedShareLinksInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailCreateNestedManyWithoutSenderInput;
@@ -3847,6 +4377,8 @@ export type UserUncheckedCreateWithoutCreatedShareLinksInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedCreateNestedManyWithoutSenderInput;
@@ -3906,6 +4438,8 @@ export type UserUpdateWithoutCreatedShareLinksInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUpdateManyWithoutSenderNestedInput;
@@ -3937,6 +4471,8 @@ export type UserUncheckedUpdateWithoutCreatedShareLinksInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	sentShareLinkMails?: Prisma.ShareLinkMailUncheckedUpdateManyWithoutSenderNestedInput;
@@ -3968,6 +4504,8 @@ export type UserCreateWithoutSentShareLinkMailsInput = {
 	lastActiveOrganization?: Prisma.OrganizationCreateNestedOneWithoutLastActiveUsersInput;
 	markers?: Prisma.MarkerCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkCreateNestedManyWithoutCreatorInput;
@@ -3999,6 +4537,8 @@ export type UserUncheckedCreateWithoutSentShareLinkMailsInput = {
 	invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput;
 	markers?: Prisma.MarkerUncheckedCreateNestedManyWithoutAuthorInput;
 	markerSets?: Prisma.MarkerSetUncheckedCreateNestedManyWithoutCreatedByInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedCreateNestedManyWithoutUserInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedCreateNestedOneWithoutUserInput;
 	responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutAuthorInput;
 	createdGrants?: Prisma.MemberGrantUncheckedCreateNestedManyWithoutCreatedByInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedCreateNestedManyWithoutCreatorInput;
@@ -4058,6 +4598,8 @@ export type UserUpdateWithoutSentShareLinkMailsInput = {
 	lastActiveOrganization?: Prisma.OrganizationUpdateOneWithoutLastActiveUsersNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -4089,6 +4631,8 @@ export type UserUncheckedUpdateWithoutSentShareLinkMailsInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -4132,6 +4676,8 @@ export type UserUpdateWithoutLastActiveOrganizationInput = {
 	invitations?: Prisma.InvitationUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUpdateManyWithoutCreatorNestedInput;
@@ -4163,6 +4709,8 @@ export type UserUncheckedUpdateWithoutLastActiveOrganizationInput = {
 	invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput;
 	markers?: Prisma.MarkerUncheckedUpdateManyWithoutAuthorNestedInput;
 	markerSets?: Prisma.MarkerSetUncheckedUpdateManyWithoutCreatedByNestedInput;
+	markerUndoSteps?: Prisma.MarkerUndoStepUncheckedUpdateManyWithoutUserNestedInput;
+	markerClipboard?: Prisma.MarkerClipboardUncheckedUpdateOneWithoutUserNestedInput;
 	responses?: Prisma.ResponseUncheckedUpdateManyWithoutAuthorNestedInput;
 	createdGrants?: Prisma.MemberGrantUncheckedUpdateManyWithoutCreatedByNestedInput;
 	createdShareLinks?: Prisma.ShareLinkUncheckedUpdateManyWithoutCreatorNestedInput;
@@ -4201,6 +4749,7 @@ export type UserCountOutputType = {
 	invitations: number;
 	markers: number;
 	markerSets: number;
+	markerUndoSteps: number;
 	responses: number;
 	createdGrants: number;
 	createdShareLinks: number;
@@ -4224,6 +4773,7 @@ export type UserCountOutputTypeSelect<
 	invitations?: boolean | UserCountOutputTypeCountInvitationsArgs;
 	markers?: boolean | UserCountOutputTypeCountMarkersArgs;
 	markerSets?: boolean | UserCountOutputTypeCountMarkerSetsArgs;
+	markerUndoSteps?: boolean | UserCountOutputTypeCountMarkerUndoStepsArgs;
 	responses?: boolean | UserCountOutputTypeCountResponsesArgs;
 	createdGrants?: boolean | UserCountOutputTypeCountCreatedGrantsArgs;
 	createdShareLinks?: boolean | UserCountOutputTypeCountCreatedShareLinksArgs;
@@ -4339,6 +4889,15 @@ export type UserCountOutputTypeCountMarkerSetsArgs<
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountMarkerUndoStepsArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	where?: Prisma.MarkerUndoStepWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountResponsesArgs<
 	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
@@ -4434,6 +4993,8 @@ export type UserSelect<
 		lastActiveOrganization?: boolean | Prisma.User$lastActiveOrganizationArgs<ExtArgs>;
 		markers?: boolean | Prisma.User$markersArgs<ExtArgs>;
 		markerSets?: boolean | Prisma.User$markerSetsArgs<ExtArgs>;
+		markerUndoSteps?: boolean | Prisma.User$markerUndoStepsArgs<ExtArgs>;
+		markerClipboard?: boolean | Prisma.User$markerClipboardArgs<ExtArgs>;
 		responses?: boolean | Prisma.User$responsesArgs<ExtArgs>;
 		createdGrants?: boolean | Prisma.User$createdGrantsArgs<ExtArgs>;
 		createdShareLinks?: boolean | Prisma.User$createdShareLinksArgs<ExtArgs>;
@@ -4531,6 +5092,8 @@ export type UserInclude<
 	lastActiveOrganization?: boolean | Prisma.User$lastActiveOrganizationArgs<ExtArgs>;
 	markers?: boolean | Prisma.User$markersArgs<ExtArgs>;
 	markerSets?: boolean | Prisma.User$markerSetsArgs<ExtArgs>;
+	markerUndoSteps?: boolean | Prisma.User$markerUndoStepsArgs<ExtArgs>;
+	markerClipboard?: boolean | Prisma.User$markerClipboardArgs<ExtArgs>;
 	responses?: boolean | Prisma.User$responsesArgs<ExtArgs>;
 	createdGrants?: boolean | Prisma.User$createdGrantsArgs<ExtArgs>;
 	createdShareLinks?: boolean | Prisma.User$createdShareLinksArgs<ExtArgs>;
@@ -4568,6 +5131,8 @@ export type $UserPayload<
 		lastActiveOrganization: Prisma.$OrganizationPayload<ExtArgs> | null;
 		markers: Prisma.$MarkerPayload<ExtArgs>[];
 		markerSets: Prisma.$MarkerSetPayload<ExtArgs>[];
+		markerUndoSteps: Prisma.$MarkerUndoStepPayload<ExtArgs>[];
+		markerClipboard: Prisma.$MarkerClipboardPayload<ExtArgs> | null;
 		responses: Prisma.$ResponsePayload<ExtArgs>[];
 		createdGrants: Prisma.$MemberGrantPayload<ExtArgs>[];
 		createdShareLinks: Prisma.$ShareLinkPayload<ExtArgs>[];
@@ -5225,6 +5790,30 @@ export interface Prisma__UserClient<
 				GlobalOmitOptions
 		  >
 		| Null
+	>;
+	markerUndoSteps<T extends Prisma.User$markerUndoStepsArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.User$markerUndoStepsArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		| runtime.Types.Result.GetResult<
+				Prisma.$MarkerUndoStepPayload<ExtArgs>,
+				T,
+				"findMany",
+				GlobalOmitOptions
+		  >
+		| Null
+	>;
+	markerClipboard<T extends Prisma.User$markerClipboardArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.User$markerClipboardArgs<ExtArgs>>,
+	): Prisma.Prisma__MarkerClipboardClient<
+		runtime.Types.Result.GetResult<
+			Prisma.$MarkerClipboardPayload<ExtArgs>,
+			T,
+			"findUniqueOrThrow",
+			GlobalOmitOptions
+		> | null,
+		null,
+		ExtArgs,
+		GlobalOmitOptions
 	>;
 	responses<T extends Prisma.User$responsesArgs<ExtArgs> = {}>(
 		args?: Prisma.Subset<T, Prisma.User$responsesArgs<ExtArgs>>,
@@ -6062,6 +6651,54 @@ export type User$markerSetsArgs<
 	take?: number;
 	skip?: number;
 	distinct?: Prisma.MarkerSetScalarFieldEnum | Prisma.MarkerSetScalarFieldEnum[];
+};
+
+/**
+ * User.markerUndoSteps
+ */
+export type User$markerUndoStepsArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the MarkerUndoStep
+	 */
+	select?: Prisma.MarkerUndoStepSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the MarkerUndoStep
+	 */
+	omit?: Prisma.MarkerUndoStepOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.MarkerUndoStepInclude<ExtArgs> | null;
+	where?: Prisma.MarkerUndoStepWhereInput;
+	orderBy?:
+		Prisma.MarkerUndoStepOrderByWithRelationInput | Prisma.MarkerUndoStepOrderByWithRelationInput[];
+	cursor?: Prisma.MarkerUndoStepWhereUniqueInput;
+	take?: number;
+	skip?: number;
+	distinct?: Prisma.MarkerUndoStepScalarFieldEnum | Prisma.MarkerUndoStepScalarFieldEnum[];
+};
+
+/**
+ * User.markerClipboard
+ */
+export type User$markerClipboardArgs<
+	ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+	/**
+	 * Select specific fields to fetch from the MarkerClipboard
+	 */
+	select?: Prisma.MarkerClipboardSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the MarkerClipboard
+	 */
+	omit?: Prisma.MarkerClipboardOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.MarkerClipboardInclude<ExtArgs> | null;
+	where?: Prisma.MarkerClipboardWhereInput;
 };
 
 /**

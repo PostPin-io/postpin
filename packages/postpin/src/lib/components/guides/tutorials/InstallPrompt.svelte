@@ -2,7 +2,7 @@
 	// The plugin question (docs/guides/tutorials/plugin-workflow.md, "The plugin question"): how the
 	// install tutorials start on their own. Which one fits depends on the program, so it asks once,
 	// on the export list, where the user is about to upload. No progress of its own: "No, thanks"
-	// skips all three install tutorials (after one confirmation, like every skip: rule 7), a
+	// skips all install tutorials (after one confirmation, like every skip: rule 7), a
 	// program starts its tutorial.
 	import ArrowLeft from "@lucide/svelte/icons/arrow-left";
 	import GraduationCap from "@lucide/svelte/icons/graduation-cap";
@@ -12,15 +12,18 @@
 
 	interface Props {
 		ondecline: () => void;
-		onchoose: (id: InstallId) => void;
+		/** startWith: what the tutorial starts with, the program for PostPin Desktop */
+		onchoose: (id: InstallId, startWith?: Record<string, string>) => void;
 	}
 	let { ondecline, onchoose }: Props = $props();
 
 	const style = GUIDE_STYLE.tutorial;
-	const PROGRAMS: { id: InstallId; name: string }[] = [
+	// PostPin Desktop works with several programs: one tutorial, started for the one chosen
+	const PROGRAMS: { id: InstallId; name: string; startWith?: Record<string, string> }[] = [
 		{ id: "install-resolve", name: "DaVinci Resolve" },
 		{ id: "install-premiere", name: "Premiere Pro" },
-		{ id: "install-desktop", name: "Pro Tools" },
+		{ id: "install-desktop", name: "Pro Tools", startWith: { program: "pro-tools" } },
+		{ id: "install-desktop", name: "FilmCraft", startWith: { program: "filmcraft" } },
 	];
 
 	let step = $state<"ask" | "confirm" | "choose">("ask");
@@ -75,8 +78,12 @@
 			{:else}
 				<h2 id="install-prompt-title" class="text-2xl font-bold">Which program do you work in?</h2>
 				<div class="flex flex-wrap gap-3">
-					{#each PROGRAMS as program (program.id)}
-						<button type="button" class="btn {style.button}" onclick={() => onchoose(program.id)}>
+					{#each PROGRAMS as program (program.name)}
+						<button
+							type="button"
+							class="btn {style.button}"
+							onclick={() => onchoose(program.id, program.startWith)}
+						>
 							{program.name}
 						</button>
 					{/each}

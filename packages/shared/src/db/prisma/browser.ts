@@ -58,6 +58,20 @@ export type Passkey = Prisma.PasskeyModel;
  */
 export type GuideProgress = Prisma.GuideProgressModel;
 /**
+ * Model MarkerUndoStep
+ * One step of a user's (or share guest's) undo history in the web app: what a marker action
+ * changed, so ⌘Z / ⌘⇧Z can take it back and do it again. Only the markers the action touched
+ * are kept, as they were before and after it (MarkerState, shared/src/logic/marker-history.ts).
+ * Kept 30 days. Not shown in the plugins, which have their own backups (MarkerSet).
+ */
+export type MarkerUndoStep = Prisma.MarkerUndoStepModel;
+/**
+ * Model MarkerClipboard
+ * What a user (or share guest) copied or cut with ⌘C / ⌘X, for every browser window and device.
+ * Only references: pasting reads the markers themselves.
+ */
+export type MarkerClipboard = Prisma.MarkerClipboardModel;
+/**
  * Model Marker
  *
  */

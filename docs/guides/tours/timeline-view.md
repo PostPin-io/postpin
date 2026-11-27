@@ -10,6 +10,7 @@ prerequisites: [first-review]
 code:
   - packages/postpin/src/lib/components/review/ShotGrid.svelte
   - packages/postpin/src/lib/components/review/MovieBarcode.svelte
+  - packages/postpin/src/lib/components/review/BarcodeOverview.svelte
   - packages/postpin/src/lib/components/review/EstimatedCuts.svelte
 ---
 
@@ -19,7 +20,7 @@ code:
 
 ## Steps
 
-1. `barcode`: **Highlights:** the movie barcode. **Text:** "An overview of the whole export by color."
+1. `barcode`: **Highlights:** the overview below the shot grid, the movie barcode with the shots in view framed. **Text:** "The whole export by color. Drag the frame or click beside it to jump through the shots, drag its edges to see more or fewer at once."
 2. `cuts`: **Highlights:** the detected cuts. **Text:** "PostPin detects cuts and shows a thumbnail per shot."
 3. `shot-grid`: **Highlights:** the shot grid. **Text:** "Jump to any shot directly."
 

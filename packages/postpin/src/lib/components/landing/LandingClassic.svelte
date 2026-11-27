@@ -106,6 +106,7 @@
 		{ name: "DaVinci Resolve Studio", icon: "davinci-resolve", docs: "/plugins/resolve" },
 		{ name: "Adobe Premiere Pro", icon: "premiere-pro", docs: "/plugins/premiere" },
 		{ name: "Avid Pro Tools", icon: "pro-tools", docs: "/plugins/desktop" },
+		{ name: "FilmCraft", icon: "filmcraft", docs: "/plugins/filmcraft" },
 	];
 
 	// hero replaces the default first screen below. rail is a narrow column left of the steps of "How
@@ -255,7 +256,7 @@
 				{/each}
 				<a
 					href="{DOCS}/guide/projects#upload-from-the-browser"
-					class="card border border-dashed border-base-300 bg-base-100 transition-colors hover:border-primary"
+					class="card border border-dashed border-base-300 bg-base-100 transition-colors hover:border-primary sm:col-span-2 lg:col-span-4"
 				>
 					<div class="card-body flex-row items-center gap-4">
 						<span class="grid size-12 shrink-0 place-items-center rounded-box bg-base-200">

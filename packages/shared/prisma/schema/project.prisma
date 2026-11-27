@@ -122,7 +122,9 @@ model ShareGuest {
   sessionTokenHash String    @unique
   lastViewedAt     DateTime?
 
-  markers Marker[]
+  markers         Marker[]
+  markerUndoSteps MarkerUndoStep[]
+  markerClipboard MarkerClipboard?
 
   @@index([shareLinkId])
   @@map("share_guest")
