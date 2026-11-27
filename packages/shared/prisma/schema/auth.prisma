@@ -24,6 +24,8 @@ model User {
   lastActiveOrganization   Organization?    @relation("LastActiveOrganization", fields: [lastActiveOrganizationId], references: [id], onDelete: SetNull)
   markers                  Marker[]
   markerSets               MarkerSet[]
+  markerUndoSteps          MarkerUndoStep[]
+  markerClipboard          MarkerClipboard?
   responses                Response[]
   createdGrants            MemberGrant[]
   createdShareLinks        ShareLink[]

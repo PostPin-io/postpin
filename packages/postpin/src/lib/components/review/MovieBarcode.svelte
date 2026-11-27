@@ -1,17 +1,17 @@
 <script lang="ts">
 	import type { MovieBarcode } from "@postpin-io/shared/types/MovieBarcode";
-	import { onMount } from "svelte";
 
 	interface Props {
 		data: MovieBarcode;
+		class?: string;
 	}
 
-	let { data }: Props = $props();
-	let canvas: HTMLCanvasElement;
+	let { data, class: className = "h-4" }: Props = $props();
+	let canvas = $state<HTMLCanvasElement>();
 
-	onMount(() => {
-		if (!canvas) return;
-		const ctx = canvas.getContext("2d");
+	// An effect, not onMount: the timeline keeps the canvas while the export's media changes
+	$effect(() => {
+		const ctx = canvas?.getContext("2d");
 		if (!ctx) return;
 
 		const bytes = Uint8Array.from(atob(data.colors), (c) => c.charCodeAt(0));
@@ -27,5 +27,5 @@
 	bind:this={canvas}
 	width={data.count}
 	height={1}
-	class="h-4 w-full [image-rendering:pixelated]"
+	class="block w-full [image-rendering:pixelated] {className}"
 ></canvas>

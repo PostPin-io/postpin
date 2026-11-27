@@ -35,25 +35,29 @@ export async function shotThumbnailUrls(mediaId: string, lifetime = DEFAULT_LIFE
 	});
 	if (!media?.shotThumbnails) return null;
 	const thumbnails = media.shotThumbnails as ShotThumbnails;
-	const { count, width, height, generation } = thumbnails;
+	const { count, width, height, generation, large } = thumbnails;
 	// while the render runs, only the shots that have their image; null for the others
 	const ready = readyShotThumbnails(thumbnails);
-	return {
-		count,
-		width,
-		height,
-		urls: await Promise.all(
+	const urls = (asLarge: boolean) =>
+		Promise.all(
 			Array.from({ length: count }, (_, index) =>
 				index < ready
 					? getPresignedUrl(
 							s3PresignClient,
 							env,
-							{ mediaId, type: "shotThumbnails", generation, index },
+							{ mediaId, type: "shotThumbnails", generation, index, large: asLarge },
 							"get",
 							lifetime,
 						)
 					: null,
 			),
-		),
+		);
+	return {
+		count,
+		width,
+		height,
+		urls: await urls(false),
+		/** Presigning is local, so these cost nothing until a big tile loads one */
+		large: large ? { ...large, urls: await urls(true) } : null,
 	};
 }

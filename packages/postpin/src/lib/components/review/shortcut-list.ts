@@ -1,4 +1,4 @@
-import { commandKeyLabel } from "#lib/keyboard.ts";
+import { commandKeyLabel, isApplePlatform } from "#lib/keyboard.ts";
 
 export type Shortcut = {
 	/** Key combinations that do the same, each one a list of keys pressed together */
@@ -10,7 +10,7 @@ export type ShortcutGroup = { title: string; shortcuts: Shortcut[] };
 
 /**
  * The review page's shortcuts, for the shortcuts modal in the account menu. Keep in sync with handleReviewShortcut, the
- * MarkerPanel and the PointerSelector, which handle them. Copy and paste are team only.
+ * MarkerPanel and the PointerSelector, which handle them. Guests paste within their link's export.
  */
 export function reviewShortcutGroups({
 	share,
@@ -19,7 +19,8 @@ export function reviewShortcutGroups({
 	share: boolean;
 	apple?: boolean;
 }): ShortcutGroup[] {
-	const cmd = commandKeyLabel(apple).replace(/\+$/, "");
+	const isApple = apple ?? isApplePlatform();
+	const cmd = commandKeyLabel(isApple).replace(/\+$/, "");
 	return [
 		{
 			title: "Playback",
@@ -62,13 +63,24 @@ export function reviewShortcutGroups({
 				{ keys: [[cmd, "A"]], label: "Select all markers" },
 				{ keys: [["Esc"]], label: "Clear the selection" },
 				{ keys: [[cmd, "⌫"]], label: "Delete selected markers" },
-				...(share
-					? []
-					: [
-							{ keys: [[cmd, "C"]], label: "Copy selected markers" },
-							{ keys: [[cmd, "X"]], label: "Cut selected markers" },
-							{ keys: [[cmd, "V"]], label: "Paste markers at the playhead" },
-						]),
+				{ keys: [[cmd, "C"]], label: "Copy selected markers" },
+				{ keys: [[cmd, "X"]], label: "Cut selected markers" },
+				{
+					keys: [[cmd, "V"]],
+					label: share
+						? "Paste markers at the playhead"
+						: "Paste markers at the playhead, also on another export",
+				},
+				{ keys: [[cmd, "Z"]], label: "Undo a marker change" },
+				{
+					keys: isApple
+						? [[cmd, "⇧", "Z"]]
+						: [
+								[cmd, "⇧", "Z"],
+								[cmd, "Y"],
+							],
+					label: "Redo a marker change",
+				},
 			],
 		},
 		{

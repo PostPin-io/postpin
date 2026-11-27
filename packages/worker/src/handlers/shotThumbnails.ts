@@ -11,16 +11,37 @@ import type { TimelineSnapshot } from "@postpin-io/shared/types/TimelineSnapshot
 import { Upload } from "@aws-sdk/lib-storage";
 import { secondsAtFrame } from "@postpin-io/shared/logic/timecode";
 import type { ShotThumbnails } from "@postpin-io/shared/types/ShotThumbnails";
+import type { Readable } from "node:stream";
 
 const WIDTH = 320;
 const HEIGHT = 180;
+// For big tiles in the shot grid; the page only loads it when a tile is wider than the small one
+const LARGE_WIDTH = 1280;
+const LARGE_HEIGHT = 720;
 // each ffmpeg only range-requests around its seek point, so a few in parallel stay cheap
 const CONCURRENCY = 4;
 /** How often the images that are ready so far are published, so the page can show them */
 export const PROGRESS_INTERVAL_MS = 1000;
 
+const letterbox = (width: number, height: number) =>
+	`scale=${width}:${height}:force_original_aspect_ratio=decrease,` +
+	`pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2`;
+
+const jpegOutput = (pipe: string) => [
+	"-frames:v",
+	"1",
+	"-c:v",
+	"mjpeg",
+	"-q:v",
+	"4",
+	"-f",
+	"image2pipe",
+	pipe,
+];
+
 /**
- * One JPEG per shot of the export's timeline snapshot, letterboxed into a fixed 16:9 box.
+ * Two JPEGs per shot of the export's timeline snapshot, a small and a large one, letterboxed into
+ * fixed 16:9 boxes.
  *
  * Changing the cuts queues a new render while older ones may still run. Each render is a
  * generation with its own S3 keys, and only the media's current shotThumbnailsGeneration
@@ -46,27 +67,29 @@ export async function shotThumbnails(job: TypedJob<typeof Queues.light, "shotThu
 	const presignedSourceUrl = await getPresignedUrl(s3Client, env, { mediaId, type: "original" });
 
 	async function render(shot: Shot) {
-		const thumbnailStream = ffmpeg([
-			"-nostdin",
-			// -ss before -i seeks to the keyframe before, then decodes up to the exact frame
-			"-ss",
-			`${secondsAtFrame(shot.thumbnailFrame, snapshot)}`,
-			"-i",
-			presignedSourceUrl,
-			"-vf",
-			`scale=${WIDTH}:${HEIGHT}:force_original_aspect_ratio=decrease,` +
-				`pad=${WIDTH}:${HEIGHT}:(ow-iw)/2:(oh-ih)/2`,
-			"-frames:v",
-			"1",
-			"-c:v",
-			"mjpeg",
-			"-q:v",
-			"4",
-			"-f",
-			"image2pipe",
-			"pipe:1",
-		]);
-		await Promise.all([
+		// One seek and decode for both sizes: the frame is split, the large one goes to fd 3
+		const thumbnailStream = ffmpeg(
+			[
+				"-nostdin",
+				// -ss before -i seeks to the keyframe before, then decodes up to the exact frame
+				"-ss",
+				`${secondsAtFrame(shot.thumbnailFrame, snapshot)}`,
+				"-i",
+				presignedSourceUrl,
+				"-filter_complex",
+				`[0:v]split=2[a][b];[a]${letterbox(WIDTH, HEIGHT)}[small];` +
+					`[b]${letterbox(LARGE_WIDTH, LARGE_HEIGHT)}[large]`,
+				"-map",
+				"[small]",
+				...jpegOutput("pipe:1"),
+				"-map",
+				"[large]",
+				...jpegOutput("pipe:3"),
+			],
+			undefined,
+			1,
+		);
+		const upload = (Body: Readable, large: boolean) =>
 			new Upload({
 				client: s3Client,
 				params: {
@@ -76,11 +99,16 @@ export async function shotThumbnails(job: TypedJob<typeof Queues.light, "shotThu
 						type: "shotThumbnails",
 						generation: generation ?? undefined,
 						index: shot.index,
+						large,
 					}),
-					Body: thumbnailStream.stdout,
+					Body,
 					ContentType: "image/jpeg",
 				},
-			}).done(),
+			}).done();
+		// both at once: ffmpeg blocks as soon as either pipe is full
+		await Promise.all([
+			upload(thumbnailStream.stdout, false),
+			upload(thumbnailStream.outputs[0]!, true),
 			thumbnailStream.done,
 		]);
 	}
@@ -97,6 +125,7 @@ export async function shotThumbnails(job: TypedJob<typeof Queues.light, "shotThu
 					count: shots.length,
 					width: WIDTH,
 					height: HEIGHT,
+					large: { width: LARGE_WIDTH, height: LARGE_HEIGHT },
 					...(generation && { generation }),
 					...(ready !== undefined && { ready }),
 				} satisfies ShotThumbnails,

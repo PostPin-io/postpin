@@ -68,7 +68,7 @@
 			await fn();
 			await jobsQuery.refresh();
 		} catch (e) {
-			alert(e instanceof Error ? e.message : String(e)); // oder euer Toast
+			alert(e instanceof Error ? e.message : String(e));
 		}
 	}
 
