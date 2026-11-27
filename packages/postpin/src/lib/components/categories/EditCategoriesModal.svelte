@@ -16,7 +16,7 @@
 	import Trash from "@lucide/svelte/icons/trash";
 	import ListPlus from "@lucide/svelte/icons/list-plus";
 	import { hueyColor } from "@hueycolor/svelte";
-	import { saveCategoryPreset } from "./category-presets.remote";
+	import { getCategoryPresets, saveCategoryPreset } from "./category-presets.remote";
 	import CategoryPresetsModal from "./CategoryPresetsModal.svelte";
 	import { SvelteSet } from "svelte/reactivity";
 	import { isHttpError } from "@sveltejs/kit";
@@ -30,6 +30,9 @@
 
 	let projectId = $derived(page.params.project ?? "");
 	let categories = $derived(await getCategories(projectId));
+	// Same query as the presets modal, so no extra request. Reviewers can't use presets.
+	let presetAccess = $derived(await getCategoryPresets(projectId));
+	let showPresets = $derived(presetAccess.canApply || presetAccess.canCreate);
 	let pendingColors: Record<string, string> = $state({});
 
 	let search = $state("");
@@ -385,13 +388,16 @@
 
 			<div class="modal-action mt-0 grid grid-cols-2 gap-2 sm:flex sm:justify-between">
 				<div class="col-span-2 grid grid-cols-2 gap-2 sm:flex">
-					<button type="button" class="btn" disabled={busy} onclick={() => presetsModal?.open()}>
-						<ListPlus class="size-[1.1em]" />
-						Presets
-					</button>
+					{#if showPresets}
+						<button type="button" class="btn" disabled={busy} onclick={() => presetsModal?.open()}>
+							<ListPlus class="size-[1.1em]" />
+							Presets
+						</button>
+					{/if}
 					<button
 						type="button"
 						class="btn"
+						class:col-span-2={!showPresets}
 						disabled={busy || unused.length === 0}
 						title={unused.length === 0 ? "Every category has markers" : undefined}
 						onclick={() => unusedWarning?.showModal()}

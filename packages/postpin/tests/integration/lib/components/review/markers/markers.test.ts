@@ -836,7 +836,7 @@ describe("getCategories", () => {
 
 describe("applyCategoryPreset", () => {
 	it("adds the preset's categories as creator and keeps one that exists already", async () => {
-		const me = await signInAs(w.org, REVIEWER, [tl1Grant()]);
+		const me = await signInAs(w.org, MEMBER, [tl1Grant()]);
 		const existing = await prisma.category.create({
 			data: { name: "Resolve Red", color: "#123456", projectId: w.projectA.id },
 		});
@@ -861,8 +861,14 @@ describe("applyCategoryPreset", () => {
 		});
 	});
 
+	it("403 for a reviewer, who may still create single categories", async () => {
+		await signInAs(w.org, REVIEWER, [tl1Grant()]);
+		await expectStatus(applyCategoryPreset({ projectId: w.projectA.id, preset: "resolve" }), 403);
+		expect(await prisma.category.count({ where: { projectId: w.projectA.id } })).toBe(1);
+	});
+
 	it("404 without a grant in the project, 400 for an unknown preset", async () => {
-		await signInAs(w.org, REVIEWER, [{ projectId: w.projectB.id }]);
+		await signInAs(w.org, MEMBER, [{ projectId: w.projectB.id }]);
 		await expectStatus(applyCategoryPreset({ projectId: w.projectA.id, preset: "postpin" }), 404);
 		await expectStatus(applyCategoryPreset({ projectId: w.projectB.id, preset: "nope" }), 404);
 		expect(await prisma.category.count({ where: { projectId: w.projectA.id } })).toBe(1);

@@ -9,8 +9,11 @@ export const ACTIONS = {
 	export: ["read", "upload", "rename", "delete"],
 	marker: ["read", "create", "update", "delete", "respond"],
 	category: ["read", "create", "update", "delete"],
-	/** The organization's own category presets; the built-in ones are code and can't be changed */
-	categoryPreset: ["read", "create", "delete"],
+	/**
+	 * The organization's own category presets; the built-in ones are code and can't be changed.
+	 * `apply` adds a preset's categories to a project: setting up the project, not reviewing it.
+	 */
+	categoryPreset: ["read", "apply", "create", "delete"],
 	/** E-mail invitation to the org, a project or a timeline */
 	invitation: ["read", "create", "update", "delete"],
 	/** Shareable invite link to the org, a project or a timeline */
@@ -64,7 +67,7 @@ const member = extend(reviewer, {
 	export: { upload: all, rename: all, delete: all },
 	marker: { update: all, delete: all },
 	category: { update: all, delete: all },
-	categoryPreset: { create: all, delete: own },
+	categoryPreset: { apply: all, create: all, delete: own },
 	invitation: { read: all, create: all, delete: own, update: own },
 	inviteLink: { read: all, create: all, delete: own },
 	shareLink: { read: all, create: all, update: own, delete: own },
