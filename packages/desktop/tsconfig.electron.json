@@ -13,5 +13,5 @@
 		"noEmit": true,
 		"noFallthroughCasesInSwitch": true
 	},
-	"include": ["src/electron", "src/adapters"]
+	"include": ["src/electron", "src/adapters", "tests"]
 }

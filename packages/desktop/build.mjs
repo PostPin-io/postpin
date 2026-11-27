@@ -29,6 +29,7 @@ const builds = [
 		sourcemap: true,
 		format: "cjs",
 		logOverride: { "duplicate-case": "silent" },
+		loader: { ".lua": "text" },
 		define: {
 			DEV_SERVER_URL: JSON.stringify(dev ? "http://localhost:5184" : ""),
 			DEFAULT_SERVER_URL: JSON.stringify(dev ? "http://localhost:5173" : "https://postpin.io"),

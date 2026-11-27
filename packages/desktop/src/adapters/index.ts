@@ -1,6 +1,7 @@
 import type { NleBridge } from "@postpin-io/plugin-core/bridge";
 import { createFilmCraftAdapter } from "./filmcraft";
 import { createProToolsAdapter } from "./pro-tools";
+import { createReaperAdapter } from "./reaper";
 
 export interface HostAdapter {
 	id: string;
@@ -13,6 +14,7 @@ export const ADAPTERS: HostAdapter[] = [
 	{ id: "pro-tools", name: "Pro Tools", create: createProToolsAdapter },
 	// experimental, see adapters/filmcraft
 	{ id: "filmcraft", name: "FilmCraft", create: createFilmCraftAdapter },
+	{ id: "reaper", name: "REAPER", create: createReaperAdapter },
 ];
 
 // One bridge per host, created on first selection. Adapters keep connection state
