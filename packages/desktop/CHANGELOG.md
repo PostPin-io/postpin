@@ -1,5 +1,12 @@
 # @postpin-io/desktop
 
+## 0.8.0
+
+### Minor Changes
+
+- PostPin Desktop connects to FilmCraft: pull and push markers, and render and upload the timeline. PostPin starts FilmCraft with remote control, so quit FilmCraft first if it's already open
+- PostPin Desktop connects to REAPER: pull and push markers and regions, render and upload the project, and a timeline snapshot with the items. PostPin sets REAPER up by itself the first time, while REAPER is closed: a script, an action for it and a password-protected web interface of its own
+
 ## 0.7.0
 
 No changes in this release.

@@ -1,5 +1,22 @@
 # @postpin-io/postpin
 
+## 0.8.0
+
+### Minor Changes
+
+- A list of all keyboard shortcuts in the review, opened with ? or from the account menu. On Windows and Linux the shortcuts use Ctrl where the Mac uses ⌘
+- Export markers as PDF, Excel or CSV from the markers panel menu, optionally with a thumbnail of each marker's frame and its pointers drawn on it
+- Marker changes in the review can be undone and redone with ⌘Z and ⌘⇧Z (Ctrl+Z and Ctrl+Shift+Z or Ctrl+Y on Windows and Linux), across exports and windows. Copied markers can be pasted on another export, and share guests can copy and paste within their link's export. Selecting several markers opens a panel to change their category, move them by frames or a timecode, or delete them together
+- The shot grid shows a shot at every cut on any video track, so an adjustment layer or a title over the whole timeline no longer hides the cuts underneath. A switch brings back one shot per clip on top. Exports with detected cuts only have the cuts
+- The shot grid has an overview of the whole export below it: the movie barcode with a frame around the shots in view. Drag the frame or click beside it to jump through the shots, drag its edges to see more or fewer at once. A search field filters the shots by name and picks out the matches in the overview. Tiles never get taller than the grid, so a whole shot is always in sight, and big tiles load a sharper image. The movie barcode moved out of the marker panel. Exports processed before this have only the small images until their shot thumbnails are rendered again
+
+### Patch Changes
+
+- fix: reviewers can no longer add a category preset to a project. Adding a preset sets up the project's whole category list, so it now needs the member role, like saving one; reviewers don't see the presets button anymore. Creating single categories while reviewing still works for them.
+- FilmCraft in the web app: the plugin question offers it, the PostPin Desktop install tutorial has a FilmCraft variant with a switch between Pro Tools and FilmCraft, and the plugin tutorial no longer calls FilmCraft Pro Tools. The landing page lists FilmCraft among the supported editors
+- Marker PDFs show umlauts and accents that come in decomposed, as from macOS, instead of a gap after every letter. Typographic quotes, dashes, "›" and "…" no longer go missing, and emoji are left out
+- The timeline follows the light and dark theme: track rows, clip borders and the progress bar use the theme colors
+
 ## 0.7.0
 
 ### Minor Changes
