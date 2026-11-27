@@ -17,7 +17,6 @@
 	import Timeline from "#lib/components/review/Timeline.svelte";
 	import KeyboardShortcutsModal from "#lib/components/review/KeyboardShortcutsModal.svelte";
 	import ShotGrid from "#lib/components/review/ShotGrid.svelte";
-	import MovieBarcode from "#lib/components/review/MovieBarcode.svelte";
 
 	import Header from "#lib/components/layout/Header.svelte";
 	import LoadingAnimation from "#lib/components/layout/LoadingAnimation.svelte";
@@ -286,16 +285,24 @@
 	});
 	/** Per shot, null while its image is missing; the URLs of images already shown stay */
 	let shotUrls = $state<(string | null)[] | undefined>();
+	/** The same for the large images, for big tiles; undefined for renders without them */
+	let largeShotUrls = $state<(string | null)[] | undefined>();
 	let shotUrlsKey: string | null = null;
 	$effect(() => {
 		const urls = shotThumbnails?.current?.urls;
+		const largeUrls = shotThumbnails?.current?.large?.urls;
 		const key = shotsKey;
 		untrack(() => {
 			if (!key) {
 				shotUrls = undefined;
+				largeShotUrls = undefined;
 				shotUrlsKey = null;
 			} else if (urls) {
-				shotUrls = mergeShotUrls(shotUrlsKey === key ? shotUrls : undefined, urls);
+				const sameRender = shotUrlsKey === key;
+				shotUrls = mergeShotUrls(sameRender ? shotUrls : undefined, urls);
+				largeShotUrls = largeUrls
+					? mergeShotUrls(sameRender ? largeShotUrls : undefined, largeUrls)
+					: undefined;
 				shotUrlsKey = key;
 			}
 		});
@@ -779,7 +786,21 @@
 						markerColor={newMarkerColor}
 					/>
 				{:else if viewMode === "shot-grid" && snapshot}
-					<ShotGrid {snapshot} thumbnailUrls={shotUrls} {currentFrame} onSeek={seekToFrame} />
+					<!-- The barcode belongs to the timeline panel: guests only get it with that panel -->
+					{@const barcode =
+						media && isTimelineVisible
+							? await getMovieBarcode({ mediaId: media.id, shareToken })
+							: null}
+					<ShotGrid
+						{snapshot}
+						thumbnailUrls={shotUrls}
+						largeThumbnailUrls={largeShotUrls}
+						thumbnailWidth={shotThumbnails?.current?.width}
+						largeThumbnailWidth={shotThumbnails?.current?.large?.width}
+						{currentFrame}
+						{barcode}
+						onSeek={seekToFrame}
+					/>
 				{:else if session}
 					<ScreeningRemote {session} bind:qr={screeningQr} />
 				{:else if media.status !== "PENDING" && videoSource && snapshot}
@@ -840,14 +861,7 @@
 	{/if}
 {/snippet}
 
-{#snippet markerArea(withBarcode = true)}
-	<!-- The barcode belongs to the timeline: guests only get it with the timeline panel -->
-	{#if withBarcode && isTimelineVisible && media}
-		{@const barcode = await getMovieBarcode({ mediaId: media.id, shareToken })}
-		{#if barcode}
-			<MovieBarcode data={barcode} />
-		{/if}
-	{/if}
+{#snippet markerArea()}
 	<MarkerPanel
 		bind:this={markerPanel}
 		bind:selectedMarkerIds
@@ -926,7 +940,7 @@
 				</div>
 				{#if isMarkerVisible}
 					<div class="flex min-h-0 flex-1 flex-col overflow-hidden border-t border-base-300">
-						{@render markerArea(false)}
+						{@render markerArea()}
 					</div>
 				{/if}
 			</div>
