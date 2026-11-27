@@ -36,9 +36,9 @@ the choice is stored with the progress. Steps 2–4 happen outside the browser: 
 stored on every step, so a reload goes on where the user left off.
 
 1. `download`: "Download for macOS" / "Download for Windows" for the selected OS, and "Need it for
-   <other OS>?" to switch. States the requirement up front: **DaVinci Resolve Studio**; the free
-   version has no Workflow Integrations. Asks to quit Resolve before installing (it loads plugins
-   only on start). "Already installed" goes straight to `open-in-nle`. **Done when:** the download
+   <other OS>?" to switch. States the requirement up front: **DaVinci Resolve Studio 20.1** or
+   newer; the free version has no Workflow Integrations. Asks to quit Resolve before installing (it
+   loads plugins only on start). "Already installed" goes straight to `open-in-nle`. **Done when:** the download
    is clicked.
 2. `os-security`: Only on Windows, left out on macOS (the package is signed and notarized). The
    installer is not signed yet, so opening it brings "Windows protected your PC": click "More
