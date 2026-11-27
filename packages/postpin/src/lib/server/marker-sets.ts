@@ -44,6 +44,52 @@ export async function deleteMarkersRecorded(tx: Tx, where: Prisma.MarkerWhereInp
 	return markers;
 }
 
+/** What a snapshot needs of a marker; see toSnapshotEntry */
+export const snapshotInclude = {
+	category: { select: { name: true, color: true } },
+	responses: { orderBy: { createdAt: "asc" } },
+	pointers: { orderBy: { createdAt: "asc" } },
+} as const satisfies Prisma.MarkerInclude;
+
+type SnapshotMarker = Prisma.MarkerGetPayload<{ include: typeof snapshotInclude }>;
+
+/** A marker with everything needed to bring it back when it was deleted since */
+export function toSnapshotEntry(m: SnapshotMarker): PostPinMarkerSnapshotEntry {
+	return {
+		id: m.id,
+		name: m.name,
+		description: m.description,
+		frame: m.frame,
+		duration: m.duration,
+		categoryId: m.categoryId,
+		categoryName: m.category.name,
+		categoryColor: m.category.color,
+		nleId: m.nleId,
+		nleTimelineId: m.nleTimelineId,
+		syncHash: m.syncHash,
+		authorId: m.authorId,
+		guestId: m.guestId,
+		createdAt: m.createdAt.toISOString(),
+		responses: m.responses.map((r) => ({
+			id: r.id,
+			content: r.content,
+			authorId: r.authorId,
+			createdAt: r.createdAt.toISOString(),
+			updatedAt: r.updatedAt.toISOString(),
+		})),
+		pointers: m.pointers.map((p) => ({
+			id: p.id,
+			kind: p.kind,
+			x: p.x,
+			y: p.y,
+			width: p.width,
+			height: p.height,
+			color: p.color,
+			createdAt: p.createdAt.toISOString(),
+		})),
+	};
+}
+
 /** The export's markers as they are now, with what's needed to bring deleted ones back */
 export async function snapshotExportMarkers(
 	tx: Tx,
@@ -52,48 +98,9 @@ export async function snapshotExportMarkers(
 	const markers = await tx.marker.findMany({
 		where: { exportId },
 		orderBy: { frame: "asc" },
-		include: {
-			category: { select: { name: true, color: true } },
-			responses: { orderBy: { createdAt: "asc" } },
-			pointers: { orderBy: { createdAt: "asc" } },
-		},
+		include: snapshotInclude,
 	});
-	return {
-		format: MARKER_SET_FORMAT,
-		markers: markers.map((m) => ({
-			id: m.id,
-			name: m.name,
-			description: m.description,
-			frame: m.frame,
-			duration: m.duration,
-			categoryId: m.categoryId,
-			categoryName: m.category.name,
-			categoryColor: m.category.color,
-			nleId: m.nleId,
-			nleTimelineId: m.nleTimelineId,
-			syncHash: m.syncHash,
-			authorId: m.authorId,
-			guestId: m.guestId,
-			createdAt: m.createdAt.toISOString(),
-			responses: m.responses.map((r) => ({
-				id: r.id,
-				content: r.content,
-				authorId: r.authorId,
-				createdAt: r.createdAt.toISOString(),
-				updatedAt: r.updatedAt.toISOString(),
-			})),
-			pointers: m.pointers.map((p) => ({
-				id: p.id,
-				kind: p.kind,
-				x: p.x,
-				y: p.y,
-				width: p.width,
-				height: p.height,
-				color: p.color,
-				createdAt: p.createdAt.toISOString(),
-			})),
-		})),
-	};
+	return { format: MARKER_SET_FORMAT, markers: markers.map(toSnapshotEntry) };
 }
 
 export interface MarkerSetInput {
@@ -256,7 +263,7 @@ export async function restoreExportMarkers(
 	return { added, updated, removed: removed.length };
 }
 
-async function existingIds(
+export async function existingIds(
 	ids: (string | null)[],
 	find: (ids: string[]) => Promise<{ id: string }[]>,
 ) {
@@ -266,14 +273,16 @@ async function existingIds(
 }
 
 // The snapshot's category, else one of the project's with its name, else a new one like it
-async function categoryResolver(tx: Tx, projectId: string) {
+export async function categoryResolver(tx: Tx, projectId: string) {
 	const categories = await tx.category.findMany({
 		where: { projectId },
 		select: { id: true, name: true },
 	});
 	const byId = new Set(categories.map((c) => c.id));
 	const byName = new Map(categories.map((c) => [c.name, c.id]));
-	return async (m: PostPinMarkerSnapshotEntry) => {
+	return async (
+		m: Pick<PostPinMarkerSnapshotEntry, "categoryId" | "categoryName" | "categoryColor">,
+	) => {
 		if (byId.has(m.categoryId)) return m.categoryId;
 		const named = byName.get(m.categoryName);
 		if (named) return named;

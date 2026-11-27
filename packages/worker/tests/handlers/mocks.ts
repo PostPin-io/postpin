@@ -25,6 +25,7 @@ export const prisma = {
 	deviceCode: { deleteMany: vi.fn() },
 	verification: { deleteMany: vi.fn() },
 	invitation: { deleteMany: vi.fn() },
+	markerUndoStep: { deleteMany: vi.fn() },
 };
 
 export const s3Client = { putObject: vi.fn() };

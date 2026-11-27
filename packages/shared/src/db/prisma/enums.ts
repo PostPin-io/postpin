@@ -16,6 +16,17 @@ export const GuideStatus = {
 
 export type GuideStatus = (typeof GuideStatus)[keyof typeof GuideStatus];
 
+export const MarkerUndoAction = {
+	CREATE: "CREATE",
+	UPDATE: "UPDATE",
+	BATCH_UPDATE: "BATCH_UPDATE",
+	DELETE: "DELETE",
+	PASTE: "PASTE",
+	CUT: "CUT",
+} as const;
+
+export type MarkerUndoAction = (typeof MarkerUndoAction)[keyof typeof MarkerUndoAction];
+
 export const PointerKind = {
 	ARROW: "ARROW",
 	RECT: "RECT",

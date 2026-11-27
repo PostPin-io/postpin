@@ -4,6 +4,7 @@
 // @ts-nocheck
 export interface $DbEnums {
 	GuideStatus: "STARTED" | "COMPLETED" | "SKIPPED";
+	MarkerUndoAction: "CREATE" | "UPDATE" | "BATCH_UPDATE" | "DELETE" | "PASTE" | "CUT";
 	PointerKind: "ARROW" | "RECT";
 	MarkerSetAction: "PUSH" | "PULL" | "CLEAR" | "RESTORE";
 	MediaStatus: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
