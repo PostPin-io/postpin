@@ -10,6 +10,7 @@ import {
 	PAGE_MARGIN,
 	thumbnailWidth,
 } from "./pdf-layout.ts";
+import { winAnsi } from "./pdf-text.ts";
 import { THUMBNAIL_PRESETS } from "./presets.ts";
 
 const FONT_SIZE = 8;
@@ -17,8 +18,10 @@ const FONT_SIZE = 8;
 const MAX_CATEGORY_MM = 50;
 const TIMECODE_WIDTH = 26;
 const AUTHOR_WIDTH = 22;
+const ELLIPSIS = winAnsi("…");
 
-export async function buildPdf(input: ExportDocument): Promise<Blob> {
+export async function buildPdf(original: ExportDocument): Promise<Blob> {
+	const input = inWinAnsi(original);
 	const [{ jsPDF }, { autoTable }] = await Promise.all([
 		import("jspdf"),
 		import("jspdf-autotable"),
@@ -130,7 +133,7 @@ function drawHeading(doc: jsPDF, input: ExportDocument) {
 	if (input.location.length > 0) {
 		y += 6;
 		doc.setFont("helvetica", "normal").setFontSize(10).setTextColor(60);
-		doc.text(fitText(doc, input.location.join("  ›  "), headingWidth), PAGE_MARGIN, y);
+		doc.text(fitText(doc, input.location.join(winAnsi("  ›  ")), headingWidth), PAGE_MARGIN, y);
 	}
 	y += 5;
 	doc.setFont("helvetica", "normal").setFontSize(8).setTextColor(120);
@@ -146,6 +149,23 @@ const thumbHeight = (width: number, thumb: { width: number; height: number }) =>
 function fitText(doc: { getTextWidth(text: string): number }, text: string, width: number) {
 	if (doc.getTextWidth(text) <= width) return text;
 	let end = text.length;
-	while (end > 0 && doc.getTextWidth(`${text.slice(0, end).trimEnd()}…`) > width) end--;
-	return `${text.slice(0, end).trimEnd()}…`;
+	while (end > 0 && doc.getTextWidth(`${text.slice(0, end).trimEnd()}${ELLIPSIS}`) > width) end--;
+	return `${text.slice(0, end).trimEnd()}${ELLIPSIS}`;
+}
+
+/** Every text of the document in WinAnsi, the only encoding jsPDF's built-in fonts can show */
+function inWinAnsi(input: ExportDocument): ExportDocument {
+	return {
+		...input,
+		title: winAnsi(input.title),
+		location: input.location.map(winAnsi),
+		details: winAnsi(input.details),
+		rows: input.rows.map((row) => ({
+			...row,
+			category: winAnsi(row.category),
+			title: winAnsi(row.title),
+			description: winAnsi(row.description),
+			author: winAnsi(row.author),
+		})),
+	};
 }
