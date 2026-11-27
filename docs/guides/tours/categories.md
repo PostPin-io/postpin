@@ -32,6 +32,6 @@ code:
 - Roles: a reviewer creates categories and changes or deletes only their own (`category.create`,
   own `update`/`delete`); Member and up change all. So `edit` has a text that holds for both
   ("Change a category's name and color") and, if the tour has the user change one, it is one they
-  created in the tour. `presets` is **optional**: saving a preset is `categoryPreset.create`
-  (Member and up); a reviewer can apply existing presets but has no save button, so the step is
-  left out for them.
+  created in the tour. `presets` is **optional**: applying and saving presets is
+  `categoryPreset.apply` / `.create` (Member and up); a reviewer has no presets button, so the
+  step is left out for them.
