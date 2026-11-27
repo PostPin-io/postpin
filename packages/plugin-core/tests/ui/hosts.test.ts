@@ -9,10 +9,11 @@ describe("hostInfo", () => {
 		expect(info.logo as string).toMatch(/davinci-resolve.*\.png|^data:image\/png/);
 	});
 
-	it("returns app icon URLs for Pro Tools and Premiere Pro", () => {
+	it("returns app icon URLs for Pro Tools, Premiere Pro and REAPER", () => {
 		for (const [name, file] of [
 			["Pro Tools", "pro-tools"],
 			["Premiere Pro", "premiere-pro"],
+			["REAPER", "reaper"],
 		]) {
 			const { displayName, logo } = hostInfo(name);
 			expect(displayName).toBe(name);
@@ -22,7 +23,7 @@ describe("hostInfo", () => {
 	});
 
 	it("has no logo for known hosts without one", () => {
-		expect(hostInfo("Reaper")).toEqual({ displayName: "Reaper", logo: null });
+		expect(hostInfo("Baselight")).toEqual({ displayName: "Baselight", logo: null });
 	});
 
 	it("falls back to the host name for unknown hosts", () => {
