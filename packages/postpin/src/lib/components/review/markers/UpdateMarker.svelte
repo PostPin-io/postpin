@@ -21,6 +21,7 @@
 	import { useShare } from "../share-context.ts";
 	import PointerSelector from "./PointerSelector.svelte";
 	import { usePointerSession } from "./pointer-session.svelte.ts";
+	import { useMarkerHistory } from "./marker-history.svelte.ts";
 	import { signalGuide } from "../../guides/guide-signals.svelte.ts";
 
 	let {
@@ -181,7 +182,7 @@
 		saving = true;
 		try {
 			const category = categories.find((c) => c.id === next.categoryId);
-			await updateMarker({
+			const save = updateMarker({
 				id: marker.id,
 				name: next.name,
 				description: next.description,
@@ -209,6 +210,7 @@
 					),
 				),
 			);
+			await (markerHistory?.track(save) ?? save);
 
 			saved = { name: next.name, description: next.description, categoryId: next.categoryId };
 			if (movedFrame === next.frame) movedFrame = null;
@@ -248,7 +250,8 @@
 		clearTimeout(timer);
 		saving = true;
 		try {
-			await deleteMarker(share ? { id: marker.id, shareToken: share.token } : marker.id);
+			const deletion = deleteMarker(share ? { id: marker.id, shareToken: share.token } : marker.id);
+			await (markerHistory?.track(deletion) ?? deletion);
 		} catch (error) {
 			removed = false;
 			throw error;
@@ -261,6 +264,14 @@
 	onDestroy(() => {
 		if (timer) void persist();
 	});
+
+	// ⌘Z sends pending edits first, so it takes back the newest change and not the one before
+	const markerHistory = useMarkerHistory();
+	onMount(() =>
+		markerHistory?.onflush(() => {
+			if (timer) void persist();
+		}),
+	);
 
 	async function finish(event: KeyboardEvent) {
 		if (event.key !== "Enter" || !(event.metaKey || event.ctrlKey)) return;

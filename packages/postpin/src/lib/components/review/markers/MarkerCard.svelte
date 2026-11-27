@@ -6,6 +6,7 @@
 	import UpdateMarker from "./UpdateMarker.svelte";
 	import { createResponse, getResponses } from "./markers.remote";
 	import { useShare } from "../share-context.ts";
+	import { useMarkerHistory } from "./marker-history.svelte.ts";
 	import type { ReviewMarker } from "./types";
 	import type { FrameRate } from "@postpin-io/shared/types/TimelineSnapshot";
 
@@ -24,6 +25,7 @@
 	let updateMarkerComponent: UpdateMarker | null = $state(null);
 	let deleting = $state(false);
 
+	const markerHistory = useMarkerHistory();
 	const getShare = useShare();
 	const share = $derived(getShare());
 
@@ -91,29 +93,32 @@
 
 <!-- data-scroller: the modal checks it to tell a scroll from a swipe-down-to-close -->
 <div data-scroller class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-	<UpdateMarker
-		bind:this={updateMarkerComponent}
-		{marker}
-		{startFrame}
-		{frameRate}
-		{frameCount}
-		mobile
-		{onclose}
-	>
-		{#snippet mobileHeaderAction()}
-			{#if marker.canUpdate}
-				<button
-					type="button"
-					class="btn btn-square btn-ghost"
-					title="Change position"
-					aria-label="Change marker position"
-					onclick={onchangeposition}
-				>
-					<LocateFixed size={20} />
-				</button>
-			{/if}
-		{/snippet}
-	</UpdateMarker>
+	<!-- After an undo or redo the editor starts over, or its next autosave would overwrite it -->
+	{#key markerHistory?.revision}
+		<UpdateMarker
+			bind:this={updateMarkerComponent}
+			{marker}
+			{startFrame}
+			{frameRate}
+			{frameCount}
+			mobile
+			{onclose}
+		>
+			{#snippet mobileHeaderAction()}
+				{#if marker.canUpdate}
+					<button
+						type="button"
+						class="btn btn-square btn-ghost"
+						title="Change position"
+						aria-label="Change marker position"
+						onclick={onchangeposition}
+					>
+						<LocateFixed size={20} />
+					</button>
+				{/if}
+			{/snippet}
+		</UpdateMarker>
+	{/key}
 
 	{#if !share}
 		<form

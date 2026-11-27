@@ -67,7 +67,7 @@ beforeEach(() => {
 	storeImageSizes.mockReset().mockResolvedValue(undefined);
 	prisma.export.findUniqueOrThrow.mockResolvedValue(exportRow(3));
 	prisma.media.updateMany.mockResolvedValue({ count: 1 });
-	ffmpegLib.ffmpeg.mockImplementation(() => fakeFfmpegRun([Buffer.from("jpg")]));
+	ffmpegLib.ffmpeg.mockImplementation(() => fakeFfmpegRun([Buffer.from("jpg")], undefined, 1));
 });
 
 afterEach(() => {
@@ -173,11 +173,15 @@ describe("shotThumbnails", () => {
 		await shotThumbnails(fakeJob("shotThumbnails", { mediaId: "m1" } as never) as never);
 		expect(uploads.map((u) => u.params.Key).sort()).toEqual([
 			"m1/shotThumbnails-0",
+			"m1/shotThumbnails-0_large",
 			"m1/shotThumbnails-1",
+			"m1/shotThumbnails-1_large",
 		]);
 		expect(prisma.media.updateMany).toHaveBeenCalledWith({
 			where: { id: "m1", shotThumbnailsGeneration: null },
-			data: { shotThumbnails: { count: 2, width: 320, height: 180 } },
+			data: {
+				shotThumbnails: { count: 2, width: 320, height: 180, large: { width: 1280, height: 720 } },
+			},
 		});
 		// its own images are the keys without a generation: nothing to clean up
 		expect(sharedStorage.deleteShotThumbnails).not.toHaveBeenCalled();
@@ -218,18 +222,29 @@ describe("shotThumbnails", () => {
 		expect(args[args.indexOf("-i") + 1]).toBe("https://s3/m1/original");
 	});
 
-	it("uploads one JPEG per shot under its generation and index and publishes the count", async () => {
+	it("uploads a small and a large JPEG per shot under its generation and index and publishes the count", async () => {
 		await shotThumbnails(job() as never);
 		expect(uploads.map((u) => u.params.Key).sort()).toEqual([
 			"m1/shotThumbnails-g2-0",
+			"m1/shotThumbnails-g2-0_large",
 			"m1/shotThumbnails-g2-1",
+			"m1/shotThumbnails-g2-1_large",
 			"m1/shotThumbnails-g2-2",
+			"m1/shotThumbnails-g2-2_large",
 		]);
 		expect(uploads[0]!.params).toMatchObject({ Bucket: "bucket", ContentType: "image/jpeg" });
 		expect(uploads[0]!.body).toEqual(Buffer.from("jpg"));
 		expect(prisma.media.updateMany).toHaveBeenCalledWith({
 			where: { id: "m1", shotThumbnailsGeneration: "g2" },
-			data: { shotThumbnails: { count: 3, width: 320, height: 180, generation: "g2" } },
+			data: {
+				shotThumbnails: {
+					count: 3,
+					width: 320,
+					height: 180,
+					generation: "g2",
+					large: { width: 1280, height: 720 },
+				},
+			},
 		});
 	});
 
@@ -291,12 +306,31 @@ describe("shotThumbnails", () => {
 		await g1Blocked;
 		await g1;
 
-		expect(db.published).toEqual({ count: 5, width: 320, height: 180, generation: "g2" });
+		expect(db.published).toEqual({
+			count: 5,
+			width: 320,
+			height: 180,
+			generation: "g2",
+			large: { width: 1280, height: 720 },
+		});
 		// g1 cleaned up its own images, g2 the ones older than itself
 		const deleted = sharedStorage.deleteShotThumbnails.mock.calls.map(
 			(c) => (c as unknown as [unknown, unknown, string, (g: string | null) => boolean])[3],
 		);
 		expect(deleted.map((matches) => ["g1", "g2"].filter(matches))).toEqual([["g1"], ["g1"]]);
+	});
+
+	it("renders both sizes in one ffmpeg run, the large one on the extra pipe", async () => {
+		await shotThumbnails(job() as never);
+		const [args, , outputs]: [string[], unknown, number] = ffmpegLib.ffmpeg.mock.calls[0]!;
+		expect(outputs).toBe(1);
+		const graph = args[args.indexOf("-filter_complex") + 1]!;
+		expect(graph).toContain("split=2");
+		expect(graph).toContain("scale=320:180");
+		expect(graph).toContain("scale=1280:720");
+		expect(args.slice(args.indexOf("[small]"))).toContain("pipe:1");
+		expect(args.at(-1)).toBe("pipe:3");
+		expect(args[args.lastIndexOf("-map") + 1]).toBe("[large]");
 	});
 
 	it("reports progress after each shot", async () => {
@@ -309,14 +343,16 @@ describe("shotThumbnails", () => {
 		prisma.export.findUniqueOrThrow.mockResolvedValue(exportRow(10));
 		let running = 0;
 		let maxRunning = 0;
-		uploadDone.mockImplementation(async () => {
+		// counted by the small image: the large one is uploaded by the same render
+		uploadDone.mockImplementation(async (key?: string) => {
+			if (key?.endsWith("_large")) return;
 			maxRunning = Math.max(maxRunning, ++running);
 			await new Promise((resolve) => setTimeout(resolve, 5));
 			running--;
 		});
 		await shotThumbnails(job() as never);
 		expect(maxRunning).toBe(4);
-		expect(new Set(uploads.map((u) => u.params.Key)).size).toBe(10);
+		expect(new Set(uploads.map((u) => u.params.Key)).size).toBe(20);
 		expect(ffmpegLib.ffmpeg).toHaveBeenCalledTimes(10);
 	});
 
@@ -329,7 +365,7 @@ describe("shotThumbnails", () => {
 
 	it("fails without storing the count when a render fails", async () => {
 		ffmpegLib.ffmpeg.mockImplementation(() =>
-			fakeFfmpegRun([], new Error("ffmpeg exited with code 1")),
+			fakeFfmpegRun([], new Error("ffmpeg exited with code 1"), 1),
 		);
 		await expect(shotThumbnails(job() as never)).rejects.toThrow("ffmpeg exited");
 		expect(prisma.media.updateMany).not.toHaveBeenCalled();

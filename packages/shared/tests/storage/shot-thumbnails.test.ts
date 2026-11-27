@@ -30,6 +30,9 @@ describe("shotThumbnailGeneration", () => {
 	it.each([
 		["m1/shotThumbnails-0mhx3k2a9b7c1-4", "0mhx3k2a9b7c1"],
 		["m1/shotThumbnails-4", null],
+		// the large image's suffix sits on the index, so it belongs to the same generation
+		["m1/shotThumbnails-0mhx3k2a9b7c1-4_large", "0mhx3k2a9b7c1"],
+		["m1/shotThumbnails-4_large", null],
 	])("%s: %s", (key, generation) => {
 		expect(shotThumbnailGeneration(key)).toBe(generation);
 	});

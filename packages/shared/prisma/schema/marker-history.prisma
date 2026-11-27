@@ -1,0 +1,66 @@
+enum MarkerUndoAction {
+  CREATE
+  UPDATE
+  BATCH_UPDATE
+  DELETE
+  PASTE
+  CUT
+}
+
+/// One step of a user's (or share guest's) undo history in the web app: what a marker action
+/// changed, so ⌘Z / ⌘⇧Z can take it back and do it again. Only the markers the action touched
+/// are kept, as they were before and after it (MarkerState, shared/src/logic/marker-history.ts).
+/// Kept 30 days. Not shown in the plugins, which have their own backups (MarkerSet).
+model MarkerUndoStep {
+  id String @id @default(cuid())
+
+  /// Whose history it is: a team member's or a share guest's, exactly one (CHECK)
+  user    User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String?
+  guest   ShareGuest? @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  guestId String?
+
+  action MarkerUndoAction
+  /// "Delete 12 markers", for the toast after an undo
+  label  String
+  /// Steps with the same key that follow each other are merged, e.g. typing a marker's title
+  coalesceKey String?
+
+  /// The exports the markers were in before or after; for refreshing and the access check
+  exportIds String[]
+  /// Every marker the action touched or created
+  markerIds String[]
+  before    Json
+  after     Json
+
+  /// Set while the step is undone: it can be redone until the next action
+  undoneAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([guestId, createdAt])
+  @@index([createdAt])
+  @@map("marker_undo_step")
+}
+
+/// What a user (or share guest) copied or cut with ⌘C / ⌘X, for every browser window and device.
+/// Only references: pasting reads the markers themselves.
+model MarkerClipboard {
+  id String @id @default(cuid())
+
+  /// Exactly one of them (CHECK)
+  user    User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String?     @unique
+  guest   ShareGuest? @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  guestId String?     @unique
+
+  sourceExportId String
+  markerIds      String[]
+  /// "copy" or "cut"
+  mode           String
+
+  updatedAt DateTime @updatedAt
+
+  @@map("marker_clipboard")
+}

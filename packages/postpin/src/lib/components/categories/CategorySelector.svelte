@@ -11,6 +11,8 @@
 		collapsed?: boolean;
 		/** Widths of the expanded and the collapsed look, whichever is showing; lets the parent decide */
 		widths?: { expanded: number; collapsed: number };
+		/** Several markers with different categories: shown stacked instead of "Select category" */
+		mixed?: { id: string; name: string; color: string }[];
 	}
 	let {
 		value,
@@ -18,7 +20,11 @@
 		readonly,
 		collapsed = false,
 		widths = $bindable({ expanded: 0, collapsed: 0 }),
+		mixed = [],
 	}: Props = $props();
+
+	// A few dots overlap like a hand of cards; more would only make the button wider
+	const MAX_STACKED = 4;
 
 	// Both looks, rendered invisibly out of the flow to measure them
 	let expandedWidth = $state(0);
@@ -116,6 +122,21 @@
 {#snippet trigger(dot: boolean)}
 	{#if selected}
 		<CategoryBadge category={selected} collapsed={dot} />
+	{:else if mixed.length > 1}
+		<span class="flex items-center gap-2" title={mixed.map((c) => c.name).join(", ")}>
+			<span class="flex items-center">
+				{#each mixed.slice(0, MAX_STACKED) as category, i (category.id)}
+					<span class="rounded-full ring-2 ring-base-200 {i > 0 ? '-ml-1.5' : ''}">
+						<CategoryBadge {category} collapsed />
+					</span>
+				{/each}
+			</span>
+			{#if !dot}
+				<span class="text-xs whitespace-nowrap opacity-70">
+					{mixed.length > MAX_STACKED ? `+${mixed.length - MAX_STACKED} · ` : ""}Mixed
+				</span>
+			{/if}
+		</span>
 	{:else}
 		<span class="opacity-60">Select category</span>
 	{/if}

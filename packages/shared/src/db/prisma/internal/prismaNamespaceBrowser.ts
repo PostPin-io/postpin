@@ -56,6 +56,8 @@ export const ModelName = {
 	TwoFactor: "TwoFactor",
 	Passkey: "Passkey",
 	GuideProgress: "GuideProgress",
+	MarkerUndoStep: "MarkerUndoStep",
+	MarkerClipboard: "MarkerClipboard",
 	Marker: "Marker",
 	MarkerPointer: "MarkerPointer",
 	Category: "Category",
@@ -219,6 +221,38 @@ export const GuideProgressScalarFieldEnum = {
 
 export type GuideProgressScalarFieldEnum =
 	(typeof GuideProgressScalarFieldEnum)[keyof typeof GuideProgressScalarFieldEnum];
+
+export const MarkerUndoStepScalarFieldEnum = {
+	id: "id",
+	userId: "userId",
+	guestId: "guestId",
+	action: "action",
+	label: "label",
+	coalesceKey: "coalesceKey",
+	exportIds: "exportIds",
+	markerIds: "markerIds",
+	before: "before",
+	after: "after",
+	undoneAt: "undoneAt",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
+} as const;
+
+export type MarkerUndoStepScalarFieldEnum =
+	(typeof MarkerUndoStepScalarFieldEnum)[keyof typeof MarkerUndoStepScalarFieldEnum];
+
+export const MarkerClipboardScalarFieldEnum = {
+	id: "id",
+	userId: "userId",
+	guestId: "guestId",
+	sourceExportId: "sourceExportId",
+	markerIds: "markerIds",
+	mode: "mode",
+	updatedAt: "updatedAt",
+} as const;
+
+export type MarkerClipboardScalarFieldEnum =
+	(typeof MarkerClipboardScalarFieldEnum)[keyof typeof MarkerClipboardScalarFieldEnum];
 
 export const MarkerScalarFieldEnum = {
 	id: "id",

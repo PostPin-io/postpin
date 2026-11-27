@@ -24,6 +24,7 @@
 		type RangeDragMode,
 	} from "./timeline-view.ts";
 	import { getMarkers, updateMarker } from "#lib/components/review/markers/markers.remote.ts";
+	import { useMarkerHistory } from "#lib/components/review/markers/marker-history.svelte.ts";
 	import {
 		formatTimecode,
 		frameAtSeconds,
@@ -56,6 +57,7 @@
 	}
 
 	const getShare = useShare();
+	const markerHistory = useMarkerHistory();
 	const share = $derived(getShare());
 
 	let {
@@ -259,7 +261,7 @@
 		const { frame, duration } = markerDrag.current;
 		try {
 			if (frame !== marker.frame || duration !== marker.duration) {
-				await updateMarker({
+				const save = updateMarker({
 					id: marker.id,
 					name: marker.name ?? "",
 					description: marker.description ?? "",
@@ -268,6 +270,8 @@
 					duration,
 					shareToken: share?.token,
 				});
+				// ⌘Z right after letting go waits for this move, then takes it back
+				await (markerHistory?.track(save) ?? save);
 				await getMarkers(markersKey(marker.exportId, share?.token)).refresh();
 				for (const signal of dragSignals(marker, { frame, duration })) {
 					signalGuide("marker-ranges", signal);
