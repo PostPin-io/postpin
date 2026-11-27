@@ -38,6 +38,13 @@
 		app: string;
 		/** The OSes with a security prompt when the installer is opened */
 		securityOn: readonly DesktopOs[];
+		/**
+		 * The programs the plugin works with, for a plugin with several (PostPin Desktop): a switch
+		 * next to the OS one, stored as `program` in the context
+		 */
+		programs?: readonly { value: string; label: string }[];
+		/** The one chosen of `programs` */
+		program?: string;
 		/** Step bar label of open-in-nle, e.g. "Open in Resolve" */
 		openLabel: string;
 		/** After connect, without the "✓" */
@@ -60,6 +67,8 @@
 		loginWhere,
 		app,
 		securityOn,
+		programs = [],
+		program = $bindable(),
 		openLabel,
 		connectedFeedback,
 		download,
@@ -103,7 +112,7 @@
 		if (!steps.includes(step)) step = "install";
 	});
 
-	const context = () => ({ os, signInBefore });
+	const context = () => ({ os, signInBefore, ...(program ? { program } : {}) });
 
 	async function moveTo(next: InstallStep) {
 		step = next;
@@ -113,6 +122,11 @@
 	function chooseOs(next: DesktopOs) {
 		os = next;
 		void save(GuideStatus.STARTED, steps.includes(step) ? step : "install", context());
+	}
+
+	function chooseProgram(next: string) {
+		program = next;
+		void save(GuideStatus.STARTED, step, context());
 	}
 
 	const offset = (by: number) => steps[steps.indexOf(step) + by]!;
@@ -157,18 +171,34 @@
 </script>
 
 {#snippet osSwitch()}
+	{@render switcher(
+		"Installing on",
+		"Operating system",
+		(["mac", "windows"] as const).map((value) => ({ value, label: OS_LABEL[value] })),
+		os,
+		(value) => chooseOs(value as DesktopOs),
+	)}
+{/snippet}
+
+{#snippet switcher(
+	label: string,
+	aria: string,
+	options: readonly { value: string; label: string }[],
+	current: string | undefined,
+	choose: (value: string) => void,
+)}
 	<div class="flex flex-wrap items-center justify-end gap-2 text-sm">
-		<span class="text-base-content/60">Installing on</span>
-		<div class="join" role="radiogroup" aria-label="Operating system">
-			{#each ["mac", "windows"] as const as value (value)}
+		<span class="text-base-content/60">{label}</span>
+		<div class="join" role="radiogroup" aria-label={aria}>
+			{#each options as option (option.value)}
 				<button
 					type="button"
 					role="radio"
-					aria-checked={os === value}
-					class="btn join-item btn-sm {os === value ? style.button : ''}"
-					onclick={() => chooseOs(value)}
+					aria-checked={current === option.value}
+					class="btn join-item btn-sm {current === option.value ? style.button : ''}"
+					onclick={() => choose(option.value)}
 				>
-					{OS_LABEL[value]}
+					{option.label}
 				</button>
 			{/each}
 		</div>
@@ -199,6 +229,9 @@
 	onskip={() => save(GuideStatus.SKIPPED)}
 >
 	{#if step !== "done"}
+		{#if programs.length > 1}
+			{@render switcher("Working in", "Program", programs, program, chooseProgram)}
+		{/if}
 		{@render osSwitch()}
 	{/if}
 

@@ -16,15 +16,15 @@ code:
 # Working from your NLE
 
 **Goal:** The plugin is installed and signed in, and the user rendered and uploaded an export from
-the NLE (DaVinci Resolve, Premiere Pro, or Pro Tools via the desktop app).
+the NLE (DaVinci Resolve, Premiere Pro, or Pro Tools and FilmCraft via the desktop app).
 
 ## Steps
 
-1. `choose-nle`: Pick the NLE: DaVinci Resolve, Premiere Pro or Pro Tools. **Done when:** an NLE is
+1. `choose-nle`: Pick the NLE: DaVinci Resolve, Premiere Pro, Pro Tools or FilmCraft. **Done when:** an NLE is
    selected.
 2. `install`: Hands over to the install tutorial of that NLE:
    [install-resolve](install-resolve.md), [install-premiere](install-premiere.md) or
-   [install-desktop](install-desktop.md) (Pro Tools). Left out when a plugin for that NLE is
+   [install-desktop](install-desktop.md) (Pro Tools, FilmCraft). Left out when a plugin for that NLE is
    already connected for this user. **Done when:** that install tutorial is completed; its
    completion screen says "Continue" and comes back here.
 3. `create-project-timeline`: Create or pick a project and timeline from the plugin.
@@ -44,7 +44,7 @@ the NLE (DaVinci Resolve, Premiere Pro, or Pro Tools via the desktop app).
 
 One install tutorial per plugin, not per operating system: the plugins differ far more from each
 other than macOS from Windows (Resolve: `.pkg` / `.exe`; Premiere: the same `.ccx` on both;
-Pro Tools: the PostPin Desktop app). All three share the same step ids, so they can be built as one
+Pro Tools and FilmCraft: the PostPin Desktop app). All three share the same step ids, so they can be built as one
 tutorial component with data per NLE and OS. The security prompt comes as soon as the installer
 is opened, so `os-security` goes before `install`:
 
@@ -100,7 +100,8 @@ of one timeline): the user is about to upload there, and the plugin is the other
      the PostPin Guides page.
    - **"Yes":** goes to `choose`.
 2. `choose`: "Which program do you work in?" with one button per program (plain buttons in
-   the tutorial style): DaVinci Resolve, Premiere Pro, Pro Tools, and "Back" to `ask`. A choice starts
+   the tutorial style): DaVinci Resolve, Premiere Pro, Pro Tools, FilmCraft, and "Back" to `ask`.
+   Pro Tools and FilmCraft both start [install-desktop](install-desktop.md), for that program. A choice starts
    that install tutorial right there, as if started by hand ([install-resolve](install-resolve.md),
    [install-premiere](install-premiere.md), [install-desktop](install-desktop.md)); the card is
    gone. The other two stay "Not started".
