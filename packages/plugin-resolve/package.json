@@ -16,6 +16,7 @@
 		"preview": "vite preview",
 		"check": "svelte-check --tsgo --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json && tsc -p tsconfig.electron.json",
 		"generate:resolve": "python3 scripts/generate-resolve-types.py && prettier --write src/electron/resolve.ts",
+		"resolve-api": "scripts/extract-resolve-api.sh",
 		"dist": "pnpm run build && ./scripts/build-pkg.sh"
 	},
 	"devDependencies": {

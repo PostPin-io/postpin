@@ -26,8 +26,8 @@
 		it, right inside Resolve.
 	</p>
 	<div class="alert text-sm alert-info" role="note">
-		It needs <strong>DaVinci Resolve Studio</strong>: the free version of Resolve has no Workflow
-		Integrations.
+		It needs <strong>DaVinci Resolve Studio 20.1</strong> or newer: the free version of Resolve has no
+		Workflow Integrations.
 	</div>
 	<p class="text-sm text-base-content/70">
 		Quit DaVinci Resolve before you install: it loads plugins only when it starts.
