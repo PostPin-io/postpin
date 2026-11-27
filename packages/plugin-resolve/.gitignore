@@ -1,3 +1,4 @@
 dist
 .svelte-check
 release
+.resolve-api
