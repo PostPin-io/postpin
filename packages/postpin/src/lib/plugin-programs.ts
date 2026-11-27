@@ -41,10 +41,24 @@ export const PLUGIN_PROGRAMS: readonly PluginProgram[] = [
 		marker: { one: "memory location", many: "memory locations" },
 		renderToDisk: false,
 	},
+	{
+		hostName: "FilmCraft",
+		name: "FilmCraft",
+		clientId: "io.postpin.desktop",
+		plugin: "PostPin Desktop",
+		marker: { one: "marker", many: "markers" },
+		renderToDisk: false,
+	},
 ];
 
 export const programByHost = (hostName: string | null | undefined) =>
 	PLUGIN_PROGRAMS.find((p) => p.hostName === hostName) ?? null;
 
-export const programByClient = (clientId: string | null | undefined) =>
-	PLUGIN_PROGRAMS.find((p) => p.clientId === clientId) ?? null;
+/**
+ * null also for a client that serves several programs: PostPin Desktop works with Pro Tools and
+ * FilmCraft
+ */
+export function programByClient(clientId: string | null | undefined) {
+	const matches = PLUGIN_PROGRAMS.filter((p) => p.clientId === clientId);
+	return matches.length === 1 ? matches[0] : null;
+}

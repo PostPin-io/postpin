@@ -1,5 +1,5 @@
 // FilmCraft (ArtCraft's Premiere-style editor) over its desktop control channel, see control.ts.
-// Experimental: FilmCraft is alpha and its protocol has no version, so command names and result
+// FilmCraft is alpha and its protocol has no version, so command names and result
 // shapes follow its main branch as of 2026-11.
 
 import type { NleBridge, NleMarker, SetMarkerResult } from "@postpin-io/plugin-core/bridge";

@@ -98,7 +98,7 @@ export const GUIDES = [
 		trigger: "automatic",
 		title: "Installing PostPin Desktop",
 		description:
-			"Install PostPin Desktop for Pro Tools on macOS or Windows, connect it and sign it in.",
+			"Install PostPin Desktop for Pro Tools or FilmCraft on macOS or Windows, connect it and sign it in.",
 		restartHint: "Starts right here.",
 		startFrom: "here",
 		minRole: Role.MEMBER,

@@ -11,16 +11,19 @@ export const guideState = $state<{
 	ended: Partial<Record<GuideId, GuideStatus>>;
 	/** Started by hand (guide button, PostPin Guides page): runs even while guides are off */
 	requested: GuideId | null;
+	/** What the requested guide starts with, e.g. the program the plugin question was answered with */
+	requestedWith: Record<string, string> | null;
 	/** Guides on or off, as just switched here (null: the stored setting counts) */
 	enabled: boolean | null;
 	/** The guide on screen, set by GuideHost: guide buttons hide meanwhile */
 	running: GuideId | null;
-}>({ ended: {}, requested: null, enabled: null, running: null });
+}>({ ended: {}, requested: null, requestedWith: null, enabled: null, running: null });
 
 /** Another user signed in (in the same tab): nothing of the last one may carry over */
 export function resetGuideState() {
 	guideState.ended = {};
 	guideState.requested = null;
+	guideState.requestedWith = null;
 	guideState.enabled = null;
 	guideState.running = null;
 }
@@ -37,14 +40,18 @@ export const isOpen = (progress: Progress, id: GuideId) => {
 };
 
 /** Starts a guide by hand: it runs from its first step */
-export function requestGuide(id: GuideId) {
+export function requestGuide(id: GuideId, startWith?: Record<string, string>) {
 	delete guideState.ended[id];
 	guideState.requested = id;
+	guideState.requestedWith = startWith ?? null;
 }
 
 export function endGuide(id: GuideId, status: GuideStatus) {
 	guideState.ended[id] = status;
-	if (guideState.requested === id) guideState.requested = null;
+	if (guideState.requested === id) {
+		guideState.requested = null;
+		guideState.requestedWith = null;
+	}
 }
 
 /** Once the server agrees, its word counts again (so a restart on the guides page works) */

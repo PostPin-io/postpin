@@ -6,7 +6,7 @@ status: implemented
 minRole: member
 permission: plugin.use
 trigger: automatic
-starts: on the first visit to the export list of a timeline, when the user answers the plugin question with Pro Tools (see [plugin-workflow](plugin-workflow.md#the-plugin-question)) · from the PostPin Guides page; one in progress goes on on the dashboard
+starts: on the first visit to the export list of a timeline, when the user answers the plugin question with Pro Tools or FilmCraft (see [plugin-workflow](plugin-workflow.md#the-plugin-question)) · from the PostPin Guides page; one in progress goes on on the dashboard
 prerequisites: [may use the plugins (`permission`)]
 code:
   - packages/postpin/src/lib/components/guides/tutorials/InstallDesktopTutorial.svelte
@@ -15,24 +15,30 @@ code:
   - packages/postpin/src/lib/downloads.ts
   - packages/desktop/electron-builder.yml
   - packages/desktop/src/adapters/pro-tools/ptsl.ts
+  - packages/desktop/src/adapters/filmcraft/control.ts
   - packages/plugin-core/src/ui/Login.svelte
 ---
 
 # Installing PostPin Desktop
 
 **Goal:** PostPin Desktop is installed, signed in to the user's PostPin account and next to a
-running Pro Tools.
+running Pro Tools, or ready to start FilmCraft.
 
 ## Steps
 
 The shared install tutorial frame (see [plugin-workflow](plugin-workflow.md#install-tutorials)):
 full screen, "Installing on: macOS | Windows" at the top of the card, "Back" / "Next" on the steps
-outside the browser, progress stored on every step. The NLE-specific part is `open-in-nle`;
-further programs that run through the desktop app get their variant there instead of a new
+outside the browser, progress stored on every step.
+
+PostPin Desktop works with several programs, so the card also has "Working in: Pro Tools |
+FilmCraft" above the OS switch, stored as `program` in the context. The plugin question's answer
+picks it; otherwise it is where the tutorial left off, or Pro Tools. The texts of `download`,
+`open-in-nle` and `done` follow it; further programs get their variant here instead of a new
 tutorial.
 
-1. `download`: What PostPin Desktop does (bounces of the session up, markers back as memory
-   locations); requires **Pro Tools 2025.10 or newer**. "Need it for <other OS>?" switches,
+1. `download`: What PostPin Desktop does. Pro Tools: bounces of the session up, markers back as
+   memory locations; requires **Pro Tools 2025.10 or newer**. FilmCraft: exports of the sequence
+   up, markers back onto it; requires FilmCraft in its usual place. "Need it for <other OS>?" switches,
    "Already installed" goes to `open-in-nle`. **Done when:** the download is clicked.
 2. `os-security`: Only on Windows (the macOS app is signed and notarized). Opening
    `PostPin-Desktop-<version>-x64.exe` brings "Windows protected your PC": "More info", then "Run
@@ -44,15 +50,21 @@ tutorial.
 
    PostPin Desktop updates itself from then on.
 
-4. `open-in-nle`: Start Pro Tools and open a session; keep PostPin Desktop open next to it.
-   "PostPin Desktop can't reach Pro Tools?" explains its two errors ("Pro Tools is not running, or
-   its scripting interface is disabled", "Pro Tools 2025.10 or newer is required"). **Done when:**
-   "Next".
+4. `open-in-nle`: **Done when:** "Next".
+   - **Pro Tools** ("Open Pro Tools"): start Pro Tools and open a session; keep PostPin Desktop
+     open next to it. "PostPin Desktop can't reach Pro Tools?" explains its two errors ("Pro Tools
+     is not running, or its scripting interface is disabled", "Pro Tools 2025.10 or newer is
+     required").
+   - **FilmCraft** ("Quit FilmCraft"): FilmCraft only takes remote control when PostPin Desktop
+     starts it, and the app's Program menu only shows after the sign-in. So: quit FilmCraft if
+     it's open and keep PostPin Desktop open; choosing FilmCraft comes on the completion screen.
 5. `connect`: Click "Login" in PostPin Desktop; the server hint as in every install tutorial;
    approve the code in the browser. **Done when:** the app is signed in for this user (client
    `io.postpin.desktop`).
 6. `done`: **Completion screen:** "PostPin Desktop is connected", what it can do now, a pointer to
-   PostPin Guides. **Done when:** "Done"; the tutorial closes at once.
+   PostPin Guides. FilmCraft: choose FilmCraft under Program in PostPin Desktop, it opens
+   FilmCraft; "PostPin Desktop can't reach FilmCraft?" explains its two errors ("FilmCraft is
+   running without remote control", "FilmCraft isn't installed"). **Done when:** "Done"; the tutorial closes at once.
 
 ## Success feedback
 
