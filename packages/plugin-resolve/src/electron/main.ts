@@ -53,10 +53,37 @@ const CLIENT_ID = "io.postpin.plugin.resolve";
 
 const WorkflowIntegration: WI = WorkflowIntegrationModule;
 
+// The oldest Resolve with the promise API and Electron 36. Which calls older versions lack:
+// `pnpm resolve-api` (scripts/extract-resolve-api.sh); those calls go through has().
+const MIN_RESOLVE_VERSION = [20, 1];
+
 // Cached as promises, so concurrent first calls share one initialization of the native module.
-// A failed (null) result isn't kept, so the next call tries again.
+// A failed (null) result isn't kept, so the next call tries again; a too old Resolve stays rejected.
 let resolvePromise: Promise<Resolve | null> | null = null;
 let projectManagerPromise: Promise<ProjectManager | null> | null = null;
+
+// An object from Resolve only has the methods its Resolve version knows, newer ones are undefined
+function has<T extends object>(object: T, method: keyof T) {
+	return typeof object[method] === "function";
+}
+
+function isOlder(version: number[], than: number[]) {
+	for (const [i, part] of than.entries()) {
+		const own = version[i] ?? 0;
+		if (own !== part) return own < part;
+	}
+	return false;
+}
+
+async function checkResolveVersion(resolve: Resolve) {
+	const version = await orNull(() => resolve.GetVersion());
+	if (version && isOlder(version.slice(0, 3) as number[], MIN_RESOLVE_VERSION)) {
+		const found = (await orNull(() => resolve.GetVersionString())) ?? version.slice(0, 3).join(".");
+		throw new Error(
+			`The plugin needs DaVinci Resolve ${MIN_RESOLVE_VERSION.join(".")} or newer, this is ${found}`,
+		);
+	}
+}
 
 // Initialize Resolve interface and returns Resolve object.
 async function initResolveInterface() {
@@ -74,6 +101,7 @@ async function initResolveInterface() {
 		return null;
 	}
 
+	await checkResolveVersion(resolve);
 	return resolve;
 }
 
@@ -142,6 +170,19 @@ async function orNull<T>(call: () => Promise<T>): Promise<T | null> {
 	} catch {
 		return null;
 	}
+}
+
+// Timeline.GetSettings() is new in Resolve 21.1, before it GetSetting() without a name returned all
+async function getTimelineSettings(timeline: Timeline) {
+	return has(timeline, "GetSettings") ? await timeline.GetSettings() : await timeline.GetSetting();
+}
+
+// The timeline's first frame as a JPEG data URL. Timeline.ExportFrame is new in Resolve 21.1.2,
+// older versions show no thumbnail.
+async function exportThumbnail(timeline: Timeline) {
+	if (!has(timeline, "ExportFrame")) return undefined;
+	const frame = await orNull(() => timeline.ExportFrame(0, { encodedImageFormat: "jpg" }));
+	return frame?.data ? `data:image/jpeg;base64,${frame.data}` : undefined;
 }
 
 // Resolve returns frame rates as rounded decimals, e.g. 23.976 for 24000/1001.
@@ -219,7 +260,7 @@ async function renderPreview(
 
 	if (await project.IsRenderingInProgress()) throw new Error("Resolve is already rendering");
 
-	const settings = await timeline.GetSettings();
+	const settings = await getTimelineSettings(timeline);
 
 	const width = Number(settings.timelineResolutionWidth);
 	const height = Number(settings.timelineResolutionHeight);
@@ -301,7 +342,7 @@ async function buildTimelineSnapshot(): Promise<TimelineSnapshot | null> {
 	const timeline = await project.GetCurrentTimeline();
 	if (!timeline) return null;
 
-	const settings = await timeline.GetSettings();
+	const settings = await getTimelineSettings(timeline);
 	const frameRate = toFrameRate(
 		Number(settings.timelineFrameRate),
 		settings.timelineDropFrameTimecode === "1",
@@ -527,13 +568,12 @@ const resolveBridge: NleBridge = {
 		if (!timeline) throw new Error("No timeline open in Resolve");
 		const project = await getCurrentProject();
 		if (!project) throw new Error("No project open in Resolve");
-		const frame = await timeline.ExportFrame(0, {});
 		return {
 			id: await timeline.GetUniqueId(),
 			name: await timeline.GetName(),
 			projectId: await project.GetUniqueId(),
 			projectName: await project.GetName(),
-			thumbnailDataUrl: frame ? `data:image/png;base64,${frame.data}` : undefined,
+			thumbnailDataUrl: await exportThumbnail(timeline),
 			startFrame: await timeline.GetStartFrame(),
 		};
 	},
