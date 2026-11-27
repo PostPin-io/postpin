@@ -28,9 +28,11 @@ export class FakeProcess extends EventEmitter {
 }
 
 /** What the mocked lib/ffmpeg.ts ffmpeg() returns */
-export function fakeFfmpegRun(chunks: Buffer[] = [], error?: Error) {
+export function fakeFfmpegRun(chunks: Buffer[] = [], error?: Error, outputs = 0) {
 	return {
 		stdout: Readable.from(chunks),
+		// the extra pipes (fd 3, …) carry the same data
+		outputs: Array.from({ length: outputs }, () => Readable.from(chunks)),
 		done: error ? Promise.reject(error) : Promise.resolve(),
 	};
 }

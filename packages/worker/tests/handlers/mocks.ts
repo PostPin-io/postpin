@@ -48,8 +48,9 @@ export const sharedStorage = {
 		proxyId?: string;
 		index?: number;
 		generation?: string;
+		large?: boolean;
 	}) =>
-		`${o.mediaId}/${o.type}${o.proxyId ? `-${o.proxyId}` : ""}${o.generation ? `-${o.generation}` : ""}${o.index !== undefined ? `-${o.index}` : ""}`,
+		`${o.mediaId}/${o.type}${o.proxyId ? `-${o.proxyId}` : ""}${o.generation ? `-${o.generation}` : ""}${o.index !== undefined ? `-${o.index}` : ""}${o.large ? "_large" : ""}`,
 	deleteShotThumbnails: vi.fn(async () => 0),
 	deleteObject: vi.fn(async () => {}),
 	getTextObject: vi.fn(async (_c: unknown, _e: unknown, _key: string) => ""),
