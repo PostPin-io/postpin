@@ -1,6 +1,6 @@
 {
 	"name": "@postpin-io/desktop",
-	"version": "0.7.0",
+	"version": "0.8.0",
 	"productName": "PostPin Desktop",
 	"description": "PostPin desktop app for NLEs with a local scripting API: Pro Tools, FilmCraft and REAPER",
 	"main": "dist/main.cjs",
